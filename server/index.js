@@ -1,0 +1,1441 @@
+// ~/study-chat/server/index.js
+import "dotenv/config";
+import path from "path";
+import { fileURLToPath } from "url";
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import OpenAI from "openai";
+import fs from "fs";
+
+import { systemPrompt, buildUserPrompt, pickRandomCast } from "./prompts.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Fail fast if OPENAI_API_KEY is missing
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY || !String(OPENAI_API_KEY).trim()) {
+  console.error(
+    "\n[ERROR] OPENAI_API_KEY is not set. Set it in .env or export OPENAI_API_KEY=sk-...\n" +
+      "  Example: echo 'OPENAI_API_KEY=sk-your-key' >> .env\n"
+  );
+  process.exit(1);
+}
+
+const PORT = 3001;
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+
+// Load per-bot model config (default + fine-tuned model IDs)
+let MODELS = { default: "gpt-4.1-mini", bots: {} };
+try {
+  const modelsPath = path.join(__dirname, "models.json");
+  const raw = fs.readFileSync(modelsPath, "utf8");
+  MODELS = JSON.parse(raw);
+  if (!MODELS.bots) MODELS.bots = {};
+} catch (e) {
+  console.warn("[WARN] Could not load models.json, using default model only:", e?.message);
+}
+
+function getModelForBot(botName) {
+  const id = MODELS.bots[botName];
+  // Placeholder IDs (e.g. ft:...:ORG:MINA_MODEL_ID) mean "not trained yet" → use default
+  if (!id || String(id).includes("_MODEL_ID")) return MODELS.default;
+  return id;
+}
+
+// =====================
+// Tuning knobs
+// =====================
+const LOG_PATH = "./logs.txt";
+
+const NORMAL_ENQUEUE_MS = 3000;
+const DEQUEUE_MIN_MS = 1000;
+const DEQUEUE_MAX_MS = 2000;
+
+const MAX_ACTIVE_BOTS = 3; // bots that can be in GENERATING/THINKING/TYPING at once
+
+// Your rule: anything that hasn't typed for >=10s is fully interruptible.
+// - If interrupted in stages 1-3 (GENERATING/THINKING/TYPING<10s before first send): cancel ENTIRE reply and keep them scheduled.
+// - If interrupted after first bubble (TYPING/THINKING for later bubbles): keep first bubble, cancel remaining.
+const INTERRUPTABLE_TYPED_MS = 10000;
+
+const OPENAI_TIMEOUT_MS = 15000;
+const IMPLICIT_WINDOW = 10;
+
+// Mention TTL defaults
+const MENTION_TTL_MS = 12_000; // 12 seconds
+const MENTION_TTL_MSGS = 4; // or 4 messages, whichever comes first
+
+// Human idle detection
+const HUMAN_IDLE_MS = 9_000; // human is idle if no typing for 9 seconds
+const MAX_DEQUEUE_WHEN_HUMAN_ACTIVE = 3; // max messages to dequeue when human is active
+const IDLE_DEQUEUE_COUNT = 3; // number of messages to dequeue when human is idle
+const IDLE_DEQUEUE_SPREAD_MS = 10_000; // spread idle dequeues across 10 seconds
+
+// =====================
+// Logging
+// =====================
+const ANSI = {
+  reset: "\x1b[0m",
+  dim: "\x1b[2m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
+  gray: "\x1b[90m",
+};
+
+function nowStr() {
+  const d = new Date();
+  return d.toISOString().replace("T", " ").replace("Z", "");
+}
+function clip(s, n = 140) {
+  const t = String(s || "").replace(/\s+/g, " ").trim();
+  return t.length > n ? t.slice(0, n) + "…" : t;
+}
+function colorForTag(tag) {
+  switch (tag) {
+    case "SESSION_START":
+    case "SESSION_END":
+    case "DISCONNECT":
+      return ANSI.magenta;
+    case "MESSAGE":
+    case "HUMAN_INPUT":
+      return ANSI.green;
+    case "QUEUE":
+      return ANSI.blue;
+    case "TYPING":
+    case "BOT_STATE":
+      return ANSI.cyan;
+    case "INTERRUPT":
+      return ANSI.yellow;
+    case "OPENAI_REQ":
+    case "OPENAI_OK":
+      return ANSI.magenta;
+    case "OPENAI_ERR":
+    case "ERROR":
+      return ANSI.red;
+    default:
+      return ANSI.gray;
+  }
+}
+function logLine(tag, msg) {
+  const ts = nowStr();
+  const plain = `${ts} [${tag}] ${msg}`;
+  const c = colorForTag(tag);
+  console.log(`${ANSI.dim}${ts}${ANSI.reset} ${c}[${tag}]${ANSI.reset} ${msg}`);
+  try {
+    fs.appendFileSync(LOG_PATH, plain + "\n");
+  } catch {}
+}
+
+// =====================
+// Express + Socket
+// =====================
+const app = express();
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: true, methods: ["GET", "POST"], credentials: true },
+});
+
+// =====================
+// Conditions
+// =====================
+const CONDITIONS = ["control", "norm", "authority", "accountability", "skeptic"];
+function pickCondition() {
+  return CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+}
+
+// =====================
+// Text utils
+// =====================
+function buildTranscript(history, maxTurns = 30) {
+  return history
+    .slice(-maxTurns)
+    .map((m) => `${m.name}: ${m.text}`)
+    .join("\n");
+}
+
+function normalizeText(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[\p{P}\p{S}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function ensureString(x) {
+  if (x == null) return "";
+  if (typeof x === "string") return x.trim();
+  if (typeof x === "object" && !Array.isArray(x)) {
+    const t = x.content ?? x.text ?? x.message ?? x.value;
+    if (t != null && typeof t === "string") return t.trim();
+    return ""; // don't stringify whole object onto chat
+  }
+  return String(x).trim();
+}
+
+function parseJsonArray(rawText, maxItems = 3) {
+  if (!rawText) return [];
+  let s = String(rawText).trim();
+  // Strip markdown code fences so we don't fail on ```json ... ```
+  s = s.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+
+  function tryParse(str) {
+    try {
+      const parsed = JSON.parse(str);
+      if (!Array.isArray(parsed)) return null;
+      return parsed
+        .map((x) => ensureString(x))
+        .filter(Boolean)
+        .map((x) => x.slice(0, 220))
+        .slice(0, maxItems);
+    } catch {
+      return null;
+    }
+  }
+
+  let result = tryParse(s);
+  if (result) return result;
+
+  // Best-effort repair: extract first [...] from the string
+  const arrayMatch = s.match(/\[\s*[\s\S]*?\]/);
+  if (arrayMatch) {
+    result = tryParse(arrayMatch[0]);
+    if (result) return result;
+  }
+
+  // Fallback: treat whole cleaned string as single message
+  return s ? [s.slice(0, 220)] : [];
+}
+
+function containsHardBanned(text) {
+  return /(as an ai|language model|chatgpt|openai|policy|experiment|study|irb|deception)/i.test(
+    text || ""
+  );
+}
+
+const FILLER_SET = new Set([
+  "yeah",
+  "yeah true",
+  "true",
+  "facts",
+  "fr",
+  "real",
+  "same",
+  "yeah same",
+  "i agree",
+  "yeah i agree",
+  "agreed",
+  "ok",
+  "okay",
+  "lol",
+  "lmao",
+  "yep",
+  "yup",
+  "mhmm",
+  "for sure",
+]);
+
+function isLowContentBubble(text) {
+  const n = normalizeText(text);
+  if (!n) return true;
+  if (FILLER_SET.has(n)) return true;
+  if (n.length <= 4 && !n.includes("?")) return true;
+  return false;
+}
+
+// Human-ish timing
+function humanDelayForText(text) {
+  const chars = String(text || "").length;
+  const thinking = 250 + Math.random() * 700; // stage 2
+  const typingSpeed = 7 + Math.random() * 7; // chars/sec
+  const typingTime = (chars / typingSpeed) * 1000; // stage 3
+  return { thinking, typingTime };
+}
+
+// =====================
+// Mention detection
+// =====================
+function detectExplicitMentions(text, botNames) {
+  const s = String(text || "");
+  const hits = [];
+  for (const name of botNames) {
+    const n = name.toLowerCase();
+    const re = new RegExp(`(^|\\s|@)${n}(\\b|\\s|:|,|\\.|!|\\?)`, "i");
+    if (re.test(s)) hits.push(name);
+  }
+  return hits;
+}
+
+async function detectImplicitMention({ history, botNames }) {
+  const window = history.slice(-IMPLICIT_WINDOW);
+  if (window.length < 2) return [];
+
+  const newest = window[window.length - 1];
+  if (detectExplicitMentions(newest.text, botNames).length) return [];
+
+  const names = botNames.join(", ");
+  const chat = window.map((m) => `${m.name}: ${m.text}`).join("\n");
+
+  const sys = `
+You are detecting who is being addressed in the newest message.
+
+Output a list of targets:
+- If addressed to ONE specific person: return that person only
+- If addressed to EVERYONE/ALL (e.g., "let's introduce ourselves", "what do you all think", "everyone share"): return ALL names except the speaker
+- If it's a general comment or reaction with no clear addressee: return empty array
+
+Output ONLY JSON:
+{"targets": [<NAME1>, <NAME2>, ...], "confidence": <0..1>, "reason": "<short>"}
+
+Allowed names must match exactly from the provided list. Exclude the speaker from targets.
+`.trim();
+
+  const user = `
+Allowed names: ${names}
+
+Chat (most recent last):
+${chat}
+
+Newest message:
+${newest.name}: "${newest.text}"
+
+Return JSON only. If addressed to everyone/all, include all names except ${newest.name}.
+`.trim();
+
+  logLine("OPENAI_REQ", `implicit_detect newest="${clip(newest.text, 90)}"`);
+
+  try {
+    const resp = await openai.responses.create(
+      {
+        model: MODELS.default,
+        input: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+      },
+      { timeout: OPENAI_TIMEOUT_MS }
+    );
+
+    const raw = (resp.output_text || "").trim();
+    logLine("OPENAI_OK", `implicit_detect raw="${clip(raw, 180)}"`);
+
+    const parsed = JSON.parse(raw);
+    let targets = parsed?.targets ?? [];
+    
+    // Handle backward compatibility: if "target" (singular) exists, convert to array
+    if (!Array.isArray(targets) && parsed?.target) {
+      targets = [parsed.target];
+    }
+    
+    if (!Array.isArray(targets)) targets = [];
+    
+    const conf = Number(parsed?.confidence ?? 0);
+
+    // Filter: must be valid bot names, not the speaker, and confidence threshold
+    const validTargets = targets
+      .filter(t => t && botNames.includes(t) && t !== newest.name)
+      .filter((t, i, arr) => arr.indexOf(t) === i); // deduplicate
+
+    if (validTargets.length === 0) return [];
+    if (conf < 0.78) return [];
+
+    return validTargets;
+  } catch (e) {
+    logLine("OPENAI_ERR", `implicit_detect err="${clip(e?.message, 180)}"`);
+    return [];
+  }
+}
+
+// =====================
+// Queue model (WHO speaks next, not message text)
+// =====================
+
+function dumpQueues(session, reason = "") {
+  const sched = session.scheduleQueue.map((x, i) => {
+    if (x.source === "mention") return `${i}:${x.bot}*(m)`;
+    if (x.source === "directive") return `${i}:${x.bot}*(d)`;
+    return `${i}:${x.bot}`;
+  });
+
+  const mentions = session.mentionQueue.map((t, i) => {
+    return `${i}:${t.target}`;
+  });
+
+  logLine(
+    "QUEUE",
+    `DUMP ${reason} | schedule=[${sched.join(" ")}] | mentions=[${mentions.join(" ")}]`
+  );
+}
+
+function scheduleHasBot(session, botName) {
+  return session.scheduleQueue.some((x) => x.bot === botName);
+}
+
+function enqueueSchedule(session, item, { front = false } = {}) {
+  // item: { bot, source: "mention"|"normal"|"directive", mentionId?: string, createdAt?: number, priorityQ?: string }
+  if (!item?.bot) return;
+
+  // Directive tasks are only removed when (1) that bot sends a message (dequeueScheduleAfterFirstSend) or (2) new moderator directive. Message from another bot must not replace or flush a directed bot's task.
+  const existing = session.scheduleQueue.find((x) => x.bot === item.bot);
+  if (existing?.source === "directive" && item.source !== "directive") return;
+
+  // Prune expired mentions before enqueueing
+  pruneExpiredMentions(session);
+
+  // prevent duplicates (unless it's a directive, which can override)
+  if (scheduleHasBot(session, item.bot) && item.source !== "directive") return;
+
+  // if enqueue mention or directive, remove any existing entry for same bot
+  session.scheduleQueue = session.scheduleQueue.filter((x) => x.bot !== item.bot);
+
+  // Set createdAt if not provided
+  if (!item.createdAt) item.createdAt = Date.now();
+
+  if (front) session.scheduleQueue.unshift(item);
+  else session.scheduleQueue.push(item);
+
+  logLine("QUEUE", `schedule +${item.source} bot=${item.bot} len=${session.scheduleQueue.length}`);
+  dumpQueues(session, `after enqueue ${item.bot}`);
+}
+
+// Only place that removes a bot's scheduled task when they send. Directive tasks are removed only here (when that bot messages out) or by enqueueModeratorDirective (new directive clears all). Message from another bot must not flush a directed bot's queue.
+function dequeueScheduleAfterFirstSend(session, botName) {
+  const before = session.scheduleQueue.length;
+  session.scheduleQueue = session.scheduleQueue.filter((x) => x.bot !== botName);
+  if (session.scheduleQueue.length !== before) {
+    logLine("QUEUE", `schedule dequeue bot=${botName} len=${session.scheduleQueue.length}`);
+    dumpQueues(session, `after dequeue ${botName}`);
+  }
+}
+
+function mentionPending(session, botName) {
+  return !!session.pendingMentionByBot[botName];
+}
+
+function enqueueNormalSpeaker(session) {
+  const candidates = session.botNames.filter((b) => !scheduleHasBot(session, b));
+  if (!candidates.length) return;
+
+  const bot = candidates[Math.floor(Math.random() * candidates.length)];
+
+  if (mentionPending(session, bot)) {
+    const t = session.pendingMentionByBot[bot];
+    enqueueSchedule(session, { bot, source: "mention", mentionId: t?.id }, { front: false });
+  } else {
+    enqueueSchedule(session, { bot, source: "normal" }, { front: false });
+  }
+}
+
+// =====================
+// Mention tickets (so bots answer even if 8+ msgs later)
+// =====================
+function createMentionTicket(session, targetBot, question, askedBy) {
+  const id = `m_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  const lastIdx = session.history.length - 1;
+
+  const ticket = {
+    id,
+    target: targetBot,
+    question: String(question || "").trim(),
+    askedBy: askedBy || "unknown",
+    createdAt: Date.now(),
+    createdMsgSeq: session.msgSeq || 0,
+    anchorIndex: lastIdx,
+    ttlMs: MENTION_TTL_MS,
+    ttlMsgs: MENTION_TTL_MSGS,
+  };
+
+  if (!session.pendingMentionByBot[targetBot]) {
+    session.pendingMentionByBot[targetBot] = ticket;
+    session.mentionQueue.push(ticket);
+    logLine("QUEUE", `mention + bot=${targetBot} id=${ticket.id} len=${session.mentionQueue.length}`);
+    dumpQueues(session, `after create mention ${targetBot}`);
+  }
+
+  // ensure scheduled (mentions have priority)
+  enqueueSchedule(session, { bot: targetBot, source: "mention", mentionId: ticket.id }, { front: true });
+}
+
+function resolveMention(session, botName, mentionId) {
+  const t = session.pendingMentionByBot[botName];
+  if (!t) return;
+  if (mentionId && t.id !== mentionId) return;
+
+  delete session.pendingMentionByBot[botName];
+  session.mentionQueue = session.mentionQueue.filter((x) => x.id !== t.id);
+
+  logLine("QUEUE", `mention - bot=${botName} id=${t.id} len=${session.mentionQueue.length}`);
+  dumpQueues(session, `after resolve mention ${botName}`); 
+}
+
+// =====================
+// Mention TTL (time-to-live) pruning
+// =====================
+function pruneExpiredMentions(session) {
+  const now = Date.now();
+  const msgSeq = session.msgSeq || 0;
+  
+  const before = session.mentionQueue.length;
+  session.mentionQueue = session.mentionQueue.filter(m => {
+    const ageMs = now - (m.createdAt || 0);
+    const ageMsgs = msgSeq - (m.createdMsgSeq || 0);
+    const expired = ageMs > (m.ttlMs || MENTION_TTL_MS) || ageMsgs > (m.ttlMsgs || MENTION_TTL_MSGS);
+    
+    if (expired) {
+      // also remove from pendingMentionByBot
+      if (session.pendingMentionByBot[m.target]?.id === m.id) {
+        delete session.pendingMentionByBot[m.target];
+      }
+    }
+    
+    return !expired;
+  });
+
+  // ALSO remove expired mention items from schedule queue
+  const beforeSched = session.scheduleQueue.length;
+  session.scheduleQueue = session.scheduleQueue.filter(task => {
+    if (task.source !== "mention") return true;
+    // keep only if its mention still exists
+    const exists = session.mentionQueue.some(m => m.id === task.mentionId);
+    if (!exists && task.mentionId) {
+      logLine("QUEUE", `prune expired mention task bot=${task.bot} mentionId=${task.mentionId}`);
+    }
+    return exists;
+  });
+
+  if (session.mentionQueue.length !== before || session.scheduleQueue.length !== beforeSched) {
+    logLine("QUEUE", `prune expired mentions: ${before}->${session.mentionQueue.length} mentions, ${beforeSched}->${session.scheduleQueue.length} schedule`);
+  }
+}
+
+
+// Priority constants
+const PRIORITY = { directive: 3, mention: 2, normal: 1 };
+
+function nextScheduleItem(session) {
+  // Prune expired mentions first
+  pruneExpiredMentions(session);
+
+  // ensure mention targets are in schedule (front)
+  if (session.mentionQueue.length) {
+    for (const t of session.mentionQueue) {
+      if (!scheduleHasBot(session, t.target)) {
+        enqueueSchedule(session, { bot: t.target, source: "mention", mentionId: t.id }, { front: true });
+      }
+    }
+  }
+
+  // Sort by priority: directive > mention > normal, then by createdAt (older first)
+  const sorted = [...session.scheduleQueue].sort((a, b) => {
+    const pa = PRIORITY[a.source] ?? 0;
+    const pb = PRIORITY[b.source] ?? 0;
+    if (pb !== pa) return pb - pa; // higher priority first
+    // tie-breaker: older first
+    return (a.createdAt ?? 0) - (b.createdAt ?? 0);
+  });
+
+  return sorted[0] || null;
+}
+
+// =====================
+// Per-bot job state machine (implements your interruption rule)
+// Stages:
+// 1) GENERATING (OpenAI)
+// 2) THINKING (random pause)
+// 3) TYPING (typing time)
+// 4) SEND (instant)
+// 5) repeat THINKING+TYPING+SEND for later bubbles
+// =====================
+function ensureBot(session, botName) {
+  if (!session.bots[botName]) {
+    session.bots[botName] = {
+      stage: "IDLE", // IDLE|GENERATING|THINKING|TYPING
+      timers: [],
+      gen: 0, // generation counter
+      controller: null, // AbortController for OpenAI
+      // plan
+      bubbles: [],
+      idx: 0,
+      sentCount: 0,
+      source: "normal",
+      mentionId: null,
+      // timing
+      typingStartedAt: 0,
+      // interrupt behavior
+      finishCurrentThenStop: false, // set when typing >=10s and interrupted
+    };
+  }
+}
+
+function clearBotTimers(session, botName) {
+  ensureBot(session, botName);
+  const b = session.bots[botName];
+  b.timers.forEach(clearTimeout);
+  b.timers = [];
+}
+
+function setStage(session, botName, next, meta = "") {
+  ensureBot(session, botName);
+  const b = session.bots[botName];
+  if (b.stage === next) return;
+  logLine("BOT_STATE", `bot=${botName} ${b.stage} -> ${next}${meta ? " " + meta : ""}`);
+  b.stage = next;
+}
+
+// active = not IDLE (counts against MAX_ACTIVE_BOTS)
+function activeBotCount(session) {
+  let n = 0;
+  for (const name of session.botNames) {
+    ensureBot(session, name);
+    if (session.bots[name].stage !== "IDLE") n++;
+  }
+  return n;
+}
+
+function startTypingIndicator(session, botName) {
+  io.to(session.sessionId).emit("typing", { who: botName, isTyping: true });
+  logLine("TYPING", `bot=${botName} true`);
+}
+function stopTypingIndicator(session, botName) {
+  io.to(session.sessionId).emit("typing", { who: botName, isTyping: false });
+  logLine("TYPING", `bot=${botName} false`);
+}
+
+// Core: interruption triggered by ANY NEW MESSAGE (human OR bot)
+function interruptBotOnNewMessage(session, botName, { by, reason }) {
+  ensureBot(session, botName);
+  const b = session.bots[botName];
+  if (b.stage === "IDLE") return;
+
+  const elapsed = b.stage === "TYPING" ? Date.now() - (b.typingStartedAt || 0) : 0;
+
+  // Helper: cancel everything and keep them scheduled (restart from stage 1 later)
+  const cancelEntire = (why) => {
+    if (b.controller) {
+      try {
+        b.controller.abort();
+      } catch {}
+    }
+    clearBotTimers(session, botName);
+    b.controller = null;
+    b.bubbles = [];
+    b.idx = 0;
+    b.sentCount = 0;
+    b.source = "normal";
+    b.mentionId = null;
+    b.typingStartedAt = 0;
+    b.finishCurrentThenStop = false;
+
+    // If they were typing, turn off indicator
+    if (b.stage === "TYPING") stopTypingIndicator(session, botName);
+
+    logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=cancel_entire ${why || ""}`.trim());
+    dumpQueues(session, `after cancel entire ${botName}`);
+    setStage(session, botName, "IDLE");
+    // IMPORTANT: do NOT dequeue schedule. They stay scheduled and will restart from stage 1.
+  };
+
+  // Helper: cancel remaining bubbles (first bubble already sent)
+  const cancelRemaining = (why) => {
+    if (b.controller) {
+      try {
+        b.controller.abort();
+      } catch {}
+    }
+    clearBotTimers(session, botName);
+    b.controller = null;
+    b.bubbles = [];
+    b.idx = 0;
+    b.typingStartedAt = 0;
+    b.finishCurrentThenStop = false;
+
+    if (b.stage === "TYPING") stopTypingIndicator(session, botName);
+
+    logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=cancel_remaining ${why || ""}`.trim());
+    setStage(session, botName, "IDLE");
+    // schedule already dequeued after first bubble (per your rule)
+  };
+
+  // Stage-specific behavior (your rule)
+  if (b.sentCount === 0) {
+    // Before first bubble is sent:
+    // - GENERATING/THINKING: always cancel
+    // - TYPING: cancel if typed < 10s, else allow finish current then stop
+    if (b.stage === "GENERATING" || b.stage === "THINKING") {
+      cancelEntire(`(stage=${b.stage})`);
+      return;
+    }
+    if (b.stage === "TYPING") {
+      if (elapsed < INTERRUPTABLE_TYPED_MS) {
+        cancelEntire(`(typedMs=${elapsed})`);
+        return;
+      }
+      // typed >= 10s: let them finish current bubble, but stop after sending it
+      b.finishCurrentThenStop = true;
+      logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=finish_current_then_stop typedMs=${elapsed}`);
+      return;
+    }
+  } else {
+    // After first bubble already sent:
+    // - THINKING or GENERATING for later content: cancel remaining immediately
+    // - TYPING: if typed <10s cancel remaining, else finish current then stop
+    if (b.stage === "GENERATING" || b.stage === "THINKING") {
+      cancelRemaining(`(stage=${b.stage})`);
+      return;
+    }
+    if (b.stage === "TYPING") {
+      if (elapsed < INTERRUPTABLE_TYPED_MS) {
+        cancelRemaining(`(typedMs=${elapsed})`);
+        return;
+      }
+      b.finishCurrentThenStop = true;
+      logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=finish_current_then_stop typedMs=${elapsed}`);
+      return;
+    }
+  }
+}
+
+function interruptAllBotsOnNewMessage(session, { from, reason }) {
+  for (const bot of session.botNames) {
+    if (bot === from) continue;
+    interruptBotOnNewMessage(session, bot, { by: from, reason });
+  }
+}
+
+// =====================
+// Moderator message handling
+// =====================
+function isModeratorMessage(msg) {
+  // Treat all human messages as moderator messages
+  return msg?.name === "You" || msg?.role === "moderator";
+}
+
+// Commentary-only moderator messages do not update directions; only actual directives do.
+const COMMENTARY_PHRASES = new Set([
+  "ok", "okay", "yeah", "yep", "yup", "nice", "cool", "got it", "i see", "interesting",
+  "hmm", "hm", "right", "true", "sure", "mhm", "mhmm", "uh huh", "alright", "k",
+  "lol", "haha", "hehe", "thanks", "thank you", "neat", "makes sense", "fair enough",
+  "understood", "noted", "same", "same here", "i agree", "agreed", "sounds good",
+]);
+
+// Substrings that suggest the message is a directive (question/request), not commentary.
+const DIRECTIVE_MARKERS = [
+  "?", "please", "tell me", "share", "introduce", "everyone", "you all", "each of you",
+  "what do you", "how do you", "can you", "could you", "would you", "let's", "let us",
+  "i want you", "i'd like", "answer", "respond", "think about", "give me", "describe",
+  "explain", "why do", "why does", "when did", "where ", "who ", "how ", "what ",
+];
+
+function isCommentaryOnly(text) {
+  const s = String(text || "").trim();
+  if (!s) return true;
+  const n = normalizeText(s);
+  if (COMMENTARY_PHRASES.has(n)) return true;
+  // Short message with no directive markers → commentary
+  if (s.length <= 30) {
+    const lower = s.toLowerCase();
+    const hasDirective = DIRECTIVE_MARKERS.some((m) => lower.includes(m));
+    if (!hasDirective) return true;
+  }
+  return false;
+}
+
+function enqueueModeratorDirective(session, text) {
+  // 1) bump message sequence (already done in emitAndRecordMessage)
+  
+  // 2) expire old mentions first
+  pruneExpiredMentions(session);
+
+  // 3) wipe mention backlog so it can't hijack
+  session.mentionQueue = [];
+  session.pendingMentionByBot = {};
+  
+  // 4) Clear ALL scheduled tasks (dequeue everything)
+  const before = session.scheduleQueue.length;
+  session.scheduleQueue = [];
+  if (before > 0) {
+    logLine("QUEUE", `cleared all ${before} scheduled tasks for new moderator directive`);
+  }
+
+  // 5) create high-priority directive tasks for all bots
+  const now = Date.now();
+  const directiveTasks = session.botNames.map(bot => ({
+    kind: "directive",
+    bot,
+    source: "directive",
+    priorityQ: text,
+    createdAt: now,
+    createdMsgSeq: session.msgSeq || 0,
+  }));
+
+  // Replace entire schedule queue with only new directive tasks
+  session.scheduleQueue = directiveTasks;
+
+  logLine("QUEUE", `directive + all bots (${session.botNames.length}) len=${session.scheduleQueue.length}`);
+  dumpQueues(session, `after moderator directive`);
+}
+
+// =====================
+// Mention detectors runner
+// =====================
+async function runMentionDetectors(session, newestMsg) {
+  const text = newestMsg?.text || "";
+  const speaker = newestMsg?.name || "";
+
+  // Explicit @name (can be multiple)
+  const explicit = detectExplicitMentions(text, session.botNames).filter((t) => t !== speaker);
+  for (const target of explicit) {
+    createMentionTicket(session, target, text, speaker || "unknown");
+  }
+
+  // Implicit (can return multiple targets, including "all")
+  const implicitTargets = await detectImplicitMention({ history: session.history, botNames: session.botNames });
+  if (Array.isArray(implicitTargets) && implicitTargets.length > 0) {
+    for (const target of implicitTargets) {
+      if (target && target !== speaker) {
+        createMentionTicket(session, target, text, speaker || "unknown");
+      }
+    }
+  }
+}
+
+// =====================
+// OpenAI generation (stage 1)
+// =====================
+async function generateBubbles({ session, botName, priorityQuestion, priorityMeta }) {
+  const transcript = buildTranscript(session.history, 30);
+  const others = session.botNames.filter((n) => n !== botName).join(", ");
+  const persona = session.personasByHandle[botName] || {};
+
+  const sys = systemPrompt(botName, others, session.condition, persona);
+
+  const lastText = session.history.slice(-1)[0]?.text || "";
+  const userPrompt = buildUserPrompt({
+    transcript,
+    recentBot: "",
+    recentQs: "",
+    userText: lastText,
+    mode: "human",
+    botName,
+    otherName: others,
+    priorityQuestion: priorityQuestion || null,
+    priorityMeta: priorityMeta || null,
+  });
+
+  logLine(
+    "OPENAI_REQ",
+    `bot=${botName} mode=human condition=${session.condition} priorityQ="${clip(priorityQuestion || "", 90)}"`
+  );
+  logLine(
+    "OPENAI_REQ",
+    `bot=${botName} ctx="${clip(transcript.split("\n").slice(-6).join(" | "), 240)}"`
+  );
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    try {
+      controller.abort();
+    } catch {}
+  }, OPENAI_TIMEOUT_MS);
+
+  const model = getModelForBot(botName);
+  logLine("OPENAI_REQ", `bot=${botName} model=${model}`);
+
+  try {
+    const resp = await openai.responses.create({
+      model,
+      input: [
+        { role: "system", content: sys },
+        { role: "user", content: userPrompt },
+      ],
+      // OpenAI JS supports fetch under the hood; AbortController works here.
+      // signal: controller.signal,
+    });
+
+    const raw = (resp.output_text || "").trim();
+    logLine("OPENAI_OK", `bot=${botName} raw="${clip(raw, 220)}"`);
+
+    let bubbles = parseJsonArray(raw, 3);
+    bubbles = bubbles.filter((b) => !containsHardBanned(b));
+    bubbles = bubbles.filter((b) => !isLowContentBubble(b));
+    if (!bubbles.length) bubbles = ["wait what", "say more"];
+
+    return { bubbles: bubbles.slice(0, 3), controller: null };
+  } catch (e) {
+    logLine("OPENAI_ERR", `bot=${botName} err="${clip(e?.message, 220)}"`);
+    return { bubbles: ["uh wait", "my bad", "what was that again"], controller: null };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// =====================
+// Speaking pipeline (implements your rule exactly)
+// =====================
+// When a bot is interrupted (by human or another bot): they are reset to IDLE and stay scheduled.
+// On their next run, startBotJobIfPossible → generateBubbles uses session.history *at that moment*,
+// so the new OpenAI request sees the current transcript including the message that interrupted.
+// We trigger an immediate dequeue after interrupt so they restart quickly with current context.
+
+async function tryDequeueNow(session) {
+  // Fill slots up to MAX_ACTIVE_BOTS so interrupted/scheduled bots run with current history soon.
+  while (activeBotCount(session) < MAX_ACTIVE_BOTS) {
+    const before = activeBotCount(session);
+    await startBotJobIfPossible(session);
+    if (activeBotCount(session) === before) break;
+  }
+}
+
+function emitAndRecordMessage(session, msg) {
+  // Ensure text is always a string so JSON/objects never get printed on the chat
+  const text = typeof msg.text === "string" ? msg.text : ensureString(msg.text) || String(msg.text ?? "").slice(0, 500);
+  const normalized = { name: msg.name, text: text.slice(0, 2000), ts: msg.ts ?? Date.now() };
+
+  session.msgSeq = (session.msgSeq || 0) + 1;
+  session.history.push(normalized);
+  io.to(session.sessionId).emit("message", normalized);
+  logLine("MESSAGE", `[${normalized.name}] "${clip(normalized.text, 160)}"`);
+
+  // YOUR RULE: any message arrival can interrupt others (stages 1-3 or <10s typing)
+  interruptAllBotsOnNewMessage(session, { from: msg.name, reason: "new_message" });
+  // Immediate dequeue so interrupted bots resend with current history right away
+  setImmediate(() => tryDequeueNow(session).catch(() => {}));
+
+  // Moderator directive updates directions; commentary-only does not.
+  if (isModeratorMessage(normalized)) {
+    if (isCommentaryOnly(normalized.text)) {
+      // Commentary only: do not update directions bots got; leave schedule and directives as-is.
+      logLine("QUEUE", `moderator commentary only: not updating directions`);
+      runMentionDetectors(session, normalized).catch(() => {});
+    } else {
+      enqueueModeratorDirective(session, normalized.text);
+    }
+  } else {
+    runMentionDetectors(session, normalized).catch(() => {});
+  }
+}
+
+async function startBotJobIfPossible(session) {
+  if (activeBotCount(session) >= MAX_ACTIVE_BOTS) return;
+
+  const item = nextScheduleItem(session);
+  if (!item) return;
+
+  const botName = item.bot;
+  ensureBot(session, botName);
+  const b = session.bots[botName];
+
+  if (b.stage !== "IDLE") return;
+
+  // Setup plan meta
+  b.gen += 1;
+  const myGen = b.gen;
+
+  b.source = item.source || "normal";
+  b.mentionId = item.mentionId || null;
+  b.bubbles = [];
+  b.idx = 0;
+  b.sentCount = 0;
+  b.finishCurrentThenStop = false;
+
+  // Resolve priorityQ based on task type
+  let priorityQuestion = null;
+  let priorityMeta = null;
+  
+  if (b.source === "directive") {
+    // Directive: use priorityQ from task
+    priorityQuestion = item.priorityQ || null;
+    priorityMeta = "This is a direct message from the moderator. Respond to it directly.";
+  } else if (b.source === "mention") {
+    // Mention: look up from mention ticket
+    const t = session.pendingMentionByBot[botName];
+    if (t && (!b.mentionId || t.id === b.mentionId)) {
+      priorityQuestion = t.question;
+      const msgsAgo = Math.max(0, session.history.length - 1 - t.anchorIndex);
+      priorityMeta =
+        `You were directly addressed earlier by ${t.askedBy} (${msgsAgo} messages ago). ` +
+        `Answer that FIRST, then (optionally) react to the newest messages.`;
+    } else {
+      // Mention expired - skip this task
+      logLine("QUEUE", `mention expired for bot=${botName} mentionId=${b.mentionId}`);
+      setStage(session, botName, "IDLE");
+      return;
+    }
+  }
+
+  // Stage 1: GENERATING (OpenAI)
+  setStage(session, botName, "GENERATING", `source=${b.source}`);
+  // NOTE: in your rule, if any other message arrives during stage 1, we cancelEntire and will restart later.
+
+  const { bubbles } = await generateBubbles({
+    session,
+    botName,
+    priorityQuestion,
+    priorityMeta,
+  });
+
+  // If canceled during generate, bot would be IDLE and/or gen mismatch.
+  if (b.stage !== "GENERATING" || b.gen !== myGen) return;
+
+  b.bubbles = bubbles;
+  b.idx = 0;
+
+  // Stage 2: THINKING (random pause) before first bubble
+  setStage(session, botName, "THINKING");
+  const { thinking } = humanDelayForText(b.bubbles[b.idx]);
+
+  clearBotTimers(session, botName);
+  const tThink = setTimeout(() => {
+    if (b.gen !== myGen) return;
+    if (b.stage !== "THINKING") return;
+
+    // Stage 3: TYPING
+    setStage(session, botName, "TYPING", `bubble=${b.idx + 1}/${b.bubbles.length}`);
+    b.typingStartedAt = Date.now();
+    startTypingIndicator(session, botName);
+
+    const { typingTime } = humanDelayForText(b.bubbles[b.idx]);
+    clearBotTimers(session, botName);
+
+    const tType = setTimeout(() => {
+      if (b.gen !== myGen) return;
+      if (b.stage !== "TYPING") return;
+
+      const bubble = b.bubbles[b.idx];
+      const msg = { name: botName, text: bubble, ts: Date.now() };
+
+      // Stage 4: SEND
+      stopTypingIndicator(session, botName);
+      b.typingStartedAt = 0;
+
+      emitAndRecordMessage(session, msg);
+
+      // After FIRST send, dequeue schedule + resolve mention
+      if (b.sentCount === 0) {
+        dequeueScheduleAfterFirstSend(session, botName);
+        if (b.source === "mention") resolveMention(session, botName, b.mentionId);
+      }
+      b.sentCount += 1;
+
+      // If interrupted after >=10s typing, we finish this bubble and stop here.
+      if (b.finishCurrentThenStop) {
+        b.finishCurrentThenStop = false;
+        b.bubbles = [];
+        b.idx = 0;
+        b.sentCount = 0;
+        b.source = "normal";
+        b.mentionId = null;
+        setStage(session, botName, "IDLE");
+        return;
+      }
+
+      // Next bubble?
+      b.idx += 1;
+      if (b.idx >= b.bubbles.length) {
+        // Done
+        b.bubbles = [];
+        b.idx = 0;
+        b.sentCount = 0;
+        b.source = "normal";
+        b.mentionId = null;
+        setStage(session, botName, "IDLE");
+        return;
+      }
+
+      // Stage 5: repeat THINKING -> TYPING -> SEND for remaining bubbles
+      setStage(session, botName, "THINKING", `nextBubble=${b.idx + 1}/${b.bubbles.length}`);
+      const { thinking: thinking2 } = humanDelayForText(b.bubbles[b.idx]);
+      clearBotTimers(session, botName);
+
+      const tThink2 = setTimeout(() => {
+        if (b.gen !== myGen) return;
+        if (b.stage !== "THINKING") return;
+
+        setStage(session, botName, "TYPING", `bubble=${b.idx + 1}/${b.bubbles.length}`);
+        b.typingStartedAt = Date.now();
+        startTypingIndicator(session, botName);
+
+        const { typingTime: typing2 } = humanDelayForText(b.bubbles[b.idx]);
+        clearBotTimers(session, botName);
+
+        const tType2 = setTimeout(() => {
+          if (b.gen !== myGen) return;
+          if (b.stage !== "TYPING") return;
+
+          const bubble2 = b.bubbles[b.idx];
+          stopTypingIndicator(session, botName);
+          b.typingStartedAt = 0;
+
+          emitAndRecordMessage(session, { name: botName, text: bubble2, ts: Date.now() });
+          b.sentCount += 1;
+
+          if (b.finishCurrentThenStop) {
+            b.finishCurrentThenStop = false;
+            b.bubbles = [];
+            b.idx = 0;
+            b.sentCount = 0;
+            b.source = "normal";
+            b.mentionId = null;
+            setStage(session, botName, "IDLE");
+            return;
+          }
+
+          b.idx += 1;
+          if (b.idx >= b.bubbles.length) {
+            b.bubbles = [];
+            b.idx = 0;
+            b.sentCount = 0;
+            b.source = "normal";
+            b.mentionId = null;
+            setStage(session, botName, "IDLE");
+            return;
+          }
+
+          // chain by calling startBotJobIfPossible() tick will keep going anyway
+          // but we continue within this job with another THINK->TYPE loop:
+          setStage(session, botName, "THINKING", `nextBubble=${b.idx + 1}/${b.bubbles.length}`);
+          const { thinking: thinking3 } = humanDelayForText(b.bubbles[b.idx]);
+          clearBotTimers(session, botName);
+
+          const tThink3 = setTimeout(() => {
+            if (b.gen !== myGen) return;
+            if (b.stage !== "THINKING") return;
+
+            setStage(session, botName, "TYPING", `bubble=${b.idx + 1}/${b.bubbles.length}`);
+            b.typingStartedAt = Date.now();
+            startTypingIndicator(session, botName);
+
+            const { typingTime: typing3 } = humanDelayForText(b.bubbles[b.idx]);
+            clearBotTimers(session, botName);
+
+            const tType3 = setTimeout(() => {
+              if (b.gen !== myGen) return;
+              if (b.stage !== "TYPING") return;
+
+              const bubble3 = b.bubbles[b.idx];
+              stopTypingIndicator(session, botName);
+              b.typingStartedAt = 0;
+
+              emitAndRecordMessage(session, { name: botName, text: bubble3, ts: Date.now() });
+              b.sentCount += 1;
+
+              // stop if requested
+              if (b.finishCurrentThenStop) {
+                b.finishCurrentThenStop = false;
+                b.bubbles = [];
+                b.idx = 0;
+                b.sentCount = 0;
+                b.source = "normal";
+                b.mentionId = null;
+                setStage(session, botName, "IDLE");
+                return;
+              }
+
+              // done
+              b.bubbles = [];
+              b.idx = 0;
+              b.sentCount = 0;
+              b.source = "normal";
+              b.mentionId = null;
+              setStage(session, botName, "IDLE");
+            }, typing3);
+
+            b.timers.push(tType3);
+          }, thinking3);
+
+          b.timers.push(tThink3);
+        }, typing2);
+
+        b.timers.push(tType2);
+      }, thinking2);
+
+      b.timers.push(tThink2);
+    }, typingTime);
+
+    b.timers.push(tType);
+  }, thinking);
+
+  b.timers.push(tThink);
+}
+
+// =====================
+// Tickers
+// =====================
+function startNormalEnqueueLoop(session) {
+  if (session.normalEnqueueTimer) clearInterval(session.normalEnqueueTimer);
+  session.normalEnqueueTimer = setInterval(() => {
+    enqueueNormalSpeaker(session);
+  }, NORMAL_ENQUEUE_MS);
+}
+
+// =====================
+// Human idle detection
+// =====================
+function isHumanIdle(session) {
+  const now = Date.now();
+  const timeSinceLastTyping = now - (session.humanLastTypingAt || 0);
+  return timeSinceLastTyping > HUMAN_IDLE_MS;
+}
+
+function resetDequeueCounter(session) {
+  session.dequeuedCountSinceHumanActive = 0;
+}
+
+// =====================
+// Dequeue loop with human activity awareness
+// =====================
+function startDequeueLoop(session) {
+  const tick = async () => {
+    // Check if first item in queue is a directive - if so, bypass human idle rules
+    const nextItem = nextScheduleItem(session);
+    const isDirectiveFirst = nextItem?.source === "directive";
+    
+    if (isDirectiveFirst) {
+      // Directive has priority - dequeue normally regardless of human idle state
+      logLine("QUEUE", `directive first: bypassing human idle counter rules`);
+      
+      while (activeBotCount(session) < MAX_ACTIVE_BOTS) {
+        const before = activeBotCount(session);
+        await startBotJobIfPossible(session);
+        const after = activeBotCount(session);
+        if (after === before) break;
+      }
+      
+      const wait = DEQUEUE_MIN_MS + Math.random() * (DEQUEUE_MAX_MS - DEQUEUE_MIN_MS);
+      session.dequeueTimer = setTimeout(tick, wait);
+      return;
+    }
+
+    const humanIdle = isHumanIdle(session);
+
+    if (humanIdle) {
+      // Human is idle: dequeue 3 messages spread across 10 seconds
+      const messagesToDequeue = IDLE_DEQUEUE_COUNT;
+      const totalSpread = IDLE_DEQUEUE_SPREAD_MS;
+      
+      // Generate random delays that sum to approximately totalSpread
+      // Use a simple approach: divide into roughly equal parts with some randomness
+      const delays = [];
+      let remaining = totalSpread;
+      for (let i = 0; i < messagesToDequeue - 1; i++) {
+        // Each delay is a portion of remaining time with some randomness
+        const portion = remaining / (messagesToDequeue - i);
+        const delay = portion * (0.5 + Math.random() * 0.5); // 50-100% of portion
+        delays.push(Math.max(100, delay)); // ensure minimum 100ms
+        remaining -= delay;
+      }
+      delays.push(Math.max(100, remaining)); // last one gets the remainder
+
+      // Shuffle delays for more natural distribution
+      delays.sort(() => Math.random() - 0.5);
+
+      logLine("QUEUE", `human idle: scheduling ${messagesToDequeue} messages over ${totalSpread}ms`);
+
+      // Schedule messages with delays
+      let cumulativeDelay = 0;
+      for (let i = 0; i < messagesToDequeue; i++) {
+        const delay = delays[i];
+        cumulativeDelay += delay;
+        
+        setTimeout(async () => {
+          // Check if still idle and can dequeue (but allow directives to bypass)
+          const nextItem = nextScheduleItem(session);
+          const isDirective = nextItem?.source === "directive";
+          
+          if (isDirective || (isHumanIdle(session) && activeBotCount(session) < MAX_ACTIVE_BOTS)) {
+            const before = activeBotCount(session);
+            await startBotJobIfPossible(session);
+            const after = activeBotCount(session);
+            if (after > before) {
+              logLine("QUEUE", `human idle: dequeued message ${i + 1}/${messagesToDequeue}${isDirective ? " (directive)" : ""}`);
+            }
+          }
+        }, cumulativeDelay);
+      }
+
+      // Reset counter after idle dequeues
+      resetDequeueCounter(session);
+
+      // Schedule next tick after all idle messages are scheduled
+      const wait = totalSpread + DEQUEUE_MIN_MS;
+      session.dequeueTimer = setTimeout(tick, wait);
+    } else {
+      // Human is active: limit to 3 messages
+      let dequeuedThisTick = 0;
+      
+      while (
+        activeBotCount(session) < MAX_ACTIVE_BOTS &&
+        session.dequeuedCountSinceHumanActive < MAX_DEQUEUE_WHEN_HUMAN_ACTIVE
+      ) {
+        const before = activeBotCount(session);
+        await startBotJobIfPossible(session);
+        const after = activeBotCount(session);
+        
+        if (after > before) {
+          session.dequeuedCountSinceHumanActive++;
+          dequeuedThisTick++;
+        } else {
+          break; // No more bots can start
+        }
+      }
+
+      if (session.dequeuedCountSinceHumanActive >= MAX_DEQUEUE_WHEN_HUMAN_ACTIVE) {
+        logLine("QUEUE", `human active: reached max dequeue limit (${MAX_DEQUEUE_WHEN_HUMAN_ACTIVE})`);
+      }
+
+      const wait = DEQUEUE_MIN_MS + Math.random() * (DEQUEUE_MAX_MS - DEQUEUE_MIN_MS);
+      session.dequeueTimer = setTimeout(tick, wait);
+    }
+  };
+
+  if (session.dequeueTimer) clearTimeout(session.dequeueTimer);
+  session.dequeueTimer = setTimeout(tick, DEQUEUE_MIN_MS);
+}
+
+function stopLoops(session) {
+  if (session.normalEnqueueTimer) clearInterval(session.normalEnqueueTimer);
+  session.normalEnqueueTimer = null;
+  if (session.dequeueTimer) clearTimeout(session.dequeueTimer);
+  session.dequeueTimer = null;
+}
+
+// =====================
+// Socket handling
+// =====================
+io.on("connection", (socket) => {
+  const sessionId = socket.id;
+  const condition = pickCondition();
+
+  const cast = pickRandomCast(5);
+  const botNames = cast.map((p) => p.handle);
+
+  const personasByHandle = {};
+  for (const p of cast) personasByHandle[p.handle] = p;
+
+  const session = {
+    sessionId,
+    condition,
+    startedAt: Date.now(),
+    history: [],
+    msgSeq: 0, // message sequence counter for TTL
+
+    botNames,
+    personasByHandle,
+
+    // schedule + mention
+    scheduleQueue: [], // { bot, source, mentionId?, createdAt?, priorityQ? }
+    mentionQueue: [],
+    pendingMentionByBot: {},
+
+    // per-bot jobs
+    bots: {},
+
+    // loops
+    normalEnqueueTimer: null,
+    dequeueTimer: null,
+
+    // human activity tracking
+    humanLastTypingAt: Date.now(), // track when human last typed
+    dequeuedCountSinceHumanActive: 0, // count of messages dequeued since human was active
+  };
+
+  for (const b of botNames) ensureBot(session, b);
+
+  logLine("SESSION_START", `id=${sessionId} condition=${condition} bots=${botNames.join(",")}`);
+
+  socket.emit("session", { sessionId, condition, bots: botNames });
+
+  // Seed (your exact seed rule)
+  const shuffled = [...botNames].sort(() => Math.random() - 0.5);
+  const seed = [
+    { name: shuffled[0], text: "heyy 👋", ts: Date.now() },
+    { name: shuffled[1], text: "hello!", ts: Date.now() },
+  ];
+
+  seed.forEach((m) => {
+    session.msgSeq = (session.msgSeq || 0) + 1;
+    session.history.push(m);
+    logLine("MESSAGE", `[${m.name}] "${clip(m.text, 140)}"`);
+  });
+  socket.emit("seed", seed);
+
+  // detect mentions on seed (optional)
+  seed.forEach((m) => runMentionDetectors(session, m).catch(() => {}));
+
+  startNormalEnqueueLoop(session);
+  startDequeueLoop(session);
+
+  socket.on("human_typing", ({ isTyping }) => {
+    logLine("TYPING", `human ${isTyping ? "true" : "false"}`);
+    
+    if (isTyping) {
+      // Human is typing - update last typing time and reset dequeue counter
+      session.humanLastTypingAt = Date.now();
+      resetDequeueCounter(session);
+      logLine("QUEUE", `human typing: reset dequeue counter`);
+    }
+  });
+
+  socket.on("human_message", async ({ text }) => {
+    const t = String(text || "").trim();
+    if (!t) return;
+
+    logLine("HUMAN_INPUT", `"${clip(t, 160)}"`);
+
+    // Update human activity tracking
+    session.humanLastTypingAt = Date.now();
+    resetDequeueCounter(session);
+
+    // IMPORTANT: your rule wants interruption even before typing.
+    // So a human message interrupts bots in GENERATING/THINKING/TYPING(<10s) too.
+    interruptAllBotsOnNewMessage(session, { from: "You", reason: "new_human_message" });
+
+    const msg = { name: "You", text: t, ts: Date.now() };
+    // emitAndRecordMessage will handle moderator directive and skip mention detection
+    emitAndRecordMessage(session, msg);
+    
+    // Note: mention detection is skipped for moderator messages (handled in emitAndRecordMessage)
+    // Directive tasks are already enqueued by enqueueModeratorDirective
+  });
+
+  socket.on("disconnect", () => {
+    // interrupt all jobs
+    for (const b of session.botNames) {
+      interruptBotOnNewMessage(session, b, { by: "SYSTEM", reason: "disconnect" });
+    }
+    stopLoops(session);
+    logLine("DISCONNECT", `id=${sessionId}`);
+  });
+
+  socket.on("end", () => {
+    for (const b of session.botNames) {
+      interruptBotOnNewMessage(session, b, { by: "SYSTEM", reason: "end" });
+    }
+    stopLoops(session);
+    logLine("SESSION_END", `id=${sessionId}`);
+  });
+});
+
+// =====================
+// Optional endpoint
+// =====================
+app.post("/api/login_choice", (req, res) => {
+  const { sessionId, choice, hesitationMs } = req.body || {};
+  logLine(
+    "SESSION_END",
+    `id=${sessionId} [LOGIN_CHOICE] choice=${choice} hesitationMs=${hesitationMs ?? ""}`
+  );
+  res.json({ ok: true });
+});
+
+server.listen(PORT, () => {
+  logLine("SESSION_START", `backend running on http://localhost:${PORT}`);
+});

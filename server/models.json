@@ -1,0 +1,8 @@
+{
+  "default": "gpt-4.1-mini",
+  "bots": {
+    "Sid": "ft:gpt-4.1-nano-2025-04-14:ORG:SID_MODEL_ID",
+    "Mina": "ft:gpt-4o-mini-2024-07-18:test::D5J9d5Zg",
+    "Vivian": "ft:gpt-4.1-nano-2025-04-14:ORG:VIVIAN_MODEL_ID"
+  }
+}

@@ -1,0 +1,147 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* Color-code message bubbles by sender */
+.sender-bubble-wrap .cs-message__content {
+  background-color: var(--sender-color) !important;
+}
+
+/* Custom layout: messages area | fixed typing gap | input — typing never covers last message */
+.chat-layout-with-gap {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+.chat-layout-with-gap .chat-messages-area {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+.chat-layout-with-gap .chat-messages-area .cs-message-list {
+  height: 100%;
+  width: 100%;
+}
+.chat-layout-with-gap .chat-typing-gap {
+  flex-shrink: 0;
+  min-height: 3em;
+  display: flex;
+  align-items: center;
+  padding: 0 0.8em;
+  font-size: 0.9em;
+  color: #666;
+  border-top: 1px solid transparent;
+}
+
+/* Typing dots animation before name(s) */
+.chat-typing-gap .typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 0.35em;
+}
+.chat-typing-gap .typing-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: typing-dot-bounce 1.2s ease-in-out infinite;
+}
+.chat-typing-gap .typing-dots span:nth-child(1) { animation-delay: 0s; }
+.chat-typing-gap .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.chat-typing-gap .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Text box: fixed max size, wrap to new lines, no growing */
+.chat-layout-with-gap .cs-message-input,
+.cs-message-input {
+  flex-shrink: 0 !important;
+  max-height: 8em !important;
+}
+.cs-message-input__content-editor-wrapper {
+  max-height: 6em !important;
+  overflow: hidden !important;
+}
+.cs-message-input__content-editor-container {
+  max-height: 5em !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+.cs-message-input__content-editor {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 1.5em !important;
+  max-height: 5em !important;
+}
