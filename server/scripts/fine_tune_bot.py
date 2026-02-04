@@ -34,8 +34,14 @@ def main():
 
     train_path = Path(sys.argv[1])
     valid_path = Path(sys.argv[2])
+    if not train_path.is_absolute():
+        train_path = SERVER_DIR / train_path
+    if not valid_path.is_absolute():
+        valid_path = SERVER_DIR / valid_path
     if not train_path.is_file() or not valid_path.is_file():
         print("Both train and valid files must exist.", file=sys.stderr)
+        print(f"  train: {train_path}", file=sys.stderr)
+        print(f"  valid: {valid_path}", file=sys.stderr)
         sys.exit(1)
 
     api_key = os.environ.get("OPENAI_API_KEY")

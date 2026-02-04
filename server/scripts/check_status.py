@@ -29,10 +29,10 @@ def load_env():
 def main():
     load_env()
     if len(sys.argv) < 2:
-        print("Usage: python fine_tune_bot.py <job_id>", file=sys.stderr)
+        print("Usage: python check_status.py <job_id>", file=sys.stderr)
         sys.exit(1)
 
-    job_id = Path(sys.argv[1])
+    job_id = sys.argv[1]
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
