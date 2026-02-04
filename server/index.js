@@ -63,6 +63,35 @@ const INTERRUPTABLE_TYPED_MS = 10000;
 const OPENAI_TIMEOUT_MS = 15000;
 const IMPLICIT_WINDOW = 10;
 
+// Moderator bot: name used in transcript and for directive handling.
+const MODERATOR_NAME = "Eunice";
+
+// Moderator (Eunice) transcript: 5 sets of bubbles, sent in order based on timing rules.
+const MODERATOR_TRANSCRIPT = [
+  [
+    "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!",
+    "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.",
+  ],
+  [
+    "Before we dive in, just a quick note about the goal of this study.\nWe are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
+    "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology.",
+  ],
+  [
+    "First question: Big tech companies like Google roll out new features pretty often.\n\nHow do you usually feel when a company you use introduces something new?\nDo you tend to try new features right away, or do you usually ignore them at first?",
+  ],
+  [
+    "Moving on, Google recently introduced Gemini as part of its products.\n\nHave any of you used Gemini before?\nWhat made you try it, or what made you decide not to?",
+  ],
+  [
+    "For some Google accounts, users can switch their account login to *passkey*.\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
+  ],
+];
+
+// Moderator timing: nudge if no reply 30s after moderator; next set (4+) after 2 min or when discussion done/looping.
+const MODERATOR_NUDGE_AFTER_MS = 30_000;
+const MODERATOR_NEXT_SET_AFTER_MS = 120_000; // 2 min
+const MODERATOR_TIMER_INTERVAL_MS = 15_000;  // check every 15s
+
 // Mention TTL defaults
 const MENTION_TTL_MS = 12_000; // 12 seconds
 const MENTION_TTL_MSGS = 4; // or 4 messages, whichever comes first
@@ -251,13 +280,26 @@ function isLowContentBubble(text) {
   return false;
 }
 
-// Human-ish timing
+// Human-ish timing (used by bots)
 function humanDelayForText(text) {
   const chars = String(text || "").length;
   const thinking = 250 + Math.random() * 700; // stage 2
   const typingSpeed = 7 + Math.random() * 7; // chars/sec
   const typingTime = (chars / typingSpeed) * 1000; // stage 3
   return { thinking, typingTime };
+}
+
+// Moderator: faster typing (and shorter thinking) so Eunice feels snappier
+function moderatorDelayForText(text) {
+  const chars = String(text || "").length;
+  const thinking = 100 + Math.random() * 300; // 100–400 ms
+  const typingSpeed = 18 + Math.random() * 12; // 18–30 chars/sec
+  const typingTime = (chars / typingSpeed) * 1000;
+  return { thinking, typingTime };
+}
+
+function delay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 // =====================
@@ -533,12 +575,14 @@ function nextScheduleItem(session) {
     }
   }
 
-  // Sort by priority: directive > mention > normal, then by createdAt (older first)
+  // Sort: directive > mention > normal; then moderator-mentioned first; then createdAt (older first)
   const sorted = [...session.scheduleQueue].sort((a, b) => {
     const pa = PRIORITY[a.source] ?? 0;
     const pb = PRIORITY[b.source] ?? 0;
-    if (pb !== pa) return pb - pa; // higher priority first
-    // tie-breaker: older first
+    if (pb !== pa) return pb - pa;
+    const am = a.moderatorMentioned ? 1 : 0;
+    const bm = b.moderatorMentioned ? 1 : 0;
+    if (bm !== am) return bm - am;
     return (a.createdAt ?? 0) - (b.createdAt ?? 0);
   });
 
@@ -609,15 +653,20 @@ function stopTypingIndicator(session, botName) {
   logLine("TYPING", `bot=${botName} false`);
 }
 
-// Core: interruption triggered by ANY NEW MESSAGE (human OR bot)
+// Core: interruption triggered by ANY NEW MESSAGE (human OR bot).
+// Only cancel bots who are TYPING and below threshold. IDLE/GENERATING/THINKING stay as-is (scheduled, not dequeued).
 function interruptBotOnNewMessage(session, botName, { by, reason }) {
   ensureBot(session, botName);
   const b = session.bots[botName];
-  if (b.stage === "IDLE") return;
+  if (b.stage === "IDLE") return; // just scheduled: stay in queue, don't touch
+  if (b.stage === "GENERATING" || b.stage === "THINKING") return; // let them run; don't cancel or dequeue
 
-  const elapsed = b.stage === "TYPING" ? Date.now() - (b.typingStartedAt || 0) : 0;
+  // Only act when TYPING: cancel if below threshold, else finish current then stop
+  if (b.stage !== "TYPING") return;
 
-  // Helper: cancel everything and keep them scheduled (restart from stage 1 later)
+  const elapsed = Date.now() - (b.typingStartedAt || 0);
+
+  // Helper: cancel everything and keep them scheduled (restart from stage 1 later). Do NOT dequeue.
   const cancelEntire = (why) => {
     if (b.controller) {
       try {
@@ -634,16 +683,15 @@ function interruptBotOnNewMessage(session, botName, { by, reason }) {
     b.typingStartedAt = 0;
     b.finishCurrentThenStop = false;
 
-    // If they were typing, turn off indicator
-    if (b.stage === "TYPING") stopTypingIndicator(session, botName);
+    stopTypingIndicator(session, botName);
 
     logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=cancel_entire ${why || ""}`.trim());
     dumpQueues(session, `after cancel entire ${botName}`);
     setStage(session, botName, "IDLE");
-    // IMPORTANT: do NOT dequeue schedule. They stay scheduled and will restart from stage 1.
+    // Do NOT dequeue. They stay scheduled and will restart from stage 1.
   };
 
-  // Helper: cancel remaining bubbles (first bubble already sent)
+  // Helper: cancel remaining bubbles (first bubble already sent). Do NOT dequeue (already dequeued after first send).
   const cancelRemaining = (why) => {
     if (b.controller) {
       try {
@@ -657,53 +705,41 @@ function interruptBotOnNewMessage(session, botName, { by, reason }) {
     b.typingStartedAt = 0;
     b.finishCurrentThenStop = false;
 
-    if (b.stage === "TYPING") stopTypingIndicator(session, botName);
+    stopTypingIndicator(session, botName);
 
     logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=cancel_remaining ${why || ""}`.trim());
     setStage(session, botName, "IDLE");
-    // schedule already dequeued after first bubble (per your rule)
   };
 
-  // Stage-specific behavior (your rule)
   if (b.sentCount === 0) {
-    // Before first bubble is sent:
-    // - GENERATING/THINKING: always cancel
-    // - TYPING: cancel if typed < 10s, else allow finish current then stop
-    if (b.stage === "GENERATING" || b.stage === "THINKING") {
-      cancelEntire(`(stage=${b.stage})`);
+    // Before first bubble: cancel if typed < threshold, else finish current then stop
+    if (elapsed < INTERRUPTABLE_TYPED_MS) {
+      cancelEntire(`(typedMs=${elapsed})`);
       return;
     }
-    if (b.stage === "TYPING") {
-      if (elapsed < INTERRUPTABLE_TYPED_MS) {
-        cancelEntire(`(typedMs=${elapsed})`);
-        return;
-      }
-      // typed >= 10s: let them finish current bubble, but stop after sending it
-      b.finishCurrentThenStop = true;
-      logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=finish_current_then_stop typedMs=${elapsed}`);
-      return;
-    }
-  } else {
-    // After first bubble already sent:
-    // - THINKING or GENERATING for later content: cancel remaining immediately
-    // - TYPING: if typed <10s cancel remaining, else finish current then stop
-    if (b.stage === "GENERATING" || b.stage === "THINKING") {
-      cancelRemaining(`(stage=${b.stage})`);
-      return;
-    }
-    if (b.stage === "TYPING") {
-      if (elapsed < INTERRUPTABLE_TYPED_MS) {
-        cancelRemaining(`(typedMs=${elapsed})`);
-        return;
-      }
-      b.finishCurrentThenStop = true;
-      logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=finish_current_then_stop typedMs=${elapsed}`);
-      return;
-    }
+    b.finishCurrentThenStop = true;
+    logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=finish_current_then_stop typedMs=${elapsed}`);
+    return;
   }
+
+  // After first bubble: same rule for remaining bubbles
+  if (elapsed < INTERRUPTABLE_TYPED_MS) {
+    cancelRemaining(`(typedMs=${elapsed})`);
+    return;
+  }
+  b.finishCurrentThenStop = true;
+  logLine("INTERRUPT", `by=${by} bot=${botName} reason=${reason} action=finish_current_then_stop typedMs=${elapsed}`);
 }
 
 function interruptAllBotsOnNewMessage(session, { from, reason }) {
+  // When a bot posts a continuation bubble (2nd, 3rd, …), don't interrupt other bots—they never got to speak.
+  if (session.botNames.includes(from)) {
+    const sender = session.bots[from];
+    if (sender && sender.sentCount >= 1) {
+      logLine("INTERRUPT", `by=${from} reason=${reason} action=skip_other_bots (continuation bubble sentCount=${sender.sentCount})`);
+      return;
+    }
+  }
   for (const bot of session.botNames) {
     if (bot === from) continue;
     interruptBotOnNewMessage(session, bot, { by: from, reason });
@@ -711,11 +747,10 @@ function interruptAllBotsOnNewMessage(session, { from, reason }) {
 }
 
 // =====================
-// Moderator message handling
+// Moderator message handling (moderator is Eunice; user is just a participant)
 // =====================
 function isModeratorMessage(msg) {
-  // Treat all human messages as moderator messages
-  return msg?.name === "You" || msg?.role === "moderator";
+  return msg?.name === MODERATOR_NAME || msg?.role === "moderator";
 }
 
 // Commentary-only moderator messages do not update directions; only actual directives do.
@@ -748,39 +783,321 @@ function isCommentaryOnly(text) {
   return false;
 }
 
-function enqueueModeratorDirective(session, text) {
-  // 1) bump message sequence (already done in emitAndRecordMessage)
-  
-  // 2) expire old mentions first
-  pruneExpiredMentions(session);
+/** True if moderator message is a nudge (e.g. "What do you think, Alex?"). Nudges do not reset the queue. */
+function isModeratorNudge(text) {
+  const s = String(text || "").trim();
+  return /^What do you think,\s*.+\s*\?$/i.test(s);
+}
 
-  // 3) wipe mention backlog so it can't hijack
+/**
+ * If the moderator text mentions a specific participant by name (@Name or "…, Name" / "Name, …"), return that name.
+ * Only returns names that are bots (human responds manually). Returns null if none or not a bot.
+ */
+function getModeratorMentionedParticipant(session, text) {
+  const s = String(text || "").trim();
+  if (!s) return null;
+  const participants = getParticipantNames(session);
+  for (const name of participants) {
+    if (!name) continue;
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const atMention = new RegExp(`@${escaped}\\b`, "i");
+    const commaMention = new RegExp(`[,，]\\s*${escaped}\\b|\\b${escaped}\\s*[,，]`, "i");
+    const wordMention = new RegExp(`\\b${escaped}\\b`, "i");
+    if (atMention.test(s) || commaMention.test(s) || wordMention.test(s)) {
+      if (session.botNames.includes(name)) return name;
+      break;
+    }
+  }
+  return null;
+}
+
+/**
+ * Non-nudge moderator message: reset direction queue, clear all mentions, requeue only this message's directive for all bots.
+ */
+function enqueueModeratorDirective(session, text) {
+  pruneExpiredMentions(session);
   session.mentionQueue = [];
   session.pendingMentionByBot = {};
-  
-  // 4) Clear ALL scheduled tasks (dequeue everything)
+
   const before = session.scheduleQueue.length;
   session.scheduleQueue = [];
   if (before > 0) {
     logLine("QUEUE", `cleared all ${before} scheduled tasks for new moderator directive`);
   }
 
-  // 5) create high-priority directive tasks for all bots
   const now = Date.now();
-  const directiveTasks = session.botNames.map(bot => ({
+  const mentionedBot = getModeratorMentionedParticipant(session, text);
+
+  const directiveTasks = session.botNames.map((bot) => ({
     kind: "directive",
     bot,
     source: "directive",
     priorityQ: text,
     createdAt: now,
     createdMsgSeq: session.msgSeq || 0,
+    moderatorMentioned: bot === mentionedBot,
   }));
 
-  // Replace entire schedule queue with only new directive tasks
-  session.scheduleQueue = directiveTasks;
+  if (mentionedBot) {
+    const idx = directiveTasks.findIndex((t) => t.bot === mentionedBot);
+    if (idx > 0) {
+      const [task] = directiveTasks.splice(idx, 1);
+      directiveTasks.unshift(task);
+    }
+    logLine("QUEUE", `moderator mentioned ${mentionedBot} → front of queue`);
+  } else {
+    // Rotate who goes first each moderator set so the same bot doesn't always respond first.
+    const setIndex = session.moderatorSetIndex ?? 0;
+    const offset = setIndex % session.botNames.length;
+    if (offset > 0) {
+      const rotated = [...directiveTasks.slice(offset), ...directiveTasks.slice(0, offset)];
+      directiveTasks.length = 0;
+      directiveTasks.push(...rotated);
+      logLine("QUEUE", `directive order rotated by ${offset} (set ${setIndex}) first=${directiveTasks[0]?.bot}`);
+    }
+  }
 
+  session.scheduleQueue = directiveTasks;
+  session.lastModeratorDirectiveText = text;
   logLine("QUEUE", `directive + all bots (${session.botNames.length}) len=${session.scheduleQueue.length}`);
   dumpQueues(session, `after moderator directive`);
+}
+
+/**
+ * Nudge: only move the nudged bot to the front of the queue. Keep their existing direction (priorityQ); do not set the nudge as the new direction.
+ */
+function enqueueModeratorNudge(session, text) {
+  const mentionedBot = getModeratorMentionedParticipant(session, text);
+  if (!mentionedBot) return;
+
+  const existingIdx = session.scheduleQueue.findIndex((t) => t.bot === mentionedBot);
+  if (existingIdx < 0) {
+    // Not in queue: add at front with the last moderator directive (not the nudge text)
+    const priorityQ = session.lastModeratorDirectiveText || text;
+    const now = Date.now();
+    session.scheduleQueue.unshift({
+      kind: "directive",
+      bot: mentionedBot,
+      source: "directive",
+      priorityQ,
+      createdAt: now,
+      createdMsgSeq: session.msgSeq || 0,
+      moderatorMentioned: true,
+    });
+    logLine("QUEUE", `moderator nudge: ${mentionedBot} added at front (direction=last directive)`);
+  } else {
+    // Already in queue: move existing task to front without changing its direction
+    const [existingTask] = session.scheduleQueue.splice(existingIdx, 1);
+    session.scheduleQueue.unshift(existingTask);
+    logLine("QUEUE", `moderator nudge: ${mentionedBot} moved to front (direction unchanged)`);
+  }
+  dumpQueues(session, `after moderator nudge`);
+}
+
+// =====================
+// Moderator (Eunice) flow: transcript, timing, nudge, and “done/looping” check
+// =====================
+function getHumanParticipantName(session) {
+  return session.participantName || "You";
+}
+
+function getParticipantNames(session) {
+  return [...session.botNames, getHumanParticipantName(session)];
+}
+
+function getLastModeratorMessageIndex(session) {
+  for (let i = session.history.length - 1; i >= 0; i--) {
+    if (session.history[i].name === MODERATOR_NAME) return i;
+  }
+  return -1;
+}
+
+function getParticipantsWhoRepliedSinceLastModerator(session) {
+  const lastModIdx = session.lastModeratorMessageHistoryIndex ?? getLastModeratorMessageIndex(session);
+  if (lastModIdx < 0) return new Set();
+  const replied = new Set();
+  for (let i = lastModIdx + 1; i < session.history.length; i++) {
+    const name = session.history[i].name;
+    if (name && name !== MODERATOR_NAME) replied.add(name);
+  }
+  return replied;
+}
+
+function countParticipantMessagesSinceLastModerator(session) {
+  const lastModIdx = session.lastModeratorMessageHistoryIndex ?? getLastModeratorMessageIndex(session);
+  if (lastModIdx < 0) return session.history.filter((m) => m.name !== MODERATOR_NAME).length;
+  let n = 0;
+  for (let i = lastModIdx + 1; i < session.history.length; i++) {
+    if (session.history[i].name !== MODERATOR_NAME) n++;
+  }
+  return n;
+}
+
+function allIntroductionsDone(session) {
+  const setIndex = session.moderatorSetIndex ?? 0;
+  if (setIndex < 1) return false;
+  const participants = new Set(getParticipantNames(session));
+  const replied = getParticipantsWhoRepliedSinceLastModerator(session);
+  for (const p of participants) {
+    if (!replied.has(p)) return false;
+  }
+  return true;
+}
+
+/**
+ * Next moderator set when triggered by participant messages (sets 1–3).
+ */
+function getNextModeratorBubble(session) {
+  const setIndex = session.moderatorSetIndex ?? 0;
+  if (setIndex >= MODERATOR_TRANSCRIPT.length) return null;
+
+  const participantCount = session.history.filter((m) => m.name !== MODERATOR_NAME).length;
+
+  // Set 1: after 1–2 participant bubbles (e.g. after seed’s 2 bubbles)
+  if (setIndex === 0) {
+    if (participantCount >= 2) return MODERATOR_TRANSCRIPT[0];
+    return null;
+  }
+
+  // Set 2: after all introductions are done (everyone has replied since set 1)
+  if (setIndex === 1) {
+    if (allIntroductionsDone(session)) return MODERATOR_TRANSCRIPT[1];
+    return null;
+  }
+
+  // Set 3 and later: wait for all participants to respond before moving on
+  if (setIndex === 2) {
+    if (allIntroductionsDone(session)) return MODERATOR_TRANSCRIPT[2];
+    return null;
+  }
+
+  // Sets 4 and 5 are sent from the timer (2 min or done/looping), and only after everyone has replied
+  return null;
+}
+
+/**
+ * Called from timer: send set 4 or 5 after 2 min since last moderator, or when discussion seems done/looping.
+ */
+async function checkDiscussionDoneOrLooping(session) {
+  const lastModIdx = session.lastModeratorMessageHistoryIndex ?? getLastModeratorMessageIndex(session);
+  if (lastModIdx < 0) return false;
+  const window = session.history.slice(lastModIdx + 1, lastModIdx + 1 + 20);
+  if (window.length < 3) return false;
+  const chat = window.map((m) => `${m.name}: ${m.text}`).join("\n");
+  const sys = "You judge if the discussion has reached a natural pause or is repeating the same points. Answer only YES or NO.";
+  const user = `Chat (recent):\n${chat}\n\nHas the discussion reached a natural pause or is it repeating the same points? Answer only YES or NO.`;
+  try {
+    const resp = await openai.responses.create(
+      {
+        model: MODELS.default,
+        input: [{ role: "system", content: sys }, { role: "user", content: user }],
+      },
+      { timeout: OPENAI_TIMEOUT_MS }
+    );
+    const raw = (resp.output_text || "").trim().toUpperCase();
+    return raw.startsWith("YES");
+  } catch (e) {
+    logLine("OPENAI_ERR", `moderator done/loop check err=${clip(e?.message, 120)}`);
+    return false;
+  }
+}
+
+/**
+ * Next moderator set when triggered by timer (sets 4–5): 2 min since last mod or discussion done/looping,
+ * and only after all participants have replied to the current moderator message.
+ */
+async function getNextModeratorBubbleFromTimer(session) {
+  const setIndex = session.moderatorSetIndex ?? 0;
+  if (setIndex < 3 || setIndex >= MODERATOR_TRANSCRIPT.length) return null;
+
+  // For 3rd set and later: moderator waits for everyone to respond before moving on
+  if (!allIntroductionsDone(session)) return null;
+
+  const lastAt = session.lastModeratorMessageAt ?? 0;
+  const elapsed = Date.now() - lastAt;
+  if (elapsed < MODERATOR_NEXT_SET_AFTER_MS) {
+    const done = await checkDiscussionDoneOrLooping(session);
+    if (!done) return null;
+  }
+
+  return MODERATOR_TRANSCRIPT[setIndex];
+}
+
+/**
+ * Send one or more messages as the moderator (Eunice). Uses moderatorDelayForText (faster than bots).
+ * Updates moderator state when setIndex is provided.
+ * Set moderatorSetIndex immediately so a mid-send trySendNextModeratorSet (from setImmediate) does not re-send the same set.
+ */
+async function emitModeratorMessage(session, text, setIndex = null) {
+  if (setIndex != null) {
+    session.moderatorSetIndex = setIndex;
+    session.moderatorNudgeSentAfterLastMessage = false;
+  }
+
+  const bubbles = Array.isArray(text) ? text : [text];
+  for (const t of bubbles) {
+    const msg = { name: MODERATOR_NAME, text: String(t || "").trim(), ts: Date.now() };
+    if (!msg.text) continue;
+
+    const { thinking, typingTime } = moderatorDelayForText(msg.text);
+    await delay(thinking);
+    io.to(session.sessionId).emit("typing", { who: MODERATOR_NAME, isTyping: true });
+    logLine("TYPING", `moderator true`);
+    await delay(typingTime);
+    io.to(session.sessionId).emit("typing", { who: MODERATOR_NAME, isTyping: false });
+    logLine("TYPING", `moderator false`);
+
+    emitAndRecordMessage(session, msg);
+  }
+  if (setIndex != null) {
+    session.lastModeratorMessageAt = Date.now();
+    session.lastModeratorMessageHistoryIndex = session.history.length - 1;
+  }
+}
+
+/**
+ * Try to send the next moderator set when triggered by a participant message (sets 1–3).
+ */
+async function trySendNextModeratorSet(session) {
+  const next = getNextModeratorBubble(session);
+  if (next == null) return;
+  const setIndex = (session.moderatorSetIndex ?? 0) + 1;
+  await emitModeratorMessage(session, next, setIndex);
+  logLine("QUEUE", `moderator set ${setIndex} sent (after participant message)`);
+}
+
+/**
+ * Try to send the next moderator set from the timer (sets 4–5), or nudge if 30s and someone hasn’t replied.
+ */
+async function runModeratorTimerTick(session) {
+  const lastAt = session.lastModeratorMessageAt ?? 0;
+  const setIndex = session.moderatorSetIndex ?? 0;
+
+  // Nudge: 30s since last moderator message and at least one participant (including human) hasn’t replied
+  if (lastAt > 0 && !session.moderatorNudgeSentAfterLastMessage) {
+    const elapsed = Date.now() - lastAt;
+    if (elapsed >= MODERATOR_NUDGE_AFTER_MS) {
+      const participants = getParticipantNames(session); // bots + human with display name from first page
+      const replied = getParticipantsWhoRepliedSinceLastModerator(session);
+      const notReplied = participants.filter((p) => !replied.has(p));
+      if (notReplied.length > 0) {
+        const name = notReplied[0]; // bot name or human display name (session.participantName from first page)
+        await emitModeratorMessage(session, `What do you think, ${name}?`);
+        session.moderatorNudgeSentAfterLastMessage = true;
+        logLine("QUEUE", `moderator nudge sent to ${name}`);
+      }
+    }
+  }
+
+  // Sets 4–5: 2 min since last mod or discussion done/looping
+  if (setIndex >= 3 && setIndex < MODERATOR_TRANSCRIPT.length) {
+    const next = await getNextModeratorBubbleFromTimer(session);
+    if (next != null) {
+      const nextSetIndex = setIndex + 1;
+      await emitModeratorMessage(session, next, nextSetIndex);
+      logLine("QUEUE", `moderator set ${nextSetIndex} sent (timer: 2min or done/looping)`);
+    }
+  }
 }
 
 // =====================
@@ -815,7 +1132,8 @@ async function generateBubbles({ session, botName, priorityQuestion, priorityMet
   const others = session.botNames.filter((n) => n !== botName).join(", ");
   const persona = session.personasByHandle[botName] || {};
 
-  const sys = systemPrompt(botName, others, session.condition, persona);
+  const humanName = getHumanParticipantName(session);
+  const sys = systemPrompt(botName, others, session.condition, persona, MODERATOR_NAME, humanName);
 
   const lastText = session.history.slice(-1)[0]?.text || "";
   const userPrompt = buildUserPrompt({
@@ -828,6 +1146,8 @@ async function generateBubbles({ session, botName, priorityQuestion, priorityMet
     otherName: others,
     priorityQuestion: priorityQuestion || null,
     priorityMeta: priorityMeta || null,
+    moderatorName: MODERATOR_NAME,
+    humanParticipantName: humanName,
   });
 
   logLine(
@@ -904,22 +1224,25 @@ function emitAndRecordMessage(session, msg) {
   io.to(session.sessionId).emit("message", normalized);
   logLine("MESSAGE", `[${normalized.name}] "${clip(normalized.text, 160)}"`);
 
-  // YOUR RULE: any message arrival can interrupt others (stages 1-3 or <10s typing)
+  // Interrupt applies to ALL messages (human "You", moderator Eunice, or any bot)—unchanged from before.
   interruptAllBotsOnNewMessage(session, { from: msg.name, reason: "new_message" });
-  // Immediate dequeue so interrupted bots resend with current history right away
   setImmediate(() => tryDequeueNow(session).catch(() => {}));
 
-  // Moderator directive updates directions; commentary-only does not.
+  // Moderator directive updates directions; commentary-only does not. (Only Eunice is moderator; "You" is just a participant.)
   if (isModeratorMessage(normalized)) {
     if (isCommentaryOnly(normalized.text)) {
       // Commentary only: do not update directions bots got; leave schedule and directives as-is.
       logLine("QUEUE", `moderator commentary only: not updating directions`);
       runMentionDetectors(session, normalized).catch(() => {});
+    } else if (isModeratorNudge(normalized.text)) {
+      enqueueModeratorNudge(session, normalized.text);
     } else {
       enqueueModeratorDirective(session, normalized.text);
     }
   } else {
     runMentionDetectors(session, normalized).catch(() => {});
+    // After a participant message, maybe send next moderator set (1–3).
+    setImmediate(() => trySendNextModeratorSet(session));
   }
 }
 
@@ -953,7 +1276,7 @@ async function startBotJobIfPossible(session) {
   if (b.source === "directive") {
     // Directive: use priorityQ from task
     priorityQuestion = item.priorityQ || null;
-    priorityMeta = "This is a direct message from the moderator. Respond to it directly.";
+    priorityMeta = `This is a direct message from the moderator (${MODERATOR_NAME}). Respond to it directly.`;
   } else if (b.source === "mention") {
     // Mention: look up from mention ticket
     const t = session.pendingMentionByBot[botName];
@@ -1305,6 +1628,8 @@ function stopLoops(session) {
   session.normalEnqueueTimer = null;
   if (session.dequeueTimer) clearTimeout(session.dequeueTimer);
   session.dequeueTimer = null;
+  if (session.moderatorTimer) clearInterval(session.moderatorTimer);
+  session.moderatorTimer = null;
 }
 
 // =====================
@@ -1343,8 +1668,19 @@ io.on("connection", (socket) => {
     dequeueTimer: null,
 
     // human activity tracking
-    humanLastTypingAt: Date.now(), // track when human last typed
-    dequeuedCountSinceHumanActive: 0, // count of messages dequeued since human was active
+    humanLastTypingAt: Date.now(),
+    dequeuedCountSinceHumanActive: 0,
+
+    // moderator (Eunice) flow
+    moderatorSetIndex: 0,
+    lastModeratorMessageAt: 0,
+    lastModeratorMessageHistoryIndex: -1,
+    lastModeratorDirectiveText: null,
+    moderatorNudgeSentAfterLastMessage: false,
+    moderatorTimer: null,
+
+    // human participant display name (set by client via participant_name)
+    participantName: null,
   };
 
   for (const b of botNames) ensureBot(session, b);
@@ -1370,14 +1706,27 @@ io.on("connection", (socket) => {
   // detect mentions on seed (optional)
   seed.forEach((m) => runMentionDetectors(session, m).catch(() => {}));
 
+  // Moderator set 1: after 1–2 participant bubbles (seed counts as 2), so send right after seed.
+  setImmediate(() => trySendNextModeratorSet(session));
+
   startNormalEnqueueLoop(session);
   startDequeueLoop(session);
+
+  // Moderator timer: nudge after 30s if someone hasn’t replied; send sets 4–5 after 2 min or when discussion done/looping.
+  session.moderatorTimer = setInterval(() => {
+    runModeratorTimerTick(session).catch((e) => logLine("OPENAI_ERR", `moderator tick: ${e?.message || e}`));
+  }, MODERATOR_TIMER_INTERVAL_MS);
+
+  socket.on("participant_name", ({ name }) => {
+    const n = name != null && typeof name === "string" ? String(name).trim() : "";
+    session.participantName = n || "You";
+    logLine("SESSION_START", `participant_name set to "${session.participantName}"`);
+  });
 
   socket.on("human_typing", ({ isTyping }) => {
     logLine("TYPING", `human ${isTyping ? "true" : "false"}`);
     
     if (isTyping) {
-      // Human is typing - update last typing time and reset dequeue counter
       session.humanLastTypingAt = Date.now();
       resetDequeueCounter(session);
       logLine("QUEUE", `human typing: reset dequeue counter`);
@@ -1388,22 +1737,16 @@ io.on("connection", (socket) => {
     const t = String(text || "").trim();
     if (!t) return;
 
-    logLine("HUMAN_INPUT", `"${clip(t, 160)}"`);
+    const humanName = getHumanParticipantName(session);
+    logLine("HUMAN_INPUT", `[${humanName}] "${clip(t, 160)}"`);
 
-    // Update human activity tracking
     session.humanLastTypingAt = Date.now();
     resetDequeueCounter(session);
 
-    // IMPORTANT: your rule wants interruption even before typing.
-    // So a human message interrupts bots in GENERATING/THINKING/TYPING(<10s) too.
-    interruptAllBotsOnNewMessage(session, { from: "You", reason: "new_human_message" });
+    interruptAllBotsOnNewMessage(session, { from: humanName, reason: "new_human_message" });
 
-    const msg = { name: "You", text: t, ts: Date.now() };
-    // emitAndRecordMessage will handle moderator directive and skip mention detection
+    const msg = { name: humanName, text: t, ts: Date.now() };
     emitAndRecordMessage(session, msg);
-    
-    // Note: mention detection is skipped for moderator messages (handled in emitAndRecordMessage)
-    // Directive tasks are already enqueued by enqueueModeratorDirective
   });
 
   socket.on("disconnect", () => {

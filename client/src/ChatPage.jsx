@@ -6,7 +6,10 @@ import {
   MessageInput,
 } from "@chatscope/chat-ui-kit-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+
+const PARTICIPANT_NAME_KEY = "participantName";
 
 function fmtTime(ts) {
   try {
@@ -31,40 +34,54 @@ const SENDER_COLORS = [
   "#ede7f6", // light indigo
 ];
 
-function getColorForSender(sender, session) {
+function getColorForSender(sender, session, myName) {
   if (!sender) return SENDER_COLORS[0];
-  const participants = ["You", ...(session?.bots || [])];
+  const participants = [myName || "You", ...(session?.bots || [])];
   const i = participants.indexOf(sender);
   if (i >= 0) return SENDER_COLORS[i % SENDER_COLORS.length];
-  // fallback: hash by name for unknown senders (e.g. from seed)
   let h = 0;
   for (let j = 0; j < String(sender).length; j++) h = (h << 5) - h + String(sender).charCodeAt(j);
   return SENDER_COLORS[Math.abs(h) % SENDER_COLORS.length];
 }
 
 export default function ChatPage() {
+  const navigate = useNavigate();
+  const participantName = useMemo(() => {
+    try {
+      return (sessionStorage.getItem(PARTICIPANT_NAME_KEY) || "").trim() || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const socket = useMemo(
     () =>
       io("http://127.0.0.1:3001", {
         autoConnect: false,
-        transports: ["polling"], // you can switch back to ["websocket","polling"] later
+        transports: ["polling"],
         withCredentials: true,
       }),
     []
   );
 
-  const [messages, setMessages] = useState([]); // {sender, message, direction, ts}
+  const [messages, setMessages] = useState([]);
   const [typing, setTyping] = useState({});
   const [session, setSession] = useState(null);
-
-  // ✅ NEW: local input state so we can detect typing + control the input value
   const [input, setInput] = useState("");
 
   // ✅ NEW: debounce timer
   const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
-    socket.on("connect", () => console.log("connected", socket.id));
+    if (!participantName) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    socket.on("connect", () => {
+      console.log("connected", socket.id);
+      socket.emit("participant_name", { name: participantName });
+    });
     socket.on("connect_error", (err) => console.log("connect_error", err));
 
     socket.on("session", (s) => setSession(s));
@@ -83,12 +100,13 @@ export default function ChatPage() {
 
     socket.on("message", (m) => {
       const text = typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000);
+      const sender = m?.name ?? "";
       setMessages((prev) => [
         ...prev,
         {
-          sender: m?.name ?? "",
+          sender,
           message: text,
-          direction: m?.name === "You" ? "outgoing" : "incoming",
+          direction: sender === participantName ? "outgoing" : "incoming",
           ts: m?.ts,
         },
       ]);
@@ -113,7 +131,7 @@ export default function ChatPage() {
       }
       socket.disconnect();
     };
-  }, [socket]);
+  }, [socket, participantName, navigate]);
 
   const typingText = Object.entries(typing)
     .filter(([, v]) => v)
@@ -174,7 +192,7 @@ export default function ChatPage() {
                   <div
                     key={i}
                     className="sender-bubble-wrap"
-                    style={{ ["--sender-color"]: getColorForSender(m.sender, session) }}
+                    style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName) }}
                   >
                     <Message
                       model={{

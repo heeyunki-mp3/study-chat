@@ -107,7 +107,8 @@ async function getReply(botName, history, condition, personasByHandle) {
   const allHandles = Object.keys(personasByHandle);
   const others = allHandles.filter((n) => n !== botName).join(", ") || "others";
   const persona = personasByHandle[botName] || {};
-  const sys = systemPrompt(botName, others, condition, persona);
+  const moderatorName = "Eunice";
+  const sys = systemPrompt(botName, others, condition, persona, moderatorName);
   const transcript = buildTranscript(history, 30);
   const lastText = history.slice(-1)[0]?.text ?? "";
   const userPrompt = buildUserPrompt({
@@ -120,6 +121,7 @@ async function getReply(botName, history, condition, personasByHandle) {
     otherName: others,
     priorityQuestion: null,
     priorityMeta: null,
+    moderatorName,
   });
 
   const model = getModelForBot(botName);

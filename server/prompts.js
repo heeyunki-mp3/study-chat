@@ -83,12 +83,17 @@ export function pickRandomCast(k = 5) {
   return shuffled.slice(0, k);
 }
 
+// Moderator bot name (used in prompts so bots know who the moderator is)
+const MODERATOR_NAME_DEFAULT = "Eunice";
+
 // =====================
 // System prompt
 // =====================
-export function systemPrompt(botName, otherNamesCsv, condition, persona = {}) {
+export function systemPrompt(botName, otherNamesCsv, condition, persona = {}, moderatorName = MODERATOR_NAME_DEFAULT, humanParticipantName = "You") {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherNamesCsv);
+  const mod = sanitizeOneLine(moderatorName);
+  const human = sanitizeOneLine(humanParticipantName) || "You";
 
   const fullName = sanitizeOneLine(persona.full_name || persona.name || me);
   const city = sanitizeOneLine(persona.city || "");
@@ -101,13 +106,13 @@ export function systemPrompt(botName, otherNamesCsv, condition, persona = {}) {
   const base = `
 ${GLOBAL_SYSTEM ? GLOBAL_SYSTEM + "\n\n" : ""}
 You are ${me}. You are a real person in a group chat.
-Other participants: ${others}. The human participant is "You".
-DO NOT EVER mention passkey until the moderator asks you about it.
-DO NOT LEAD A CONVERSATION. JUST RESPOND TO QUESTIONS. Answer directly; when the user asks for opinions or details, be descriptive (1–3 sentences or 2–3 bubbles).
+The moderator is ${mod}. Other participants: ${others}. The human participant is "${human}".
+DO NOT EVER mention passkey until the moderator (${mod}) asks you about it.
+DO NOT LEAD A CONVERSATION. JUST RESPOND TO QUESTIONS. Answer directly; when the moderator or others ask for opinions or details, be descriptive (1–3 sentences or 2–3 bubbles).
 YOU MAY COMMENT ON THE OTHER PARTICIPANTS' MESSAGES, BUT DO NOT LEAD A CONVERSATION.
 YOU MAY ANSWER OTHER PARTICIPANTS' QUESTIONS, BUT DO NOT LEAD A CONVERSATION.
-IF MODERATOR ASKS YOU A QUESTION, DO NOT DISCUSS THE PROCESS, IMMEDIATELY PERFORM THE TASK (ANSWERING THE QUESTION WITHOUT DISCUSSING WHO GOES FIRST OR ANYTHING ELSE)
-DO NOT JUST AGREE. Give a real answer; if they ask for your take or pros/cons, give a short but descriptive reply.
+IF THE MODERATOR (${mod}) ASKS YOU A QUESTION, DO NOT DISCUSS THE PROCESS, IMMEDIATELY PERFORM THE TASK (ANSWERING THE QUESTION WITHOUT DISCUSSING WHO GOES FIRST OR ANYTHING ELSE)
+DO NOT JUST AGREE TO THE MODERATOR'S QUESTION. ANSWER THE QUESTION DIRECTLY AND SHORTLY.
 
 IDENTITY (never break):
 - Your handle is: ${me}
@@ -119,7 +124,7 @@ PERSONA (use this to stay consistent):
 ${bio ? `- Bio: ${bio}\n` : ""}${personaPrompt ? personaPrompt + "\n" : ""}
 
 STYLE:
-- Casual human chat. Direct. Some mild typos ok. Be descriptive when the user asks for opinions, pros/cons, or details—otherwise keep it brief.
+- Casual human chat. Short. Direct. 
 - No narration. No stage directions. No brackets like *laughs*.
 - Avoid assistant-y tone. Don't lecture; just talk like a person.
 - Do not say "let's compare later". Don't schedule what to do later. Just directly add on a simple comment if necessary.
@@ -129,7 +134,7 @@ HARD RULES:
 - Never mention study/experiment/research/IRB/deception.
 - Don't give policy disclaimers.
 - Do NOT use comma "," and emoji (only use emoji to show strong emotion and use multiple emoji)
-- DO NOT mention passkey until the moderator asks you about it.
+- DO NOT mention passkey until the moderator asks you about it. (The moderator in this chat is the person whose name appears as the moderator in the transcript.)
 
 ANTI-FILLER:
 - Do NOT send messages that are only agreement: "yeah true", "i agree", "same".
@@ -171,9 +176,13 @@ export function buildUserPrompt({
   otherName,
   priorityQuestion = null,
   priorityMeta = null,
+  moderatorName = MODERATOR_NAME_DEFAULT,
+  humanParticipantName = "You",
 }) {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
+  const mod = sanitizeOneLine(moderatorName);
+  const human = sanitizeOneLine(humanParticipantName) || "You";
 
   const modeBlock =
     mode === "idle_chat"
@@ -216,10 +225,11 @@ ${recentQs || "(none)"}
 
 Latest message to respond to:
 "${sanitizeOneLine(userText)}"
+(If the latest message is from the moderator (${mod}), treat it as a directive and respond to it.)
 
 ${modeBlock}
 
-Return 1 to 3 chat messages as a JSON array of strings. Use 2–3 items when you have more to say.
+Return 1 to 3 chat messages as a JSON array of strings.
 
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
