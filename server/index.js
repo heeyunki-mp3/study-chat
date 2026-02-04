@@ -1188,7 +1188,7 @@ async function runMentionDetectors(session, newestMsg) {
 // =====================
 // OpenAI generation (stage 1)
 // =====================
-async function generateBubbles({ session, botName, priorityQuestion, priorityMeta }) {
+async function generateBubbles({ session, botName, source = "normal", priorityQuestion = null }) {
   const transcript = buildTranscript(session.history, 30);
   const others = session.botNames.filter((n) => n !== botName).join(", ");
   const persona = session.personasByHandle[botName] || {};
@@ -1196,17 +1196,21 @@ async function generateBubbles({ session, botName, priorityQuestion, priorityMet
   const humanName = getHumanParticipantName(session);
   const sys = systemPrompt(botName, others, session.condition, persona, MODERATOR_NAME, humanName);
 
-  const lastText = session.history.slice(-1)[0]?.text || "";
+  const respondTo =
+    source === "directive" && priorityQuestion
+      ? { type: "directive", text: priorityQuestion }
+      : source === "mention" && priorityQuestion
+      ? { type: "mention", text: priorityQuestion }
+      : null;
+
   const userPrompt = buildUserPrompt({
     transcript,
     recentBot: "",
     recentQs: "",
-    userText: lastText,
     mode: "human",
     botName,
     otherName: others,
-    priorityQuestion: priorityQuestion || null,
-    priorityMeta: priorityMeta || null,
+    respondTo,
     moderatorName: MODERATOR_NAME,
     humanParticipantName: humanName,
   });
@@ -1240,6 +1244,9 @@ async function generateBubbles({ session, botName, priorityQuestion, priorityMet
       // OpenAI JS supports fetch under the hood; AbortController works here.
       // signal: controller.signal,
     });
+    
+    logLine("OPENAI_REQ_SYSTEM", sys);
+    logLine("OPENAI_REQ_USER", userPrompt);
 
     const raw = (resp.output_text || "").trim();
     logLine("OPENAI_OK", `bot=${botName} raw="${clip(raw, 220)}"`);
@@ -1363,8 +1370,8 @@ async function startBotJobIfPossible(session) {
   const { bubbles } = await generateBubbles({
     session,
     botName,
+    source: b.source,
     priorityQuestion,
-    priorityMeta,
   });
 
   // If canceled during generate, bot would be IDLE and/or gen mismatch.

@@ -110,17 +110,14 @@ async function getReply(botName, history, condition, personasByHandle) {
   const moderatorName = "Eunice";
   const sys = systemPrompt(botName, others, condition, persona, moderatorName);
   const transcript = buildTranscript(history, 30);
-  const lastText = history.slice(-1)[0]?.text ?? "";
   const userPrompt = buildUserPrompt({
     transcript,
     recentBot: "",
     recentQs: "",
-    userText: lastText,
     mode: "human",
     botName,
     otherName: others,
-    priorityQuestion: null,
-    priorityMeta: null,
+    respondTo: null,
     moderatorName,
   });
 

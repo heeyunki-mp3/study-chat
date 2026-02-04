@@ -1,0 +1,720 @@
+2026-02-04 13:33:10.737 [SESSION_START] backend running on http://localhost:3001
+2026-02-04 13:33:14.141 [SESSION_START] id=v6H_d7dzUSsl1A0TAAAB condition=control bots=Derek,Faith,Dario,Sid
+2026-02-04 13:33:14.142 [MESSAGE] [Faith] "heyy 👋"
+2026-02-04 13:33:14.142 [MESSAGE] [Dario] "hello!"
+2026-02-04 13:33:14.143 [OPENAI_REQ] implicit_detect newest="hello!"
+2026-02-04 13:33:14.143 [OPENAI_REQ] implicit_detect newest="hello!"
+2026-02-04 13:33:14.191 [SESSION_START] participant_name set to "Hailey"
+2026-02-04 13:33:14.566 [TYPING] moderator true
+2026-02-04 13:33:14.663 [DISCONNECT] id=v6H_d7dzUSsl1A0TAAAB
+2026-02-04 13:33:15.123 [OPENAI_OK] implicit_detect raw="{"targets": ["Derek", "Faith", "Sid"], "confidence": 1, "reason": "Greeting sent without specific addressee, likely to all participants except self."}"
+2026-02-04 13:33:15.124 [QUEUE] mention + bot=Derek id=m_1770211995124_417556 len=1
+2026-02-04 13:33:15.124 [QUEUE] DUMP after create mention Derek | schedule=[] | mentions=[0:Derek]
+2026-02-04 13:33:15.124 [QUEUE] schedule +mention bot=Derek len=1
+2026-02-04 13:33:15.124 [QUEUE] DUMP after enqueue Derek | schedule=[0:Derek*(m)] | mentions=[0:Derek]
+2026-02-04 13:33:15.124 [QUEUE] mention + bot=Sid id=m_1770211995124_984241 len=2
+2026-02-04 13:33:15.124 [QUEUE] DUMP after create mention Sid | schedule=[0:Derek*(m)] | mentions=[0:Derek 1:Sid]
+2026-02-04 13:33:15.124 [QUEUE] schedule +mention bot=Sid len=2
+2026-02-04 13:33:15.124 [QUEUE] DUMP after enqueue Sid | schedule=[0:Sid*(m) 1:Derek*(m)] | mentions=[0:Derek 1:Sid]
+2026-02-04 13:33:15.349 [OPENAI_OK] implicit_detect raw="{"targets": ["Derek", "Faith", "Sid"], "confidence": 1, "reason": "Dario greets the group, addressing all except himself."}"
+2026-02-04 13:33:15.349 [QUEUE] mention + bot=Faith id=m_1770211995349_171580 len=3
+2026-02-04 13:33:15.350 [QUEUE] DUMP after create mention Faith | schedule=[0:Sid*(m) 1:Derek*(m)] | mentions=[0:Derek 1:Sid 2:Faith]
+2026-02-04 13:33:15.350 [QUEUE] schedule +mention bot=Faith len=3
+2026-02-04 13:33:15.350 [QUEUE] DUMP after enqueue Faith | schedule=[0:Faith*(m) 1:Sid*(m) 2:Derek*(m)] | mentions=[0:Derek 1:Sid 2:Faith]
+2026-02-04 13:33:17.780 [TYPING] moderator false
+2026-02-04 13:33:17.780 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-04 13:33:17.781 [QUEUE] cleared all 3 scheduled tasks for new moderator directive
+2026-02-04 13:33:17.782 [QUEUE] directive order rotated by 1 (set 1) first=Faith
+2026-02-04 13:33:17.782 [QUEUE] directive + all bots (4) len=4
+2026-02-04 13:33:17.782 [QUEUE] DUMP after moderator directive | schedule=[0:Faith*(d) 1:Dario*(d) 2:Sid*(d) 3:Derek*(d)] | mentions=[]
+2026-02-04 13:33:17.783 [BOT_STATE] bot=Faith IDLE -> GENERATING source=directive
+2026-02-04 13:33:17.783 [OPENAI_REQ] bot=Faith mode=human condition=control priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-04 13:33:17.783 [OPENAI_REQ] bot=Faith ctx="Faith: heyy 👋 | Dario: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-04 13:33:17.783 [OPENAI_REQ] bot=Faith model=gpt-4.1-mini
+2026-02-04 13:33:18.039 [TYPING] moderator true
+2026-02-04 13:33:18.792 [OPENAI_OK] bot=Faith raw="["Hey Eunice! Thanks for setting this up.", "Looking forward to the discussion!"]"
+2026-02-04 13:33:18.794 [BOT_STATE] bot=Faith GENERATING -> THINKING
+2026-02-04 13:33:19.524 [BOT_STATE] bot=Faith THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:19.524 [TYPING] bot=Faith true
+2026-02-04 13:33:22.746 [TYPING] bot=Faith false
+2026-02-04 13:33:22.747 [MESSAGE] [Faith] "Hey Eunice! Thanks for setting this up."
+2026-02-04 13:33:22.749 [OPENAI_REQ] implicit_detect newest="Hey Eunice! Thanks for setting this up."
+2026-02-04 13:33:22.749 [QUEUE] schedule dequeue bot=Faith len=3
+2026-02-04 13:33:22.750 [QUEUE] DUMP after dequeue Faith | schedule=[0:Dario*(d) 1:Sid*(d) 2:Derek*(d)] | mentions=[]
+2026-02-04 13:33:22.750 [BOT_STATE] bot=Faith TYPING -> THINKING nextBubble=2/2
+2026-02-04 13:33:22.753 [BOT_STATE] bot=Dario IDLE -> GENERATING source=directive
+2026-02-04 13:33:22.753 [OPENAI_REQ] bot=Dario mode=human condition=control priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-04 13:33:22.753 [OPENAI_REQ] bot=Dario ctx="Faith: heyy 👋 | Dario: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Faith: Hey Eunice! Thanks for setting this up."
+2026-02-04 13:33:22.753 [OPENAI_REQ] bot=Dario model=gpt-4.1-mini
+2026-02-04 13:33:23.167 [BOT_STATE] bot=Faith THINKING -> TYPING bubble=2/2
+2026-02-04 13:33:23.168 [TYPING] bot=Faith true
+2026-02-04 13:33:23.747 [OPENAI_OK] bot=Dario raw="["Hey Eunice, thanks for getting this started! Looking forward to the chat.", "Appreciate you organizing everything for us."]"
+2026-02-04 13:33:23.748 [BOT_STATE] bot=Dario GENERATING -> THINKING
+2026-02-04 13:33:24.198 [TYPING] moderator false
+2026-02-04 13:33:24.199 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-04 13:33:24.199 [TYPING] bot=Faith false
+2026-02-04 13:33:24.200 [INTERRUPT] by=Eunice bot=Faith reason=new_message action=cancel_remaining (typedMs=1031)
+2026-02-04 13:33:24.200 [BOT_STATE] bot=Faith TYPING -> IDLE
+2026-02-04 13:33:24.200 [QUEUE] cleared all 3 scheduled tasks for new moderator directive
+2026-02-04 13:33:24.201 [QUEUE] directive order rotated by 1 (set 1) first=Faith
+2026-02-04 13:33:24.201 [QUEUE] directive + all bots (4) len=4
+2026-02-04 13:33:24.201 [QUEUE] DUMP after moderator directive | schedule=[0:Faith*(d) 1:Dario*(d) 2:Sid*(d) 3:Derek*(d)] | mentions=[]
+2026-02-04 13:33:24.202 [QUEUE] moderator set 1 sent (after participant message)
+2026-02-04 13:33:24.202 [BOT_STATE] bot=Faith IDLE -> GENERATING source=directive
+2026-02-04 13:33:24.202 [OPENAI_REQ] bot=Faith mode=human condition=control priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:24.202 [OPENAI_REQ] bot=Faith ctx="Faith: heyy 👋 | Dario: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Faith: Hey Eunice! Thanks for setting this up. | Eunice: To start us off, can we go around and do quic…"
+2026-02-04 13:33:24.202 [OPENAI_REQ] bot=Faith model=gpt-4.1-mini
+2026-02-04 13:33:24.214 [OPENAI_OK] implicit_detect raw="{"targets": ["Eunice"], "confidence": 1, "reason": "Faith directly addresses Eunice by name."}"
+2026-02-04 13:33:24.644 [BOT_STATE] bot=Dario THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:24.644 [TYPING] bot=Dario true
+2026-02-04 13:33:25.484 [OPENAI_OK] bot=Faith raw="["Hey everyone! I'm Faith Hae-rin Kim, a college student from Irvine, CA.", "I’m pretty into social media and streaming, so I’m always worried about getting locked out of my accounts.", "Looking forward to chatting with …"
+2026-02-04 13:33:25.486 [BOT_STATE] bot=Faith GENERATING -> THINKING
+2026-02-04 13:33:25.896 [BOT_STATE] bot=Faith THINKING -> TYPING bubble=1/3
+2026-02-04 13:33:25.897 [TYPING] bot=Faith true
+2026-02-04 13:33:26.978 [SESSION_START] id=tmqAJTcPKEuaP5qsAAAD condition=skeptic bots=Vivian,Anika,Erik,Alayna
+2026-02-04 13:33:26.978 [MESSAGE] [Erik] "heyy 👋"
+2026-02-04 13:33:26.978 [MESSAGE] [Anika] "hello!"
+2026-02-04 13:33:26.980 [OPENAI_REQ] implicit_detect newest="hello!"
+2026-02-04 13:33:26.980 [OPENAI_REQ] implicit_detect newest="hello!"
+2026-02-04 13:33:26.990 [SESSION_START] participant_name set to "Hailey"
+2026-02-04 13:33:27.174 [TYPING] moderator true
+2026-02-04 13:33:28.072 [OPENAI_OK] implicit_detect raw="{"targets": ["Vivian", "Erik", "Alayna"], "confidence": 1, "reason": "General greeting addressing all participants except the speaker."}"
+2026-02-04 13:33:28.073 [QUEUE] mention + bot=Vivian id=m_1770212008073_779106 len=1
+2026-02-04 13:33:28.073 [QUEUE] DUMP after create mention Vivian | schedule=[] | mentions=[0:Vivian]
+2026-02-04 13:33:28.073 [QUEUE] schedule +mention bot=Vivian len=1
+2026-02-04 13:33:28.073 [QUEUE] DUMP after enqueue Vivian | schedule=[0:Vivian*(m)] | mentions=[0:Vivian]
+2026-02-04 13:33:28.074 [QUEUE] mention + bot=Erik id=m_1770212008074_135553 len=2
+2026-02-04 13:33:28.074 [QUEUE] DUMP after create mention Erik | schedule=[0:Vivian*(m)] | mentions=[0:Vivian 1:Erik]
+2026-02-04 13:33:28.074 [QUEUE] schedule +mention bot=Erik len=2
+2026-02-04 13:33:28.074 [QUEUE] DUMP after enqueue Erik | schedule=[0:Erik*(m) 1:Vivian*(m)] | mentions=[0:Vivian 1:Erik]
+2026-02-04 13:33:28.074 [QUEUE] mention + bot=Alayna id=m_1770212008074_103796 len=3
+2026-02-04 13:33:28.074 [QUEUE] DUMP after create mention Alayna | schedule=[0:Erik*(m) 1:Vivian*(m)] | mentions=[0:Vivian 1:Erik 2:Alayna]
+2026-02-04 13:33:28.074 [QUEUE] schedule +mention bot=Alayna len=3
+2026-02-04 13:33:28.074 [QUEUE] DUMP after enqueue Alayna | schedule=[0:Alayna*(m) 1:Erik*(m) 2:Vivian*(m)] | mentions=[0:Vivian 1:Erik 2:Alayna]
+2026-02-04 13:33:28.138 [OPENAI_OK] implicit_detect raw="{"targets": ["Vivian", "Erik", "Alayna"], "confidence": 0.9, "reason": "General greeting to all participants except the speaker"}"
+2026-02-04 13:33:29.978 [BOT_STATE] bot=Vivian IDLE -> GENERATING source=mention
+2026-02-04 13:33:29.979 [OPENAI_REQ] bot=Vivian mode=human condition=skeptic priorityQ="hello!"
+2026-02-04 13:33:29.979 [OPENAI_REQ] bot=Vivian ctx="Erik: heyy 👋 | Anika: hello!"
+2026-02-04 13:33:29.980 [OPENAI_REQ] bot=Vivian model=gpt-4.1-mini
+2026-02-04 13:33:29.983 [QUEUE] schedule +normal bot=Anika len=4
+2026-02-04 13:33:29.985 [QUEUE] DUMP after enqueue Anika | schedule=[0:Alayna*(m) 1:Erik*(m) 2:Vivian*(m) 3:Anika] | mentions=[0:Vivian 1:Erik 2:Alayna]
+2026-02-04 13:33:31.179 [TYPING] moderator false
+2026-02-04 13:33:31.180 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-04 13:33:31.180 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-04 13:33:31.180 [QUEUE] directive order rotated by 1 (set 1) first=Anika
+2026-02-04 13:33:31.180 [QUEUE] directive + all bots (4) len=4
+2026-02-04 13:33:31.180 [QUEUE] DUMP after moderator directive | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[]
+2026-02-04 13:33:31.180 [BOT_STATE] bot=Anika IDLE -> GENERATING source=directive
+2026-02-04 13:33:31.181 [OPENAI_REQ] bot=Anika mode=human condition=skeptic priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-04 13:33:31.181 [OPENAI_REQ] bot=Anika ctx="Erik: heyy 👋 | Anika: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-04 13:33:31.181 [OPENAI_REQ] bot=Anika model=gpt-4.1-mini
+2026-02-04 13:33:31.326 [TYPING] bot=Faith false
+2026-02-04 13:33:31.327 [MESSAGE] [Faith] "Hey everyone! I'm Faith Hae-rin Kim, a college student from Irvine, CA."
+2026-02-04 13:33:31.327 [TYPING] bot=Dario false
+2026-02-04 13:33:31.328 [INTERRUPT] by=Faith bot=Dario reason=new_message action=cancel_entire (typedMs=6683)
+2026-02-04 13:33:31.328 [QUEUE] DUMP after cancel entire Dario | schedule=[0:Faith*(d) 1:Dario*(d) 2:Sid*(d) 3:Derek*(d)] | mentions=[]
+2026-02-04 13:33:31.328 [BOT_STATE] bot=Dario TYPING -> IDLE
+2026-02-04 13:33:31.328 [QUEUE] schedule dequeue bot=Faith len=3
+2026-02-04 13:33:31.329 [QUEUE] DUMP after dequeue Faith | schedule=[0:Dario*(d) 1:Sid*(d) 2:Derek*(d)] | mentions=[]
+2026-02-04 13:33:31.329 [BOT_STATE] bot=Faith TYPING -> THINKING nextBubble=2/3
+2026-02-04 13:33:31.329 [BOT_STATE] bot=Dario IDLE -> GENERATING source=directive
+2026-02-04 13:33:31.329 [OPENAI_REQ] bot=Dario mode=human condition=control priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:31.329 [OPENAI_REQ] bot=Dario ctx="Faith: heyy 👋 | Dario: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Faith: Hey Eunice! Thanks for setting this up. | Eunice: To start us off, can we go around and do quic…"
+2026-02-04 13:33:31.330 [OPENAI_REQ] bot=Dario model=gpt-4.1-mini
+2026-02-04 13:33:31.355 [OPENAI_OK] bot=Vivian raw="[ "Hey Anika! How’s it going today?", "Erik’s here too, so the chat’s starting off lively.", "Anyone else got plans this weekend or is it just me trying to catch up on work?" ]"
+2026-02-04 13:33:31.356 [BOT_STATE] bot=Vivian GENERATING -> THINKING
+2026-02-04 13:33:31.381 [TYPING] moderator true
+2026-02-04 13:33:31.693 [BOT_STATE] bot=Vivian THINKING -> TYPING bubble=1/3
+2026-02-04 13:33:31.694 [TYPING] bot=Vivian true
+2026-02-04 13:33:32.064 [BOT_STATE] bot=Faith THINKING -> TYPING bubble=2/3
+2026-02-04 13:33:32.065 [TYPING] bot=Faith true
+2026-02-04 13:33:32.110 [TYPING] human true
+2026-02-04 13:33:32.111 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:32.283 [OPENAI_OK] bot=Anika raw="["Hi Eunice, thanks for setting this up! Looking forward to the discussion.", "Let me know if there’s anything specific we should prepare or focus on."]"
+2026-02-04 13:33:32.283 [BOT_STATE] bot=Anika GENERATING -> THINKING
+2026-02-04 13:33:32.284 [OPENAI_OK] bot=Dario raw="["Hey everyone, I'm Dario Miguel Alvarez from Austin, TX.", "I work as a bartender and love anything that makes life easier, especially tech.", "Looking forward to the chat!"]"
+2026-02-04 13:33:32.284 [BOT_STATE] bot=Dario GENERATING -> THINKING
+2026-02-04 13:33:32.347 [TYPING] human true
+2026-02-04 13:33:32.348 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:32.697 [TYPING] human true
+2026-02-04 13:33:32.698 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:32.777 [BOT_STATE] bot=Anika THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:32.779 [TYPING] bot=Anika true
+2026-02-04 13:33:32.874 [BOT_STATE] bot=Dario THINKING -> TYPING bubble=1/3
+2026-02-04 13:33:32.875 [TYPING] bot=Dario true
+2026-02-04 13:33:33.314 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:33.499 [TYPING] human false
+2026-02-04 13:33:33.507 [TYPING] human false
+2026-02-04 13:33:33.508 [HUMAN_INPUT] [Hailey] "Hi!"
+2026-02-04 13:33:33.509 [TYPING] bot=Vivian false
+2026-02-04 13:33:33.509 [INTERRUPT] by=Hailey bot=Vivian reason=new_human_message action=cancel_entire (typedMs=1816)
+2026-02-04 13:33:33.510 [QUEUE] DUMP after cancel entire Vivian | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[]
+2026-02-04 13:33:33.510 [BOT_STATE] bot=Vivian TYPING -> IDLE
+2026-02-04 13:33:33.510 [TYPING] bot=Anika false
+2026-02-04 13:33:33.510 [INTERRUPT] by=Hailey bot=Anika reason=new_human_message action=cancel_entire (typedMs=732)
+2026-02-04 13:33:33.510 [QUEUE] DUMP after cancel entire Anika | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[]
+2026-02-04 13:33:33.510 [BOT_STATE] bot=Anika TYPING -> IDLE
+2026-02-04 13:33:33.511 [MESSAGE] [Hailey] "Hi!"
+2026-02-04 13:33:33.511 [OPENAI_REQ] implicit_detect newest="Hi!"
+2026-02-04 13:33:33.513 [BOT_STATE] bot=Anika IDLE -> GENERATING source=directive
+2026-02-04 13:33:33.513 [OPENAI_REQ] bot=Anika mode=human condition=skeptic priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-04 13:33:33.514 [OPENAI_REQ] bot=Anika ctx="Erik: heyy 👋 | Anika: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi!"
+2026-02-04 13:33:33.514 [OPENAI_REQ] bot=Anika model=gpt-4.1-mini
+2026-02-04 13:33:34.371 [OPENAI_OK] bot=Anika raw="["Hi Eunice, thanks for setting this up!", "Looking forward to the discussion."]"
+2026-02-04 13:33:34.371 [BOT_STATE] bot=Anika GENERATING -> THINKING
+2026-02-04 13:33:34.415 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:34.645 [OPENAI_OK] implicit_detect raw="{"targets": ["Vivian", "Anika", "Erik", "Alayna"], "confidence": 1, "reason": "Greeting likely addressed to all participants except the speaker."}"
+2026-02-04 13:33:34.645 [QUEUE] mention + bot=Vivian id=m_1770212014645_892580 len=1
+2026-02-04 13:33:34.645 [QUEUE] DUMP after create mention Vivian | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[0:Vivian]
+2026-02-04 13:33:34.645 [QUEUE] mention + bot=Anika id=m_1770212014645_58539 len=2
+2026-02-04 13:33:34.645 [QUEUE] DUMP after create mention Anika | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[0:Vivian 1:Anika]
+2026-02-04 13:33:34.646 [QUEUE] mention + bot=Erik id=m_1770212014646_334166 len=3
+2026-02-04 13:33:34.646 [QUEUE] DUMP after create mention Erik | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[0:Vivian 1:Anika 2:Erik]
+2026-02-04 13:33:34.646 [QUEUE] mention + bot=Alayna id=m_1770212014646_514827 len=4
+2026-02-04 13:33:34.646 [QUEUE] DUMP after create mention Alayna | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[0:Vivian 1:Anika 2:Erik 3:Alayna]
+2026-02-04 13:33:35.308 [BOT_STATE] bot=Anika THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:35.309 [TYPING] bot=Anika true
+2026-02-04 13:33:35.841 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:37.278 [TYPING] moderator false
+2026-02-04 13:33:37.280 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-04 13:33:37.281 [TYPING] bot=Anika false
+2026-02-04 13:33:37.282 [INTERRUPT] by=Eunice bot=Anika reason=new_message action=cancel_entire (typedMs=1973)
+2026-02-04 13:33:37.282 [QUEUE] DUMP after cancel entire Anika | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[0:Vivian 1:Anika 2:Erik 3:Alayna]
+2026-02-04 13:33:37.282 [BOT_STATE] bot=Anika TYPING -> IDLE
+2026-02-04 13:33:37.282 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-04 13:33:37.283 [QUEUE] directive order rotated by 1 (set 1) first=Anika
+2026-02-04 13:33:37.283 [QUEUE] directive + all bots (4) len=4
+2026-02-04 13:33:37.284 [QUEUE] DUMP after moderator directive | schedule=[0:Anika*(d) 1:Erik*(d) 2:Alayna*(d) 3:Vivian*(d)] | mentions=[]
+2026-02-04 13:33:37.284 [QUEUE] moderator set 1 sent (after participant message)
+2026-02-04 13:33:37.286 [BOT_STATE] bot=Anika IDLE -> GENERATING source=directive
+2026-02-04 13:33:37.286 [OPENAI_REQ] bot=Anika mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:37.286 [OPENAI_REQ] bot=Anika ctx="Erik: heyy 👋 | Anika: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share …"
+2026-02-04 13:33:37.287 [OPENAI_REQ] bot=Anika model=gpt-4.1-mini
+2026-02-04 13:33:37.384 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:38.443 [OPENAI_OK] bot=Anika raw="["I'm Anika Riya Patel, a massage therapist from Fremont, CA.", "I like keeping things simple and calm, especially with my work and tech use.", "Not a fan of complicated apps or settings, I prefer things that just work."…"
+2026-02-04 13:33:38.444 [BOT_STATE] bot=Anika GENERATING -> THINKING
+2026-02-04 13:33:38.829 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:38.983 [BOT_STATE] bot=Anika THINKING -> TYPING bubble=1/3
+2026-02-04 13:33:38.985 [TYPING] bot=Anika true
+2026-02-04 13:33:39.397 [TYPING] bot=Dario false
+2026-02-04 13:33:39.397 [MESSAGE] [Dario] "Hey everyone, I'm Dario Miguel Alvarez from Austin, TX."
+2026-02-04 13:33:39.398 [TYPING] bot=Faith false
+2026-02-04 13:33:39.398 [INTERRUPT] by=Dario bot=Faith reason=new_message action=cancel_remaining (typedMs=7333)
+2026-02-04 13:33:39.398 [BOT_STATE] bot=Faith TYPING -> IDLE
+2026-02-04 13:33:39.398 [QUEUE] schedule dequeue bot=Dario len=2
+2026-02-04 13:33:39.399 [QUEUE] DUMP after dequeue Dario | schedule=[0:Sid*(d) 1:Derek*(d)] | mentions=[]
+2026-02-04 13:33:39.399 [BOT_STATE] bot=Dario TYPING -> THINKING nextBubble=2/3
+2026-02-04 13:33:39.399 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-04 13:33:39.399 [OPENAI_REQ] bot=Sid mode=human condition=control priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:39.399 [OPENAI_REQ] bot=Sid ctx="Dario: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Faith: Hey Eunice! Thanks for setting this up. | Eunice: To start us off, can we go around and do quick introductions? …"
+2026-02-04 13:33:39.400 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-04 13:33:39.550 [TYPING] human true
+2026-02-04 13:33:39.551 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:39.728 [TYPING] human true
+2026-02-04 13:33:39.729 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:39.799 [TYPING] human true
+2026-02-04 13:33:39.800 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:39.839 [TYPING] human true
+2026-02-04 13:33:39.840 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:39.880 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:40.058 [TYPING] human true
+2026-02-04 13:33:40.059 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:40.179 [TYPING] human true
+2026-02-04 13:33:40.180 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:40.325 [BOT_STATE] bot=Dario THINKING -> TYPING bubble=2/3
+2026-02-04 13:33:40.326 [TYPING] bot=Dario true
+2026-02-04 13:33:40.739 [OPENAI_OK] bot=Sid raw="["I'm Sid, Sidharth Patel from Edison, NJ. I work in IT support and deal with security systems daily.", "I have a love-hate relationship with authentication methods, always trying to keep things secure but user-friendly.…"
+2026-02-04 13:33:40.740 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-04 13:33:40.795 [TYPING] human true
+2026-02-04 13:33:40.795 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:40.965 [TYPING] human true
+2026-02-04 13:33:40.966 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.023 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:41.024 [TYPING] bot=Sid true
+2026-02-04 13:33:41.070 [TYPING] human true
+2026-02-04 13:33:41.071 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.206 [TYPING] human true
+2026-02-04 13:33:41.207 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.311 [TYPING] human true
+2026-02-04 13:33:41.312 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.402 [TYPING] human true
+2026-02-04 13:33:41.403 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.474 [TYPING] human true
+2026-02-04 13:33:41.474 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.542 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:41.568 [TYPING] human true
+2026-02-04 13:33:41.569 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.640 [TYPING] human true
+2026-02-04 13:33:41.641 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:41.730 [TYPING] human true
+2026-02-04 13:33:41.730 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:42.113 [TYPING] human true
+2026-02-04 13:33:42.113 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:42.522 [TYPING] human true
+2026-02-04 13:33:42.522 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:42.655 [TYPING] human true
+2026-02-04 13:33:42.655 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:42.916 [TYPING] human true
+2026-02-04 13:33:42.917 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.255 [TYPING] human true
+2026-02-04 13:33:43.256 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.501 [TYPING] human true
+2026-02-04 13:33:43.501 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.526 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:43.623 [TYPING] human true
+2026-02-04 13:33:43.623 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.698 [TYPING] human true
+2026-02-04 13:33:43.699 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.772 [TYPING] human true
+2026-02-04 13:33:43.772 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.844 [TYPING] human true
+2026-02-04 13:33:43.844 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:43.990 [TYPING] human true
+2026-02-04 13:33:43.990 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.181 [TYPING] human true
+2026-02-04 13:33:44.181 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.271 [TYPING] human true
+2026-02-04 13:33:44.271 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.412 [TYPING] human true
+2026-02-04 13:33:44.413 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.493 [TYPING] human true
+2026-02-04 13:33:44.493 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.619 [TYPING] human true
+2026-02-04 13:33:44.620 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.673 [TYPING] human true
+2026-02-04 13:33:44.674 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.891 [TYPING] human true
+2026-02-04 13:33:44.892 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:44.939 [TYPING] human true
+2026-02-04 13:33:44.939 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:45.040 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:45.064 [TYPING] human true
+2026-02-04 13:33:45.065 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:45.182 [TYPING] human true
+2026-02-04 13:33:45.182 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:45.258 [TYPING] human true
+2026-02-04 13:33:45.258 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:45.364 [TYPING] human true
+2026-02-04 13:33:45.364 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:45.488 [TYPING] human true
+2026-02-04 13:33:45.489 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:45.568 [TYPING] bot=Anika false
+2026-02-04 13:33:45.568 [MESSAGE] [Anika] "I'm Anika Riya Patel, a massage therapist from Fremont, CA."
+2026-02-04 13:33:45.569 [QUEUE] schedule dequeue bot=Anika len=3
+2026-02-04 13:33:45.569 [QUEUE] DUMP after dequeue Anika | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d)] | mentions=[]
+2026-02-04 13:33:45.569 [BOT_STATE] bot=Anika TYPING -> THINKING nextBubble=2/3
+2026-02-04 13:33:45.570 [BOT_STATE] bot=Erik IDLE -> GENERATING source=directive
+2026-02-04 13:33:45.570 [OPENAI_REQ] bot=Erik mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:45.570 [OPENAI_REQ] bot=Erik ctx="Erik: heyy 👋 | Anika: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share …"
+2026-02-04 13:33:45.570 [OPENAI_REQ] bot=Erik model=gpt-4.1-mini
+2026-02-04 13:33:46.027 [TYPING] human true
+2026-02-04 13:33:46.028 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.174 [TYPING] human true
+2026-02-04 13:33:46.174 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.294 [TYPING] human true
+2026-02-04 13:33:46.295 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.327 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:46.381 [TYPING] human true
+2026-02-04 13:33:46.381 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.519 [BOT_STATE] bot=Anika THINKING -> TYPING bubble=2/3
+2026-02-04 13:33:46.521 [TYPING] bot=Anika true
+2026-02-04 13:33:46.563 [TYPING] human true
+2026-02-04 13:33:46.563 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.576 [OPENAI_OK] bot=Erik raw="["Erik Anders Nilsson here, IT systems coordinator in Stockholm, focused on digital identity.", "I work mainly with public-sector systems and am pretty interested in how tech can be more secure and usable."]"
+2026-02-04 13:33:46.577 [BOT_STATE] bot=Erik GENERATING -> THINKING
+2026-02-04 13:33:46.672 [TYPING] human true
+2026-02-04 13:33:46.672 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.757 [TYPING] human true
+2026-02-04 13:33:46.757 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.876 [TYPING] human true
+2026-02-04 13:33:46.876 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:46.942 [TYPING] human true
+2026-02-04 13:33:46.942 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.074 [TYPING] human true
+2026-02-04 13:33:47.075 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.196 [TYPING] human true
+2026-02-04 13:33:47.197 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.296 [BOT_STATE] bot=Erik THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:47.298 [TYPING] bot=Erik true
+2026-02-04 13:33:47.454 [TYPING] human true
+2026-02-04 13:33:47.455 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.586 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:47.663 [TYPING] human true
+2026-02-04 13:33:47.664 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.799 [TYPING] human true
+2026-02-04 13:33:47.799 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.965 [TYPING] human true
+2026-02-04 13:33:47.965 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:47.991 [QUEUE] schedule +normal bot=Anika len=4
+2026-02-04 13:33:47.991 [QUEUE] DUMP after enqueue Anika | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[]
+2026-02-04 13:33:48.080 [TYPING] human true
+2026-02-04 13:33:48.081 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.150 [TYPING] human true
+2026-02-04 13:33:48.150 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.258 [TYPING] human true
+2026-02-04 13:33:48.259 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.379 [TYPING] human true
+2026-02-04 13:33:48.379 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.440 [TYPING] human true
+2026-02-04 13:33:48.441 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.622 [TYPING] human true
+2026-02-04 13:33:48.623 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.692 [TYPING] human true
+2026-02-04 13:33:48.692 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.798 [TYPING] human true
+2026-02-04 13:33:48.799 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:48.869 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:48.955 [TYPING] human true
+2026-02-04 13:33:48.955 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:49.736 [TYPING] human true
+2026-02-04 13:33:49.736 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:49.848 [TYPING] human true
+2026-02-04 13:33:49.848 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:49.927 [TYPING] human true
+2026-02-04 13:33:49.928 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.061 [TYPING] bot=Sid false
+2026-02-04 13:33:50.062 [MESSAGE] [Sid] "I'm Sid, Sidharth Patel from Edison, NJ. I work in IT support and deal with security systems daily."
+2026-02-04 13:33:50.063 [TYPING] bot=Dario false
+2026-02-04 13:33:50.063 [INTERRUPT] by=Sid bot=Dario reason=new_message action=cancel_remaining (typedMs=9737)
+2026-02-04 13:33:50.063 [BOT_STATE] bot=Dario TYPING -> IDLE
+2026-02-04 13:33:50.064 [QUEUE] schedule dequeue bot=Sid len=1
+2026-02-04 13:33:50.064 [QUEUE] DUMP after dequeue Sid | schedule=[0:Derek*(d)] | mentions=[]
+2026-02-04 13:33:50.064 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/2
+2026-02-04 13:33:50.065 [BOT_STATE] bot=Derek IDLE -> GENERATING source=directive
+2026-02-04 13:33:50.065 [OPENAI_REQ] bot=Derek mode=human condition=control priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:50.065 [OPENAI_REQ] bot=Derek ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Faith: Hey Eunice! Thanks for setting this up. | Eunice: To start us off, can we go around and do quick introductions? You can just sha…"
+2026-02-04 13:33:50.065 [OPENAI_REQ] bot=Derek model=gpt-4.1-mini
+2026-02-04 13:33:50.069 [TYPING] human true
+2026-02-04 13:33:50.070 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.148 [TYPING] human true
+2026-02-04 13:33:50.148 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.160 [TYPING] human true
+2026-02-04 13:33:50.161 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.297 [TYPING] human true
+2026-02-04 13:33:50.297 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.358 [TYPING] human true
+2026-02-04 13:33:50.361 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.463 [TYPING] human true
+2026-02-04 13:33:50.464 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.488 [TYPING] human true
+2026-02-04 13:33:50.488 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.587 [TYPING] human true
+2026-02-04 13:33:50.588 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.643 [TYPING] human true
+2026-02-04 13:33:50.643 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.662 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/2
+2026-02-04 13:33:50.663 [TYPING] bot=Sid true
+2026-02-04 13:33:50.715 [TYPING] human true
+2026-02-04 13:33:50.715 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.724 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:50.851 [TYPING] human true
+2026-02-04 13:33:50.852 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:50.926 [TYPING] human true
+2026-02-04 13:33:50.926 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:51.031 [TYPING] human true
+2026-02-04 13:33:51.032 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:51.119 [TYPING] human true
+2026-02-04 13:33:51.119 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:51.246 [OPENAI_OK] bot=Derek raw="["I'm Derek Matthew Ross from Tacoma, WA. I work as a social case worker, mostly dealing with government aid programs.", "Been in this line a while, so I’ve seen a lot of changes—most of them annoying to be honest."]"
+2026-02-04 13:33:51.246 [BOT_STATE] bot=Derek GENERATING -> THINKING
+2026-02-04 13:33:51.445 [TYPING] human true
+2026-02-04 13:33:51.446 [QUEUE] human typing: reset dequeue counter
+2026-02-04 13:33:51.635 [TYPING] human false
+2026-02-04 13:33:51.641 [HUMAN_INPUT] [Hailey] "Sure, My name is Hailey, and I am a student at NYC studying computer science!"
+2026-02-04 13:33:51.642 [TYPING] bot=Anika false
+2026-02-04 13:33:51.643 [INTERRUPT] by=Hailey bot=Anika reason=new_human_message action=cancel_remaining (typedMs=5122)
+2026-02-04 13:33:51.643 [BOT_STATE] bot=Anika TYPING -> IDLE
+2026-02-04 13:33:51.643 [TYPING] bot=Erik false
+2026-02-04 13:33:51.643 [INTERRUPT] by=Hailey bot=Erik reason=new_human_message action=cancel_entire (typedMs=4346)
+2026-02-04 13:33:51.643 [QUEUE] DUMP after cancel entire Erik | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[]
+2026-02-04 13:33:51.643 [BOT_STATE] bot=Erik TYPING -> IDLE
+2026-02-04 13:33:51.644 [MESSAGE] [Hailey] "Sure, My name is Hailey, and I am a student at NYC studying computer science!"
+2026-02-04 13:33:51.644 [OPENAI_REQ] implicit_detect newest="Sure, My name is Hailey, and I am a student at NYC studying computer science!"
+2026-02-04 13:33:51.645 [BOT_STATE] bot=Erik IDLE -> GENERATING source=directive
+2026-02-04 13:33:51.646 [OPENAI_REQ] bot=Erik mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:33:51.646 [OPENAI_REQ] bot=Erik ctx="Anika: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and an…"
+2026-02-04 13:33:51.646 [OPENAI_REQ] bot=Erik model=gpt-4.1-mini
+2026-02-04 13:33:52.053 [BOT_STATE] bot=Derek THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:52.054 [TYPING] bot=Derek true
+2026-02-04 13:33:52.326 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:52.686 [OPENAI_OK] bot=Erik raw="["Erik Anders Nilsson from Stockholm Sweden, I coordinate IT systems for the public sector.", "I focus on digital identity and system integration, always interested in smoother user experiences."]"
+2026-02-04 13:33:52.687 [BOT_STATE] bot=Erik GENERATING -> THINKING
+2026-02-04 13:33:53.033 [OPENAI_OK] implicit_detect raw="{"targets": ["Vivian", "Anika", "Erik", "Alayna"], "confidence": 1, "reason": "Hailey's introduction is addressed to everyone as part of group introductions."}"
+2026-02-04 13:33:53.033 [QUEUE] mention + bot=Vivian id=m_1770212033033_544040 len=1
+2026-02-04 13:33:53.034 [QUEUE] DUMP after create mention Vivian | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[0:Vivian]
+2026-02-04 13:33:53.034 [QUEUE] mention + bot=Anika id=m_1770212033034_32822 len=2
+2026-02-04 13:33:53.034 [QUEUE] DUMP after create mention Anika | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[0:Vivian 1:Anika]
+2026-02-04 13:33:53.034 [QUEUE] mention + bot=Erik id=m_1770212033034_134078 len=3
+2026-02-04 13:33:53.034 [QUEUE] DUMP after create mention Erik | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[0:Vivian 1:Anika 2:Erik]
+2026-02-04 13:33:53.034 [QUEUE] mention + bot=Alayna id=m_1770212033034_724162 len=4
+2026-02-04 13:33:53.034 [QUEUE] DUMP after create mention Alayna | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[0:Vivian 1:Anika 2:Erik 3:Alayna]
+2026-02-04 13:33:53.629 [BOT_STATE] bot=Erik THINKING -> TYPING bubble=1/2
+2026-02-04 13:33:53.630 [TYPING] bot=Erik true
+2026-02-04 13:33:54.082 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:55.345 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:56.924 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:58.485 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:33:59.631 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:00.920 [TYPING] bot=Derek false
+2026-02-04 13:34:00.921 [MESSAGE] [Derek] "I'm Derek Matthew Ross from Tacoma, WA. I work as a social case worker, mostly dealing with government aid programs."
+2026-02-04 13:34:00.921 [INTERRUPT] by=Derek bot=Sid reason=new_message action=finish_current_then_stop typedMs=10258
+2026-02-04 13:34:00.922 [QUEUE] schedule dequeue bot=Derek len=0
+2026-02-04 13:34:00.922 [QUEUE] DUMP after dequeue Derek | schedule=[] | mentions=[]
+2026-02-04 13:34:00.922 [BOT_STATE] bot=Derek TYPING -> THINKING nextBubble=2/2
+2026-02-04 13:34:01.186 [BOT_STATE] bot=Derek THINKING -> TYPING bubble=2/2
+2026-02-04 13:34:01.186 [TYPING] bot=Derek true
+2026-02-04 13:34:01.395 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:03.015 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:04.004 [TYPING] bot=Erik false
+2026-02-04 13:34:04.005 [MESSAGE] [Erik] "Erik Anders Nilsson from Stockholm Sweden, I coordinate IT systems for the public sector."
+2026-02-04 13:34:04.006 [QUEUE] schedule dequeue bot=Erik len=3
+2026-02-04 13:34:04.006 [QUEUE] DUMP after dequeue Erik | schedule=[0:Alayna*(d) 1:Vivian*(d) 2:Anika] | mentions=[0:Vivian 1:Anika 2:Erik 3:Alayna]
+2026-02-04 13:34:04.006 [BOT_STATE] bot=Erik TYPING -> THINKING nextBubble=2/2
+2026-02-04 13:34:04.007 [QUEUE] schedule +mention bot=Erik len=4
+2026-02-04 13:34:04.007 [QUEUE] DUMP after enqueue Erik | schedule=[0:Erik*(m) 1:Alayna*(d) 2:Vivian*(d) 3:Anika] | mentions=[0:Vivian 1:Anika 2:Erik 3:Alayna]
+2026-02-04 13:34:04.007 [BOT_STATE] bot=Alayna IDLE -> GENERATING source=directive
+2026-02-04 13:34:04.007 [OPENAI_REQ] bot=Alayna mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:34:04.007 [OPENAI_REQ] bot=Alayna ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel …"
+2026-02-04 13:34:04.007 [OPENAI_REQ] bot=Alayna model=gpt-4.1-mini
+2026-02-04 13:34:04.354 [BOT_STATE] bot=Erik THINKING -> TYPING bubble=2/2
+2026-02-04 13:34:04.355 [TYPING] bot=Erik true
+2026-02-04 13:34:04.390 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:04.678 [TYPING] bot=Sid false
+2026-02-04 13:34:04.679 [MESSAGE] [Sid] "I have a love-hate relationship with authentication methods, always trying to keep things secure but user-friendly."
+2026-02-04 13:34:04.680 [INTERRUPT] by=Sid reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-04 13:34:04.681 [OPENAI_REQ] implicit_detect newest="I have a love-hate relationship with authentication methods, always trying to keep things …"
+2026-02-04 13:34:04.681 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-04 13:34:04.991 [OPENAI_OK] bot=Alayna raw="[ "I'm Alayna Michelle Brooks from Raleigh, NC, working in HR operations.", "I focus on rollout, communication, and keeping support issues minimal during projects." ]"
+2026-02-04 13:34:04.991 [BOT_STATE] bot=Alayna GENERATING -> THINKING
+2026-02-04 13:34:05.740 [BOT_STATE] bot=Alayna THINKING -> TYPING bubble=1/2
+2026-02-04 13:34:05.742 [TYPING] bot=Alayna true
+2026-02-04 13:34:06.032 [OPENAI_OK] implicit_detect raw="{"targets": ["Derek", "Faith", "Dario"], "confidence": 0.9, "reason": "Sid shares a general comment likely meant for the group except himself."}"
+2026-02-04 13:34:06.033 [QUEUE] mention + bot=Derek id=m_1770212046033_493735 len=1
+2026-02-04 13:34:06.033 [QUEUE] DUMP after create mention Derek | schedule=[] | mentions=[0:Derek]
+2026-02-04 13:34:06.033 [QUEUE] schedule +mention bot=Derek len=1
+2026-02-04 13:34:06.034 [QUEUE] DUMP after enqueue Derek | schedule=[0:Derek*(m)] | mentions=[0:Derek]
+2026-02-04 13:34:06.034 [QUEUE] mention + bot=Faith id=m_1770212046034_566590 len=2
+2026-02-04 13:34:06.034 [QUEUE] DUMP after create mention Faith | schedule=[0:Derek*(m)] | mentions=[0:Derek 1:Faith]
+2026-02-04 13:34:06.034 [QUEUE] schedule +mention bot=Faith len=2
+2026-02-04 13:34:06.034 [QUEUE] DUMP after enqueue Faith | schedule=[0:Faith*(m) 1:Derek*(m)] | mentions=[0:Derek 1:Faith]
+2026-02-04 13:34:06.034 [QUEUE] mention + bot=Dario id=m_1770212046034_488760 len=3
+2026-02-04 13:34:06.034 [QUEUE] DUMP after create mention Dario | schedule=[0:Faith*(m) 1:Derek*(m)] | mentions=[0:Derek 1:Faith 2:Dario]
+2026-02-04 13:34:06.035 [QUEUE] schedule +mention bot=Dario len=3
+2026-02-04 13:34:06.035 [QUEUE] DUMP after enqueue Dario | schedule=[0:Dario*(m) 1:Faith*(m) 2:Derek*(m)] | mentions=[0:Derek 1:Faith 2:Dario]
+2026-02-04 13:34:06.200 [QUEUE] prune expired mention task bot=Erik mentionId=m_1770212033034_134078
+2026-02-04 13:34:06.200 [QUEUE] prune expired mentions: 4->0 mentions, 4->3 schedule
+2026-02-04 13:34:06.201 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:07.507 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:08.931 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:08.997 [QUEUE] schedule +normal bot=Erik len=4
+2026-02-04 13:34:08.998 [QUEUE] DUMP after enqueue Erik | schedule=[0:Alayna*(d) 1:Vivian*(d) 2:Anika 3:Erik] | mentions=[]
+2026-02-04 13:34:10.772 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:11.194 [TYPING] bot=Derek false
+2026-02-04 13:34:11.195 [MESSAGE] [Derek] "Been in this line a while, so I’ve seen a lot of changes—most of them annoying to be honest."
+2026-02-04 13:34:11.195 [INTERRUPT] by=Derek reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-04 13:34:11.196 [OPENAI_REQ] implicit_detect newest="Been in this line a while, so I’ve seen a lot of changes—most of them annoying to be hones…"
+2026-02-04 13:34:11.196 [BOT_STATE] bot=Derek TYPING -> IDLE
+2026-02-04 13:34:11.198 [BOT_STATE] bot=Derek IDLE -> GENERATING source=mention
+2026-02-04 13:34:11.198 [OPENAI_REQ] bot=Derek mode=human condition=control priorityQ="I have a love-hate relationship with authentication methods, always trying to keep things …"
+2026-02-04 13:34:11.198 [OPENAI_REQ] bot=Derek ctx="Faith: Hey everyone! I'm Faith Hae-rin Kim, a college student from Irvine, CA. | Dario: Hey everyone, I'm Dario Miguel Alvarez from Austin, TX. | Sid: I'm Sid, Sidharth Patel from Edison, NJ. I work in IT support and deal with security syst…"
+2026-02-04 13:34:11.198 [OPENAI_REQ] bot=Derek model=gpt-4.1-mini
+2026-02-04 13:34:11.236 [TYPING] bot=Alayna false
+2026-02-04 13:34:11.238 [MESSAGE] [Alayna] "I'm Alayna Michelle Brooks from Raleigh, NC, working in HR operations."
+2026-02-04 13:34:11.238 [TYPING] bot=Erik false
+2026-02-04 13:34:11.238 [INTERRUPT] by=Alayna bot=Erik reason=new_message action=cancel_remaining (typedMs=6884)
+2026-02-04 13:34:11.238 [BOT_STATE] bot=Erik TYPING -> IDLE
+2026-02-04 13:34:11.238 [QUEUE] schedule dequeue bot=Alayna len=3
+2026-02-04 13:34:11.238 [QUEUE] DUMP after dequeue Alayna | schedule=[0:Vivian*(d) 1:Anika 2:Erik] | mentions=[]
+2026-02-04 13:34:11.238 [BOT_STATE] bot=Alayna TYPING -> THINKING nextBubble=2/2
+2026-02-04 13:34:11.239 [BOT_STATE] bot=Vivian IDLE -> GENERATING source=directive
+2026-02-04 13:34:11.239 [OPENAI_REQ] bot=Vivian mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-04 13:34:11.239 [OPENAI_REQ] bot=Vivian ctx="Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning. | Anika: I'm Anika Riya Patel, a massage therapist from Fremont, CA. | Hailey: Sure, My …"
+2026-02-04 13:34:11.239 [OPENAI_REQ] bot=Vivian model=gpt-4.1-mini
+2026-02-04 13:34:11.850 [BOT_STATE] bot=Alayna THINKING -> TYPING bubble=2/2
+2026-02-04 13:34:11.850 [TYPING] bot=Alayna true
+2026-02-04 13:34:11.868 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:11.998 [QUEUE] schedule +normal bot=Alayna len=4
+2026-02-04 13:34:11.998 [QUEUE] DUMP after enqueue Alayna | schedule=[0:Vivian*(d) 1:Anika 2:Erik 3:Alayna] | mentions=[]
+2026-02-04 13:34:12.180 [OPENAI_OK] bot=Vivian raw="["I'm Vivian Mae O’Connor, a psych undergrad at Emory in Atlanta.", "I’m always juggling classes and projects so I guess multitasking's my vibe."]"
+2026-02-04 13:34:12.180 [BOT_STATE] bot=Vivian GENERATING -> THINKING
+2026-02-04 13:34:12.586 [OPENAI_OK] implicit_detect raw="{"targets": ["Faith", "Dario", "Sid"], "confidence": 0.9, "reason": "Derek's statement is a general comment likely directed to everyone else in the group."}"
+2026-02-04 13:34:12.586 [QUEUE] mention + bot=Sid id=m_1770212052586_596467 len=4
+2026-02-04 13:34:12.587 [QUEUE] DUMP after create mention Sid | schedule=[0:Dario*(m) 1:Faith*(m) 2:Derek*(m)] | mentions=[0:Derek 1:Faith 2:Dario 3:Sid]
+2026-02-04 13:34:12.587 [QUEUE] schedule +mention bot=Sid len=4
+2026-02-04 13:34:12.587 [QUEUE] DUMP after enqueue Sid | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m) 3:Derek*(m)] | mentions=[0:Derek 1:Faith 2:Dario 3:Sid]
+2026-02-04 13:34:12.587 [OPENAI_OK] bot=Derek raw="["To be honest, I think too many new auth methods just slow me down, especially for the folks I work with who aren't tech-savvy.", "Security matters a lot, but every new system feels like another hurdle in an already com…"
+2026-02-04 13:34:12.587 [BOT_STATE] bot=Derek GENERATING -> THINKING
+2026-02-04 13:34:12.928 [BOT_STATE] bot=Vivian THINKING -> TYPING bubble=1/2
+2026-02-04 13:34:12.929 [TYPING] bot=Vivian true
+2026-02-04 13:34:12.953 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:13.255 [BOT_STATE] bot=Derek THINKING -> TYPING bubble=1/3
+2026-02-04 13:34:13.255 [TYPING] bot=Derek true
+2026-02-04 13:34:14.807 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:16.750 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:18.061 [TYPING] bot=Alayna false
+2026-02-04 13:34:18.062 [MESSAGE] [Alayna] "I focus on rollout, communication, and keeping support issues minimal during projects."
+2026-02-04 13:34:18.062 [INTERRUPT] by=Alayna reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-04 13:34:18.062 [OPENAI_REQ] implicit_detect newest="I focus on rollout, communication, and keeping support issues minimal during projects."
+2026-02-04 13:34:18.062 [BOT_STATE] bot=Alayna TYPING -> IDLE
+2026-02-04 13:34:18.254 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:19.421 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:19.716 [OPENAI_OK] implicit_detect raw="{"targets": ["Vivian", "Anika", "Erik"], "confidence": 0.9, "reason": "The statement is a general comment about her work, typically addressed to all participants except herself."}"
+2026-02-04 13:34:19.717 [QUEUE] mention + bot=Vivian id=m_1770212059717_977797 len=1
+2026-02-04 13:34:19.717 [QUEUE] DUMP after create mention Vivian | schedule=[0:Vivian*(d) 1:Anika 2:Erik 3:Alayna] | mentions=[0:Vivian]
+2026-02-04 13:34:19.717 [QUEUE] mention + bot=Anika id=m_1770212059717_638317 len=2
+2026-02-04 13:34:19.717 [QUEUE] DUMP after create mention Anika | schedule=[0:Vivian*(d) 1:Anika 2:Erik 3:Alayna] | mentions=[0:Vivian 1:Anika]
+2026-02-04 13:34:19.717 [QUEUE] mention + bot=Erik id=m_1770212059717_368167 len=3
+2026-02-04 13:34:19.718 [QUEUE] DUMP after create mention Erik | schedule=[0:Vivian*(d) 1:Anika 2:Erik 3:Alayna] | mentions=[0:Vivian 1:Anika 2:Erik]
+2026-02-04 13:34:20.649 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:21.593 [TYPING] bot=Vivian false
+2026-02-04 13:34:21.594 [MESSAGE] [Vivian] "I'm Vivian Mae O’Connor, a psych undergrad at Emory in Atlanta."
+2026-02-04 13:34:21.594 [QUEUE] schedule dequeue bot=Vivian len=3
+2026-02-04 13:34:21.594 [QUEUE] DUMP after dequeue Vivian | schedule=[0:Anika 1:Erik 2:Alayna] | mentions=[0:Vivian 1:Anika 2:Erik]
+2026-02-04 13:34:21.594 [BOT_STATE] bot=Vivian TYPING -> THINKING nextBubble=2/2
+2026-02-04 13:34:21.594 [QUEUE] schedule +mention bot=Vivian len=4
+2026-02-04 13:34:21.595 [QUEUE] DUMP after enqueue Vivian | schedule=[0:Vivian*(m) 1:Anika 2:Erik 3:Alayna] | mentions=[0:Vivian 1:Anika 2:Erik]
+2026-02-04 13:34:21.883 [TYPING] moderator true
+2026-02-04 13:34:22.100 [BOT_STATE] bot=Vivian THINKING -> TYPING bubble=2/2
+2026-02-04 13:34:22.101 [TYPING] bot=Vivian true
+2026-02-04 13:34:22.195 [QUEUE] human idle: scheduling 3 messages over 10000ms
+2026-02-04 13:34:23.711 [TYPING] bot=Derek false
+2026-02-04 13:34:23.712 [MESSAGE] [Derek] "To be honest, I think too many new auth methods just slow me down, especially for the folks I work with who aren't tech-savvy."
+2026-02-04 13:34:23.712 [OPENAI_REQ] implicit_detect newest="To be honest, I think too many new auth methods just slow me down, especially for the folk…"
+2026-02-04 13:34:23.713 [QUEUE] schedule dequeue bot=Derek len=3
+2026-02-04 13:34:23.713 [QUEUE] DUMP after dequeue Derek | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m)] | mentions=[0:Derek 1:Faith 2:Dario 3:Sid]
+2026-02-04 13:34:23.713 [QUEUE] mention - bot=Derek id=m_1770212046033_493735 len=3
+2026-02-04 13:34:23.713 [QUEUE] DUMP after resolve mention Derek | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid]
+2026-02-04 13:34:23.714 [BOT_STATE] bot=Derek TYPING -> THINKING nextBubble=2/3
+2026-02-04 13:34:23.716 [QUEUE] prune expired mention task bot=Dario mentionId=m_1770212046034_488760
+2026-02-04 13:34:23.716 [QUEUE] prune expired mention task bot=Faith mentionId=m_1770212046034_566590
+2026-02-04 13:34:23.716 [QUEUE] prune expired mentions: 3->1 mentions, 3->1 schedule
+2026-02-04 13:34:23.717 [BOT_STATE] bot=Sid IDLE -> GENERATING source=mention
+2026-02-04 13:34:23.717 [OPENAI_REQ] bot=Sid mode=human condition=control priorityQ="Been in this line a while, so I’ve seen a lot of changes—most of them annoying to be hones…"
+2026-02-04 13:34:23.717 [OPENAI_REQ] bot=Sid ctx="Dario: Hey everyone, I'm Dario Miguel Alvarez from Austin, TX. | Sid: I'm Sid, Sidharth Patel from Edison, NJ. I work in IT support and deal with security systems daily. | Derek: I'm Derek Matthew Ross from Tacoma, WA. I work as a social ca…"
+2026-02-04 13:34:23.717 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-04 13:34:24.197 [BOT_STATE] bot=Derek THINKING -> TYPING bubble=2/3
+2026-02-04 13:34:24.198 [TYPING] bot=Derek true
+2026-02-04 13:34:24.978 [OPENAI_OK] implicit_detect raw="{"targets": ["Faith", "Dario", "Sid"], "confidence": 0.9, "reason": "Derek is making a general comment addressing the group excluding himself."}"
+2026-02-04 13:34:24.978 [QUEUE] mention + bot=Faith id=m_1770212064978_229515 len=2
+2026-02-04 13:34:24.979 [QUEUE] DUMP after create mention Faith | schedule=[0:Sid*(m)] | mentions=[0:Sid 1:Faith]
+2026-02-04 13:34:24.979 [QUEUE] prune expired mention task bot=Sid mentionId=m_1770212052586_596467
+2026-02-04 13:34:24.979 [QUEUE] prune expired mentions: 2->1 mentions, 1->0 schedule
+2026-02-04 13:34:24.979 [QUEUE] schedule +mention bot=Faith len=1
+2026-02-04 13:34:24.979 [QUEUE] DUMP after enqueue Faith | schedule=[0:Faith*(m)] | mentions=[0:Faith]
+2026-02-04 13:34:24.980 [QUEUE] mention + bot=Dario id=m_1770212064980_181446 len=2
+2026-02-04 13:34:24.980 [QUEUE] DUMP after create mention Dario | schedule=[0:Faith*(m)] | mentions=[0:Faith 1:Dario]
+2026-02-04 13:34:24.980 [QUEUE] schedule +mention bot=Dario len=2
+2026-02-04 13:34:24.980 [QUEUE] DUMP after enqueue Dario | schedule=[0:Dario*(m) 1:Faith*(m)] | mentions=[0:Faith 1:Dario]
+2026-02-04 13:34:24.980 [QUEUE] mention + bot=Sid id=m_1770212064980_509390 len=3
+2026-02-04 13:34:24.980 [QUEUE] DUMP after create mention Sid | schedule=[0:Dario*(m) 1:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid]
+2026-02-04 13:34:24.980 [QUEUE] schedule +mention bot=Sid len=3
+2026-02-04 13:34:24.980 [QUEUE] DUMP after enqueue Sid | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid]
+2026-02-04 13:34:25.384 [OPENAI_OK] bot=Sid raw="["Yeah, I've seen that too. New methods often create more hassle than help, especially for those not tech-savvy.", "Security tech keeps evolving but the user experience usually takes a hit. Legacy users get left behind."…"
+2026-02-04 13:34:25.385 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-04 13:34:25.385 [BOT_STATE] bot=Faith IDLE -> GENERATING source=mention
+2026-02-04 13:34:25.385 [OPENAI_REQ] bot=Faith mode=human condition=control priorityQ="To be honest, I think too many new auth methods just slow me down, especially for the folk…"
+2026-02-04 13:34:25.385 [OPENAI_REQ] bot=Faith ctx="Dario: Hey everyone, I'm Dario Miguel Alvarez from Austin, TX. | Sid: I'm Sid, Sidharth Patel from Edison, NJ. I work in IT support and deal with security systems daily. | Derek: I'm Derek Matthew Ross from Tacoma, WA. I work as a social ca…"
+2026-02-04 13:34:25.385 [OPENAI_REQ] bot=Faith model=gpt-4.1-mini
+2026-02-04 13:34:25.704 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-04 13:34:25.705 [TYPING] bot=Sid true
+2026-02-04 13:34:26.612 [OPENAI_OK] bot=Faith raw="["I get that Derek, new auth methods can feel overwhelming especially for those not good with tech.", "It's like we want more security but sometimes it just complicates the basics, which can be frustrating.", "Maybe simp…"
+2026-02-04 13:34:26.612 [BOT_STATE] bot=Faith GENERATING -> THINKING
+2026-02-04 13:34:26.986 [NUDGE] not replied: []
+2026-02-04 13:34:27.549 [BOT_STATE] bot=Faith THINKING -> TYPING bubble=1/3
+2026-02-04 13:34:27.550 [TYPING] bot=Faith true
+2026-02-04 13:34:27.600 [TYPING] bot=Vivian false
+2026-02-04 13:34:27.600 [MESSAGE] [Vivian] "I’m always juggling classes and projects so I guess multitasking's my vibe."
+2026-02-04 13:34:27.600 [INTERRUPT] by=Vivian reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-04 13:34:27.600 [OPENAI_REQ] implicit_detect newest="I’m always juggling classes and projects so I guess multitasking's my vibe."
+2026-02-04 13:34:27.600 [BOT_STATE] bot=Vivian TYPING -> IDLE
+2026-02-04 13:34:27.601 [BOT_STATE] bot=Vivian IDLE -> GENERATING source=mention
+2026-02-04 13:34:27.601 [OPENAI_REQ] bot=Vivian mode=human condition=skeptic priorityQ="I focus on rollout, communication, and keeping support issues minimal during projects."
+2026-02-04 13:34:27.601 [OPENAI_REQ] bot=Vivian ctx="Hailey: Sure, My name is Hailey, and I am a student at NYC studying computer science! | Erik: Erik Anders Nilsson from Stockholm Sweden, I coordinate IT systems for the public sector. | Alayna: I'm Alayna Michelle Brooks from Raleigh, NC, w…"
+2026-02-04 13:34:27.601 [OPENAI_REQ] bot=Vivian model=gpt-4.1-mini
+2026-02-04 13:34:29.092 [TYPING] moderator false
+2026-02-04 13:34:29.093 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-04 13:34:29.093 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-04 13:34:29.094 [QUEUE] directive order rotated by 2 (set 2) first=Erik
+2026-02-04 13:34:29.094 [QUEUE] directive + all bots (4) len=4
+2026-02-04 13:34:29.094 [QUEUE] DUMP after moderator directive | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[]
+2026-02-04 13:34:29.095 [BOT_STATE] bot=Erik IDLE -> GENERATING source=directive
+2026-02-04 13:34:29.095 [OPENAI_REQ] bot=Erik mode=human condition=skeptic priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-04 13:34:29.096 [OPENAI_REQ] bot=Erik ctx="Alayna: I'm Alayna Michelle Brooks from Raleigh, NC, working in HR operations. | Alayna: I focus on rollout, communication, and keeping support issues minimal during projects. | Vivian: I'm Vivian Mae O’Connor, a psych undergrad at Emory in…"
+2026-02-04 13:34:29.096 [OPENAI_REQ] bot=Erik model=gpt-4.1-mini
+2026-02-04 13:34:29.163 [OPENAI_OK] bot=Vivian raw="["That makes sense Alayna, keeping support issues minimal is key to smooth rollouts.", "Clear communication can really cut down confusion and last-minute fires during projects.", "In psych, I see that when teams have goo…"
+2026-02-04 13:34:29.164 [BOT_STATE] bot=Vivian GENERATING -> THINKING
+2026-02-04 13:34:29.301 [TYPING] moderator true
+2026-02-04 13:34:29.421 [BOT_STATE] bot=Vivian THINKING -> TYPING bubble=1/3
+2026-02-04 13:34:29.422 [TYPING] bot=Vivian true
+2026-02-04 13:34:29.585 [OPENAI_OK] implicit_detect raw="{"targets": ["Anika", "Erik", "Alayna"], "confidence": 0.9, "reason": "Vivian is sharing a general comment about herself, likely addressed to everyone except herself."}"
+2026-02-04 13:34:29.586 [QUEUE] mention + bot=Anika id=m_1770212069586_385978 len=1
+2026-02-04 13:34:29.586 [QUEUE] DUMP after create mention Anika | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[0:Anika]
+2026-02-04 13:34:29.587 [QUEUE] mention + bot=Erik id=m_1770212069587_82815 len=2
+2026-02-04 13:34:29.587 [QUEUE] DUMP after create mention Erik | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[0:Anika 1:Erik]
+2026-02-04 13:34:29.587 [QUEUE] mention + bot=Alayna id=m_1770212069587_689388 len=3
+2026-02-04 13:34:29.587 [QUEUE] DUMP after create mention Alayna | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[0:Anika 1:Erik 2:Alayna]
+2026-02-04 13:34:29.998 [OPENAI_OK] bot=Erik raw="["That makes sense, evaluating new tech features always involves weighing benefits against possible complications.", "I think people look at convenience improvements but also worry about security and learning curves."]"
+2026-02-04 13:34:29.999 [BOT_STATE] bot=Erik GENERATING -> THINKING
+2026-02-04 13:34:30.325 [BOT_STATE] bot=Erik THINKING -> TYPING bubble=1/2
+2026-02-04 13:34:30.326 [TYPING] bot=Erik true
+2026-02-04 13:34:33.197 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:34.837 [TYPING] bot=Sid false
+2026-02-04 13:34:34.838 [MESSAGE] [Sid] "Yeah, I've seen that too. New methods often create more hassle than help, especially for those not tech-savvy."
+2026-02-04 13:34:34.839 [INTERRUPT] by=Sid bot=Derek reason=new_message action=finish_current_then_stop typedMs=10641
+2026-02-04 13:34:34.839 [TYPING] bot=Faith false
+2026-02-04 13:34:34.840 [INTERRUPT] by=Sid bot=Faith reason=new_message action=cancel_entire (typedMs=7289)
+2026-02-04 13:34:34.840 [QUEUE] DUMP after cancel entire Faith | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid]
+2026-02-04 13:34:34.840 [BOT_STATE] bot=Faith TYPING -> IDLE
+2026-02-04 13:34:34.840 [OPENAI_REQ] implicit_detect newest="Yeah, I've seen that too. New methods often create more hassle than help, especially for t…"
+2026-02-04 13:34:34.841 [QUEUE] schedule dequeue bot=Sid len=2
+2026-02-04 13:34:34.841 [QUEUE] DUMP after dequeue Sid | schedule=[0:Dario*(m) 1:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid]
+2026-02-04 13:34:34.841 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/3
+2026-02-04 13:34:34.846 [QUEUE] schedule +mention bot=Sid len=3
+2026-02-04 13:34:34.846 [QUEUE] DUMP after enqueue Sid | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid]
+2026-02-04 13:34:34.846 [BOT_STATE] bot=Faith IDLE -> GENERATING source=mention
+2026-02-04 13:34:34.846 [OPENAI_REQ] bot=Faith mode=human condition=control priorityQ="To be honest, I think too many new auth methods just slow me down, especially for the folk…"
+2026-02-04 13:34:34.846 [OPENAI_REQ] bot=Faith ctx="Sid: I'm Sid, Sidharth Patel from Edison, NJ. I work in IT support and deal with security systems daily. | Derek: I'm Derek Matthew Ross from Tacoma, WA. I work as a social case worker, mostly dealing with government aid programs. | Sid: I …"
+2026-02-04 13:34:34.847 [OPENAI_REQ] bot=Faith model=gpt-4.1-mini
+2026-02-04 13:34:35.040 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:35.165 [TYPING] moderator false
+2026-02-04 13:34:35.166 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-04 13:34:35.166 [TYPING] bot=Vivian false
+2026-02-04 13:34:35.167 [INTERRUPT] by=Eunice bot=Vivian reason=new_message action=cancel_entire (typedMs=5745)
+2026-02-04 13:34:35.168 [QUEUE] DUMP after cancel entire Vivian | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[0:Anika 1:Erik 2:Alayna]
+2026-02-04 13:34:35.169 [BOT_STATE] bot=Vivian TYPING -> IDLE
+2026-02-04 13:34:35.169 [TYPING] bot=Erik false
+2026-02-04 13:34:35.170 [INTERRUPT] by=Eunice bot=Erik reason=new_message action=cancel_entire (typedMs=4843)
+2026-02-04 13:34:35.170 [QUEUE] DUMP after cancel entire Erik | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[0:Anika 1:Erik 2:Alayna]
+2026-02-04 13:34:35.170 [BOT_STATE] bot=Erik TYPING -> IDLE
+2026-02-04 13:34:35.170 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-04 13:34:35.171 [QUEUE] directive order rotated by 2 (set 2) first=Erik
+2026-02-04 13:34:35.171 [QUEUE] directive + all bots (4) len=4
+2026-02-04 13:34:35.171 [QUEUE] DUMP after moderator directive | schedule=[0:Erik*(d) 1:Alayna*(d) 2:Vivian*(d) 3:Anika*(d)] | mentions=[]
+2026-02-04 13:34:35.171 [QUEUE] moderator set 2 sent (after participant message)
+2026-02-04 13:34:35.172 [BOT_STATE] bot=Erik IDLE -> GENERATING source=directive
+2026-02-04 13:34:35.172 [OPENAI_REQ] bot=Erik mode=human condition=skeptic priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-04 13:34:35.173 [OPENAI_REQ] bot=Erik ctx="Alayna: I focus on rollout, communication, and keeping support issues minimal during projects. | Vivian: I'm Vivian Mae O’Connor, a psych undergrad at Emory in Atlanta. | Vivian: I’m always juggling classes and projects so I guess multitask…"
+2026-02-04 13:34:35.173 [OPENAI_REQ] bot=Erik model=gpt-4.1-mini
+2026-02-04 13:34:35.405 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/3
+2026-02-04 13:34:35.406 [TYPING] bot=Sid true
+2026-02-04 13:34:35.673 [TYPING] bot=Derek false
+2026-02-04 13:34:35.674 [MESSAGE] [Derek] "Security matters a lot, but every new system feels like another hurdle in an already complicated process."
+2026-02-04 13:34:35.674 [INTERRUPT] by=Derek reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-04 13:34:35.674 [OPENAI_REQ] implicit_detect newest="Security matters a lot, but every new system feels like another hurdle in an already compl…"
+2026-02-04 13:34:35.674 [BOT_STATE] bot=Derek TYPING -> IDLE
+2026-02-04 13:34:36.124 [OPENAI_OK] implicit_detect raw="{"targets": ["Derek", "Faith", "Dario"], "confidence": 0.9, "reason": "Sid's comment is a general statement following Derek's comment, clearly involving the group in the conversati…"
+2026-02-04 13:34:36.124 [QUEUE] mention + bot=Derek id=m_1770212076124_203839 len=4
+2026-02-04 13:34:36.124 [QUEUE] DUMP after create mention Derek | schedule=[0:Sid*(m) 1:Dario*(m) 2:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid 3:Derek]
+2026-02-04 13:34:36.125 [QUEUE] schedule +mention bot=Derek len=4
+2026-02-04 13:34:36.125 [QUEUE] DUMP after enqueue Derek | schedule=[0:Derek*(m) 1:Sid*(m) 2:Dario*(m) 3:Faith*(m)] | mentions=[0:Faith 1:Dario 2:Sid 3:Derek]
+2026-02-04 13:34:36.295 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-04 13:34:36.444 [OPENAI_OK] bot=Faith raw="["That makes total sense. If the people you work with aren’t comfortable with tech, too many new steps just slow everything down.", "Sometimes sticking to simpler methods can be way more effective, especially for those w…"
+2026-02-04 13:34:36.444 [BOT_STATE] bot=Faith GENERATING -> THINKING
+2026-02-04 13:34:36.750 [OPENAI_OK] bot=Erik raw="["I work in IT systems for the public sector so I see how tech can make things smoother or more complex, depending on design.", "I'm generally open to new tech but cautious about how it impacts security and accessibility…"
+2026-02-04 13:34:36.750 [BOT_STATE] bot=Erik GENERATING -> THINKING
+2026-02-04 13:34:36.771 [OPENAI_OK] implicit_detect raw="{"targets": ["Faith", "Dario", "Sid"], "confidence": 0.9, "reason": "Derek is making a general comment likely addressed to the group excluding himself."}"
+2026-02-04 13:34:37.060 [BOT_STATE] bot=Erik THINKING -> TYPING bubble=1/3
+2026-02-04 13:34:37.061 [TYPING] bot=Erik true
+2026-02-04 13:34:37.150 [BOT_STATE] bot=Faith THINKING -> TYPING bubble=1/3
+2026-02-04 13:34:37.151 [TYPING] bot=Faith true
+2026-02-04 13:34:37.738 [QUEUE] directive first: bypassing human idle counter rules

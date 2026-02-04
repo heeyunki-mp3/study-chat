@@ -163,19 +163,19 @@ OUTPUT FORMAT:
 
 // =====================
 // buildUserPrompt
-// - priorityQuestion: old mention question to answer FIRST
-// - priorityMeta: extra reminder like "it happened 7 msgs ago"
+// - respondTo: { type: "directive"|"mention"|"normal", text?: string }
+//   - directive: include "Latest directive message to respond to" (moderator's message); transcript is enough for context.
+//   - mention: include "Latest message to respond to" (the message that mentioned the bot).
+//   - normal: no "latest message to respond to" block; only transcript and other necessary parts.
 // =====================
 export function buildUserPrompt({
   transcript,
   recentBot,
   recentQs,
-  userText,
   mode,
   botName,
   otherName,
-  priorityQuestion = null,
-  priorityMeta = null,
+  respondTo = null,
   moderatorName = MODERATOR_NAME_DEFAULT,
   humanParticipantName = "You",
 }) {
@@ -198,22 +198,25 @@ export function buildUserPrompt({
 - You may ask ONE simple question.`
       : `MODE=human
 - Respond naturally to the chat.
-- If there is a priority question, answer it first.`;
+- If there is a directive or a message that mentioned you, answer it first.`;
 
-  const priorityBlock = priorityQuestion
-    ? `PRIORITY QUESTION (answer FIRST, even if chat moved on):
-"${sanitizeOneLine(priorityQuestion)}"
-${priorityMeta ? sanitizeOneLine(priorityMeta) : ""}
-
-Rules:
-- Answer it FIRST and directly.
-- Do NOT pretend someone else asked it.
-- After answering, you may react to newer messages.
+  // Only add a "respond to" block when queue is directive or mention; normal has no such block.
+  const respondToBlock =
+    respondTo?.type === "directive" && respondTo?.text
+      ? `
+Latest directive message to respond to (from moderator ${mod}):
+"${sanitizeOneLine(respondTo.text)}"
+Respond to this directive directly. The transcript above gives full context.
 `
-    : "";
+      : respondTo?.type === "mention" && respondTo?.text
+      ? `
+Latest message to respond to (you were mentioned / addressed):
+"${sanitizeOneLine(respondTo.text)}"
+Answer this first, then you may react to newer messages in the transcript.
+`
+      : "";
 
   const prompt = `
-${priorityBlock}
 Chat so far:
 ${transcript}
 
@@ -222,11 +225,7 @@ ${recentBot || "(none)"}
 
 Recent question-like prompts already asked (DO NOT repeat/rephrase):
 ${recentQs || "(none)"}
-
-Latest message to respond to:
-"${sanitizeOneLine(userText)}"
-(If the latest message is from the moderator (${mod}), treat it as a directive and respond to it.)
-
+${respondToBlock}
 ${modeBlock}
 
 Return 1 to 3 chat messages as a JSON array of strings.
