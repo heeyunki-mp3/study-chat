@@ -343,12 +343,18 @@ async function detectImplicitMention({ history, botNames }) {
   const chat = window.map((m) => `${m.name}: ${m.text}`).join("\n");
 
   const sys = `
-You are detecting who is being addressed in the newest message.
+You detect who is being directly addressed in the newest message.
 
-Output a list of targets:
-- If addressed to ONE specific person: return that person only
-- If addressed to EVERYONE/ALL (e.g., "let's introduce ourselves", "what do you all think", "everyone share"): return ALL names except the speaker
-- If it's a general comment or reaction with no clear addressee: return empty array
+Return targets ONLY when the message clearly addresses someone:
+- Addressed to ONE specific person (e.g. question or request to them): return that person only.
+- Addressed to EVERYONE/ALL with explicit invite (e.g. "let's introduce ourselves", "what do you all think", "everyone share"): return ALL names except the speaker.
+
+Return EMPTY array when:
+- The message is a general statement, opinion, or reaction (e.g. "From my experience...", "I think...", "That makes sense").
+- The message is commentary on the topic without asking anyone to respond.
+- It is unclear who is being addressed.
+
+When in doubt, return empty array. Only include targets when there is a clear question, request, or explicit group invite.
 
 Output ONLY JSON:
 {"targets": [<NAME1>, <NAME2>, ...], "confidence": <0..1>, "reason": "<short>"}
@@ -365,7 +371,7 @@ ${chat}
 Newest message:
 ${newest.name}: "${newest.text}"
 
-Return JSON only. If addressed to everyone/all, include all names except ${newest.name}.
+Return JSON only. If clearly addressed to everyone/all (explicit invite), include all names except ${newest.name}. If a general statement or opinion with no clear addressee, return empty array.
 `.trim();
 
   logLine("OPENAI_REQ", `implicit_detect newest="${clip(newest.text, 90)}"`);
@@ -403,7 +409,8 @@ Return JSON only. If addressed to everyone/all, include all names except ${newes
       .filter((t, i, arr) => arr.indexOf(t) === i); // deduplicate
 
     if (validTargets.length === 0) return [];
-    if (conf < 0.78) return [];
+    // Require higher confidence so general statements don't create false mention tickets
+    if (conf < 0.85) return [];
 
     return validTargets;
   } catch (e) {
@@ -1130,8 +1137,8 @@ async function runModeratorTimerTick(session) {
   const lastAt = session.lastModeratorMessageAt ?? 0;
   const setIndex = session.moderatorSetIndex ?? 0;
 
-  // Nudge: 30s since last moderator message and at least one participant hasn’t replied. Skip for set 2 (“Before we dive in…”), where we only need 2 bubbles.
-  if (lastAt > 0 && setIndex !== 1 && !session.moderatorNudgeSentAfterLastMessage) {
+  // Nudge: 30s since last moderator message and at least one participant hasn’t replied. Skip only for set 2 (“Before we dive in…”), where we only need 2 bubbles (setIndex 2 = we’ve sent that set).
+  if (lastAt > 0 && setIndex !== 2 && !session.moderatorNudgeSentAfterLastMessage) {
     const elapsed = Date.now() - lastAt;
     if (elapsed >= MODERATOR_NUDGE_AFTER_MS) {
       const participants = getParticipantNames(session); // bots + human with display name from first page
