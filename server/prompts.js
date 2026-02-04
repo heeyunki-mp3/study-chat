@@ -71,7 +71,7 @@ function uniqByHandle(arr) {
 // =====================
 // Export: pickRandomCast(k)
 // =====================
-export function pickRandomCast(k = 5) {
+export function pickRandomCast(k = 4) {
   const pool = uniqByHandle(PERSONAS);
   if (pool.length <= k) return pool;
 

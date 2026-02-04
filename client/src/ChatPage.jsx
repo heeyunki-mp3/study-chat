@@ -179,7 +179,7 @@ export default function ChatPage() {
   return (
     <div style={{ height: "100vh", padding: 16 }}>
       <div style={{ marginBottom: 8, color: "#666" }}>
-        {session ? `Group chat: ${(session.bots || []).join(", ")}` : "Connecting..."}
+        {session ? `Group chat: ${[participantName || "You", ...(session.bots || [])].join(", ")}` : "Connecting..."}
       </div>
 
       <div style={{ height: "75vh" }}>

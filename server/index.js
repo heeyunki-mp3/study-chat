@@ -47,7 +47,23 @@ function getModelForBot(botName) {
 // =====================
 // Tuning knobs
 // =====================
-const LOG_PATH = "./logs.txt";
+// Per-run log: each instance writes to logs/<YYYY-MM-DD_HH-mm-ss>.txt
+const LOG_DIR = path.join(__dirname, "logs");
+const runStart = new Date();
+const runStamp =
+  runStart.getFullYear() +
+  "-" +
+  String(runStart.getMonth() + 1).padStart(2, "0") +
+  "-" +
+  String(runStart.getDate()).padStart(2, "0") +
+  "_" +
+  String(runStart.getHours()).padStart(2, "0") +
+  "-" +
+  String(runStart.getMinutes()).padStart(2, "0") +
+  "-" +
+  String(runStart.getSeconds()).padStart(2, "0");
+fs.mkdirSync(LOG_DIR, { recursive: true });
+const LOG_PATH = path.join(LOG_DIR, `${runStamp}.txt`);
 
 const NORMAL_ENQUEUE_MS = 3000;
 const DEQUEUE_MIN_MS = 1000;
@@ -923,11 +939,40 @@ function getParticipantsWhoRepliedSinceLastModerator(session) {
   return replied;
 }
 
+/** Round = since moderator's last major (non-nudge) text. Used for nudge so we nudge human when they didn't reply but all others did. */
+function getParticipantsWhoRepliedSinceLastMajorModerator(session) {
+  const lastMajorIdx =
+    session.lastMajorModeratorMessageHistoryIndex ??
+    session.lastModeratorMessageHistoryIndex ??
+    getLastModeratorMessageIndex(session);
+  if (lastMajorIdx < 0) return new Set();
+  const replied = new Set();
+  for (let i = lastMajorIdx + 1; i < session.history.length; i++) {
+    const name = session.history[i].name;
+    if (name && name !== MODERATOR_NAME) replied.add(name);
+  }
+  return replied;
+}
+
 function countParticipantMessagesSinceLastModerator(session) {
   const lastModIdx = session.lastModeratorMessageHistoryIndex ?? getLastModeratorMessageIndex(session);
   if (lastModIdx < 0) return session.history.filter((m) => m.name !== MODERATOR_NAME).length;
   let n = 0;
   for (let i = lastModIdx + 1; i < session.history.length; i++) {
+    if (session.history[i].name !== MODERATOR_NAME) n++;
+  }
+  return n;
+}
+
+/** Count participant (non-moderator) messages since last *major* moderator message (excludes nudges). Used for 2-bubble rule after "Before we dive in...". */
+function countParticipantMessagesSinceLastMajorModerator(session) {
+  const lastMajorIdx =
+    session.lastMajorModeratorMessageHistoryIndex ??
+    session.lastModeratorMessageHistoryIndex ??
+    getLastModeratorMessageIndex(session);
+  if (lastMajorIdx < 0) return session.history.filter((m) => m.name !== MODERATOR_NAME).length;
+  let n = 0;
+  for (let i = lastMajorIdx + 1; i < session.history.length; i++) {
     if (session.history[i].name !== MODERATOR_NAME) n++;
   }
   return n;
@@ -959,19 +1004,30 @@ function getNextModeratorBubble(session) {
     return null;
   }
 
-  // Set 2: after all introductions are done (everyone has replied since set 1)
+  // Set 2 ("Before we dive in..." / "There are no right or wrong..."): after all have replied since set 1
   if (setIndex === 1) {
     if (allIntroductionsDone(session)) return MODERATOR_TRANSCRIPT[1];
     return null;
   }
 
-  // Set 3 and later: wait for all participants to respond before moving on
+  // Set 3 ("First question..."): after "Before we dive in...", only need 2 participant bubbles (since last major mod; don't wait for everyone).
+  // Only apply when last major moderator message is actually from set 2 (we set moderatorSetIndex=2 at start of emit, so a mid-send setImmediate can run before set 2 bubbles are in history).
   if (setIndex === 2) {
-    if (allIntroductionsDone(session)) return MODERATOR_TRANSCRIPT[2];
+    const lastMajorIdx =
+      session.lastMajorModeratorMessageHistoryIndex ??
+      session.lastModeratorMessageHistoryIndex ??
+      getLastModeratorMessageIndex(session);
+    const lastMajorText = lastMajorIdx >= 0 && session.history[lastMajorIdx] ? (session.history[lastMajorIdx].text || "") : "";
+    const lastMajorIsSet2 =
+      lastMajorText.includes("Before we dive in") || lastMajorText.includes("There are no right or wrong");
+    if (!lastMajorIsSet2) return null; // still sending set 2 or not sent yet
+    const countSinceMajor = countParticipantMessagesSinceLastMajorModerator(session);
+    logLine("QUEUE", `moderator set 3 check: ${countSinceMajor} participant bubbles since last major (need 2)`);
+    if (countSinceMajor >= 2) return MODERATOR_TRANSCRIPT[2];
     return null;
   }
 
-  // Sets 4 and 5 are sent from the timer (2 min or done/looping), and only after everyone has replied
+  // Sets 4 and 5 are sent from the timer; they wait for everyone and nudge if needed (allIntroductionsDone in timer path)
   return null;
 }
 
@@ -1049,8 +1105,9 @@ async function emitModeratorMessage(session, text, setIndex = null) {
 
     emitAndRecordMessage(session, msg);
   }
+  // Always update last moderator time so nudge timing is from last message (avoids double nudge)
+  session.lastModeratorMessageAt = Date.now();
   if (setIndex != null) {
-    session.lastModeratorMessageAt = Date.now();
     session.lastModeratorMessageHistoryIndex = session.history.length - 1;
   }
 }
@@ -1073,15 +1130,19 @@ async function runModeratorTimerTick(session) {
   const lastAt = session.lastModeratorMessageAt ?? 0;
   const setIndex = session.moderatorSetIndex ?? 0;
 
-  // Nudge: 30s since last moderator message and at least one participant (including human) hasn’t replied
-  if (lastAt > 0 && !session.moderatorNudgeSentAfterLastMessage) {
+  // Nudge: 30s since last moderator message and at least one participant hasn’t replied. Skip for set 2 (“Before we dive in…”), where we only need 2 bubbles.
+  if (lastAt > 0 && setIndex !== 1 && !session.moderatorNudgeSentAfterLastMessage) {
     const elapsed = Date.now() - lastAt;
     if (elapsed >= MODERATOR_NUDGE_AFTER_MS) {
       const participants = getParticipantNames(session); // bots + human with display name from first page
-      const replied = getParticipantsWhoRepliedSinceLastModerator(session);
+      const replied = getParticipantsWhoRepliedSinceLastMajorModerator(session);
       const notReplied = participants.filter((p) => !replied.has(p));
+      logLine("NUDGE", `not replied: ${JSON.stringify(notReplied)}`);
       if (notReplied.length > 0) {
-        const name = notReplied[0]; // bot name or human display name (session.participantName from first page)
+        const humanName = getHumanParticipantName(session);
+        const humanNotReplied = notReplied.includes(humanName);
+        // Prefer nudging the human when they haven't replied (e.g. first moderator text); otherwise first non-replier
+        const name = humanNotReplied ? humanName : notReplied[0];
         await emitModeratorMessage(session, `What do you think, ${name}?`);
         session.moderatorNudgeSentAfterLastMessage = true;
         logLine("QUEUE", `moderator nudge sent to ${name}`);
@@ -1237,6 +1298,7 @@ function emitAndRecordMessage(session, msg) {
     } else if (isModeratorNudge(normalized.text)) {
       enqueueModeratorNudge(session, normalized.text);
     } else {
+      session.lastMajorModeratorMessageHistoryIndex = session.history.length - 1;
       enqueueModeratorDirective(session, normalized.text);
     }
   } else {
@@ -1639,7 +1701,7 @@ io.on("connection", (socket) => {
   const sessionId = socket.id;
   const condition = pickCondition();
 
-  const cast = pickRandomCast(5);
+  const cast = pickRandomCast(4);
   const botNames = cast.map((p) => p.handle);
 
   const personasByHandle = {};
@@ -1675,6 +1737,7 @@ io.on("connection", (socket) => {
     moderatorSetIndex: 0,
     lastModeratorMessageAt: 0,
     lastModeratorMessageHistoryIndex: -1,
+    lastMajorModeratorMessageHistoryIndex: -1,
     lastModeratorDirectiveText: null,
     moderatorNudgeSentAfterLastMessage: false,
     moderatorTimer: null,
