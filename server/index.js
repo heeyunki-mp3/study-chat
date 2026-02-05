@@ -183,6 +183,7 @@ function logLine(tag, msg) {
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use("/profile_pictures", express.static(path.join(__dirname, "..", "profile_pictures")));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -258,6 +259,38 @@ function parseJsonArray(rawText, maxItems = 3) {
 
   // Fallback: treat whole cleaned string as single message
   return s ? [s.slice(0, 220)] : [];
+}
+
+/**
+ * If the message text looks like JSON (array of strings or object with text), decompose it into
+ * plain strings so we never print raw JSON in the chat. Returns an array of strings to emit (one or more).
+ */
+function decomposeJsonMessage(text) {
+  if (text == null || typeof text !== "string") return [String(text ?? "").slice(0, 2000)];
+  const s = text.trim();
+  if (!s || (s[0] !== "[" && s[0] !== "{")) return [s.slice(0, 2000)];
+
+  try {
+    const parsed = JSON.parse(s);
+    if (Array.isArray(parsed)) {
+      const strings = parsed
+        .filter((x) => x != null && typeof x === "string")
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+        .map((x) => x.slice(0, 2000));
+      if (strings.length > 0) return strings;
+    }
+    if (parsed && typeof parsed === "object") {
+      const content =
+        parsed.content ?? parsed.text ?? parsed.message ?? parsed.value ?? parsed.response;
+      if (content != null && typeof content === "string") {
+        return [content.trim().slice(0, 2000)];
+      }
+    }
+  } catch {
+    // Not valid JSON or parse failed — use as-is
+  }
+  return [s.slice(0, 2000)];
 }
 
 function containsHardBanned(text) {
@@ -609,7 +642,13 @@ function nextScheduleItem(session) {
     return (a.createdAt ?? 0) - (b.createdAt ?? 0);
   });
 
-  return sorted[0] || null;
+  // Return first item whose bot is IDLE so we don't block on one busy bot (e.g. directive for Mina
+  // while Mina is GENERATING — we can start Vivian, Anika, Erik instead)
+  for (const item of sorted) {
+    ensureBot(session, item.bot);
+    if (session.bots[item.bot].stage === "IDLE") return item;
+  }
+  return null;
 }
 
 // =====================
@@ -1290,34 +1329,43 @@ async function tryDequeueNow(session) {
 }
 
 function emitAndRecordMessage(session, msg) {
-  // Ensure text is always a string so JSON/objects never get printed on the chat
-  const text = typeof msg.text === "string" ? msg.text : ensureString(msg.text) || String(msg.text ?? "").slice(0, 500);
-  const normalized = { name: msg.name, text: text.slice(0, 2000), ts: msg.ts ?? Date.now() };
+  const rawText = typeof msg.text === "string" ? msg.text : ensureString(msg.text) || String(msg.text ?? "").slice(0, 500);
+  const name = msg.name;
+  const ts = msg.ts ?? Date.now();
 
-  session.msgSeq = (session.msgSeq || 0) + 1;
-  session.history.push(normalized);
-  io.to(session.sessionId).emit("message", normalized);
-  logLine("MESSAGE", `[${normalized.name}] "${clip(normalized.text, 160)}"`);
+  // If the message looks like JSON (e.g. raw ["bubble1","bubble2"]), decompose into plain strings so we never print JSON in the chat
+  const texts = decomposeJsonMessage(rawText);
+  let firstNormalized = null;
+  const historyStart = session.history.length;
+
+  for (const text of texts) {
+    const normalized = { name, text: text.slice(0, 2000), ts };
+    if (!firstNormalized) firstNormalized = normalized;
+    session.msgSeq = (session.msgSeq || 0) + 1;
+    session.history.push(normalized);
+    io.to(session.sessionId).emit("message", normalized);
+    logLine("MESSAGE", `[${normalized.name}] "${clip(normalized.text, 160)}"`);
+  }
+
+  if (!firstNormalized) return;
 
   // Interrupt applies to ALL messages (human "You", moderator Eunice, or any bot)—unchanged from before.
-  interruptAllBotsOnNewMessage(session, { from: msg.name, reason: "new_message" });
+  interruptAllBotsOnNewMessage(session, { from: name, reason: "new_message" });
   setImmediate(() => tryDequeueNow(session).catch(() => {}));
 
-  // Moderator directive updates directions; commentary-only does not. (Only Eunice is moderator; "You" is just a participant.)
-  if (isModeratorMessage(normalized)) {
-    if (isCommentaryOnly(normalized.text)) {
-      // Commentary only: do not update directions bots got; leave schedule and directives as-is.
+  // Moderator directive updates directions; use first message for logic (commentary/nudge/directive)
+  if (isModeratorMessage(firstNormalized)) {
+    if (isCommentaryOnly(firstNormalized.text)) {
       logLine("QUEUE", `moderator commentary only: not updating directions`);
-      runMentionDetectors(session, normalized).catch(() => {});
-    } else if (isModeratorNudge(normalized.text)) {
-      enqueueModeratorNudge(session, normalized.text);
+      runMentionDetectors(session, firstNormalized).catch(() => {});
+    } else if (isModeratorNudge(firstNormalized.text)) {
+      enqueueModeratorNudge(session, firstNormalized.text);
     } else {
-      session.lastMajorModeratorMessageHistoryIndex = session.history.length - 1;
-      enqueueModeratorDirective(session, normalized.text);
+      session.lastMajorModeratorMessageHistoryIndex = historyStart; // first message of this batch
+      enqueueModeratorDirective(session, firstNormalized.text);
     }
   } else {
-    runMentionDetectors(session, normalized).catch(() => {});
-    // After a participant message, maybe send next moderator set (1–3).
+    runMentionDetectors(session, firstNormalized).catch(() => {});
     setImmediate(() => trySendNextModeratorSet(session));
   }
 }
@@ -1764,7 +1812,7 @@ io.on("connection", (socket) => {
 
   logLine("SESSION_START", `id=${sessionId} condition=${condition} bots=${botNames.join(",")}`);
 
-  socket.emit("session", { sessionId, condition, bots: botNames });
+  socket.emit("session", { sessionId, condition, bots: botNames, moderatorName: MODERATOR_NAME });
 
   // Seed (your exact seed rule)
   const shuffled = [...botNames].sort(() => Math.random() - 0.5);

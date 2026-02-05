@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 const PARTICIPANT_NAME_KEY = "participantName";
+const PARTICIPANT_PROFILE_KEY = "participantProfilePicture";
+const SERVER_BASE = "http://127.0.0.1:3001";
 
 function fmtTime(ts) {
   try {
@@ -22,7 +24,7 @@ function fmtTime(ts) {
   }
 }
 
-// Slightly different bubble colors per person (light tints)
+// Bubble colors per person (light tints)
 const SENDER_COLORS = [
   "#e3f2fd", // light blue – You
   "#f3e5f5", // light purple
@@ -34,14 +36,68 @@ const SENDER_COLORS = [
   "#ede7f6", // light indigo
 ];
 
+// Moderator: blue so it reads as mod
+const MODERATOR_COLOR = "#bbdefb"; // light blue
+const MODERATOR_LABEL = " (mod)";
+
+// One color per slot: You, Mod, then bots — no repeat until palette is exhausted
+const PARTICIPANT_PALETTE = [SENDER_COLORS[0], MODERATOR_COLOR, ...SENDER_COLORS.slice(1)];
+
+function getOrderedParticipantNames(session, myName) {
+  const names = [myName || "You"];
+  if (session?.moderatorName) names.push(session.moderatorName);
+  if (session?.bots?.length) names.push(...session.bots);
+  return names;
+}
+
 function getColorForSender(sender, session, myName) {
-  if (!sender) return SENDER_COLORS[0];
-  const participants = [myName || "You", ...(session?.bots || [])];
-  const i = participants.indexOf(sender);
-  if (i >= 0) return SENDER_COLORS[i % SENDER_COLORS.length];
+  if (!sender) return PARTICIPANT_PALETTE[0];
+  const ordered = getOrderedParticipantNames(session, myName);
+  const i = ordered.indexOf(sender);
+  if (i >= 0) return PARTICIPANT_PALETTE[i % PARTICIPANT_PALETTE.length];
   let h = 0;
   for (let j = 0; j < String(sender).length; j++) h = (h << 5) - h + String(sender).charCodeAt(j);
-  return SENDER_COLORS[Math.abs(h) % SENDER_COLORS.length];
+  return PARTICIPANT_PALETTE[Math.abs(h) % PARTICIPANT_PALETTE.length];
+}
+
+// Build participant list for sidebar: You, Moderator, Bots (with profile pic + color, no repeat)
+function getParticipants(session, participantName) {
+  const list = [];
+  const myName = participantName || "You";
+  const bots = session?.bots || [];
+  const moderatorName = session?.moderatorName;
+
+  list.push({
+    name: myName,
+    displayName: myName,
+    isYou: true,
+    isModerator: false,
+    color: PARTICIPANT_PALETTE[0],
+    profilePic: null, // set from sessionStorage in component
+  });
+  let paletteIndex = 1;
+  if (moderatorName) {
+    list.push({
+      name: moderatorName,
+      displayName: `${moderatorName}${MODERATOR_LABEL}`,
+      isYou: false,
+      isModerator: true,
+      color: PARTICIPANT_PALETTE[1],
+      profilePic: null,
+    });
+    paletteIndex = 2;
+  }
+  bots.forEach((bot, i) => {
+    list.push({
+      name: bot,
+      displayName: bot,
+      isYou: false,
+      isModerator: false,
+      color: PARTICIPANT_PALETTE[(paletteIndex + i) % PARTICIPANT_PALETTE.length],
+      profilePic: `${SERVER_BASE}/profile_pictures/profile_${(i % 9) + 1}.jpg`,
+    });
+  });
+  return list;
 }
 
 export default function ChatPage() {
@@ -176,37 +232,127 @@ export default function ChatPage() {
     window.location.href = "/login";
   }
 
-  return (
-    <div style={{ height: "100vh", padding: 16 }}>
-      <div style={{ marginBottom: 8, color: "#666" }}>
-        {session ? `Group chat: ${[participantName || "You", ...(session.bots || [])].join(", ")}` : "Connecting..."}
-      </div>
+  const participantProfilePic = (() => {
+    try {
+      return sessionStorage.getItem(PARTICIPANT_PROFILE_KEY) || null;
+    } catch {
+      return null;
+    }
+  })();
 
-      <div style={{ height: "75vh" }}>
+  const participants = session ? getParticipants(session, participantName) : [];
+  if (participants.length && participants[0].isYou) participants[0].profilePic = participantProfilePic;
+
+  return (
+    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
+      {/* Left sidebar: participant profiles */}
+      <aside
+        style={{
+          width: 220,
+          flexShrink: 0,
+          borderRight: "1px solid #e0e0e0",
+          padding: "16px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          background: "#fafafa",
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4 }}>Participants</div>
+        {session ? (
+          participants.map((p) => (
+            <div
+              key={p.name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 10,
+                background: p.color,
+                border: "1px solid rgba(0,0,0,0.08)",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+              }}
+            >
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                  background: "rgba(255,255,255,0.6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {p.profilePic ? (
+                  <img
+                    src={p.profilePic}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 18, color: "#444" }}>
+                    {p.isModerator ? "🎙️" : (p.displayName || "?").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{
+                      fontWeight: p.isModerator ? 600 : 500,
+                      fontSize: 14,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      color: p.isModerator ? "#1565c0" : "#1a1a1a",
+                    }}>
+                    {p.isYou ? `${p.displayName} (You)` : p.displayName}
+                  </span>
+                  {p.isModerator && (
+                    <span title="Moderator" style={{ flexShrink: 0 }} aria-hidden>🎙️</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ color: "#999", fontSize: 14 }}>Connecting…</div>
+        )}
+      </aside>
+
+      {/* Main chat area: fixed 15cm width; text and input wrap inside, never push */}
+      <div style={{ width: "15cm", minWidth: "15cm", maxWidth: "15cm", flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", padding: 16 }}>
+        <div style={{ height: "75vh", flex: "1 1 0", minHeight: 0, minWidth: 0, width: "100%", overflow: "hidden" }}>
         <MainContainer>
           {/* Custom layout: list | fixed gap (typing) | input — so typing never covers last message */}
           <div className="cs-chat-container chat-layout-with-gap">
             <div className="chat-messages-area">
               <MessageList typingIndicator={null}>
-                {messages.map((m, i) => (
-                  <div
-                    key={i}
-                    className="sender-bubble-wrap"
-                    style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName) }}
-                  >
-                    <Message
-                      model={{
-                        message: typeof m.message === "string" ? m.message : String(m.message ?? "").slice(0, 2000),
-                        sentTime: fmtTime(m.ts),
-                        sender: m.sender,
-                        direction: m.direction,
-                        position: "single",
-                      }}
+                {messages.map((m, i) => {
+                  const isModerator = session?.moderatorName && m.sender === session.moderatorName;
+                  return (
+                    <div
+                      key={i}
+                      className={`sender-bubble-wrap${isModerator ? " moderator-bubble" : ""}`}
+                      style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName) }}
                     >
-                      <Message.Header sender={m.sender} sentTime={fmtTime(m.ts)} />
-                    </Message>
-                  </div>
-                ))}
+                        <Message
+                          model={{
+                            message: typeof m.message === "string" ? m.message : String(m.message ?? "").slice(0, 2000),
+                            sentTime: fmtTime(m.ts),
+                            sender: isModerator ? `${m.sender}${MODERATOR_LABEL}` : m.sender,
+                            direction: m.direction,
+                            position: "single",
+                          }}
+                        >
+                          <Message.Header sender={isModerator ? `${m.sender}${MODERATOR_LABEL}` : m.sender} sentTime={fmtTime(m.ts)} />
+                        </Message>
+                    </div>
+                  );
+                })}
               </MessageList>
             </div>
             <div className="chat-typing-gap" aria-live="polite">
@@ -229,13 +375,14 @@ export default function ChatPage() {
             />
           </div>
         </MainContainer>
-      </div>
+        </div>
 
-      <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between" }}>
-        <div style={{ color: "#666" }}>Chat a bit, then proceed to login.</div>
-        <button onClick={goLogin} style={{ padding: "10px 14px" }}>
-          Proceed to Login
-        </button>
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", flexShrink: 0 }}>
+          <div style={{ color: "#666" }}>Chat a bit, then proceed to login.</div>
+          <button onClick={goLogin} style={{ padding: "10px 14px" }}>
+            Proceed to Login
+          </button>
+        </div>
       </div>
     </div>
   );

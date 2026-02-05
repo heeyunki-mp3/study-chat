@@ -5,9 +5,6 @@
 .DEFAULT_GOAL := help
 .PHONY: finetune prettify to-jsonl status server client chat venv help
 
-# Use venv Python from server/ if it exists (avoids "openai not found" when system python differs)
-PY := (test -f .venv/bin/python3 && .venv/bin/python3 || python3)
-
 # --- Create Python venv in server/ and install openai (fixes "ModuleNotFoundError: No module named 'openai'")
 # Usage: make venv   (run once from project root, or from server/)
 venv:
@@ -16,31 +13,32 @@ venv:
 
 # --- Bot fine-tuning: upload train/valid JSONL and submit fine-tune job
 # Usage: make finetune Mina
+# Use .venv Python from server/ if it exists (subshell so script+args are passed to python)
 finetune: BOT := $(word 1,$(filter-out finetune,$(MAKECMDGOALS)))
 finetune:
 	@if [ -z "$(BOT)" ]; then echo "Usage: make finetune <name>  (e.g. make finetune Mina)"; exit 1; fi
-	cd server && $(PY) scripts/fine_tune_bot.py fine_tune_data/$(BOT).train.jsonl fine_tune_data/$(BOT).valid.jsonl
+	cd server && (P=python3; [ -f .venv/bin/python3 ] && P=.venv/bin/python3; $$P scripts/fine_tune_bot.py fine_tune_data/$(BOT).train.jsonl fine_tune_data/$(BOT).valid.jsonl)
 
 # --- Prettify JSONL for human reading (compact -> multi-line)
-# Usage: make prettify Mina
-prettify: BOT := $(word 1,$(filter-out prettify,$(MAKECMDGOALS)))
+# Usage: make prettify Mina.train.jsonl   or   make prettify Minal.train.jsonl
+prettify: FILE := $(word 1,$(filter-out prettify,$(MAKECMDGOALS)))
 prettify:
-	@if [ -z "$(BOT)" ]; then echo "Usage: make prettify <name>  (e.g. make prettify Mina)"; exit 1; fi
-	cd server && node scripts/prettify_jsonl.js $(BOT)
+	@if [ -z "$(FILE)" ]; then echo "Usage: make prettify <filename>  (e.g. make prettify Mina.train.jsonl)"; exit 1; fi
+	cd server && node scripts/prettify_jsonl.js $(FILE)
 
 # --- Convert prettified JSONL back to compact one-line-per-record JSONL
-# Usage: make to-jsonl Mina
-to-jsonl: BOT := $(word 1,$(filter-out to-jsonl,$(MAKECMDGOALS)))
+# Usage: make to-jsonl Mina.train.prettified.jsonl
+to-jsonl: FILE := $(word 1,$(filter-out to-jsonl,$(MAKECMDGOALS)))
 to-jsonl:
-	@if [ -z "$(BOT)" ]; then echo "Usage: make to-jsonl <name>  (e.g. make to-jsonl Mina)"; exit 1; fi
-	cd server && node scripts/to_jsonl.js $(BOT)
+	@if [ -z "$(FILE)" ]; then echo "Usage: make to-jsonl <filename>  (e.g. make to-jsonl Mina.train.prettified.jsonl)"; exit 1; fi
+	cd server && node scripts/to_jsonl.js $(FILE)
 
 # --- Print status of a fine-tune job
 # Usage: make status ftjob-abc123
 status: JOBID := $(word 1,$(filter-out status,$(MAKECMDGOALS)))
 status:
 	@if [ -z "$(JOBID)" ]; then echo "Usage: make status <job_id>  (e.g. make status ftjob-abc123)"; exit 1; fi
-	cd server && $(PY) scripts/check_status.py $(JOBID)
+	cd server && (P=python3; [ -f .venv/bin/python3 ] && P=.venv/bin/python3; $$P scripts/check_status.py $(JOBID))
 
 # --- Run the backend server
 server:
@@ -63,8 +61,8 @@ help:
 	@echo ""
 	@echo "  make venv              — create server/.venv and install openai (fix \"openai not found\")"
 	@echo "  make finetune <name>   — run fine-tuning (e.g. make finetune Mina)"
-	@echo "  make prettify <name>   — prettify JSONL for reading (e.g. make prettify Mina)"
-	@echo "  make to-jsonl <name>  — convert prettified back to compact JSONL (e.g. make to-jsonl Mina)"
+	@echo "  make prettify <file>   — prettify JSONL (e.g. make prettify Mina.train.jsonl)"
+	@echo "  make to-jsonl <file>   — prettified back to compact (e.g. make to-jsonl Mina.train.prettified.jsonl)"
 	@echo "  make status <job_id>   — print fine-tune job status (e.g. make status ftjob-abc123)"
 	@echo "  make server           — run backend server"
 	@echo "  make client           — run client (Vite dev)"

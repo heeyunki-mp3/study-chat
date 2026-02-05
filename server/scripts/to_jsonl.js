@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Convert prettified JSONL (multi-line JSON objects) back to compact JSONL (one object per line).
- * Usage: node scripts/to_jsonl.js <bot_name>
- *   e.g. node scripts/to_jsonl.js Mina
- * Reads fine_tune_data/<BOT>.train.prettified.jsonl and .valid.prettified.jsonl, overwrites .train.jsonl and .valid.jsonl
+ * Usage: node scripts/to_jsonl.js <filename>
+ *   e.g. node scripts/to_jsonl.js Mina.train.prettified.jsonl
+ * Reads fine_tune_data/<filename>, overwrites fine_tune_data/<name>.jsonl (e.g. Mina.train.jsonl)
  */
 import fs from "fs";
 import path from "path";
@@ -64,20 +64,27 @@ function toJsonl(inputPath, outputPath) {
 const serverDir = path.resolve(__dirname, "..");
 const dataDir = path.join(serverDir, "fine_tune_data");
 
-const bot = process.argv[2];
-if (!bot || !/^[A-Za-z]+$/.test(bot)) {
-  console.error("Usage: node scripts/to_jsonl.js <bot_name>");
-  console.error("  e.g. node scripts/to_jsonl.js Mina");
+const filename = process.argv[2];
+if (!filename || typeof filename !== "string") {
+  console.error("Usage: node scripts/to_jsonl.js <filename>");
+  console.error("  e.g. node scripts/to_jsonl.js Mina.train.prettified.jsonl");
   process.exit(1);
 }
 
-for (const suffix of ["train", "valid"]) {
-  const inputPath = path.join(dataDir, `${bot}.${suffix}.prettified.jsonl`);
-  const outputPath = path.join(dataDir, `${bot}.${suffix}.jsonl`);
-  if (!fs.existsSync(inputPath)) {
-    console.warn(`Skip ${inputPath}: not found`);
-    continue;
-  }
-  const count = toJsonl(inputPath, outputPath);
-  console.log(`${bot}.${suffix}.prettified.jsonl -> ${bot}.${suffix}.jsonl (${count} records)`);
+const base = path.basename(filename);
+if (!base.endsWith(".prettified.jsonl")) {
+  console.error("Filename must end with .prettified.jsonl");
+  process.exit(1);
 }
+
+const inputPath = path.join(dataDir, base);
+if (!fs.existsSync(inputPath)) {
+  console.error(`File not found: ${inputPath}`);
+  process.exit(1);
+}
+
+const outputBase = base.replace(/\.prettified\.jsonl$/, ".jsonl");
+const outputPath = path.join(dataDir, outputBase);
+
+const count = toJsonl(inputPath, outputPath);
+console.log(`${base} -> ${outputBase} (${count} records)`);

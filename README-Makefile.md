@@ -18,8 +18,8 @@ make
 |--------|--------|-------------|
 | **venv** | `make venv` | Create Python venv in `server/` and install `openai` (fixes “openai not found”) |
 | **finetune** | `make finetune Mina` | Run fine-tuning for a bot |
-| **prettify** | `make prettify Mina` | Prettify JSONL for editing |
-| **to-jsonl** | `make to-jsonl Mina` | Convert prettified back to compact JSONL |
+| **prettify** | `make prettify Mina.train.jsonl` | Prettify JSONL for editing (pass filename) |
+| **to-jsonl** | `make to-jsonl Mina.train.prettified.jsonl` | Convert prettified back to compact (pass filename) |
 | **status** | `make status ftjob-xxx` | Check fine-tune job status |
 | **server** | `make server` | Start the backend |
 | **client** | `make client` | Start the frontend (Vite) |
@@ -30,7 +30,7 @@ make
 
 ## Bot name (pass directly)
 
-For `finetune`, `prettify`, `to-jsonl`, and `chat`, pass the bot name **directly after the target**. It is the **prefix of the JSONL files** in `server/fine_tune_data/`:
+For `finetune` and `chat`, pass the **bot name** directly (e.g. Mina). For `prettify` and `to-jsonl`, pass the **filename** (e.g. Mina.train.jsonl). Bot name is the prefix of the JSONL files in `server/fine_tune_data/`:
 
 - **Mina** → `Mina.train.jsonl`, `Mina.valid.jsonl`
 - **Sid** → `Sid.train.jsonl`, `Sid.valid.jsonl`
@@ -75,13 +75,14 @@ make finetune Mina
 Turns compact, one-line-per-record JSONL into multi-line, indented JSON so you can read and edit it.
 
 ```bash
-make prettify Mina
+make prettify Mina.train.jsonl
+# or any .jsonl file: make prettify Minal.train.jsonl
 ```
 
-**Reads:** `server/fine_tune_data/Mina.train.jsonl`, `Mina.valid.jsonl`  
-**Writes:** `Mina.train.prettified.jsonl`, `Mina.valid.prettified.jsonl`
+**Reads:** `server/fine_tune_data/<filename>` (e.g. Mina.train.jsonl)  
+**Writes:** same name with `.prettified` before `.jsonl` (e.g. Mina.train.prettified.jsonl)
 
-Edit the `.prettified.jsonl` files, then convert back with `make to-jsonl Mina`.
+Edit the `.prettified.jsonl` file, then convert back with `make to-jsonl Mina.train.prettified.jsonl`.
 
 ---
 
@@ -90,11 +91,11 @@ Edit the `.prettified.jsonl` files, then convert back with `make to-jsonl Mina`.
 After editing the prettified files, convert them back to compact JSONL (one JSON object per line) and overwrite the original train/valid files.
 
 ```bash
-make to-jsonl Mina
+make to-jsonl Mina.train.prettified.jsonl
 ```
 
-**Reads:** `server/fine_tune_data/Mina.train.prettified.jsonl`, `Mina.valid.prettified.jsonl`  
-**Overwrites:** `Mina.train.jsonl`, `Mina.valid.jsonl`
+**Reads:** `server/fine_tune_data/<filename>` (must end with `.prettified.jsonl`)  
+**Overwrites:** same name with `.prettified` removed (e.g. Mina.train.jsonl)
 
 ---
 
@@ -155,9 +156,9 @@ make chat Mina control
 
 2. **Edit training data (optional)**  
    ```bash
-   make prettify Mina
-   # Edit server/fine_tune_data/Mina.train.prettified.jsonl (and .valid)
-   make to-jsonl Mina
+   make prettify Mina.train.jsonl
+   # Edit server/fine_tune_data/Mina.train.prettified.jsonl
+   make to-jsonl Mina.train.prettified.jsonl
    ```
 
 3. **Start a fine-tune job**  
