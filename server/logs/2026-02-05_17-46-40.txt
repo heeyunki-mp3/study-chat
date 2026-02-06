@@ -1,0 +1,826 @@
+2026-02-05 22:46:40.855 [SESSION_START] backend running on http://localhost:3001
+2026-02-05 22:46:41.052 [SESSION_START] id=InWGrLt7aBdKnY0HAAAB condition=authority bots=Mina,Lukas,Sid,Jae
+2026-02-05 22:46:41.053 [MESSAGE] [Jae] "heyy 👋"
+2026-02-05 22:46:41.053 [MESSAGE] [Mina] "hello!"
+2026-02-05 22:46:41.054 [OPENAI_REQ] implicit_detect newest="hello!"
+2026-02-05 22:46:41.054 [OPENAI_REQ] implicit_detect newest="hello!"
+2026-02-05 22:46:41.092 [SESSION_START] participant_name set to "Hailey"
+2026-02-05 22:46:41.435 [TYPING] moderator true
+2026-02-05 22:46:42.016 [OPENAI_RTT] implicit_detect rtt=962ms
+2026-02-05 22:46:42.016 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General greeting without clear addressee"}"
+2026-02-05 22:46:42.406 [OPENAI_RTT] implicit_detect rtt=1352ms
+2026-02-05 22:46:42.407 [OPENAI_OK] implicit_detect raw="{"targets": ["Jae"], "confidence": 0.9, "reason": "Mina's 'hello!' is a greeting, likely addressed to Jae who spoke last."}"
+2026-02-05 22:46:44.056 [QUEUE] schedule +normal bot=Jae len=1
+2026-02-05 22:46:44.056 [QUEUE] DUMP after enqueue Jae | schedule=[0:Jae] | mentions=[]
+2026-02-05 22:46:45.042 [TYPING] moderator false
+2026-02-05 22:46:45.043 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-05 22:46:45.044 [QUEUE] cleared all 1 scheduled tasks for new moderator directive
+2026-02-05 22:46:45.044 [QUEUE] directive order rotated by 1 (set 1) first=Lukas
+2026-02-05 22:46:45.044 [QUEUE] directive + all bots (4) len=4
+2026-02-05 22:46:45.044 [QUEUE] DUMP after moderator directive | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:45.045 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:46:45.046 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-05 22:46:45.046 [OPENAI_REQ] bot=Lukas ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-05 22:46:45.046 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:46:45.074 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:45.074 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:46:45.074 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-05 22:46:45.074 [OPENAI_REQ] bot=Sid ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-05 22:46:45.074 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:46:45.279 [TYPING] moderator true
+2026-02-05 22:46:45.725 [OPENAI_RTT] bot=Lukas rtt=679ms
+2026-02-05 22:46:45.726 [OPENAI_OK] bot=Lukas raw="["Hi Eunice thanks for organizing this"]"
+2026-02-05 22:46:45.727 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:46:45.727 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:46:45.727 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-05 22:46:45.727 [OPENAI_REQ] bot=Jae ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-05 22:46:45.728 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:46:46.215 [OPENAI_RTT] bot=Sid rtt=1141ms
+2026-02-05 22:46:46.215 [OPENAI_OK] bot=Sid raw="["Hey Eunice, thanks for setting this up.", "Looking forward to the discussion, should be interesting."]"
+2026-02-05 22:46:46.216 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:46:46.636 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/1
+2026-02-05 22:46:46.637 [TYPING] bot=Lukas true
+2026-02-05 22:46:46.929 [OPENAI_RTT] bot=Jae rtt=1201ms
+2026-02-05 22:46:46.929 [OPENAI_OK] bot=Jae raw="[ "Hi Eunice, thanks for setting this up! Looking forward to the discussion today.", "I usually like clear structures for meetings, so this setup seems great so far.", "Just let me know what you need from us as we go alo…"
+2026-02-05 22:46:46.930 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:46:47.049 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-05 22:46:47.050 [TYPING] bot=Sid true
+2026-02-05 22:46:47.329 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:47.527 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:46:47.529 [TYPING] bot=Jae true
+2026-02-05 22:46:48.372 [TYPING] human true
+2026-02-05 22:46:48.372 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:48.521 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:48.662 [TYPING] human true
+2026-02-05 22:46:48.662 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:49.130 [TYPING] human true
+2026-02-05 22:46:49.130 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:49.563 [TYPING] human false
+2026-02-05 22:46:49.579 [HUMAN_INPUT] [Hailey] "Hi!"
+2026-02-05 22:46:49.580 [TYPING] bot=Lukas false
+2026-02-05 22:46:49.580 [INTERRUPT] by=Hailey bot=Lukas reason=new_human_message action=cancel_entire (typedMs=2944)
+2026-02-05 22:46:49.581 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:49.581 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:46:49.581 [TYPING] bot=Sid false
+2026-02-05 22:46:49.581 [INTERRUPT] by=Hailey bot=Sid reason=new_human_message action=cancel_entire (typedMs=2532)
+2026-02-05 22:46:49.581 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:49.581 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:46:49.581 [TYPING] bot=Jae false
+2026-02-05 22:46:49.581 [INTERRUPT] by=Hailey bot=Jae reason=new_human_message action=cancel_entire (typedMs=2054)
+2026-02-05 22:46:49.581 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:49.581 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:46:49.582 [MESSAGE] [Hailey] "Hi!"
+2026-02-05 22:46:49.582 [OPENAI_REQ] implicit_detect newest="Hi!"
+2026-02-05 22:46:49.584 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:46:49.584 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-05 22:46:49.584 [OPENAI_REQ] bot=Lukas ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi!"
+2026-02-05 22:46:49.584 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:46:50.355 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:50.356 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:46:50.356 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-05 22:46:50.357 [OPENAI_REQ] bot=Sid ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi!"
+2026-02-05 22:46:50.357 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:46:50.475 [OPENAI_RTT] implicit_detect rtt=893ms
+2026-02-05 22:46:50.475 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General greeting with no clear addressee."}"
+2026-02-05 22:46:51.001 [OPENAI_RTT] bot=Lukas rtt=1417ms
+2026-02-05 22:46:51.001 [OPENAI_OK] bot=Lukas raw="["Hi Eunice, thanks for organizing this. Looking forward to the discussion.", "Let me know if there are any specific topics we should prepare for."]"
+2026-02-05 22:46:51.003 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:46:51.004 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:46:51.004 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-05 22:46:51.005 [OPENAI_REQ] bot=Jae ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi!"
+2026-02-05 22:46:51.005 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:46:51.390 [OPENAI_RTT] bot=Sid rtt=1033ms
+2026-02-05 22:46:51.391 [OPENAI_OK] bot=Sid raw="[ "Hey Eunice, thanks for setting this up.", "Looking forward to the discussion, should be interesting." ]"
+2026-02-05 22:46:51.391 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:46:51.888 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-05 22:46:51.889 [TYPING] bot=Sid true
+2026-02-05 22:46:51.940 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/2
+2026-02-05 22:46:51.940 [TYPING] bot=Lukas true
+2026-02-05 22:46:52.067 [TYPING] moderator false
+2026-02-05 22:46:52.067 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-05 22:46:52.068 [TYPING] bot=Lukas false
+2026-02-05 22:46:52.068 [INTERRUPT] by=Eunice bot=Lukas reason=new_message action=cancel_entire (typedMs=128)
+2026-02-05 22:46:52.068 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:52.068 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:46:52.068 [TYPING] bot=Sid false
+2026-02-05 22:46:52.068 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_entire (typedMs=179)
+2026-02-05 22:46:52.068 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:52.068 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:46:52.068 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-05 22:46:52.069 [QUEUE] directive order rotated by 1 (set 1) first=Lukas
+2026-02-05 22:46:52.069 [QUEUE] directive + all bots (4) len=4
+2026-02-05 22:46:52.069 [QUEUE] DUMP after moderator directive | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:52.069 [QUEUE] moderator set 1 sent (after participant message)
+2026-02-05 22:46:52.069 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:46:52.069 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:46:52.069 [OPENAI_REQ] bot=Lukas ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share yo…"
+2026-02-05 22:46:52.069 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:46:52.165 [OPENAI_RTT] bot=Jae rtt=1160ms
+2026-02-05 22:46:52.165 [OPENAI_OK] bot=Jae raw="["Hi Eunice, thanks for organizing this! Looking forward to the discussion.", "Let me know if you need anything from me as we go along."]"
+2026-02-05 22:46:52.166 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:46:52.800 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/2
+2026-02-05 22:46:52.802 [TYPING] bot=Jae true
+2026-02-05 22:46:53.102 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:53.103 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:46:53.104 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:46:53.104 [OPENAI_REQ] bot=Sid ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share yo…"
+2026-02-05 22:46:53.104 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:46:53.368 [OPENAI_RTT] bot=Lukas rtt=1298ms
+2026-02-05 22:46:53.369 [OPENAI_OK] bot=Lukas raw="["I'm Lukas Johannes Weber from Munich, working as a mechanical engineer.", "I like precise systems and clear standards, especially in tech and engineering.", "Looking forward to the discussion and hearing everyone's ins…"
+2026-02-05 22:46:53.370 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:46:53.565 [TYPING] human true
+2026-02-05 22:46:53.565 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:53.684 [TYPING] human true
+2026-02-05 22:46:53.685 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:53.702 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:46:53.702 [TYPING] bot=Lukas true
+2026-02-05 22:46:53.790 [TYPING] human true
+2026-02-05 22:46:53.790 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:53.943 [TYPING] human true
+2026-02-05 22:46:53.943 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:54.011 [TYPING] human true
+2026-02-05 22:46:54.012 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:54.107 [TYPING] human true
+2026-02-05 22:46:54.107 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:54.178 [TYPING] human true
+2026-02-05 22:46:54.179 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:54.240 [TYPING] human true
+2026-02-05 22:46:54.240 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:54.332 [OPENAI_RTT] bot=Sid rtt=1227ms
+2026-02-05 22:46:54.333 [OPENAI_OK] bot=Sid raw="["Hey, I'm Sid. Work in IT support in Edison, NJ.", "Spend most days dealing with security headaches and user errors.", "Not a fan of passwords but love talking tech."]"
+2026-02-05 22:46:54.333 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:46:54.957 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-05 22:46:54.959 [TYPING] bot=Sid true
+2026-02-05 22:46:55.046 [TYPING] human false
+2026-02-05 22:46:55.068 [TYPING] human true
+2026-02-05 22:46:55.069 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.174 [TYPING] human true
+2026-02-05 22:46:55.174 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.278 [TYPING] human true
+2026-02-05 22:46:55.279 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.333 [TYPING] human true
+2026-02-05 22:46:55.333 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.390 [TYPING] human true
+2026-02-05 22:46:55.391 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.512 [TYPING] human true
+2026-02-05 22:46:55.513 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.880 [TYPING] human true
+2026-02-05 22:46:55.881 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:55.991 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:56.070 [TYPING] human true
+2026-02-05 22:46:56.071 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:56.866 [TYPING] human true
+2026-02-05 22:46:56.866 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:56.923 [TYPING] human true
+2026-02-05 22:46:56.924 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.043 [TYPING] human true
+2026-02-05 22:46:57.043 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.119 [TYPING] human true
+2026-02-05 22:46:57.120 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.194 [TYPING] human true
+2026-02-05 22:46:57.194 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.280 [TYPING] human true
+2026-02-05 22:46:57.280 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.403 [TYPING] human true
+2026-02-05 22:46:57.403 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.524 [TYPING] human true
+2026-02-05 22:46:57.525 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.644 [TYPING] human true
+2026-02-05 22:46:57.644 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.731 [TYPING] human true
+2026-02-05 22:46:57.732 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.828 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:57.882 [TYPING] human true
+2026-02-05 22:46:57.883 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:57.976 [TYPING] human true
+2026-02-05 22:46:57.977 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.231 [TYPING] human true
+2026-02-05 22:46:58.231 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.380 [TYPING] human true
+2026-02-05 22:46:58.380 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.511 [TYPING] human true
+2026-02-05 22:46:58.512 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.632 [TYPING] human true
+2026-02-05 22:46:58.632 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.741 [TYPING] human true
+2026-02-05 22:46:58.741 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.836 [TYPING] bot=Sid false
+2026-02-05 22:46:58.836 [MESSAGE] [Sid] "Hey, I'm Sid. Work in IT support in Edison, NJ."
+2026-02-05 22:46:58.837 [TYPING] bot=Lukas false
+2026-02-05 22:46:58.837 [INTERRUPT] by=Sid bot=Lukas reason=new_message action=cancel_entire (typedMs=5135)
+2026-02-05 22:46:58.837 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:58.837 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:46:58.837 [TYPING] bot=Jae false
+2026-02-05 22:46:58.838 [INTERRUPT] by=Sid bot=Jae reason=new_message action=cancel_entire (typedMs=6036)
+2026-02-05 22:46:58.838 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae*(d) 3:Mina*(d)] | mentions=[]
+2026-02-05 22:46:58.838 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:46:58.838 [QUEUE] schedule dequeue bot=Sid len=3
+2026-02-05 22:46:58.838 [QUEUE] DUMP after dequeue Sid | schedule=[0:Lukas*(d) 1:Jae*(d) 2:Mina*(d)] | mentions=[]
+2026-02-05 22:46:58.838 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/3
+2026-02-05 22:46:58.839 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:46:58.839 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:46:58.839 [OPENAI_REQ] bot=Lukas ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share yo…"
+2026-02-05 22:46:58.839 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:46:58.885 [TYPING] human true
+2026-02-05 22:46:58.886 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.976 [TYPING] human true
+2026-02-05 22:46:58.976 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:58.996 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:46:58.996 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:46:58.996 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:46:58.996 [OPENAI_REQ] bot=Jae ctx="Jae: heyy 👋 | Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share yo…"
+2026-02-05 22:46:58.996 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:46:59.059 [QUEUE] schedule +normal bot=Sid len=4
+2026-02-05 22:46:59.059 [QUEUE] DUMP after enqueue Sid | schedule=[0:Lukas*(d) 1:Jae*(d) 2:Mina*(d) 3:Sid] | mentions=[]
+2026-02-05 22:46:59.126 [TYPING] human true
+2026-02-05 22:46:59.126 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.187 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/3
+2026-02-05 22:46:59.188 [TYPING] bot=Sid true
+2026-02-05 22:46:59.257 [TYPING] human true
+2026-02-05 22:46:59.257 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.308 [TYPING] human true
+2026-02-05 22:46:59.309 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.427 [TYPING] human true
+2026-02-05 22:46:59.427 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.474 [TYPING] human true
+2026-02-05 22:46:59.474 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.546 [TYPING] human true
+2026-02-05 22:46:59.546 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.624 [TYPING] human true
+2026-02-05 22:46:59.624 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:46:59.848 [OPENAI_RTT] bot=Lukas rtt=1009ms
+2026-02-05 22:46:59.849 [OPENAI_OK] bot=Lukas raw="["I'm Lukas, a mechanical engineer based in Munich.", "Really into precise standards and efficient design processes.", "Always cautious about data security and system reliability."]"
+2026-02-05 22:46:59.849 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:47:00.430 [TYPING] human false
+2026-02-05 22:47:00.451 [TYPING] human true
+2026-02-05 22:47:00.452 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:00.508 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:00.509 [TYPING] bot=Lukas true
+2026-02-05 22:47:00.604 [OPENAI_RTT] bot=Jae rtt=1608ms
+2026-02-05 22:47:00.604 [OPENAI_OK] bot=Jae raw="["Hey, I'm Jae-Woo Lee. I teach high school math in Arlington, VA.", "I try to keep things organized both at work and in life, so structure is my thing.", "I prefer stable routines, especially with technology—I get worri…"
+2026-02-05 22:47:00.605 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:00.612 [TYPING] human true
+2026-02-05 22:47:00.612 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:00.871 [TYPING] human true
+2026-02-05 22:47:00.871 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:01.189 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:01.190 [TYPING] bot=Jae true
+2026-02-05 22:47:01.511 [TYPING] human true
+2026-02-05 22:47:01.511 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:01.744 [TYPING] human true
+2026-02-05 22:47:01.745 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:01.857 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:01.916 [TYPING] human true
+2026-02-05 22:47:01.916 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:02.070 [TYPING] human true
+2026-02-05 22:47:02.071 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:02.161 [TYPING] human true
+2026-02-05 22:47:02.162 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:02.232 [TYPING] human true
+2026-02-05 22:47:02.232 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:02.359 [TYPING] human true
+2026-02-05 22:47:02.359 [QUEUE] human typing: reset dequeue counter
+2026-02-05 22:47:02.396 [TYPING] human false
+2026-02-05 22:47:02.408 [HUMAN_INPUT] [Hailey] "Hi I am Hailey! I am a student at Columbia"
+2026-02-05 22:47:02.409 [TYPING] bot=Lukas false
+2026-02-05 22:47:02.409 [INTERRUPT] by=Hailey bot=Lukas reason=new_human_message action=cancel_entire (typedMs=1901)
+2026-02-05 22:47:02.409 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Lukas*(d) 1:Jae*(d) 2:Mina*(d) 3:Sid] | mentions=[]
+2026-02-05 22:47:02.409 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:47:02.409 [TYPING] bot=Sid false
+2026-02-05 22:47:02.409 [INTERRUPT] by=Hailey bot=Sid reason=new_human_message action=cancel_remaining (typedMs=3222)
+2026-02-05 22:47:02.409 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:47:02.409 [TYPING] bot=Jae false
+2026-02-05 22:47:02.409 [INTERRUPT] by=Hailey bot=Jae reason=new_human_message action=cancel_entire (typedMs=1220)
+2026-02-05 22:47:02.409 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Lukas*(d) 1:Jae*(d) 2:Mina*(d) 3:Sid] | mentions=[]
+2026-02-05 22:47:02.410 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:02.410 [MESSAGE] [Hailey] "Hi I am Hailey! I am a student at Columbia"
+2026-02-05 22:47:02.410 [OPENAI_REQ] implicit_detect newest="Hi I am Hailey! I am a student at Columbia"
+2026-02-05 22:47:02.411 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:47:02.411 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:47:02.411 [OPENAI_REQ] bot=Lukas ctx="Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and any…"
+2026-02-05 22:47:02.411 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:47:03.679 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:03.679 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:03.679 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:47:03.679 [OPENAI_REQ] bot=Jae ctx="Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and any…"
+2026-02-05 22:47:03.679 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:03.697 [OPENAI_RTT] implicit_detect rtt=1287ms
+2026-02-05 22:47:03.697 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General self-introduction statement with no direct addressee."}"
+2026-02-05 22:47:04.049 [OPENAI_RTT] bot=Lukas rtt=1638ms
+2026-02-05 22:47:04.050 [OPENAI_OK] bot=Lukas raw="["Hi, I’m Lukas. I’m a mechanical engineer based in Munich.", "I focus on designing and testing industrial machinery with a lot of attention to standards.", "I prefer working with reliable systems that have clear guarant…"
+2026-02-05 22:47:04.050 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:47:04.050 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-05 22:47:04.050 [OPENAI_REQ] bot=Mina mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:47:04.050 [OPENAI_REQ] bot=Mina ctx="Mina: hello! | Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and any…"
+2026-02-05 22:47:04.050 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D61sPOKv
+2026-02-05 22:47:04.950 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:04.951 [TYPING] bot=Lukas true
+2026-02-05 22:47:05.463 [OPENAI_RTT] bot=Jae rtt=1784ms
+2026-02-05 22:47:05.463 [OPENAI_OK] bot=Jae raw="["Hey everyone, I'm Jae-Woo Lee, a high school math teacher in Arlington, VA.", "I like things structured and organized, especially with tech in the classroom.", "Always a bit cautious about new tech since I worry about …"
+2026-02-05 22:47:05.463 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:05.808 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:05.810 [TYPING] bot=Jae true
+2026-02-05 22:47:06.281 [OPENAI_RTT] bot=Mina rtt=2231ms
+2026-02-05 22:47:06.282 [OPENAI_OK] bot=Mina raw="["Hi all! I’m Mina, and I live in Koreatown, LA. I work as a retail associate at Abercrombie!"]"
+2026-02-05 22:47:06.282 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-05 22:47:06.697 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/1
+2026-02-05 22:47:06.698 [TYPING] bot=Mina true
+2026-02-05 22:47:09.693 [TYPING] bot=Lukas false
+2026-02-05 22:47:09.693 [MESSAGE] [Lukas] "Hi, I’m Lukas. I’m a mechanical engineer based in Munich."
+2026-02-05 22:47:09.693 [TYPING] bot=Mina false
+2026-02-05 22:47:09.693 [INTERRUPT] by=Lukas bot=Mina reason=new_message action=cancel_entire (typedMs=2996)
+2026-02-05 22:47:09.693 [QUEUE] DUMP after cancel entire Mina | schedule=[0:Lukas*(d) 1:Jae*(d) 2:Mina*(d) 3:Sid] | mentions=[]
+2026-02-05 22:47:09.693 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-05 22:47:09.694 [TYPING] bot=Jae false
+2026-02-05 22:47:09.694 [INTERRUPT] by=Lukas bot=Jae reason=new_message action=cancel_entire (typedMs=3885)
+2026-02-05 22:47:09.694 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Lukas*(d) 1:Jae*(d) 2:Mina*(d) 3:Sid] | mentions=[]
+2026-02-05 22:47:09.694 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:09.694 [QUEUE] schedule dequeue bot=Lukas len=3
+2026-02-05 22:47:09.695 [QUEUE] DUMP after dequeue Lukas | schedule=[0:Jae*(d) 1:Mina*(d) 2:Sid] | mentions=[]
+2026-02-05 22:47:09.695 [BOT_STATE] bot=Lukas TYPING -> THINKING nextBubble=2/3
+2026-02-05 22:47:09.695 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:09.695 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:47:09.695 [OPENAI_REQ] bot=Jae ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel …"
+2026-02-05 22:47:09.695 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:10.398 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=2/3
+2026-02-05 22:47:10.399 [TYPING] bot=Lukas true
+2026-02-05 22:47:10.626 [OPENAI_RTT] bot=Jae rtt=931ms
+2026-02-05 22:47:10.626 [OPENAI_OK] bot=Jae raw="["Hey everyone, I’m Jae, a high school math teacher in Arlington VA.", "I mainly work with Google Classroom and love keeping things organized.", "Always cautious about tech changes since I deal with a lot through school …"
+2026-02-05 22:47:10.627 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:10.627 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-05 22:47:10.627 [OPENAI_REQ] bot=Mina mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:47:10.627 [OPENAI_REQ] bot=Mina ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel …"
+2026-02-05 22:47:10.627 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D61sPOKv
+2026-02-05 22:47:11.061 [QUEUE] schedule +normal bot=Lukas len=4
+2026-02-05 22:47:11.062 [QUEUE] DUMP after enqueue Lukas | schedule=[0:Jae*(d) 1:Mina*(d) 2:Sid 3:Lukas] | mentions=[]
+2026-02-05 22:47:11.524 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:11.525 [TYPING] bot=Jae true
+2026-02-05 22:47:11.653 [OPENAI_RTT] bot=Mina rtt=1026ms
+2026-02-05 22:47:11.653 [OPENAI_OK] bot=Mina raw="["Hey, I’m Mina! I work at Abercrombie in Koreatown, LA."]"
+2026-02-05 22:47:11.653 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-05 22:47:11.936 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/1
+2026-02-05 22:47:11.938 [TYPING] bot=Mina true
+2026-02-05 22:47:12.021 [QUEUE] human idle: scheduling 3 messages over 10000ms
+2026-02-05 22:47:15.811 [TYPING] bot=Mina false
+2026-02-05 22:47:15.812 [MESSAGE] [Mina] "Hey, I’m Mina! I work at Abercrombie in Koreatown, LA."
+2026-02-05 22:47:15.812 [TYPING] bot=Lukas false
+2026-02-05 22:47:15.813 [INTERRUPT] by=Mina bot=Lukas reason=new_message action=cancel_remaining (typedMs=5414)
+2026-02-05 22:47:15.813 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:47:15.814 [TYPING] bot=Jae false
+2026-02-05 22:47:15.814 [INTERRUPT] by=Mina bot=Jae reason=new_message action=cancel_entire (typedMs=4289)
+2026-02-05 22:47:15.814 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Jae*(d) 1:Mina*(d) 2:Sid 3:Lukas] | mentions=[]
+2026-02-05 22:47:15.814 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:15.814 [QUEUE] schedule dequeue bot=Mina len=3
+2026-02-05 22:47:15.814 [QUEUE] DUMP after dequeue Mina | schedule=[0:Jae*(d) 1:Sid 2:Lukas] | mentions=[]
+2026-02-05 22:47:15.814 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-05 22:47:15.815 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:15.815 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-05 22:47:15.815 [OPENAI_REQ] bot=Jae ctx="Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning. | Sid: Hey, I'm Sid. Work in IT support in Edison, NJ. | Hailey: Hi I am Hailey! I am a …"
+2026-02-05 22:47:15.815 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:16.709 [BOT_STATE] bot=Sid IDLE -> GENERATING source=normal
+2026-02-05 22:47:16.709 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ=""
+2026-02-05 22:47:16.710 [OPENAI_REQ] bot=Sid ctx="Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning. | Sid: Hey, I'm Sid. Work in IT support in Edison, NJ. | Hailey: Hi I am Hailey! I am a …"
+2026-02-05 22:47:16.710 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:47:17.064 [QUEUE] schedule +normal bot=Mina len=4
+2026-02-05 22:47:17.064 [QUEUE] DUMP after enqueue Mina | schedule=[0:Jae*(d) 1:Sid 2:Lukas 3:Mina] | mentions=[]
+2026-02-05 22:47:17.181 [OPENAI_RTT] bot=Jae rtt=1366ms
+2026-02-05 22:47:17.181 [OPENAI_OK] bot=Jae raw="["Hey all, I’m Jae-Woo Lee. I teach high school math in Arlington, VA.", "I like things organized and prefer stable tech that just works without issues.", "I get a bit anxious when new systems break or complicate the log…"
+2026-02-05 22:47:17.182 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:17.182 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=normal
+2026-02-05 22:47:17.182 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ=""
+2026-02-05 22:47:17.182 [OPENAI_REQ] bot=Lukas ctx="Hailey: Hi! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning. | Sid: Hey, I'm Sid. Work in IT support in Edison, NJ. | Hailey: Hi I am Hailey! I am a …"
+2026-02-05 22:47:17.182 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:47:17.668 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:17.670 [TYPING] bot=Jae true
+2026-02-05 22:47:18.553 [OPENAI_RTT] bot=Sid rtt=1843ms
+2026-02-05 22:47:18.553 [OPENAI_OK] bot=Sid raw="["Nice to meet everyone here. IT support keeps me busy with all kinds of security stuff.", "I’m pretty into anything that can make passwords less of a disaster.", "Happy to chat about anything tech or not."]"
+2026-02-05 22:47:18.554 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:47:18.554 [QUEUE] human idle: dequeued message 2/3
+2026-02-05 22:47:18.807 [OPENAI_RTT] bot=Lukas rtt=1624ms
+2026-02-05 22:47:18.808 [OPENAI_OK] bot=Lukas raw="["Hello everyone, nice to meet you all here.", "Looking forward to hearing what everyone has to share.", "Munich has been nice this time of year, perfect for work and some outdoor projects."]"
+2026-02-05 22:47:18.808 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:47:19.262 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:19.263 [TYPING] bot=Lukas true
+2026-02-05 22:47:19.475 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:19.476 [TYPING] bot=Sid true
+2026-02-05 22:47:23.023 [QUEUE] human idle: scheduling 3 messages over 10000ms
+2026-02-05 22:47:23.312 [TYPING] bot=Jae false
+2026-02-05 22:47:23.315 [MESSAGE] [Jae] "Hey all, I’m Jae-Woo Lee. I teach high school math in Arlington, VA."
+2026-02-05 22:47:23.317 [TYPING] bot=Lukas false
+2026-02-05 22:47:23.317 [INTERRUPT] by=Jae bot=Lukas reason=new_message action=cancel_entire (typedMs=4054)
+2026-02-05 22:47:23.317 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Jae*(d) 1:Sid 2:Lukas 3:Mina] | mentions=[]
+2026-02-05 22:47:23.317 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:47:23.317 [TYPING] bot=Sid false
+2026-02-05 22:47:23.317 [INTERRUPT] by=Jae bot=Sid reason=new_message action=cancel_entire (typedMs=3841)
+2026-02-05 22:47:23.317 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Jae*(d) 1:Sid 2:Lukas 3:Mina] | mentions=[]
+2026-02-05 22:47:23.318 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:47:23.318 [QUEUE] schedule dequeue bot=Jae len=3
+2026-02-05 22:47:23.318 [QUEUE] DUMP after dequeue Jae | schedule=[0:Sid 1:Lukas 2:Mina] | mentions=[]
+2026-02-05 22:47:23.319 [BOT_STATE] bot=Jae TYPING -> THINKING nextBubble=2/3
+2026-02-05 22:47:23.320 [BOT_STATE] bot=Sid IDLE -> GENERATING source=normal
+2026-02-05 22:47:23.320 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ=""
+2026-02-05 22:47:23.321 [OPENAI_REQ] bot=Sid ctx="Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning. | Sid: Hey, I'm Sid. Work in IT support in Edison, NJ. | Hailey: Hi I am Hailey! I am a student at Col…"
+2026-02-05 22:47:23.321 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:47:23.582 [TYPING] moderator true
+2026-02-05 22:47:23.791 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=2/3
+2026-02-05 22:47:23.792 [TYPING] bot=Jae true
+2026-02-05 22:47:24.465 [OPENAI_RTT] bot=Sid rtt=1144ms
+2026-02-05 22:47:24.465 [OPENAI_OK] bot=Sid raw="[ "Cool group! Glad we all have such different backgrounds here.", "Hailey, Columbia sounds intense—what are you studying there?", "If anyone’s curious about tech stuff or security, hit me up. It’s my jam." ]"
+2026-02-05 22:47:24.466 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:47:24.466 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=normal
+2026-02-05 22:47:24.466 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ=""
+2026-02-05 22:47:24.467 [OPENAI_REQ] bot=Lukas ctx="Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning. | Sid: Hey, I'm Sid. Work in IT support in Edison, NJ. | Hailey: Hi I am Hailey! I am a student at Col…"
+2026-02-05 22:47:24.467 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:47:25.412 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-05 22:47:25.413 [TYPING] bot=Sid true
+2026-02-05 22:47:25.669 [OPENAI_RTT] bot=Lukas rtt=1202ms
+2026-02-05 22:47:25.669 [OPENAI_OK] bot=Lukas raw="["Nice to meet everyone here so far, sounds like we have a diverse group.", "Given we're all from different fields, curious about what topic we'll dive into today.", "I prefer structured discussions, so hoping for clear …"
+2026-02-05 22:47:25.669 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:47:26.067 [QUEUE] schedule +normal bot=Jae len=4
+2026-02-05 22:47:26.068 [QUEUE] DUMP after enqueue Jae | schedule=[0:Sid 1:Lukas 2:Mina 3:Jae] | mentions=[]
+2026-02-05 22:47:26.250 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:26.251 [TYPING] bot=Lukas true
+2026-02-05 22:47:29.633 [TYPING] bot=Jae false
+2026-02-05 22:47:29.634 [MESSAGE] [Jae] "I like things organized and prefer stable tech that just works without issues."
+2026-02-05 22:47:29.635 [INTERRUPT] by=Jae reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-05 22:47:29.635 [OPENAI_REQ] implicit_detect newest="I like things organized and prefer stable tech that just works without issues."
+2026-02-05 22:47:29.636 [BOT_STATE] bot=Jae TYPING -> THINKING nextBubble=3/3
+2026-02-05 22:47:30.129 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=3/3
+2026-02-05 22:47:30.133 [TYPING] bot=Jae true
+2026-02-05 22:47:30.387 [OPENAI_RTT] implicit_detect rtt=751ms
+2026-02-05 22:47:30.387 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee."}"
+2026-02-05 22:47:31.496 [TYPING] bot=Lukas false
+2026-02-05 22:47:31.496 [MESSAGE] [Lukas] "Nice to meet everyone here so far, sounds like we have a diverse group."
+2026-02-05 22:47:31.497 [TYPING] bot=Sid false
+2026-02-05 22:47:31.497 [INTERRUPT] by=Lukas bot=Sid reason=new_message action=cancel_entire (typedMs=6085)
+2026-02-05 22:47:31.497 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Sid 1:Lukas 2:Mina 3:Jae] | mentions=[]
+2026-02-05 22:47:31.498 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:47:31.498 [TYPING] bot=Jae false
+2026-02-05 22:47:31.498 [INTERRUPT] by=Lukas bot=Jae reason=new_message action=cancel_remaining (typedMs=1368)
+2026-02-05 22:47:31.498 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:31.498 [OPENAI_REQ] implicit_detect newest="Nice to meet everyone here so far, sounds like we have a diverse group."
+2026-02-05 22:47:31.498 [QUEUE] schedule dequeue bot=Lukas len=3
+2026-02-05 22:47:31.498 [QUEUE] DUMP after dequeue Lukas | schedule=[0:Sid 1:Mina 2:Jae] | mentions=[]
+2026-02-05 22:47:31.498 [BOT_STATE] bot=Lukas TYPING -> THINKING nextBubble=2/3
+2026-02-05 22:47:31.500 [BOT_STATE] bot=Sid IDLE -> GENERATING source=normal
+2026-02-05 22:47:31.500 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ=""
+2026-02-05 22:47:31.500 [OPENAI_REQ] bot=Sid ctx="Hailey: Hi I am Hailey! I am a student at Columbia | Lukas: Hi, I’m Lukas. I’m a mechanical engineer based in Munich. | Mina: Hey, I’m Mina! I work at Abercrombie in Koreatown, LA. | Jae: Hey all, I’m Jae-Woo Lee. I teach high school math i…"
+2026-02-05 22:47:31.500 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:47:32.069 [QUEUE] schedule +normal bot=Lukas len=4
+2026-02-05 22:47:32.070 [QUEUE] DUMP after enqueue Lukas | schedule=[0:Sid 1:Mina 2:Jae 3:Lukas] | mentions=[]
+2026-02-05 22:47:32.227 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=2/3
+2026-02-05 22:47:32.228 [TYPING] bot=Lukas true
+2026-02-05 22:47:32.281 [OPENAI_RTT] implicit_detect rtt=783ms
+2026-02-05 22:47:32.282 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee"}"
+2026-02-05 22:47:32.810 [TYPING] moderator false
+2026-02-05 22:47:32.810 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-05 22:47:32.811 [TYPING] bot=Lukas false
+2026-02-05 22:47:32.811 [INTERRUPT] by=Eunice bot=Lukas reason=new_message action=cancel_remaining (typedMs=583)
+2026-02-05 22:47:32.811 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:47:32.811 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-05 22:47:32.812 [QUEUE] directive order rotated by 2 (set 2) first=Sid
+2026-02-05 22:47:32.812 [QUEUE] directive + all bots (4) len=4
+2026-02-05 22:47:32.812 [QUEUE] DUMP after moderator directive | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina*(d) 3:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:32.812 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:32.812 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-05 22:47:32.812 [OPENAI_REQ] bot=Jae ctx="Mina: Hey, I’m Mina! I work at Abercrombie in Koreatown, LA. | Jae: Hey all, I’m Jae-Woo Lee. I teach high school math in Arlington, VA. | Jae: I like things organized and prefer stable tech that just works without issues. | Lukas: Nice to …"
+2026-02-05 22:47:32.812 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:33.025 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-05 22:47:33.025 [OPENAI_REQ] bot=Mina mode=human condition=authority priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-05 22:47:33.025 [OPENAI_REQ] bot=Mina ctx="Mina: Hey, I’m Mina! I work at Abercrombie in Koreatown, LA. | Jae: Hey all, I’m Jae-Woo Lee. I teach high school math in Arlington, VA. | Jae: I like things organized and prefer stable tech that just works without issues. | Lukas: Nice to …"
+2026-02-05 22:47:33.025 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D61sPOKv
+2026-02-05 22:47:33.160 [TYPING] moderator true
+2026-02-05 22:47:33.316 [OPENAI_RTT] bot=Sid rtt=1816ms
+2026-02-05 22:47:33.316 [OPENAI_OK] bot=Sid raw="["Stable tech is gold for teaching. I deal with all kinds of user issues daily and stability saves tons of headaches.", "Mechanical engineering in Munich sounds cool, probably lots of precision work involved.", "Columbia…"
+2026-02-05 22:47:33.318 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:47:34.025 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:34.244 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:34.245 [TYPING] bot=Sid true
+2026-02-05 22:47:34.751 [OPENAI_RTT] bot=Jae rtt=1938ms
+2026-02-05 22:47:34.752 [OPENAI_OK] bot=Jae raw="[ "It makes sense to study how new tech features affect users before they fully commit to them.", "In my experience, I usually weigh stability and ease of use before adopting anything new.", "I tend to be cautious with c…"
+2026-02-05 22:47:34.752 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:35.064 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/2
+2026-02-05 22:47:35.066 [TYPING] bot=Jae true
+2026-02-05 22:47:35.113 [OPENAI_RTT] bot=Mina rtt=2088ms
+2026-02-05 22:47:35.114 [OPENAI_OK] bot=Mina raw="["Got it!","That makes sense."]"
+2026-02-05 22:47:35.114 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-05 22:47:35.114 [QUEUE] human idle: dequeued message 3/3 (directive)
+2026-02-05 22:47:35.151 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:35.771 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/2
+2026-02-05 22:47:35.772 [TYPING] bot=Mina true
+2026-02-05 22:47:36.233 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:36.327 [TYPING] bot=Mina false
+2026-02-05 22:47:36.328 [MESSAGE] [Mina] "Got it!"
+2026-02-05 22:47:36.330 [TYPING] bot=Sid false
+2026-02-05 22:47:36.331 [INTERRUPT] by=Mina bot=Sid reason=new_message action=cancel_entire (typedMs=2085)
+2026-02-05 22:47:36.331 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina*(d) 3:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:36.331 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:47:36.332 [TYPING] bot=Jae false
+2026-02-05 22:47:36.332 [INTERRUPT] by=Mina bot=Jae reason=new_message action=cancel_entire (typedMs=1266)
+2026-02-05 22:47:36.332 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina*(d) 3:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:36.333 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:36.333 [OPENAI_REQ] implicit_detect newest="Got it!"
+2026-02-05 22:47:36.333 [QUEUE] schedule dequeue bot=Mina len=3
+2026-02-05 22:47:36.334 [QUEUE] DUMP after dequeue Mina | schedule=[0:Sid*(d) 1:Jae*(d) 2:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:36.334 [BOT_STATE] bot=Mina TYPING -> THINKING nextBubble=2/2
+2026-02-05 22:47:36.336 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:47:36.336 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-05 22:47:36.336 [OPENAI_REQ] bot=Sid ctx="Jae: Hey all, I’m Jae-Woo Lee. I teach high school math in Arlington, VA. | Jae: I like things organized and prefer stable tech that just works without issues. | Lukas: Nice to meet everyone here so far, sounds like we have a diverse group.…"
+2026-02-05 22:47:36.336 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:47:36.337 [QUEUE] moderator set 3 check: 1 participant bubbles since last major (need 2)
+2026-02-05 22:47:37.170 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=2/2
+2026-02-05 22:47:37.171 [TYPING] bot=Mina true
+2026-02-05 22:47:37.261 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:37.262 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:37.262 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-05 22:47:37.262 [OPENAI_REQ] bot=Jae ctx="Jae: Hey all, I’m Jae-Woo Lee. I teach high school math in Arlington, VA. | Jae: I like things organized and prefer stable tech that just works without issues. | Lukas: Nice to meet everyone here so far, sounds like we have a diverse group.…"
+2026-02-05 22:47:37.263 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:37.613 [TYPING] moderator false
+2026-02-05 22:47:37.616 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-05 22:47:37.617 [TYPING] bot=Mina false
+2026-02-05 22:47:37.617 [INTERRUPT] by=Eunice bot=Mina reason=new_message action=cancel_remaining (typedMs=446)
+2026-02-05 22:47:37.618 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-05 22:47:37.618 [QUEUE] cleared all 3 scheduled tasks for new moderator directive
+2026-02-05 22:47:37.619 [QUEUE] directive order rotated by 2 (set 2) first=Sid
+2026-02-05 22:47:37.619 [QUEUE] directive + all bots (4) len=4
+2026-02-05 22:47:37.619 [QUEUE] DUMP after moderator directive | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina*(d) 3:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:37.619 [QUEUE] moderator set 2 sent (after participant message)
+2026-02-05 22:47:37.622 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-05 22:47:37.622 [OPENAI_REQ] bot=Mina mode=human condition=authority priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-05 22:47:37.623 [OPENAI_REQ] bot=Mina ctx="Jae: I like things organized and prefer stable tech that just works without issues. | Lukas: Nice to meet everyone here so far, sounds like we have a diverse group. | Eunice: Before we dive in, just a quick note about the goal of this study…"
+2026-02-05 22:47:37.623 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D61sPOKv
+2026-02-05 22:47:37.626 [OPENAI_RTT] bot=Sid rtt=1290ms
+2026-02-05 22:47:37.626 [OPENAI_OK] bot=Sid raw="["Sounds like a good plan. Big tech usually rolls out features quickly, so user experience matters a lot.", "Adoption often depends on how seamless the new tech is and if it really solves existing problems or just adds c…"
+2026-02-05 22:47:37.627 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:47:38.050 [OPENAI_RTT] implicit_detect rtt=1717ms
+2026-02-05 22:47:38.052 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General acknowledgment with no clear addressee"}"
+2026-02-05 22:47:38.547 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-05 22:47:38.548 [TYPING] bot=Sid true
+2026-02-05 22:47:38.642 [OPENAI_RTT] bot=Mina rtt=1019ms
+2026-02-05 22:47:38.642 [OPENAI_OK] bot=Mina raw="["Got it! I can definitely do that."]"
+2026-02-05 22:47:38.643 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-05 22:47:39.347 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/1
+2026-02-05 22:47:39.348 [TYPING] bot=Mina true
+2026-02-05 22:47:39.667 [OPENAI_RTT] bot=Jae rtt=2404ms
+2026-02-05 22:47:39.668 [OPENAI_OK] bot=Jae raw="[ "I feel like improving security is important but it has to be easy enough so people actually use it.", "In my experience, if a new feature causes glitches or lockouts, I’m much less likely to adopt it.", "It’s all abou…"
+2026-02-05 22:47:39.668 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:40.563 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:40.564 [TYPING] bot=Jae true
+2026-02-05 22:47:41.416 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:42.937 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:43.666 [TYPING] bot=Mina false
+2026-02-05 22:47:43.666 [MESSAGE] [Mina] "Got it! I can definitely do that."
+2026-02-05 22:47:43.666 [TYPING] bot=Sid false
+2026-02-05 22:47:43.667 [INTERRUPT] by=Mina bot=Sid reason=new_message action=cancel_entire (typedMs=5119)
+2026-02-05 22:47:43.667 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina*(d) 3:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:43.667 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:47:43.667 [TYPING] bot=Jae false
+2026-02-05 22:47:43.667 [INTERRUPT] by=Mina bot=Jae reason=new_message action=cancel_entire (typedMs=3103)
+2026-02-05 22:47:43.667 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina*(d) 3:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:43.667 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:43.668 [OPENAI_REQ] implicit_detect newest="Got it! I can definitely do that."
+2026-02-05 22:47:43.668 [QUEUE] schedule dequeue bot=Mina len=3
+2026-02-05 22:47:43.668 [QUEUE] DUMP after dequeue Mina | schedule=[0:Sid*(d) 1:Jae*(d) 2:Lukas*(d)] | mentions=[]
+2026-02-05 22:47:43.668 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-05 22:47:43.671 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:47:43.671 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-05 22:47:43.671 [OPENAI_REQ] bot=Sid ctx="Lukas: Nice to meet everyone here so far, sounds like we have a diverse group. | Eunice: Before we dive in, just a quick note about the goal of this study. | We are interested in how people experience new features introduced by large tech c…"
+2026-02-05 22:47:43.671 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:47:43.673 [QUEUE] moderator set 3 check: 1 participant bubbles since last major (need 2)
+2026-02-05 22:47:44.073 [QUEUE] schedule +normal bot=Mina len=4
+2026-02-05 22:47:44.073 [QUEUE] DUMP after enqueue Mina | schedule=[0:Sid*(d) 1:Jae*(d) 2:Lukas*(d) 3:Mina] | mentions=[]
+2026-02-05 22:47:44.468 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:47:44.469 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:44.469 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-05 22:47:44.469 [OPENAI_REQ] bot=Jae ctx="Lukas: Nice to meet everyone here so far, sounds like we have a diverse group. | Eunice: Before we dive in, just a quick note about the goal of this study. | We are interested in how people experience new features introduced by large tech c…"
+2026-02-05 22:47:44.470 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:44.535 [OPENAI_RTT] implicit_detect rtt=867ms
+2026-02-05 22:47:44.536 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee."}"
+2026-02-05 22:47:45.503 [OPENAI_RTT] bot=Sid rtt=1832ms
+2026-02-05 22:47:45.504 [OPENAI_OK] bot=Sid raw="["Tech changes fast and it’s exhausting. I always check if a new feature actually improves security or just adds hassle.", "Most people don’t think about the risks; they just want convenience. That’s usually a bad trade-…"
+2026-02-05 22:47:45.504 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:47:45.504 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:47:45.505 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-05 22:47:45.505 [OPENAI_REQ] bot=Lukas ctx="Lukas: Nice to meet everyone here so far, sounds like we have a diverse group. | Eunice: Before we dive in, just a quick note about the goal of this study. | We are interested in how people experience new features introduced by large tech c…"
+2026-02-05 22:47:45.505 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:47:46.392 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:46.394 [TYPING] bot=Sid true
+2026-02-05 22:47:46.423 [OPENAI_RTT] bot=Jae rtt=1953ms
+2026-02-05 22:47:46.424 [OPENAI_OK] bot=Jae raw="[ "I usually stick with tech that’s proven and reliable since I can’t afford disruptions during work.", "New features sometimes feel exciting but also a bit risky if they break workflow or logins.", "I like when updates …"
+2026-02-05 22:47:46.424 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:46.567 [OPENAI_RTT] bot=Lukas rtt=1062ms
+2026-02-05 22:47:46.568 [OPENAI_OK] bot=Lukas raw="[ "I tend to be cautious about adopting new tech until I see clear standards or guarantees.", "For me, reliability and clear specifications are key before I fully trust new features.", "I like to understand what happens …"
+2026-02-05 22:47:46.568 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:47:46.980 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:46.981 [TYPING] bot=Jae true
+2026-02-05 22:47:47.002 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:47.002 [TYPING] bot=Lukas true
+2026-02-05 22:47:48.352 [QUEUE] human idle: scheduling 3 messages over 10000ms
+2026-02-05 22:47:54.306 [TYPING] bot=Lukas false
+2026-02-05 22:47:54.307 [MESSAGE] [Lukas] "I tend to be cautious about adopting new tech until I see clear standards or guarantees."
+2026-02-05 22:47:54.309 [TYPING] bot=Sid false
+2026-02-05 22:47:54.309 [INTERRUPT] by=Lukas bot=Sid reason=new_message action=cancel_entire (typedMs=7915)
+2026-02-05 22:47:54.310 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Sid*(d) 1:Jae*(d) 2:Lukas*(d) 3:Mina] | mentions=[]
+2026-02-05 22:47:54.310 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:47:54.310 [TYPING] bot=Jae false
+2026-02-05 22:47:54.310 [INTERRUPT] by=Lukas bot=Jae reason=new_message action=cancel_entire (typedMs=7329)
+2026-02-05 22:47:54.310 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Sid*(d) 1:Jae*(d) 2:Lukas*(d) 3:Mina] | mentions=[]
+2026-02-05 22:47:54.311 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:47:54.311 [OPENAI_REQ] implicit_detect newest="I tend to be cautious about adopting new tech until I see clear standards or guarantees."
+2026-02-05 22:47:54.311 [QUEUE] schedule dequeue bot=Lukas len=3
+2026-02-05 22:47:54.311 [QUEUE] DUMP after dequeue Lukas | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina] | mentions=[]
+2026-02-05 22:47:54.311 [BOT_STATE] bot=Lukas TYPING -> THINKING nextBubble=2/3
+2026-02-05 22:47:54.315 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:47:54.315 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-05 22:47:54.316 [OPENAI_REQ] bot=Sid ctx="Eunice: Before we dive in, just a quick note about the goal of this study. | We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not. | Mina: Got it! | Eun…"
+2026-02-05 22:47:54.316 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:47:54.318 [QUEUE] moderator set 3 check: 2 participant bubbles since last major (need 2)
+2026-02-05 22:47:54.569 [TYPING] moderator true
+2026-02-05 22:47:54.842 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=2/3
+2026-02-05 22:47:54.843 [TYPING] bot=Lukas true
+2026-02-05 22:47:55.066 [OPENAI_RTT] bot=Sid rtt=750ms
+2026-02-05 22:47:55.066 [OPENAI_OK] bot=Sid raw="["New tech can be hit or miss, but I usually test it in a controlled environment before rolling out."]"
+2026-02-05 22:47:55.066 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:47:55.067 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:47:55.067 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="There are no right or wrong answers here. Feel free to talk openly about your own experien…"
+2026-02-05 22:47:55.067 [OPENAI_REQ] bot=Jae ctx="Eunice: Before we dive in, just a quick note about the goal of this study. | We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not. | Mina: Got it! | Eun…"
+2026-02-05 22:47:55.067 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:47:55.687 [OPENAI_RTT] implicit_detect rtt=1376ms
+2026-02-05 22:47:55.687 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee"}"
+2026-02-05 22:47:55.848 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/1
+2026-02-05 22:47:55.849 [TYPING] bot=Sid true
+2026-02-05 22:47:56.077 [QUEUE] schedule +normal bot=Lukas len=4
+2026-02-05 22:47:56.077 [QUEUE] DUMP after enqueue Lukas | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina 3:Lukas] | mentions=[]
+2026-02-05 22:47:56.528 [OPENAI_RTT] bot=Jae rtt=1461ms
+2026-02-05 22:47:56.528 [OPENAI_OK] bot=Jae raw="[ "I usually wait to adopt new tech until it's proven stable and reliable, especially for work.", "In my experience, shiny new features often come with unexpected glitches or lockouts.", "I feel like it’s important to un…"
+2026-02-05 22:47:56.528 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:47:57.029 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:47:57.030 [TYPING] bot=Jae true
+2026-02-05 22:47:59.353 [QUEUE] human idle: scheduling 3 messages over 10000ms
+2026-02-05 22:48:01.404 [TYPING] bot=Lukas false
+2026-02-05 22:48:01.405 [MESSAGE] [Lukas] "For me, reliability and clear specifications are key before I fully trust new features."
+2026-02-05 22:48:01.405 [INTERRUPT] by=Lukas reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-05 22:48:01.407 [OPENAI_REQ] implicit_detect newest="For me, reliability and clear specifications are key before I fully trust new features."
+2026-02-05 22:48:01.408 [BOT_STATE] bot=Lukas TYPING -> THINKING nextBubble=3/3
+2026-02-05 22:48:02.284 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=3/3
+2026-02-05 22:48:02.285 [TYPING] bot=Lukas true
+2026-02-05 22:48:02.493 [OPENAI_RTT] implicit_detect rtt=1086ms
+2026-02-05 22:48:02.493 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "Lukas is making a general statement about his preferences with no clear addressee."}"
+2026-02-05 22:48:02.967 [TYPING] moderator false
+2026-02-05 22:48:02.971 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often. How do you usually feel when a company you use introduces something new? Do y…"
+2026-02-05 22:48:02.971 [TYPING] bot=Lukas false
+2026-02-05 22:48:02.971 [INTERRUPT] by=Eunice bot=Lukas reason=new_message action=cancel_remaining (typedMs=686)
+2026-02-05 22:48:02.971 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:48:02.972 [TYPING] bot=Sid false
+2026-02-05 22:48:02.972 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_entire (typedMs=7123)
+2026-02-05 22:48:02.972 [QUEUE] DUMP after cancel entire Sid | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina 3:Lukas] | mentions=[]
+2026-02-05 22:48:02.972 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-05 22:48:02.972 [TYPING] bot=Jae false
+2026-02-05 22:48:02.973 [INTERRUPT] by=Eunice bot=Jae reason=new_message action=cancel_entire (typedMs=5942)
+2026-02-05 22:48:02.973 [QUEUE] DUMP after cancel entire Jae | schedule=[0:Sid*(d) 1:Jae*(d) 2:Mina 3:Lukas] | mentions=[]
+2026-02-05 22:48:02.973 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:48:02.973 [QUEUE] cleared all 4 scheduled tasks for new moderator directive
+2026-02-05 22:48:02.973 [QUEUE] directive order rotated by 3 (set 3) first=Jae
+2026-02-05 22:48:02.973 [QUEUE] directive + all bots (4) len=4
+2026-02-05 22:48:02.973 [QUEUE] DUMP after moderator directive | schedule=[0:Jae*(d) 1:Mina*(d) 2:Lukas*(d) 3:Sid*(d)] | mentions=[]
+2026-02-05 22:48:02.974 [QUEUE] moderator set 3 sent (after participant message)
+2026-02-05 22:48:02.974 [BOT_STATE] bot=Jae IDLE -> GENERATING source=directive
+2026-02-05 22:48:02.975 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:02.975 [OPENAI_REQ] bot=Jae ctx="Lukas: I tend to be cautious about adopting new tech until I see clear standards or guarantees. | Lukas: For me, reliability and clear specifications are key before I fully trust new features. | Eunice: First question: Big tech companies li…"
+2026-02-05 22:48:02.975 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:48:03.676 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-05 22:48:03.676 [OPENAI_REQ] bot=Mina mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:03.676 [OPENAI_REQ] bot=Mina ctx="Lukas: I tend to be cautious about adopting new tech until I see clear standards or guarantees. | Lukas: For me, reliability and clear specifications are key before I fully trust new features. | Eunice: First question: Big tech companies li…"
+2026-02-05 22:48:03.677 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D61sPOKv
+2026-02-05 22:48:04.586 [OPENAI_RTT] bot=Mina rtt=909ms
+2026-02-05 22:48:04.586 [OPENAI_OK] bot=Mina raw="["I usually try new features when they look easy and convenient. If it requires too many steps or setup, I tend to ignore it."]"
+2026-02-05 22:48:04.586 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-05 22:48:04.586 [QUEUE] human idle: dequeued message 2/3 (directive)
+2026-02-05 22:48:05.108 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/1
+2026-02-05 22:48:05.108 [TYPING] bot=Mina true
+2026-02-05 22:48:05.575 [OPENAI_RTT] bot=Jae rtt=2600ms
+2026-02-05 22:48:05.575 [OPENAI_OK] bot=Jae raw="[ "I usually feel cautious when new features roll out, especially from big companies like Google.", "I prefer to wait for reviews or for others to test the feature first before trying it myself.", "In my experience, jump…"
+2026-02-05 22:48:05.576 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:48:05.576 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:48:05.576 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:05.577 [OPENAI_REQ] bot=Lukas ctx="Lukas: I tend to be cautious about adopting new tech until I see clear standards or guarantees. | Lukas: For me, reliability and clear specifications are key before I fully trust new features. | Eunice: First question: Big tech companies li…"
+2026-02-05 22:48:05.577 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:48:06.091 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:48:06.093 [TYPING] bot=Jae true
+2026-02-05 22:48:06.744 [OPENAI_RTT] bot=Lukas rtt=1167ms
+2026-02-05 22:48:06.744 [OPENAI_OK] bot=Lukas raw="["I usually wait for reviews or official standards before trying new features to avoid issues.","If there's clear documentation and guarantees, I might test new features on secondary devices first.","Immediate adoption w…"
+2026-02-05 22:48:06.745 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:48:07.411 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:48:07.412 [TYPING] bot=Lukas true
+2026-02-05 22:48:10.356 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:11.933 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:13.875 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:14.207 [TYPING] bot=Jae false
+2026-02-05 22:48:14.210 [MESSAGE] [Jae] "I usually feel cautious when new features roll out, especially from big companies like Google."
+2026-02-05 22:48:14.210 [TYPING] bot=Mina false
+2026-02-05 22:48:14.210 [INTERRUPT] by=Jae bot=Mina reason=new_message action=cancel_entire (typedMs=9102)
+2026-02-05 22:48:14.210 [QUEUE] DUMP after cancel entire Mina | schedule=[0:Jae*(d) 1:Mina*(d) 2:Lukas*(d) 3:Sid*(d)] | mentions=[]
+2026-02-05 22:48:14.210 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-05 22:48:14.211 [TYPING] bot=Lukas false
+2026-02-05 22:48:14.211 [INTERRUPT] by=Jae bot=Lukas reason=new_message action=cancel_entire (typedMs=6799)
+2026-02-05 22:48:14.211 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Jae*(d) 1:Mina*(d) 2:Lukas*(d) 3:Sid*(d)] | mentions=[]
+2026-02-05 22:48:14.211 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:48:14.211 [OPENAI_REQ] implicit_detect newest="I usually feel cautious when new features roll out, especially from big companies like Goo…"
+2026-02-05 22:48:14.211 [QUEUE] schedule dequeue bot=Jae len=3
+2026-02-05 22:48:14.211 [QUEUE] DUMP after dequeue Jae | schedule=[0:Mina*(d) 1:Lukas*(d) 2:Sid*(d)] | mentions=[]
+2026-02-05 22:48:14.211 [BOT_STATE] bot=Jae TYPING -> THINKING nextBubble=2/3
+2026-02-05 22:48:14.214 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-05 22:48:14.214 [OPENAI_REQ] bot=Mina mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:14.215 [OPENAI_REQ] bot=Mina ctx="Lukas: For me, reliability and clear specifications are key before I fully trust new features. | Eunice: First question: Big tech companies like Google roll out new features pretty often. | | How do you usually feel when a company you use i…"
+2026-02-05 22:48:14.215 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D61sPOKv
+2026-02-05 22:48:14.904 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=2/3
+2026-02-05 22:48:14.905 [TYPING] bot=Jae true
+2026-02-05 22:48:15.255 [OPENAI_RTT] implicit_detect rtt=1044ms
+2026-02-05 22:48:15.256 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee or explicit invitation to respond."}"
+2026-02-05 22:48:15.448 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:15.449 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:48:15.449 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:15.449 [OPENAI_REQ] bot=Lukas ctx="Lukas: For me, reliability and clear specifications are key before I fully trust new features. | Eunice: First question: Big tech companies like Google roll out new features pretty often. | | How do you usually feel when a company you use i…"
+2026-02-05 22:48:15.449 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:48:16.863 [OPENAI_RTT] bot=Lukas rtt=1414ms
+2026-02-05 22:48:16.863 [OPENAI_OK] bot=Lukas raw="[ "I usually wait to see if the new feature meets clear standards or has good reviews before trying it.", "Trying new tech immediately feels risky without guarantees on reliability or security.", "If the feature is well-…"
+2026-02-05 22:48:16.864 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:48:17.083 [QUEUE] schedule +normal bot=Jae len=4
+2026-02-05 22:48:17.083 [QUEUE] DUMP after enqueue Jae | schedule=[0:Mina*(d) 1:Lukas*(d) 2:Sid*(d) 3:Jae] | mentions=[]
+2026-02-05 22:48:17.456 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:48:17.457 [TYPING] bot=Lukas true
+2026-02-05 22:48:17.502 [OPENAI_RTT] bot=Mina rtt=3287ms
+2026-02-05 22:48:17.502 [OPENAI_OK] bot=Mina raw="["Honestly I will try it at least once, especially if it’s easy to use.","If it’s annoying or has too many steps, I just drop it."]"
+2026-02-05 22:48:17.502 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-05 22:48:18.273 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/2
+2026-02-05 22:48:18.274 [TYPING] bot=Mina true
+2026-02-05 22:48:18.504 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:19.656 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:21.067 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:22.925 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:23.205 [TYPING] bot=Jae false
+2026-02-05 22:48:23.205 [MESSAGE] [Jae] "I prefer to wait for reviews or for others to test the feature first before trying it myself."
+2026-02-05 22:48:23.206 [INTERRUPT] by=Jae reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-05 22:48:23.207 [OPENAI_REQ] implicit_detect newest="I prefer to wait for reviews or for others to test the feature first before trying it myse…"
+2026-02-05 22:48:23.208 [BOT_STATE] bot=Jae TYPING -> THINKING nextBubble=3/3
+2026-02-05 22:48:24.103 [OPENAI_RTT] implicit_detect rtt=895ms
+2026-02-05 22:48:24.103 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee"}"
+2026-02-05 22:48:24.142 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=3/3
+2026-02-05 22:48:24.143 [TYPING] bot=Jae true
+2026-02-05 22:48:24.485 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:25.690 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:25.789 [TYPING] bot=Mina false
+2026-02-05 22:48:25.789 [MESSAGE] [Mina] "Honestly I will try it at least once, especially if it’s easy to use."
+2026-02-05 22:48:25.789 [TYPING] bot=Lukas false
+2026-02-05 22:48:25.790 [INTERRUPT] by=Mina bot=Lukas reason=new_message action=cancel_entire (typedMs=8332)
+2026-02-05 22:48:25.790 [QUEUE] DUMP after cancel entire Lukas | schedule=[0:Mina*(d) 1:Lukas*(d) 2:Sid*(d) 3:Jae] | mentions=[]
+2026-02-05 22:48:25.790 [BOT_STATE] bot=Lukas TYPING -> IDLE
+2026-02-05 22:48:25.791 [TYPING] bot=Jae false
+2026-02-05 22:48:25.791 [INTERRUPT] by=Mina bot=Jae reason=new_message action=cancel_remaining (typedMs=1649)
+2026-02-05 22:48:25.791 [BOT_STATE] bot=Jae TYPING -> IDLE
+2026-02-05 22:48:25.791 [OPENAI_REQ] implicit_detect newest="Honestly I will try it at least once, especially if it’s easy to use."
+2026-02-05 22:48:25.791 [QUEUE] schedule dequeue bot=Mina len=3
+2026-02-05 22:48:25.791 [QUEUE] DUMP after dequeue Mina | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae] | mentions=[]
+2026-02-05 22:48:25.791 [BOT_STATE] bot=Mina TYPING -> THINKING nextBubble=2/2
+2026-02-05 22:48:25.793 [BOT_STATE] bot=Lukas IDLE -> GENERATING source=directive
+2026-02-05 22:48:25.793 [OPENAI_REQ] bot=Lukas mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:25.793 [OPENAI_REQ] bot=Lukas ctx="| How do you usually feel when a company you use introduces something new? | Do you tend to try new features right away, or do you usually ignore them at first? | Jae: I usually feel cautious when new features roll out, especially from big …"
+2026-02-05 22:48:25.793 [OPENAI_REQ] bot=Lukas model=gpt-4.1-mini
+2026-02-05 22:48:26.086 [QUEUE] schedule +normal bot=Mina len=4
+2026-02-05 22:48:26.086 [QUEUE] DUMP after enqueue Mina | schedule=[0:Lukas*(d) 1:Sid*(d) 2:Jae 3:Mina] | mentions=[]
+2026-02-05 22:48:26.372 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=2/2
+2026-02-05 22:48:26.373 [TYPING] bot=Mina true
+2026-02-05 22:48:26.822 [OPENAI_RTT] implicit_detect rtt=1031ms
+2026-02-05 22:48:26.823 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement about Mina's approach, no clear addressee."}"
+2026-02-05 22:48:26.987 [QUEUE] directive first: bypassing human idle counter rules
+2026-02-05 22:48:26.987 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-05 22:48:26.988 [OPENAI_REQ] bot=Sid mode=human condition=authority priorityQ="First question: Big tech companies like Google roll out new features pretty often. How do …"
+2026-02-05 22:48:26.988 [OPENAI_REQ] bot=Sid ctx="| How do you usually feel when a company you use introduces something new? | Do you tend to try new features right away, or do you usually ignore them at first? | Jae: I usually feel cautious when new features roll out, especially from big …"
+2026-02-05 22:48:26.988 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-05 22:48:27.284 [OPENAI_RTT] bot=Lukas rtt=1491ms
+2026-02-05 22:48:27.285 [OPENAI_OK] bot=Lukas raw="[ "I usually wait until the feature is well-documented and tested before trying it out myself.", "Without clear technical specs or guarantees, I’m hesitant to adopt new features immediately.", "If the feature involves cr…"
+2026-02-05 22:48:27.285 [BOT_STATE] bot=Lukas GENERATING -> THINKING
+2026-02-05 22:48:28.232 [BOT_STATE] bot=Lukas THINKING -> TYPING bubble=1/3
+2026-02-05 22:48:28.233 [TYPING] bot=Lukas true
+2026-02-05 22:48:28.449 [OPENAI_RTT] bot=Sid rtt=1461ms
+2026-02-05 22:48:28.449 [OPENAI_OK] bot=Sid raw="[ "I usually wait to see if the feature actually fixes something or improves security.", "Trying new features right away can lead to headaches if they're buggy or poorly designed.", "If it's a security upgrade and easy t…"
+2026-02-05 22:48:28.450 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-05 22:48:29.114 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-05 22:48:29.115 [TYPING] bot=Sid true
+2026-02-05 22:48:29.665 [QUEUE] human idle: scheduling 3 messages over 10000ms
+2026-02-05 22:48:30.852 [TYPING] bot=Mina false
+2026-02-05 22:48:30.853 [MESSAGE] [Mina] "If it’s annoying or has too many steps, I just drop it."
+2026-02-05 22:48:30.854 [INTERRUPT] by=Mina reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-05 22:48:30.854 [OPENAI_REQ] implicit_detect newest="If it’s annoying or has too many steps, I just drop it."
+2026-02-05 22:48:30.854 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-05 22:48:30.856 [BOT_STATE] bot=Jae IDLE -> GENERATING source=normal
+2026-02-05 22:48:30.857 [OPENAI_REQ] bot=Jae mode=human condition=authority priorityQ=""
+2026-02-05 22:48:30.857 [OPENAI_REQ] bot=Jae ctx="How do you usually feel when a company you use introduces something new? | Do you tend to try new features right away, or do you usually ignore them at first? | Jae: I usually feel cautious when new features roll out, especially from big co…"
+2026-02-05 22:48:30.857 [OPENAI_REQ] bot=Jae model=gpt-4.1-mini
+2026-02-05 22:48:32.285 [OPENAI_RTT] implicit_detect rtt=1431ms
+2026-02-05 22:48:32.286 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no direct addressee."}"
+2026-02-05 22:48:32.965 [OPENAI_RTT] bot=Jae rtt=2108ms
+2026-02-05 22:48:32.966 [OPENAI_OK] bot=Jae raw="["In my experience new features sometimes cause more headaches than help at first, so I’m always cautious.", "I usually wait for others to test them and watch out for bugs or privacy concerns before I try.", "If it’s a s…"
+2026-02-05 22:48:32.967 [BOT_STATE] bot=Jae GENERATING -> THINKING
+2026-02-05 22:48:33.307 [BOT_STATE] bot=Jae THINKING -> TYPING bubble=1/3
+2026-02-05 22:48:33.308 [TYPING] bot=Jae true

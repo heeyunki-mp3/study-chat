@@ -159,6 +159,7 @@ function colorForTag(tag) {
       return ANSI.yellow;
     case "OPENAI_REQ":
     case "OPENAI_OK":
+    case "OPENAI_RTT":
       return ANSI.magenta;
     case "OPENAI_ERR":
     case "ERROR":
@@ -410,6 +411,7 @@ Return JSON only. If clearly addressed to everyone/all (explicit invite), includ
   logLine("OPENAI_REQ", `implicit_detect newest="${clip(newest.text, 90)}"`);
 
   try {
+    const startMs = Date.now();
     const resp = await openai.responses.create(
       {
         model: MODELS.default,
@@ -420,6 +422,8 @@ Return JSON only. If clearly addressed to everyone/all (explicit invite), includ
       },
       { timeout: OPENAI_TIMEOUT_MS }
     );
+    const rttMs = Date.now() - startMs;
+    logLine("OPENAI_RTT", `implicit_detect rtt=${rttMs}ms`);
 
     const raw = (resp.output_text || "").trim();
     logLine("OPENAI_OK", `implicit_detect raw="${clip(raw, 180)}"`);
@@ -1089,6 +1093,7 @@ async function checkDiscussionDoneOrLooping(session) {
   const sys = "You judge if the discussion has reached a natural pause or is repeating the same points. Answer only YES or NO.";
   const user = `Chat (recent):\n${chat}\n\nHas the discussion reached a natural pause or is it repeating the same points? Answer only YES or NO.`;
   try {
+    const startMs = Date.now();
     const resp = await openai.responses.create(
       {
         model: MODELS.default,
@@ -1096,6 +1101,8 @@ async function checkDiscussionDoneOrLooping(session) {
       },
       { timeout: OPENAI_TIMEOUT_MS }
     );
+    const rttMs = Date.now() - startMs;
+    logLine("OPENAI_RTT", `moderator done/loop check rtt=${rttMs}ms`);
     const raw = (resp.output_text || "").trim().toUpperCase();
     return raw.startsWith("YES");
   } catch (e) {
@@ -1281,6 +1288,7 @@ async function generateBubbles({ session, botName, source = "normal", priorityQu
   logLine("OPENAI_REQ", `bot=${botName} model=${model}`);
 
   try {
+    const startMs = Date.now();
     const resp = await openai.responses.create({
       model,
       input: [
@@ -1290,9 +1298,11 @@ async function generateBubbles({ session, botName, source = "normal", priorityQu
       // OpenAI JS supports fetch under the hood; AbortController works here.
       // signal: controller.signal,
     });
-    
-    logLine("OPENAI_REQ_SYSTEM", sys);
-    logLine("OPENAI_REQ_USER", userPrompt);
+    const rttMs = Date.now() - startMs;
+    logLine("OPENAI_RTT", `bot=${botName} rtt=${rttMs}ms`);
+
+    // logLine("OPENAI_REQ_SYSTEM", sys);
+    // logLine("OPENAI_REQ_USER", userPrompt);
 
     const raw = (resp.output_text || "").trim();
     logLine("OPENAI_OK", `bot=${botName} raw="${clip(raw, 220)}"`);
