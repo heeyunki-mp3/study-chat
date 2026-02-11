@@ -1,0 +1,99 @@
+2026-02-11 16:02:13.004 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 16:02:13.006 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-11 16:02:14.833 [SESSION_START] id=ZfFtpt6W-UQKb3ETAAAB condition=control bots=Sid,Vivian,Jae
+2026-02-11 16:02:14.833 [SESSION_START] participant_name set to "ara"
+2026-02-11 16:02:14.834 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 16:02:14.834 [TYPING] moderator true
+2026-02-11 16:02:17.259 [TYPING] human true
+2026-02-11 16:02:17.410 [TYPING] human true
+2026-02-11 16:02:17.469 [TYPING] human true
+2026-02-11 16:02:18.057 [TYPING] human true
+2026-02-11 16:02:18.100 [TYPING] human true
+2026-02-11 16:02:18.236 [TYPING] human true
+2026-02-11 16:02:18.332 [TYPING] human true
+2026-02-11 16:02:18.374 [TYPING] human true
+2026-02-11 16:02:18.608 [TYPING] human true
+2026-02-11 16:02:18.699 [TYPING] human true
+2026-02-11 16:02:18.842 [TYPING] human true
+2026-02-11 16:02:19.037 [TYPING] moderator false
+2026-02-11 16:02:19.039 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 16:02:19.040 [TYPING] moderator true
+2026-02-11 16:02:19.112 [TYPING] human true
+2026-02-11 16:02:19.353 [TYPING] human true
+2026-02-11 16:02:19.484 [TYPING] human true
+2026-02-11 16:02:19.601 [TYPING] human true
+2026-02-11 16:02:19.781 [TYPING] human true
+2026-02-11 16:02:19.834 [TYPING] human true
+2026-02-11 16:02:20.090 [TYPING] human true
+2026-02-11 16:02:20.197 [TYPING] human true
+2026-02-11 16:02:20.479 [TYPING] human true
+2026-02-11 16:02:20.550 [TYPING] human true
+2026-02-11 16:02:20.621 [TYPING] human true
+2026-02-11 16:02:20.654 [TYPING] human true
+2026-02-11 16:02:20.748 [TYPING] human true
+2026-02-11 16:02:20.849 [TYPING] human true
+2026-02-11 16:02:20.918 [TYPING] human true
+2026-02-11 16:02:21.002 [TYPING] human true
+2026-02-11 16:02:21.349 [TYPING] human true
+2026-02-11 16:02:21.401 [TYPING] human true
+2026-02-11 16:02:21.550 [TYPING] human true
+2026-02-11 16:02:21.596 [TYPING] human true
+2026-02-11 16:02:21.669 [TYPING] human true
+2026-02-11 16:02:21.777 [TYPING] human true
+2026-02-11 16:02:21.820 [TYPING] human true
+2026-02-11 16:02:21.889 [TYPING] human true
+2026-02-11 16:02:21.986 [TYPING] human true
+2026-02-11 16:02:22.086 [TYPING] human true
+2026-02-11 16:02:22.187 [TYPING] human true
+2026-02-11 16:02:22.320 [TYPING] human true
+2026-02-11 16:02:22.686 [TYPING] human true
+2026-02-11 16:02:22.857 [TYPING] human true
+2026-02-11 16:02:23.067 [TYPING] human true
+2026-02-11 16:02:23.244 [TYPING] moderator false
+2026-02-11 16:02:23.246 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 16:02:23.247 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-11 16:02:23.870 [TYPING] human false
+2026-02-11 16:02:24.287 [TYPING] human false
+2026-02-11 16:02:24.293 [HUMAN_INPUT] [ara] "Hi I am Ara! Nice to meet you all :)"
+2026-02-11 16:02:24.294 [MESSAGE] [ara] "Hi I am Ara! Nice to meet you all :)"
+2026-02-11 16:02:25.498 [TYPING] bot=Vivian true
+2026-02-11 16:02:26.113 [TYPING] bot=Sid true
+2026-02-11 16:02:26.445 [TYPING] bot=Jae true
+2026-02-11 16:02:28.700 [TYPING] bot=Vivian false
+2026-02-11 16:02:28.702 [MESSAGE] [Vivian] "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology"
+2026-02-11 16:02:29.315 [TYPING] bot=Sid false
+2026-02-11 16:02:29.317 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-11 16:02:29.647 [TYPING] bot=Jae false
+2026-02-11 16:02:29.649 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-11 16:02:29.650 [QUEUE] intro: human already replied after "To start us off", advancing to study_goal
+2026-02-11 16:02:29.651 [TYPING] moderator true
+2026-02-11 16:02:33.853 [TYPING] moderator false
+2026-02-11 16:02:33.855 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study.
+We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-11 16:02:33.855 [TYPING] moderator true
+2026-02-11 16:02:38.058 [TYPING] moderator false
+2026-02-11 16:02:38.060 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-11 16:02:41.061 [MESSAGE] [Vivian] "Ok!"
+2026-02-11 16:02:41.062 [QUEUE] study_goal ack done, starting first big_question
+2026-02-11 16:02:41.062 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-11 16:02:41.062 [TYPING] moderator true
+2026-02-11 16:02:45.264 [TYPING] moderator false
+2026-02-11 16:02:45.266 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-11 16:02:46.104 [TYPING] moderator true
+2026-02-11 16:02:50.307 [TYPING] moderator false
+2026-02-11 16:02:50.308 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-11 16:02:50.310 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 16:02:50.310 [TYPING] bot=Sid true
+2026-02-11 16:02:52.267 [OPENAI_OK] bot=Sid rtt=1957ms raw="["Honestly, I’m usually skeptical about new features from big tech. Most of the time it’s just fluff…"
+2026-02-11 16:02:52.267 [TYPING] bot=Sid false
+2026-02-11 16:02:53.269 [TYPING] bot=Sid true
+2026-02-11 16:02:56.472 [TYPING] bot=Sid false
+2026-02-11 16:02:56.473 [MESSAGE] [Sid] "Honestly, I’m usually skeptical about new features from big tech. Most of the time it’s just fluff or unnecessary changes that complicate things."
+2026-02-11 16:02:57.474 [TYPING] bot=Sid true
+2026-02-11 16:03:00.677 [TYPING] bot=Sid false
+2026-02-11 16:03:00.678 [MESSAGE] [Sid] "I don’t try new features right away unless they solve a specific problem I have or improve security somehow. Otherwise, I wait to see how stable they are."
+2026-02-11 16:03:01.838 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-11 16:03:01.838 [TYPING] moderator true

@@ -115,8 +115,6 @@ const MODERATOR_SCRIPT = [
 ];
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"]; // one bot says one of these after study_goal
-const BOT_INTRO_STAGGER_MS_MIN = 1000;
-const BOT_INTRO_STAGGER_MS_MAX = 3000;
 const STUDY_GOAL_ACK_DELAY_MS_MIN = 2000;
 const STUDY_GOAL_ACK_DELAY_MS_MAX = 3000;
 const BOT_THINKING_DELAY_MS = 1000;  // Delay before showing "typing" for each bubble (thinking phase)
@@ -257,10 +255,11 @@ async function detectDisagreements(moderatorQuestion, answersByPerson) {
   }
   const transcript = lines.join("\n");
 
-  const sys = `You analyze discussion transcripts. Identify only CLEAR DISAGREEMENTS: one participant expressed a view and another explicitly disagreed or contradicted them.
+  const sys = `You analyze discussion transcripts. Identify DISAGREEMENTS: one participant expressed a view and another disagreed, contradicted, or pushed back (even mildly).
 Output a JSON array. Each item: { "disagreedWith": "Name of person who was disagreed with", "disagreedBy": "Name of person who disagreed" }.
-Only include real disagreements (e.g. "I don't agree", "I disagree", "I don't think so", contradiction). Do NOT include agreements, neutral comments, or uninteresting overlap.
-If there are no clear disagreements, output: [].
+Include: explicit disagreement ("I disagree", "I don't agree"), contradiction, pushback ("I see it differently", "not sure I agree", "I'd say the opposite"), or when someone corrects or challenges another's view. Use the EXACT names as they appear in the transcript.
+Do NOT include: simple agreements, neutral comments, or just adding on without disagreeing.
+If there are no disagreements, output: [].
 Output ONLY valid JSON, no other text.`;
 
   const completion = await openai.chat.completions.create({
@@ -660,9 +659,21 @@ io.on("connection", (socket) => {
     co.disagreementPhase = true;
     logLine("QUEUE", "disagreement phase started");
 
+    // Only include messages from the current round (after moderator asked this question)
+    const questionPrefix = String(co.question).slice(0, 80);
+    let roundStartIndex = 0;
+    for (let i = 0; i < session.messages.length; i++) {
+      const m = session.messages[i];
+      if (m?.name === MODERATOR_NAME && String(m?.text || "").includes(questionPrefix)) {
+        roundStartIndex = i + 1;
+      }
+    }
+
     const answersByPerson = {};
     for (const name of co.order) {
-      const msgs = session.messages.filter((m) => m.name === name && !m.text.startsWith("How about you") && m.text !== co.question);
+      const msgs = session.messages
+        .slice(roundStartIndex)
+        .filter((m) => m.name === name && !m.text.startsWith("How about you") && m.text !== co.question);
       const relevant = msgs.slice(-5).map((m) => m.text);
       if (relevant.length) answersByPerson[name] = relevant;
     }
@@ -675,17 +686,25 @@ io.on("connection", (socket) => {
     }
 
     const botNames = session.bots;
+    const participantName = session.participantName;
     const toPrompt = [];
     for (const p of pairs) {
-      const who = String(p.disagreedWith).trim();
-      const by = String(p.disagreedBy).trim();
-      if (botNames.includes(who) && who !== by) {
-        toPrompt.push({
-          disagreedWith: who,
-          disagreedBy: by,
-          disagreedByText: Array.isArray(answersByPerson[by]) ? answersByPerson[by].join(" ") : "",
-        });
-      }
+      let who = String(p.disagreedWith).trim();
+      let by = String(p.disagreedBy).trim();
+      // Normalize names (model may return different casing)
+      const matchedBotWho = botNames.find((b) => b.toLowerCase() === who.toLowerCase());
+      if (!matchedBotWho || matchedBotWho.toLowerCase() === by.toLowerCase()) continue;
+      who = matchedBotWho;
+      const byBot = botNames.find((b) => b.toLowerCase() === by.toLowerCase());
+      const byHuman = participantName && participantName.toLowerCase() === by.toLowerCase();
+      by = byBot || (byHuman ? participantName : by);
+      if (who === by) continue;
+      const byText = Array.isArray(answersByPerson[by]) ? answersByPerson[by].join(" ") : (answersByPerson[by] ?? "");
+      toPrompt.push({
+        disagreedWith: who,
+        disagreedBy: by,
+        disagreedByText: byText,
+      });
     }
 
     co.disagreementQueue = toPrompt;
@@ -751,12 +770,13 @@ io.on("connection", (socket) => {
     await runIntroRound();
   }
 
-  /** Intro: all bots start their 1–3s timer as soon as "To start us off..." is shown; they type in parallel. */
+  /** Intro: all bots start their timer as soon as "To start us off..." is shown; 1st bot 1–2s, 2nd 1–3s, 3rd 1–4s, etc. */
   async function runIntroRound() {
     if (!session?.bots?.length) return;
-    logLine("QUEUE", "intro: bots start 1–3s timers from 'To start us off', type in parallel");
-    const botPromises = session.bots.map((bot) => {
-      const staggerMs = randomBetween(BOT_INTRO_STAGGER_MS_MIN, BOT_INTRO_STAGGER_MS_MAX);
+    logLine("QUEUE", "intro: bots start staggered timers from 'To start us off', type in parallel");
+    const botPromises = session.bots.map((bot, i) => {
+      const maxSec = 2 + i;
+      const staggerMs = randomBetween(1000, maxSec * 1000);
       return new Promise((resolve) => {
         setTimeout(async () => {
           await new Promise((r) => setTimeout(r, BOT_THINKING_DELAY_MS));

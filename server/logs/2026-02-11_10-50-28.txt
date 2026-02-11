@@ -600,3 +600,29 @@ What made you try it, or what made …"
 2026-02-11 15:56:52.876 [TYPING] bot=Vivian false
 2026-02-11 15:56:52.877 [MESSAGE] [Vivian] "Yeah I’ve used ChatGPT a few times, mostly to brainstorm essay ideas or get quick explanations for psych concepts that confuse me."
 2026-02-11 15:56:53.880 [TYPING] bot=Vivian true
+2026-02-11 15:56:57.081 [TYPING] bot=Vivian false
+2026-02-11 15:56:57.082 [MESSAGE] [Vivian] "It’s definitely saved me time, but I’m also careful because sometimes the answers can feel a bit too generic or miss nuances."
+2026-02-11 15:56:58.084 [TYPING] bot=Vivian true
+2026-02-11 15:57:01.285 [TYPING] bot=Vivian false
+2026-02-11 15:57:01.286 [MESSAGE] [Vivian] "I like it as a starting point but always double-check with my textbooks or notes before I trust it fully."
+2026-02-11 15:57:02.126 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-11 15:57:02.127 [TYPING] moderator true
+2026-02-11 15:57:06.329 [TYPING] moderator false
+2026-02-11 15:57:06.330 [MESSAGE] [Eunice] "Good point, Vivian. Jae, what's your take on using generative AI like Gemini or Chat GPT?"
+2026-02-11 15:57:06.330 [OPENAI_REQ] bot=Jae question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-11 15:57:06.330 [TYPING] bot=Jae true
+2026-02-11 15:57:08.446 [OPENAI_OK] bot=Jae rtt=2116ms raw="["I've dabbled with tools like ChatGPT, mostly to help draft emails or find quick lesson ideas, but …"
+2026-02-11 15:57:08.447 [TYPING] bot=Jae false
+2026-02-11 15:57:09.450 [TYPING] bot=Jae true
+2026-02-11 15:57:12.652 [TYPING] bot=Jae false
+2026-02-11 15:57:12.653 [MESSAGE] [Jae] "I've dabbled with tools like ChatGPT, mostly to help draft emails or find quick lesson ideas, but I’m cautious about relying on them too much."
+2026-02-11 15:57:13.653 [TYPING] bot=Jae true
+2026-02-11 15:57:16.855 [TYPING] bot=Jae false
+2026-02-11 15:57:16.857 [MESSAGE] [Jae] "Logically, they can be a time-saver but my main concern is accuracy—especially for math—because wrong info can lead to confusion in class."
+2026-02-11 15:57:17.858 [TYPING] bot=Jae true
+2026-02-11 15:57:21.059 [TYPING] bot=Jae false
+2026-02-11 15:57:21.060 [MESSAGE] [Jae] "Also, juggling multiple devices makes me wary; if it’s not seamless, it adds extra steps and stress rather than helping."
+2026-02-11 15:57:22.021 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human ara, waiting for human_idle
+2026-02-11 15:57:22.021 [TYPING] moderator true
+2026-02-11 15:57:26.223 [TYPING] moderator false
+2026-02-11 15:57:26.224 [MESSAGE] [Eunice] "Makes sense, Jae. Ara, what do you think about using generative AI like Gemini or ChatGPT?"
