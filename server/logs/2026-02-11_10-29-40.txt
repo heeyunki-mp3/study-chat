@@ -1,0 +1,5 @@
+2026-02-11 15:29:40.022 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 15:29:44.738 [SESSION_START] id=wZpCPSxi-r7w_Z1-AAAB condition=control bots=Jae,Anika,Vivian
+2026-02-11 15:29:44.738 [SESSION_START] participant_name set to "ara"
+2026-02-11 15:29:44.739 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 15:29:44.739 [TYPING] moderator true

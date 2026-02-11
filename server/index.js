@@ -23,6 +23,12 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Bot names from CLI: npm start -- Jae Mina Derek (optional; if empty, spawn random cast)
+const CLI_BOT_NAMES = process.argv
+  .slice(2)
+  .map((s) => String(s).trim())
+  .filter(Boolean);
+
 // =====================
 // Logging (per-run log file)
 // =====================
@@ -374,8 +380,18 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Session state (one per socket/room)
 // =====================
 function createSession(participantName) {
-  const cast = pickRandomCast(3);
+  const cast =
+    CLI_BOT_NAMES.length > 0
+      ? getCastByHandles(CLI_BOT_NAMES)
+      : pickRandomCast(3);
   const bots = cast.map((p) => p.handle);
+  if (CLI_BOT_NAMES.length > 0 && bots.length === 0) {
+    console.warn("CLI bot names matched no personas; falling back to random cast.");
+    const fallback = pickRandomCast(3);
+    fallback.forEach((p) => bots.push(p.handle));
+  } else if (CLI_BOT_NAMES.length > 0 && bots.length < CLI_BOT_NAMES.length) {
+    console.warn(`Only ${bots.length} of ${CLI_BOT_NAMES.length} CLI names matched: ${bots.join(", ")}`);
+  }
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
   const order = [...bots, participantName];
@@ -436,14 +452,14 @@ const BOT_INTROS = {
     "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology",
   ],
   Anika: [
-    "Hi, I'm Anika. I'm a massage therapist in California. Nice to meet you all",
-    "Hey, my name is Anika.",
+    "Hi I'm Anika. I'm a massage therapist in California. Nice to meet you all",
+    "Hey my name is Anika. I work as a massage therapist in California.",
     "I am Anika.",
   ],
   Sid: [
-    "Hi, I'm Sid. I'm in grad school and I use a ton of apps for research and writing. I'm pretty comfortable with tech.",
-    "Hey, I'm Sid. I'm a student and I'm always trying new tools. Some stick and some don't—I just see what works.",
-    "I'm Sid. I live on my laptop and phone. I've heard of passkeys and stuff but I don't always keep up with the names.",
+    "Hello I'm Sid. I am in IT support. Nice to meet you all",
+    "Hey, I'm Sid. I am an IT support technician in New Jersey.",
+    "Sid. I am an IT support technician in New Jersey.",
   ],
 };
 
@@ -719,7 +735,8 @@ io.on("connection", (socket) => {
       botTypingTimeout = null;
     }
     if (hasHumanRepliedAfterIntroPrompt(session)) {
-      logLine("QUEUE", `intro: human already replied after "To start us off", skipping cue`);
+      logLine("QUEUE", `intro: human already replied after "To start us off", advancing to study_goal`);
+      await runStudyGoal();
       return;
     }
     const latest = getLastParticipantMessage(session);
@@ -921,4 +938,7 @@ io.on("connection", (socket) => {
 
 httpServer.listen(PORT, () => {
   logLine("SESSION_START", `backend running on http://localhost:${PORT}`);
+  if (CLI_BOT_NAMES.length > 0) {
+    logLine("SESSION_START", `CLI bots for this run: ${CLI_BOT_NAMES.join(", ")}`);
+  }
 });
