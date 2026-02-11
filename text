@@ -1,0 +1,534 @@
+/**
+ * Study-chat server: moderator-led call-on flow.
+ * No queue. Eunice (moderator) calls on one participant at a time; only that participant gets one OpenAI request (up to 3 messages).
+ * Human turn: wait for human_idle (idle = empty input no typing 4s, or non-empty no typing 10s).
+ * After first round: detect disagreements, then prompt only the person who was disagreed WITH (one OpenAI call per).
+ */
+
+import "dotenv/config";
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import OpenAI from "openai";
+import {
+  pickRandomCast,
+  getCastByHandles,
+  systemPrompt,
+  buildUserPrompt,
+} from "./prompts.js";
+
+// =====================
+// Constants (easy to change at top of code)
+// =====================
+const IDLE_EMPTY_MS = 4000;   // Participant idle when text box empty and no typing for this long
+const IDLE_TYPING_MS = 10000; // Participant idle when text box not empty and no typing for this long
+const MODERATOR_NAME = "Eunice";
+const DEFAULT_TOPIC = "What do you think about passkeys for logging into websites and apps?";
+const BOT_TYPING_DELAY_MS = 800;  // Min delay between bot message bubbles (typing simulation)
+const CONDITION = "control";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let MODELS = { default: "gpt-4o-mini", bots: {} };
+try {
+  const fs = await import("fs");
+  const path = await import("path");
+  const { fileURLToPath } = await import("url");
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const raw = fs.readFileSync(path.join(__dirname, "models.json"), "utf8");
+  MODELS = JSON.parse(raw);
+  if (!MODELS.bots) MODELS.bots = {};
+} catch (e) {
+  console.warn("Using default gpt-4o-mini (models.json not found or invalid)");
+}
+
+function getModelForBot(/* botName */) {
+  return MODELS.default;
+}
+
+// =====================
+// Helpers
+// =====================
+function buildTranscript(messages, maxLines = 50) {
+  if (!Array.isArray(messages) || messages.length === 0) return "";
+  return messages
+    .slice(-maxLines)
+    .map((m) => `${m.name}: ${(m.text || "").trim()}`)
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
+
+function parseJsonArray(rawText, maxItems = 3) {
+  if (!rawText) return [];
+  let s = String(rawText).trim();
+  s = s.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+  function tryParse(str) {
+    try {
+      const parsed = JSON.parse(str);
+      if (!Array.isArray(parsed)) return null;
+      return parsed
+        .map((x) => (typeof x === "string" ? x : String(x ?? "").trim()))
+        .filter(Boolean)
+        .map((x) => x.slice(0, 220))
+        .slice(0, maxItems);
+    } catch {
+      return null;
+    }
+  }
+  let result = tryParse(s);
+  if (result) return result;
+  const arrayMatch = s.match(/\[\s*[\s\S]*?\]/);
+  if (arrayMatch) {
+    result = tryParse(arrayMatch[0]);
+    if (result) return result;
+  }
+  return s ? [s.slice(0, 220)] : [];
+}
+
+function ts() {
+  return Date.now();
+}
+
+// =====================
+// Bot response (one OpenAI request → 1–3 messages)
+// =====================
+async function getBotResponse(botName, context) {
+  const { moderatorQuestion, directive, previousAnswers, humanParticipantName } = context;
+  const cast = getCastByHandles([botName]);
+  const persona = cast[0] || {};
+  const bots = context.bots || [botName];
+  const others = bots.filter((n) => n !== botName).join(", ") || "others";
+
+  const sys = systemPrompt(
+    botName,
+    others,
+    CONDITION,
+    persona,
+    MODERATOR_NAME,
+    humanParticipantName || "You"
+  );
+
+  const transcriptLines = [];
+  transcriptLines.push(`${MODERATOR_NAME}: ${moderatorQuestion}`);
+  for (const a of previousAnswers) {
+    transcriptLines.push(`${a.name}: ${a.text}`);
+  }
+  if (directive) {
+    transcriptLines.push(`${MODERATOR_NAME}: ${directive}`);
+  }
+  const transcript = transcriptLines.join("\n");
+
+  const recentBot = previousAnswers
+    .filter((a) => a.name !== botName)
+    .map((a) => a.text)
+    .join(" | ") || "(none)";
+
+  const userPrompt = buildUserPrompt({
+    transcript,
+    recentBot,
+    recentQs: moderatorQuestion,
+    mode: "human",
+    botName,
+    otherName: others,
+    respondTo: directive ? { type: "directive", text: directive } : null,
+    moderatorName: MODERATOR_NAME,
+    humanParticipantName: humanParticipantName || "You",
+  });
+
+  const model = getModelForBot(botName);
+  const completion = await openai.chat.completions.create({
+    model,
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 600,
+  });
+
+  const raw =
+    completion?.choices?.[0]?.message?.content ?? "";
+  return parseJsonArray(raw, 3);
+}
+
+// =====================
+// Disagreement detection (OpenAI)
+// =====================
+async function detectDisagreements(moderatorQuestion, answersByPerson) {
+  const lines = [`Moderator question: ${moderatorQuestion}`];
+  for (const [name, texts] of Object.entries(answersByPerson)) {
+    const full = Array.isArray(texts) ? texts.join(" ") : String(texts);
+    lines.push(`${name}: ${full}`);
+  }
+  const transcript = lines.join("\n");
+
+  const sys = `You analyze discussion transcripts. Identify only CLEAR DISAGREEMENTS: one participant expressed a view and another explicitly disagreed or contradicted them.
+Output a JSON array. Each item: { "disagreedWith": "Name of person who was disagreed with", "disagreedBy": "Name of person who disagreed" }.
+Only include real disagreements (e.g. "I don't agree", "I disagree", "I don't think so", contradiction). Do NOT include agreements, neutral comments, or uninteresting overlap.
+If there are no clear disagreements, output: [].
+Output ONLY valid JSON, no other text.`;
+
+  const completion = await openai.chat.completions.create({
+    model: MODELS.default,
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: transcript },
+    ],
+    max_tokens: 300,
+  });
+
+  const raw = completion?.choices?.[0]?.message?.content ?? "[]";
+  let arr;
+  try {
+    const s = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = JSON.parse(s);
+    arr = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    arr = [];
+  }
+  return arr.filter(
+    (x) =>
+      x && typeof x.disagreedWith === "string" && typeof x.disagreedBy === "string"
+  );
+}
+
+// =====================
+// Generate follow-up prompt text for disagreed-with person (OpenAI)
+// =====================
+async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagreedByText, moderatorQuestion) {
+  const sys = `You generate one short moderator-style sentence to ask ${disagreedWith} to respond to ${disagreedBy}'s disagreement.
+Context: The moderator had asked: "${moderatorQuestion}". ${disagreedBy} said: "${(disagreedByText || "").slice(0, 300)}".
+Output ONLY one sentence (e.g. "${disagreedBy} disagreed with you—what do you think about their viewpoint?"). No quotes, no JSON.`;
+
+  const completion = await openai.chat.completions.create({
+    model: MODELS.default,
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: "Generate the follow-up sentence." },
+    ],
+    max_tokens: 120,
+  });
+
+  const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
+  return text || `${disagreedBy} disagreed with you. What do you think about their viewpoint?`;
+}
+
+// =====================
+// Session state (one per socket/room)
+// =====================
+function createSession(participantName) {
+  const cast = pickRandomCast(3);
+  const bots = cast.map((p) => p.handle);
+  const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+  const seedMessages = [
+    { name: MODERATOR_NAME, text: "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!", ts: ts() },
+    { name: MODERATOR_NAME, text: `${DEFAULT_TOPIC} Let's start with ${bots[0]}.`, ts: ts() },
+  ];
+
+  const question = DEFAULT_TOPIC;
+  const order = [...bots, participantName];
+
+  return {
+    sessionId,
+    moderatorName: MODERATOR_NAME,
+    bots,
+    condition: CONDITION,
+    participantName,
+    messages: [...seedMessages],
+    idleEmptyMs: IDLE_EMPTY_MS,
+    idleTypingMs: IDLE_TYPING_MS,
+    callOnState: {
+      question,
+      order,
+      whoSpoke: [],
+      currentIndex: 0,
+      waitingForHumanIdle: false,
+      roundDone: false,
+      disagreementPhase: false,
+      disagreementQueue: [],
+      disagreementIndex: 0,
+    },
+  };
+}
+
+function addMessage(session, name, text) {
+  const m = { name, text: String(text).trim(), ts: ts() };
+  session.messages.push(m);
+  return m;
+}
+
+// =====================
+// App & Socket
+// =====================
+const app = express();
+app.use(cors());
+const httpServer = createServer(app);
+// CORS: withCredentials requires explicit origins (no "*")
+const CORS_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
+];
+const io = new Server(httpServer, {
+  cors: {
+    origin: CORS_ORIGINS,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+const PORT = process.env.PORT || 3001;
+
+io.on("connection", (socket) => {
+  let session = null;
+  let botTypingTimeout = null;
+
+  function broadcast(msg) {
+    if (!session) return;
+    io.to(socket.id).emit(msg.event, msg.payload);
+  }
+
+  function emitTyping(who, isTyping) {
+    io.to(socket.id).emit("typing", { who, isTyping });
+  }
+
+  function emitMessage(name, text) {
+    const m = addMessage(session, name, text);
+    io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
+  }
+
+  function advanceCallOn() {
+    if (!session?.callOnState) return;
+    const co = session.callOnState;
+    co.currentIndex += 1;
+    co.waitingForHumanIdle = false;
+
+    if (co.currentIndex >= co.order.length) {
+      co.roundDone = true;
+      runDisagreementPhase();
+      return;
+    }
+
+    const nextName = co.order[co.currentIndex];
+    const isHuman = nextName === session.participantName;
+
+    if (isHuman) {
+      const moderatorLine = `How about you, ${nextName}?`;
+      addMessage(session, MODERATOR_NAME, moderatorLine);
+      io.to(socket.id).emit("message", { name: MODERATOR_NAME, text: moderatorLine, ts: ts() });
+      co.waitingForHumanIdle = true;
+      return;
+    }
+
+    const directive = `How about you, ${nextName}?`;
+    addMessage(session, MODERATOR_NAME, directive);
+    io.to(socket.id).emit("message", { name: MODERATOR_NAME, text: directive, ts: ts() });
+    runBotTurn(nextName);
+  }
+
+  async function runBotTurn(botName) {
+    const co = session.callOnState;
+    const previousAnswers = co.whoSpoke.map((name) => {
+      const msgs = session.messages.filter((m) => m.name === name);
+      const text = msgs.map((m) => m.text).join(" ");
+      return { name, text };
+    });
+
+    const directive =
+      co.currentIndex === 0
+        ? `Let's start with ${botName}.`
+        : `How about you, ${botName}?`;
+    const context = {
+      moderatorQuestion: co.question,
+      directive,
+      previousAnswers,
+      humanParticipantName: session.participantName,
+      bots: session.bots,
+    };
+
+    emitTyping(botName, true);
+    let bubbles = [];
+    try {
+      bubbles = await getBotResponse(botName, context);
+    } catch (e) {
+      console.error("OpenAI error for", botName, e?.message || e);
+      bubbles = ["(Sorry, I didn't get that.)"];
+    }
+    emitTyping(botName, false);
+
+    if (!Array.isArray(bubbles) || bubbles.length === 0) {
+      co.whoSpoke.push(botName);
+      advanceCallOn();
+      return;
+    }
+
+    for (let i = 0; i < bubbles.length; i++) {
+      if (botTypingTimeout) clearTimeout(botTypingTimeout);
+      await new Promise((r) => {
+        botTypingTimeout = setTimeout(r, BOT_TYPING_DELAY_MS);
+      });
+      emitTyping(botName, true);
+      await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+      emitTyping(botName, false);
+      emitMessage(botName, bubbles[i]);
+    }
+    if (botTypingTimeout) {
+      clearTimeout(botTypingTimeout);
+      botTypingTimeout = null;
+    }
+
+    co.whoSpoke.push(botName);
+    advanceCallOn();
+  }
+
+  async function runDisagreementPhase() {
+    const co = session.callOnState;
+    if (co.disagreementPhase) return;
+    co.disagreementPhase = true;
+
+    const answersByPerson = {};
+    for (const name of co.order) {
+      const msgs = session.messages.filter((m) => m.name === name && !m.text.startsWith("How about you") && m.text !== co.question);
+      const relevant = msgs.slice(-5).map((m) => m.text);
+      if (relevant.length) answersByPerson[name] = relevant;
+    }
+
+    let pairs = [];
+    try {
+      pairs = await detectDisagreements(co.question, answersByPerson);
+    } catch (e) {
+      console.error("Disagreement detection error", e?.message || e);
+    }
+
+    const botNames = session.bots;
+    const toPrompt = [];
+    for (const p of pairs) {
+      const who = String(p.disagreedWith).trim();
+      const by = String(p.disagreedBy).trim();
+          if (botNames.includes(who) && who !== by) {
+        toPrompt.push({
+          disagreedWith: who,
+          disagreedBy: by,
+          disagreedByText: Array.isArray(answersByPerson[by]) ? answersByPerson[by].join(" ") : "",
+        });
+      }
+    }
+
+    co.disagreementQueue = toPrompt;
+    co.disagreementIndex = 0;
+    if (toPrompt.length === 0) return;
+    runNextDisagreementFollowUp();
+  }
+
+  async function runNextDisagreementFollowUp() {
+    const co = session.callOnState;
+    if (co.disagreementIndex >= co.disagreementQueue.length) return;
+
+    const item = co.disagreementQueue[co.disagreementIndex];
+    co.disagreementIndex += 1;
+
+    let followUpText;
+    try {
+      followUpText = await generateDisagreementFollowUp(
+        item.disagreedWith,
+        item.disagreedBy,
+        item.disagreedByText,
+        co.question
+      );
+    } catch (e) {
+      followUpText = `${item.disagreedBy} disagreed with you. What do you think about their viewpoint?`;
+    }
+
+    addMessage(session, MODERATOR_NAME, followUpText);
+    io.to(socket.id).emit("message", { name: MODERATOR_NAME, text: followUpText, ts: ts() });
+
+    const previousAnswers = session.messages
+      .filter((m) => co.order.includes(m.name))
+      .map((m) => ({ name: m.name, text: m.text }));
+    const context = {
+      moderatorQuestion: co.question,
+      directive: followUpText,
+      previousAnswers,
+      humanParticipantName: session.participantName,
+      bots: session.bots,
+    };
+
+    const botName = item.disagreedWith;
+    emitTyping(botName, true);
+    let bubbles = [];
+    try {
+      bubbles = await getBotResponse(botName, context);
+    } catch (e) {
+      console.error("OpenAI disagreement follow-up error", e?.message || e);
+      bubbles = ["(I'll think about it.)"];
+    }
+    emitTyping(botName, false);
+
+    if (Array.isArray(bubbles) && bubbles.length > 0) {
+      for (let i = 0; i < bubbles.length; i++) {
+        if (botTypingTimeout) clearTimeout(botTypingTimeout);
+        await new Promise((r) => {
+          botTypingTimeout = setTimeout(r, BOT_TYPING_DELAY_MS);
+        });
+        emitTyping(botName, true);
+        await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+        emitTyping(botName, false);
+        emitMessage(botName, bubbles[i]);
+      }
+    }
+    if (botTypingTimeout) {
+      clearTimeout(botTypingTimeout);
+      botTypingTimeout = null;
+    }
+
+    runNextDisagreementFollowUp();
+  }
+
+  socket.on("participant_name", (data) => {
+    const name = (data?.name || "").trim() || "Participant";
+    session = createSession(name);
+    socket.emit("session", {
+      sessionId: session.sessionId,
+      moderatorName: session.moderatorName,
+      bots: session.bots,
+      idleEmptyMs: session.idleEmptyMs,
+      idleTypingMs: session.idleTypingMs,
+    });
+    socket.emit(
+      "seed",
+      session.messages.map((m) => ({ name: m.name, text: m.text, ts: m.ts }))
+    );
+    const firstBot = session.callOnState.order[0];
+    if (session.bots.includes(firstBot)) {
+      setImmediate(() => runBotTurn(firstBot));
+    }
+  });
+
+  socket.on("human_typing", (/* data */) => {
+    // Optional: could show "Participant is typing" in UI
+  });
+
+  socket.on("human_idle", () => {
+    if (!session?.callOnState?.waitingForHumanIdle) return;
+    advanceCallOn();
+  });
+
+  socket.on("human_message", (data) => {
+    const text = (data?.text || "").trim();
+    if (!text || !session) return;
+    emitMessage(session.participantName, text);
+  });
+
+  socket.on("end", () => {
+    // Optional: persist sessionId for login flow
+  });
+
+  socket.on("disconnect", () => {
+    if (botTypingTimeout) clearTimeout(botTypingTimeout);
+  });
+});
+
+httpServer.listen(PORT, () => {
+  console.log(`[SESSION_START] backend running on http://localhost:${PORT}`);
+});

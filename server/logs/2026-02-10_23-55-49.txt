@@ -1,0 +1,123 @@
+2026-02-11 04:55:49.481 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 04:55:51.988 [SESSION_START] id=Pvrc4w9iJV0UTeylAAAB condition=control bots=Lukas,Sid,Alayna
+2026-02-11 04:55:51.988 [SESSION_START] participant_name set to "ara"
+2026-02-11 04:55:51.988 [QUEUE] call-on turn: Lukas
+2026-02-11 04:55:51.989 [OPENAI_REQ] bot=Lukas question="What do you think about passkeys for logging into websites and apps?"
+2026-02-11 04:55:51.989 [TYPING] bot=Lukas true
+2026-02-11 04:55:52.727 [DISCONNECT] id=Pvrc4w9iJV0UTeylAAAB
+2026-02-11 04:55:52.971 [SESSION_START] id=_HlIs1cugrz47aTCAAAD condition=control bots=Sid,Alex,Lukas
+2026-02-11 04:55:52.972 [SESSION_START] participant_name set to "ara"
+2026-02-11 04:55:52.972 [QUEUE] call-on turn: Sid
+2026-02-11 04:55:52.972 [OPENAI_REQ] bot=Sid question="What do you think about passkeys for logging into websites and apps?"
+2026-02-11 04:55:52.972 [TYPING] bot=Sid true
+2026-02-11 04:55:53.381 [OPENAI_OK] bot=Lukas rtt=1392ms raw="["Passkeys sound promising in theory since they could remove the risk of weak or reused passwords, w…"
+2026-02-11 04:55:53.381 [TYPING] bot=Lukas false
+2026-02-11 04:55:53.984 [TYPING] bot=Lukas true
+2026-02-11 04:55:54.149 [OPENAI_OK] bot=Sid rtt=1177ms raw="["Passkeys sound promising because they solve the whole password mess, which is usually the weakest …"
+2026-02-11 04:55:54.149 [TYPING] bot=Sid false
+2026-02-11 04:55:54.750 [TYPING] bot=Sid true
+2026-02-11 04:55:55.987 [TYPING] bot=Lukas false
+2026-02-11 04:55:55.987 [MESSAGE] [Lukas] "Passkeys sound promising in theory since they could remove the risk of weak or reused passwords, which is a big improvement."
+2026-02-11 04:55:56.588 [TYPING] bot=Lukas true
+2026-02-11 04:55:56.753 [TYPING] bot=Sid false
+2026-02-11 04:55:56.754 [MESSAGE] [Sid] "Passkeys sound promising because they solve the whole password mess, which is usually the weakest link."
+2026-02-11 04:55:57.356 [TYPING] bot=Sid true
+2026-02-11 04:55:58.589 [TYPING] bot=Lukas false
+2026-02-11 04:55:58.590 [MESSAGE] [Lukas] "But I'm curious about where and how these passkeys are stored and protected. If the system isn't standardized, it might create new vulnerabilities."
+2026-02-11 04:55:59.191 [TYPING] bot=Lukas true
+2026-02-11 04:55:59.358 [TYPING] bot=Sid false
+2026-02-11 04:55:59.358 [MESSAGE] [Sid] "But adoption is patchy, and I worry about how they handle recovery if you lose the device."
+2026-02-11 04:55:59.960 [TYPING] bot=Sid true
+2026-02-11 04:56:01.193 [TYPING] bot=Lukas false
+2026-02-11 04:56:01.194 [MESSAGE] [Lukas] "Also, what happens if you lose your device or access method? I'd want a clear, reliable recovery process before trusting them fully."
+2026-02-11 04:56:01.194 [QUEUE] call-on who_spoke=[Lukas] next=Sid
+2026-02-11 04:56:01.194 [MESSAGE] [Eunice] "How about you, Sid?"
+2026-02-11 04:56:01.194 [OPENAI_REQ] bot=Sid question="What do you think about passkeys for logging into websites and apps?"
+2026-02-11 04:56:01.194 [TYPING] bot=Sid true
+2026-02-11 04:56:01.963 [TYPING] bot=Sid false
+2026-02-11 04:56:01.964 [MESSAGE] [Sid] "Still, from a security standpoint, they're a lot better than traditional passwords or even 2FA in some cases."
+2026-02-11 04:56:01.965 [QUEUE] call-on who_spoke=[Sid] next=Alex
+2026-02-11 04:56:01.965 [MESSAGE] [Eunice] "How about you, Alex?"
+2026-02-11 04:56:01.965 [OPENAI_REQ] bot=Alex question="What do you think about passkeys for logging into websites and apps?"
+2026-02-11 04:56:01.965 [TYPING] bot=Alex true
+2026-02-11 04:56:02.295 [OPENAI_OK] bot=Sid rtt=1101ms raw="["Passkeys technically solve a ton of issues with traditional passwords, like phishing and reuse, wh…"
+2026-02-11 04:56:02.295 [TYPING] bot=Sid false
+2026-02-11 04:56:02.896 [TYPING] bot=Sid true
+2026-02-11 04:56:03.335 [OPENAI_OK] bot=Alex rtt=1370ms raw="["From a security standpoint, biometric-based logins are a big step forward because they cut down on…"
+2026-02-11 04:56:03.335 [TYPING] bot=Alex false
+2026-02-11 04:56:03.938 [TYPING] bot=Alex true
+2026-02-11 04:56:04.898 [TYPING] bot=Sid false
+2026-02-11 04:56:04.899 [MESSAGE] [Sid] "Passkeys technically solve a ton of issues with traditional passwords, like phishing and reuse, which is huge."
+2026-02-11 04:56:05.500 [TYPING] bot=Sid true
+2026-02-11 04:56:05.940 [TYPING] bot=Alex false
+2026-02-11 04:56:05.940 [MESSAGE] [Alex] "From a security standpoint, biometric-based logins are a big step forward because they cut down on weak or reused passwords."
+2026-02-11 04:56:06.542 [TYPING] bot=Alex true
+2026-02-11 04:56:07.500 [TYPING] bot=Sid false
+2026-02-11 04:56:07.501 [MESSAGE] [Sid] "The biggest catch is device loss and cross-device syncing; without a solid recovery plan, you’re stuck."
+2026-02-11 04:56:08.102 [TYPING] bot=Sid true
+2026-02-11 04:56:08.544 [TYPING] bot=Alex false
+2026-02-11 04:56:08.544 [MESSAGE] [Alex] "Practically speaking, I appreciate how these systems reduce human error and make daily access hassle-free with just a fingerprint or face scan."
+2026-02-11 04:56:09.146 [TYPING] bot=Alex true
+2026-02-11 04:56:10.103 [TYPING] bot=Sid false
+2026-02-11 04:56:10.104 [MESSAGE] [Sid] "If the backend or app doesn’t implement them right, you can still get security gaps. It's not magic, just better tech."
+2026-02-11 04:56:10.104 [QUEUE] call-on who_spoke=[Lukas, Sid] next=Alayna
+2026-02-11 04:56:10.105 [MESSAGE] [Eunice] "How about you, Alayna?"
+2026-02-11 04:56:10.105 [OPENAI_REQ] bot=Alayna question="What do you think about passkeys for logging into websites and apps?"
+2026-02-11 04:56:10.106 [TYPING] bot=Alayna true
+2026-02-11 04:56:11.148 [TYPING] bot=Alex false
+2026-02-11 04:56:11.152 [MESSAGE] [Alex] "My main concern is always what happens if the biometric system or device fails—there has to be a solid backup or recovery plan in place."
+2026-02-11 04:56:11.152 [QUEUE] call-on who_spoke=[Sid, Alex] next=Lukas
+2026-02-11 04:56:11.152 [MESSAGE] [Eunice] "How about you, Lukas?"
+2026-02-11 04:56:11.153 [OPENAI_REQ] bot=Lukas question="What do you think about passkeys for logging into websites and apps?"
+2026-02-11 04:56:11.153 [TYPING] bot=Lukas true
+2026-02-11 04:56:11.201 [OPENAI_OK] bot=Alayna rtt=1096ms raw="["From a process perspective, passkeys could help reduce support tickets on password resets if rollo…"
+2026-02-11 04:56:11.201 [TYPING] bot=Alayna false
+2026-02-11 04:56:11.803 [TYPING] bot=Alayna true
+2026-02-11 04:56:12.657 [OPENAI_OK] bot=Lukas rtt=1504ms raw="["Passkeys sound like a solid upgrade security-wise, especially if they reduce phishing and password…"
+2026-02-11 04:56:12.657 [TYPING] bot=Lukas false
+2026-02-11 04:56:13.259 [TYPING] bot=Lukas true
+2026-02-11 04:56:13.804 [TYPING] bot=Alayna false
+2026-02-11 04:56:13.805 [MESSAGE] [Alayna] "From a process perspective, passkeys could help reduce support tickets on password resets if rollout is clear enough."
+2026-02-11 04:56:14.406 [TYPING] bot=Alayna true
+2026-02-11 04:56:15.261 [TYPING] bot=Lukas false
+2026-02-11 04:56:15.262 [MESSAGE] [Lukas] "Passkeys sound like a solid upgrade security-wise, especially if they reduce phishing and password reuse risks."
+2026-02-11 04:56:15.863 [TYPING] bot=Lukas true
+2026-02-11 04:56:16.408 [TYPING] bot=Alayna false
+2026-02-11 04:56:16.408 [MESSAGE] [Alayna] "But I worry about the communication piece—employees need to fully understand backup options before this replaces passwords."
+2026-02-11 04:56:17.010 [TYPING] bot=Alayna true
+2026-02-11 04:56:17.863 [TYPING] bot=Lukas false
+2026-02-11 04:56:17.864 [MESSAGE] [Lukas] "My main concern is how recovery processes are standardized across platforms, since losing access could be a big issue."
+2026-02-11 04:56:18.465 [TYPING] bot=Lukas true
+2026-02-11 04:56:19.011 [TYPING] bot=Alayna false
+2026-02-11 04:56:19.011 [MESSAGE] [Alayna] "Plus, different platforms might handle passkeys differently, so a standardized approach would help avoid confusion."
+2026-02-11 04:56:19.012 [QUEUE] call-on who_spoke=[Lukas, Sid, Alayna] next=human ara, waiting for human_idle
+2026-02-11 04:56:19.012 [MESSAGE] [Eunice] "How about you, ara?"
+2026-02-11 04:56:20.467 [TYPING] bot=Lukas false
+2026-02-11 04:56:20.467 [MESSAGE] [Lukas] "Also, where is the authentication data actually stored? Cloud storage makes me a bit uneasy without clear standards."
+2026-02-11 04:56:20.467 [QUEUE] call-on who_spoke=[Sid, Alex, Lukas] next=human ara, waiting for human_idle
+2026-02-11 04:56:20.468 [MESSAGE] [Eunice] "How about you, ara?"
+2026-02-11 04:56:23.407 [TYPING] human true
+2026-02-11 04:56:23.479 [TYPING] human true
+2026-02-11 04:56:23.541 [TYPING] human true
+2026-02-11 04:56:23.630 [TYPING] human true
+2026-02-11 04:56:23.736 [TYPING] human true
+2026-02-11 04:56:23.844 [TYPING] human true
+2026-02-11 04:56:23.915 [TYPING] human true
+2026-02-11 04:56:23.980 [TYPING] human true
+2026-02-11 04:56:24.081 [TYPING] human true
+2026-02-11 04:56:24.158 [TYPING] human true
+2026-02-11 04:56:24.217 [TYPING] human true
+2026-02-11 04:56:24.291 [TYPING] human true
+2026-02-11 04:56:24.397 [TYPING] human true
+2026-02-11 04:56:24.502 [TYPING] human true
+2026-02-11 04:56:24.644 [TYPING] human true
+2026-02-11 04:56:24.727 [TYPING] human true
+2026-02-11 04:56:24.865 [TYPING] human true
+2026-02-11 04:56:24.944 [TYPING] human true
+2026-02-11 04:56:24.995 [TYPING] human false
+2026-02-11 04:56:25.000 [HUMAN_INPUT] [ara] "I think it is good"
+2026-02-11 04:56:25.000 [MESSAGE] [ara] "I think it is good"
+2026-02-11 04:56:25.000 [QUEUE] human_message during call-on: advancing after ara's response
+2026-02-11 04:56:25.000 [QUEUE] call-on round done, running disagreement phase
+2026-02-11 04:56:25.000 [QUEUE] disagreement phase started
+2026-02-11 04:56:25.442 [QUEUE] no disagreements detected
