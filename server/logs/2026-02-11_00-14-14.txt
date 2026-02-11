@@ -169,3 +169,46 @@ Do …"
 2026-02-11 05:16:46.650 [MESSAGE] [Alayna] "I think it depends on how much impact it might have on workflows or the user experience before deciding to dive in."
 2026-02-11 05:16:47.546 [QUEUE] call-on who_spoke=[Sid, Alayna] next=Erik
 2026-02-11 05:16:47.546 [TYPING] moderator true
+2026-02-11 05:16:51.748 [TYPING] moderator false
+2026-02-11 05:16:51.748 [MESSAGE] [Eunice] "Good point, Alayna. Erik, how about you? Do you jump right in with new features or wait to see how they play out?"
+2026-02-11 05:16:51.748 [OPENAI_REQ] bot=Erik question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 05:16:51.748 [TYPING] bot=Erik true
+2026-02-11 05:16:53.038 [OPENAI_OK] bot=Erik rtt=1290ms raw="["I tend to wait and observe how a new feature affects system stability and security before adopting…"
+2026-02-11 05:16:53.038 [TYPING] bot=Erik false
+2026-02-11 05:16:54.040 [TYPING] bot=Erik true
+2026-02-11 05:16:57.241 [TYPING] bot=Erik false
+2026-02-11 05:16:57.242 [MESSAGE] [Erik] "I tend to wait and observe how a new feature affects system stability and security before adopting it."
+2026-02-11 05:16:58.243 [TYPING] bot=Erik true
+2026-02-11 05:17:01.447 [TYPING] bot=Erik false
+2026-02-11 05:17:01.448 [MESSAGE] [Erik] "If it has clear benefits, especially in security or efficiency, I’m more willing to try it sooner."
+2026-02-11 05:17:02.452 [TYPING] bot=Erik true
+2026-02-11 05:17:05.654 [TYPING] bot=Erik false
+2026-02-11 05:17:05.655 [MESSAGE] [Erik] "For me, the rollout strategy and technical documentation play a big role in the decision to jump in or hold back."
+2026-02-11 05:17:06.454 [QUEUE] call-on who_spoke=[Sid, Alayna, Erik] next=human ara, waiting for human_idle
+2026-02-11 05:17:06.455 [TYPING] moderator true
+2026-02-11 05:17:10.657 [TYPING] moderator false
+2026-02-11 05:17:10.657 [MESSAGE] [Eunice] "Good point, Erik. Ara, how about you? Do you jump on new features right away or wait it out?"
+2026-02-11 05:20:44.203 [DISCONNECT] id=yXZ0pj2yfaTSRD8DAAAD
+2026-02-11 05:20:44.277 [SESSION_START] id=2dygM_Up6-9P6RvsAAAF condition=control bots=Vivian,Alayna,Anika
+2026-02-11 05:20:44.277 [SESSION_START] participant_name set to "ara"
+2026-02-11 05:20:44.277 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 05:20:44.277 [TYPING] moderator true
+2026-02-11 05:20:48.411 [TYPING] moderator false
+2026-02-11 05:20:48.414 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 05:20:48.414 [TYPING] moderator true
+2026-02-11 05:22:01.500 [TYPING] moderator false
+2026-02-11 05:22:01.502 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 05:22:01.505 [QUEUE] intro: bots stagger 1–3s with typing, then human
+2026-02-11 05:22:03.521 [TYPING] bot=Vivian true
+2026-02-11 05:22:06.725 [TYPING] bot=Vivian false
+2026-02-11 05:22:06.726 [MESSAGE] [Vivian] "Hi, I'm Vivian. I'm a psych undergrad at Emory. I'm on my phone 24/7 and I barely think about logging in—it just happens."
+2026-02-11 05:22:09.567 [TYPING] bot=Alayna true
+2026-02-11 05:22:33.677 [TYPING] bot=Alayna false
+2026-02-11 05:22:33.678 [MESSAGE] [Alayna] "Hey, I'm Alayna. I'm pretty active online. New features? I'll try them if they look good and don't get in the way."
+2026-02-11 05:22:37.128 [TYPING] bot=Anika true
+2026-02-11 05:22:40.331 [TYPING] bot=Anika false
+2026-02-11 05:22:40.332 [MESSAGE] [Anika] "I'm Anika. I do yoga and cooking when I'm not working. I keep tech pretty minimal. I don't need a lot of new features."
+2026-02-11 05:22:41.130 [TYPING] moderator true
+2026-02-11 05:23:58.809 [TYPING] moderator false
+2026-02-11 05:23:58.811 [MESSAGE] [Eunice] "Thanks for sharing, Anika. Ara, how about you? Tell us a bit about yourself."
+2026-02-11 05:23:58.812 [QUEUE] waiting for human intro from ara

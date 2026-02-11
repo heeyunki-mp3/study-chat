@@ -417,68 +417,33 @@ function addMessage(session, name, text) {
 /** Hardcoded intro options per bot (2–3 sentences). One is chosen at random. */
 const BOT_INTROS = {
   Jae: [
-    "Hi, I'm Jae. I teach math at high school",
+    "Hi I'm Jae. I teach math at high school",
     "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
   ],
   Mina: [
-    "Hi, I'm Mina. I work in retail in LA and I'm on my phone a lot. Honestly I just want things to be easy.",
-    "Hey, I'm Mina Yujin. I use Instagram and TikTok constantly. If an app adds something new I usually ignore it until I have to.",
-    "I'm Mina. I live in Koreatown and I hate when apps make me do extra steps. The simpler the better.",
+    "Hi, I'm Mina. I work in retail in LA. Nice to meet you all",
+    "Hiii my name is Mina! I work in retail in LA",
+    "Hi yall! I'm Mina. First time doing this kind of thing!",
   ],
   Derek: [
-    "Hi, I'm Derek. I'm a case worker in Tacoma. I deal with a lot of systems at work and I'm pretty tired of things changing all the time.",
-    "Hey, I'm Derek Matthew. I work in social services. To be honest I've seen too many \"upgrades\" that just make everything harder.",
-    "I'm Derek. I'm in Tacoma and I use a lot of government portals. I care about security but I also just want to get through my day.",
+    "Hi, I'm Derek. I'm a case worker in Tacoma.",
+    "Hey, I'm Derek. I work in social services. Good to see you all.",
+    "I am Derek. I'm in Tacoma.",
   ],
   Vivian: [
-    "Hi, I'm Vivian. I'm a psych undergrad at Emory. I'm on my phone 24/7 and I barely think about logging in—it just happens.",
-    "Hey, I'm Vivian Mae. I'm in Atlanta and I use Notion, Discord, all of that. Passwords feel so outdated to me.",
-    "I'm Vivian. I'm a student and I multitask a lot. My phone is basically my identity at this point.",
+    "Hi I'm Vivian. I'm a psych undergrad at Emory.",
+    "Hey my name is Vivian. I live in Atlanta",
+    "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology",
   ],
   Anika: [
-    "Hi, I'm Anika. I'm a massage therapist in Fremont. I prefer simple things—I don't really like complicated apps or settings.",
-    "Hey, I'm Anika Riya. I run my own practice and use my phone for booking and stuff. If it works I don't touch it.",
-    "I'm Anika. I do yoga and cooking when I'm not working. I keep tech pretty minimal. I don't need a lot of new features.",
-  ],
-  Alex: [
-    "Hi, I'm Alex. I work at a bank in Bellevue. I use fingerprint and face login a lot—we're pretty focused on security.",
-    "Hey, I'm Alex Wei. I'm in banking so I think about risk and procedures. I like biometrics but I don't really follow the latest terms.",
-    "I'm Alex. I'm in Washington and I use LinkedIn and Reddit. I'm fine with new login options as long as they're secure.",
-  ],
-  Dario: [
-    "Hi, I'm Dario. I bartend in Austin. I'm on social media a lot but I don't dig into how login stuff works.",
-    "Hey, I'm Dario. I'm in Texas and I use my phone for everything. New features? I'll try them if they're obvious.",
-    "I'm Dario. I work nights so I'm on my phone between shifts. I just want things to work without thinking about it.",
-  ],
-  Faith: [
-    "Hi, I'm Faith. I'm a nurse and we use a lot of systems at the hospital. I'm careful about security but I also need things to be fast.",
-    "Hey, I'm Faith. I work in healthcare so I see a lot of logins. I like when things get easier—face ID and that kind of thing.",
-    "I'm Faith. I'm in nursing and we're always short on time. I prefer logins that don't make me stop and think.",
+    "Hi, I'm Anika. I'm a massage therapist in California. Nice to meet you all",
+    "Hey, my name is Anika.",
+    "I am Anika.",
   ],
   Sid: [
     "Hi, I'm Sid. I'm in grad school and I use a ton of apps for research and writing. I'm pretty comfortable with tech.",
     "Hey, I'm Sid. I'm a student and I'm always trying new tools. Some stick and some don't—I just see what works.",
     "I'm Sid. I live on my laptop and phone. I've heard of passkeys and stuff but I don't always keep up with the names.",
-  ],
-  Alayna: [
-    "Hi, I'm Alayna. I work in marketing and I'm on Instagram and TikTok a lot. I like when apps feel smooth and modern.",
-    "Hey, I'm Alayna. I'm pretty active online. New features? I'll try them if they look good and don't get in the way.",
-    "I'm Alayna. I care about how things look and feel. If a company rolls out something new I might try it if it's easy.",
-  ],
-  Lukas: [
-    "Hi, I'm Lukas. I'm in software but I don't obsess over every new feature. I use what works for me.",
-    "Hey, I'm Lukas. I work in tech in the Bay Area. I've heard of passkeys and similar stuff—some of it's useful.",
-    "I'm Lukas. I'm a developer so I'm used to new tools. I adopt things when they actually make my life easier.",
-  ],
-  Camille: [
-    "Hi, I'm Camille. I'm in design and I use a lot of creative apps. I like when login doesn't interrupt my flow.",
-    "Hey, I'm Camille. I work with design tools and collaboration apps. I'm fine with Face ID and things like that.",
-    "I'm Camille. I'm pretty visual and I get annoyed when tech gets in the way. Simple logins are best.",
-  ],
-  Erik: [
-    "Hi, I'm Erik. I'm in sales and I'm on the road a lot. I use my phone for everything—the less typing the better.",
-    "Hey, I'm Erik. I travel for work so I need logins that work everywhere. I've used fingerprint and face login for years.",
-    "I'm Erik. I'm in sales and I hate resetting passwords. I'm open to anything that makes signing in faster.",
   ],
 };
 
