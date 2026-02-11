@@ -125,8 +125,10 @@ export default function ChatPage() {
   const [session, setSession] = useState(null);
   const [input, setInput] = useState("");
 
-  // ✅ NEW: debounce timer
+  // Debounce: stop-typing after 800ms; then idle = 3s (empty) or 7s (has text)
   const typingTimeoutRef = useRef(null);
+  const idleTimeoutRef = useRef(null);
+  const inputRef = useRef("");
 
   useEffect(() => {
     if (!participantName) {
@@ -185,6 +187,10 @@ export default function ChatPage() {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = null;
+      }
       socket.disconnect();
     };
   }, [socket, participantName, navigate]);
@@ -194,36 +200,53 @@ export default function ChatPage() {
     .map(([k]) => k)
     .join(", ");
 
-  // ✅ NEW: fires on every keystroke
+  // Fires on every keystroke
   function handleInputChange(val) {
     setInput(val);
+    inputRef.current = val ?? "";
 
-    // tell server: human is typing
     socket.emit("human_typing", { isTyping: true });
 
-    // debounce stop-typing
+    // Typing debounce: stop "typing" after 800ms
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("human_typing", { isTyping: false });
       typingTimeoutRef.current = null;
     }, 800);
+
+    // Idle: 1s if empty, 7s if has text — timer starts from this keystroke so moderator can advance
+    if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+    const isEmpty = String(val ?? "").trim() === "";
+    const idleMs = isEmpty ? 1000 : 7000;
+    idleTimeoutRef.current = setTimeout(() => {
+      socket.emit("human_idle");
+      idleTimeoutRef.current = null;
+    }, idleMs);
   }
 
   function onSend(text) {
     const t = (text || "").trim();
     if (!t) return;
 
-    // ✅ stop typing immediately on send
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
     }
+    if (idleTimeoutRef.current) {
+      clearTimeout(idleTimeoutRef.current);
+      idleTimeoutRef.current = null;
+    }
     socket.emit("human_typing", { isTyping: false });
-
     socket.emit("human_message", { text: t });
 
-    // clear input locally (MessageInput also clears, but we control value now)
     setInput("");
+    inputRef.current = "";
+
+    // After sending, start 1s idle timer so moderator advances once user is "done" (empty input)
+    idleTimeoutRef.current = setTimeout(() => {
+      socket.emit("human_idle");
+      idleTimeoutRef.current = null;
+    }, 1000);
   }
 
   function goLogin() {

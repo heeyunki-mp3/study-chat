@@ -1,0 +1,602 @@
+2026-02-11 15:50:28.236 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 15:50:28.237 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-11 15:50:28.700 [SESSION_START] id=97kunGwFA6DQw-cEAAAB condition=control bots=Sid,Vivian,Jae
+2026-02-11 15:50:28.701 [SESSION_START] participant_name set to "ara"
+2026-02-11 15:50:28.701 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 15:50:28.702 [TYPING] moderator true
+2026-02-11 15:50:29.931 [DISCONNECT] id=97kunGwFA6DQw-cEAAAB
+2026-02-11 15:50:30.277 [SESSION_START] id=3Xukn2COdZ9Sym3ZAAAD condition=control bots=Sid,Vivian,Jae
+2026-02-11 15:50:30.278 [SESSION_START] participant_name set to "ara"
+2026-02-11 15:50:30.278 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 15:50:30.278 [TYPING] moderator true
+2026-02-11 15:50:32.905 [TYPING] moderator false
+2026-02-11 15:50:32.906 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 15:50:32.907 [TYPING] moderator true
+2026-02-11 15:50:34.481 [TYPING] moderator false
+2026-02-11 15:50:34.483 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 15:50:34.483 [TYPING] moderator true
+2026-02-11 15:50:37.109 [TYPING] moderator false
+2026-02-11 15:50:37.110 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 15:50:37.111 [QUEUE] intro: bots start 1–3s timers from 'To start us off', type in parallel
+2026-02-11 15:50:38.686 [TYPING] moderator false
+2026-02-11 15:50:38.686 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 15:50:38.686 [QUEUE] intro: bots start 1–3s timers from 'To start us off', type in parallel
+2026-02-11 15:50:39.124 [TYPING] bot=Jae true
+2026-02-11 15:50:40.565 [TYPING] bot=Sid true
+2026-02-11 15:50:40.630 [TYPING] bot=Vivian true
+2026-02-11 15:50:40.808 [TYPING] bot=Vivian true
+2026-02-11 15:50:41.195 [TYPING] bot=Sid true
+2026-02-11 15:50:41.600 [TYPING] bot=Jae true
+2026-02-11 15:50:42.326 [TYPING] bot=Jae false
+2026-02-11 15:50:42.326 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-11 15:50:43.766 [TYPING] bot=Sid false
+2026-02-11 15:50:43.767 [MESSAGE] [Sid] "Sid. I am an IT support technician in New Jersey."
+2026-02-11 15:50:43.832 [TYPING] bot=Vivian false
+2026-02-11 15:50:43.832 [MESSAGE] [Vivian] "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology"
+2026-02-11 15:50:44.009 [TYPING] bot=Vivian false
+2026-02-11 15:50:44.010 [MESSAGE] [Vivian] "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology"
+2026-02-11 15:50:44.397 [TYPING] bot=Sid false
+2026-02-11 15:50:44.398 [MESSAGE] [Sid] "Sid. I am an IT support technician in New Jersey."
+2026-02-11 15:50:44.728 [TYPING] moderator true
+2026-02-11 15:50:44.802 [TYPING] bot=Jae false
+2026-02-11 15:50:44.802 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-11 15:50:45.627 [TYPING] moderator true
+2026-02-11 15:50:48.929 [TYPING] moderator false
+2026-02-11 15:50:48.930 [MESSAGE] [Eunice] "Thanks for sharing, Vivian. Ara, how about you? Please introduce yourself."
+2026-02-11 15:50:48.930 [QUEUE] waiting for human intro from ara
+2026-02-11 15:50:49.828 [TYPING] moderator false
+2026-02-11 15:50:49.830 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Ara, could you introduce yourself next?"
+2026-02-11 15:50:49.831 [QUEUE] waiting for human intro from ara
+2026-02-11 15:50:51.652 [TYPING] human true
+2026-02-11 15:50:51.766 [TYPING] human true
+2026-02-11 15:50:51.825 [TYPING] human true
+2026-02-11 15:50:51.967 [TYPING] human true
+2026-02-11 15:50:52.036 [TYPING] human true
+2026-02-11 15:50:52.187 [TYPING] human true
+2026-02-11 15:50:52.275 [TYPING] human true
+2026-02-11 15:50:52.349 [TYPING] human true
+2026-02-11 15:50:52.516 [TYPING] human true
+2026-02-11 15:50:52.573 [TYPING] human true
+2026-02-11 15:50:52.789 [TYPING] human true
+2026-02-11 15:50:53.186 [TYPING] human true
+2026-02-11 15:50:53.335 [TYPING] human true
+2026-02-11 15:50:53.466 [TYPING] human true
+2026-02-11 15:50:53.586 [TYPING] human true
+2026-02-11 15:50:54.128 [TYPING] human true
+2026-02-11 15:50:54.280 [TYPING] human true
+2026-02-11 15:50:54.339 [TYPING] human true
+2026-02-11 15:50:54.441 [TYPING] human true
+2026-02-11 15:50:54.846 [TYPING] human true
+2026-02-11 15:50:54.998 [TYPING] human true
+2026-02-11 15:50:55.111 [TYPING] human true
+2026-02-11 15:50:55.252 [TYPING] human true
+2026-02-11 15:50:55.524 [TYPING] human true
+2026-02-11 15:50:55.625 [TYPING] human true
+2026-02-11 15:50:55.943 [TYPING] human true
+2026-02-11 15:50:56.040 [TYPING] human true
+2026-02-11 15:50:56.102 [TYPING] human true
+2026-02-11 15:50:56.180 [TYPING] human true
+2026-02-11 15:50:56.250 [TYPING] human true
+2026-02-11 15:50:56.372 [TYPING] human true
+2026-02-11 15:50:56.466 [TYPING] human true
+2026-02-11 15:50:56.532 [TYPING] human true
+2026-02-11 15:50:56.643 [TYPING] human true
+2026-02-11 15:50:57.015 [TYPING] human true
+2026-02-11 15:50:57.195 [TYPING] human true
+2026-02-11 15:50:57.211 [TYPING] human true
+2026-02-11 15:50:57.428 [TYPING] human true
+2026-02-11 15:50:57.464 [TYPING] human true
+2026-02-11 15:50:57.743 [TYPING] human true
+2026-02-11 15:50:57.860 [TYPING] human true
+2026-02-11 15:50:57.981 [TYPING] human true
+2026-02-11 15:50:58.100 [TYPING] human true
+2026-02-11 15:50:58.313 [TYPING] human true
+2026-02-11 15:50:58.365 [TYPING] human true
+2026-02-11 15:50:58.503 [TYPING] human true
+2026-02-11 15:50:58.561 [TYPING] human true
+2026-02-11 15:50:58.623 [TYPING] human true
+2026-02-11 15:50:58.760 [TYPING] human true
+2026-02-11 15:50:58.768 [TYPING] human true
+2026-02-11 15:50:58.861 [TYPING] human true
+2026-02-11 15:50:58.890 [TYPING] human true
+2026-02-11 15:50:58.950 [TYPING] human true
+2026-02-11 15:50:59.045 [TYPING] human true
+2026-02-11 15:50:59.164 [TYPING] human true
+2026-02-11 15:50:59.268 [TYPING] human false
+2026-02-11 15:50:59.273 [HUMAN_INPUT] [ara] "Hi I am Ara! Nice to meet you all"
+2026-02-11 15:50:59.274 [MESSAGE] [ara] "Hi I am Ara! Nice to meet you all"
+2026-02-11 15:50:59.274 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-11 15:50:59.275 [TYPING] moderator true
+2026-02-11 15:51:03.477 [TYPING] moderator false
+2026-02-11 15:51:03.478 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study.
+We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-11 15:51:03.479 [TYPING] moderator true
+2026-02-11 15:51:07.682 [TYPING] moderator false
+2026-02-11 15:51:07.684 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-11 15:51:10.261 [MESSAGE] [Vivian] "Ok!"
+2026-02-11 15:51:10.262 [QUEUE] study_goal ack done, starting first big_question
+2026-02-11 15:51:10.263 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-11 15:51:10.263 [TYPING] moderator true
+2026-02-11 15:51:14.065 [TYPING] human true
+2026-02-11 15:51:14.166 [TYPING] human true
+2026-02-11 15:51:14.361 [TYPING] human true
+2026-02-11 15:51:14.466 [TYPING] moderator false
+2026-02-11 15:51:14.467 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-11 15:51:14.585 [TYPING] human false
+2026-02-11 15:51:14.593 [HUMAN_INPUT] [ara] "OK!"
+2026-02-11 15:51:14.594 [MESSAGE] [ara] "OK!"
+2026-02-11 15:51:15.158 [TYPING] moderator true
+2026-02-11 15:51:19.362 [TYPING] moderator false
+2026-02-11 15:51:19.365 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-11 15:51:19.366 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:51:19.367 [TYPING] bot=Sid true
+2026-02-11 15:51:20.500 [OPENAI_OK] bot=Sid rtt=1134ms raw="["I usually give new features a skeptical glance at first. Companies tend to release them before the…"
+2026-02-11 15:51:20.500 [TYPING] bot=Sid false
+2026-02-11 15:51:21.503 [TYPING] bot=Sid true
+2026-02-11 15:51:24.704 [TYPING] bot=Sid false
+2026-02-11 15:51:24.706 [MESSAGE] [Sid] "I usually give new features a skeptical glance at first. Companies tend to release them before they're fully polished."
+2026-02-11 15:51:25.709 [TYPING] bot=Sid true
+2026-02-11 15:51:28.912 [TYPING] bot=Sid false
+2026-02-11 15:51:28.913 [MESSAGE] [Sid] "I try new stuff only if it seems useful or if it’s security related—otherwise, I’ll wait till others find the bugs for me."
+2026-02-11 15:51:29.819 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-11 15:51:29.819 [TYPING] moderator true
+2026-02-11 15:51:34.021 [TYPING] moderator false
+2026-02-11 15:51:34.022 [MESSAGE] [Eunice] "Thanks for that, Sid. Vivian, how about you? Do you jump on new features immediately or take a wait-and-see approach?"
+2026-02-11 15:51:34.022 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:51:34.022 [TYPING] bot=Vivian true
+2026-02-11 15:51:35.757 [OPENAI_OK] bot=Vivian rtt=1735ms raw="["I usually get curious and try new features pretty fast. Waiting feels like missing out, plus I get…"
+2026-02-11 15:51:35.757 [TYPING] bot=Vivian false
+2026-02-11 15:51:36.760 [TYPING] bot=Vivian true
+2026-02-11 15:51:39.962 [TYPING] bot=Vivian false
+2026-02-11 15:51:39.963 [MESSAGE] [Vivian] "I usually get curious and try new features pretty fast. Waiting feels like missing out, plus I get distracted easily, so testing them is fun."
+2026-02-11 15:51:40.964 [TYPING] bot=Vivian true
+2026-02-11 15:51:44.166 [TYPING] bot=Vivian false
+2026-02-11 15:51:44.166 [MESSAGE] [Vivian] "But if it's something major or tricky, I might skim reviews or ask friends first before fully switching over. Gotta avoid wasting time on glitchy stuff."
+2026-02-11 15:51:47.351 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-11 15:51:47.352 [TYPING] moderator true
+2026-02-11 15:51:51.554 [TYPING] moderator false
+2026-02-11 15:51:51.554 [MESSAGE] [Eunice] "Good point, Vivian. Jae, how about you? How do you usually react when new features come out?"
+2026-02-11 15:51:51.555 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:51:51.555 [TYPING] bot=Jae true
+2026-02-11 15:51:56.151 [OPENAI_OK] bot=Jae rtt=4596ms raw="["I usually feel cautious about new features, especially if they could affect my work tools or accou…"
+2026-02-11 15:51:56.152 [TYPING] bot=Jae false
+2026-02-11 15:51:57.153 [TYPING] bot=Jae true
+2026-02-11 15:52:00.355 [TYPING] bot=Jae false
+2026-02-11 15:52:00.356 [MESSAGE] [Jae] "I usually feel cautious about new features, especially if they could affect my work tools or accounts. I don’t try them right away—I like to wait and see if the…"
+2026-02-11 15:52:01.358 [TYPING] bot=Jae true
+2026-02-11 15:52:04.561 [TYPING] bot=Jae false
+2026-02-11 15:52:04.561 [MESSAGE] [Jae] "In my experience, sometimes updates can cause syncing issues or annoyances, so I prefer stability over excitement with new versions. If it’s security-related, I…"
+2026-02-11 15:52:05.935 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human ara, waiting for human_idle
+2026-02-11 15:52:05.936 [TYPING] moderator true
+2026-02-11 15:52:10.138 [TYPING] moderator false
+2026-02-11 15:52:10.138 [MESSAGE] [Eunice] "Thanks for that, Jae. Ara, what’s your take on trying new features from big tech companies?"
+2026-02-11 15:52:31.360 [TYPING] human true
+2026-02-11 15:52:31.457 [TYPING] human true
+2026-02-11 15:52:31.670 [TYPING] human true
+2026-02-11 15:52:31.838 [TYPING] human true
+2026-02-11 15:52:31.939 [TYPING] human true
+2026-02-11 15:52:32.027 [TYPING] human true
+2026-02-11 15:52:32.135 [TYPING] human true
+2026-02-11 15:52:32.632 [TYPING] human true
+2026-02-11 15:52:33.396 [TYPING] human true
+2026-02-11 15:52:33.543 [TYPING] human true
+2026-02-11 15:52:33.639 [TYPING] human true
+2026-02-11 15:52:33.774 [TYPING] human true
+2026-02-11 15:52:33.891 [TYPING] human true
+2026-02-11 15:52:34.254 [TYPING] human true
+2026-02-11 15:52:34.583 [TYPING] human true
+2026-02-11 15:52:34.701 [TYPING] human true
+2026-02-11 15:52:34.836 [TYPING] human true
+2026-02-11 15:52:34.909 [TYPING] human true
+2026-02-11 15:52:34.982 [TYPING] human true
+2026-02-11 15:52:35.153 [TYPING] human true
+2026-02-11 15:52:35.604 [TYPING] human true
+2026-02-11 15:52:35.935 [TYPING] human true
+2026-02-11 15:52:36.006 [TYPING] human true
+2026-02-11 15:52:36.169 [TYPING] human true
+2026-02-11 15:52:36.318 [TYPING] human true
+2026-02-11 15:52:36.447 [TYPING] human true
+2026-02-11 15:52:37.250 [TYPING] human false
+2026-02-11 15:52:37.476 [TYPING] human true
+2026-02-11 15:52:37.643 [TYPING] human true
+2026-02-11 15:52:38.048 [TYPING] human true
+2026-02-11 15:52:38.467 [TYPING] human true
+2026-02-11 15:52:38.632 [TYPING] human true
+2026-02-11 15:52:38.813 [TYPING] human true
+2026-02-11 15:52:38.867 [TYPING] human true
+2026-02-11 15:52:38.961 [TYPING] human true
+2026-02-11 15:52:39.064 [TYPING] human true
+2026-02-11 15:52:39.156 [TYPING] human true
+2026-02-11 15:52:39.245 [TYPING] human true
+2026-02-11 15:52:39.334 [TYPING] human true
+2026-02-11 15:52:39.442 [TYPING] human true
+2026-02-11 15:52:39.594 [TYPING] human true
+2026-02-11 15:52:39.663 [TYPING] human true
+2026-02-11 15:52:39.846 [TYPING] human true
+2026-02-11 15:52:39.949 [TYPING] human true
+2026-02-11 15:52:40.096 [TYPING] human true
+2026-02-11 15:52:40.253 [TYPING] human true
+2026-02-11 15:52:40.389 [TYPING] human true
+2026-02-11 15:52:40.463 [TYPING] human true
+2026-02-11 15:52:40.548 [TYPING] human true
+2026-02-11 15:52:40.626 [TYPING] human true
+2026-02-11 15:52:40.728 [TYPING] human true
+2026-02-11 15:52:40.833 [TYPING] human true
+2026-02-11 15:52:40.958 [TYPING] human true
+2026-02-11 15:52:41.031 [TYPING] human true
+2026-02-11 15:52:41.135 [TYPING] human true
+2026-02-11 15:52:41.223 [TYPING] human true
+2026-02-11 15:52:41.453 [TYPING] human true
+2026-02-11 15:52:41.784 [TYPING] human false
+2026-02-11 15:52:41.794 [HUMAN_INPUT] [ara] "I dont like trying new stuff right away."
+2026-02-11 15:52:41.794 [MESSAGE] [ara] "I dont like trying new stuff right away."
+2026-02-11 15:52:41.795 [QUEUE] human_message during call-on: ara replied, waiting for idle to advance
+2026-02-11 15:53:19.730 [TYPING] human false
+2026-02-11 15:53:19.732 [DISCONNECT] id=3Xukn2COdZ9Sym3ZAAAD
+2026-02-11 15:53:19.735 [SESSION_START] id=BI7ySusvH0eDaJv2AAAF condition=control bots=Sid,Vivian,Jae
+2026-02-11 15:53:19.735 [SESSION_START] participant_name set to "ara"
+2026-02-11 15:53:19.735 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 15:53:19.735 [TYPING] moderator true
+2026-02-11 15:53:23.937 [TYPING] moderator false
+2026-02-11 15:53:23.938 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 15:53:23.938 [TYPING] moderator true
+2026-02-11 15:53:28.142 [TYPING] moderator false
+2026-02-11 15:53:28.143 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 15:53:28.144 [QUEUE] intro: bots start 1–3s timers from 'To start us off', type in parallel
+2026-02-11 15:53:30.441 [TYPING] bot=Jae true
+2026-02-11 15:53:31.392 [TYPING] bot=Sid true
+2026-02-11 15:53:31.725 [TYPING] bot=Vivian true
+2026-02-11 15:53:33.643 [TYPING] bot=Jae false
+2026-02-11 15:53:33.644 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-11 15:53:34.593 [TYPING] bot=Sid false
+2026-02-11 15:53:34.594 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-11 15:53:34.928 [TYPING] bot=Vivian false
+2026-02-11 15:53:34.929 [MESSAGE] [Vivian] "Hey my name is Vivian. I live in Atlanta"
+2026-02-11 15:53:35.816 [TYPING] moderator true
+2026-02-11 15:53:40.018 [TYPING] moderator false
+2026-02-11 15:53:40.019 [MESSAGE] [Eunice] "Thanks for sharing, Vivian. Ara, how about you introduce yourself next?"
+2026-02-11 15:53:40.019 [QUEUE] waiting for human intro from ara
+2026-02-11 15:53:43.980 [TYPING] human true
+2026-02-11 15:53:44.111 [TYPING] human true
+2026-02-11 15:53:44.178 [TYPING] human true
+2026-02-11 15:53:44.560 [TYPING] human true
+2026-02-11 15:53:44.614 [TYPING] human true
+2026-02-11 15:53:44.689 [TYPING] human true
+2026-02-11 15:53:44.778 [TYPING] human true
+2026-02-11 15:53:44.858 [TYPING] human true
+2026-02-11 15:53:44.944 [TYPING] human true
+2026-02-11 15:53:44.991 [TYPING] human true
+2026-02-11 15:53:45.078 [TYPING] human true
+2026-02-11 15:53:45.171 [TYPING] human false
+2026-02-11 15:53:45.178 [HUMAN_INPUT] [ara] "Hi I am ara"
+2026-02-11 15:53:45.178 [MESSAGE] [ara] "Hi I am ara"
+2026-02-11 15:53:45.178 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-11 15:53:45.178 [TYPING] moderator true
+2026-02-11 15:53:49.381 [TYPING] moderator false
+2026-02-11 15:53:49.382 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study.
+We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-11 15:53:49.382 [TYPING] moderator true
+2026-02-11 15:53:53.584 [TYPING] moderator false
+2026-02-11 15:53:53.585 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-11 15:53:56.284 [MESSAGE] [Jae] "Got it!"
+2026-02-11 15:53:56.284 [QUEUE] study_goal ack done, starting first big_question
+2026-02-11 15:53:56.284 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-11 15:53:56.284 [TYPING] moderator true
+2026-02-11 15:53:57.759 [TYPING] human true
+2026-02-11 15:53:57.845 [TYPING] human true
+2026-02-11 15:53:58.101 [TYPING] human true
+2026-02-11 15:53:58.244 [TYPING] human false
+2026-02-11 15:53:58.253 [HUMAN_INPUT] [ara] "Ok1"
+2026-02-11 15:53:58.254 [MESSAGE] [ara] "Ok1"
+2026-02-11 15:54:00.487 [TYPING] moderator false
+2026-02-11 15:54:00.487 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-11 15:54:01.152 [TYPING] moderator true
+2026-02-11 15:54:05.356 [TYPING] moderator false
+2026-02-11 15:54:05.357 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-11 15:54:05.357 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:54:05.357 [TYPING] bot=Sid true
+2026-02-11 15:54:06.388 [OPENAI_OK] bot=Sid rtt=1031ms raw="["Honestly, I’m skeptical at first. Most new features from big companies feel like unnecessary bloat…"
+2026-02-11 15:54:06.388 [TYPING] bot=Sid false
+2026-02-11 15:54:07.390 [TYPING] bot=Sid true
+2026-02-11 15:54:10.592 [TYPING] bot=Sid false
+2026-02-11 15:54:10.592 [MESSAGE] [Sid] "Honestly, I’m skeptical at first. Most new features from big companies feel like unnecessary bloat or some half-baked idea. I usually wait a bit to see if peopl…"
+2026-02-11 15:54:11.782 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-11 15:54:11.782 [TYPING] moderator true
+2026-02-11 15:54:15.879 [TYPING] human false
+2026-02-11 15:54:15.881 [DISCONNECT] id=BI7ySusvH0eDaJv2AAAF
+2026-02-11 15:54:15.882 [SESSION_START] id=mi5Bdw4CMv7KVbQ1AAAH condition=control bots=Sid,Vivian,Jae
+2026-02-11 15:54:15.882 [SESSION_START] participant_name set to "ara"
+2026-02-11 15:54:15.882 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-11 15:54:15.882 [TYPING] moderator true
+2026-02-11 15:54:15.986 [TYPING] moderator false
+2026-02-11 15:54:15.986 [MESSAGE] [Eunice] "Got it, Sid. Vivian, how about you? Do you try new features right away or wait it out?"
+2026-02-11 15:54:15.986 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:54:15.986 [TYPING] bot=Vivian true
+2026-02-11 15:54:17.225 [OPENAI_OK] bot=Vivian rtt=1239ms raw="["I usually check out new features pretty fast if they look useful or cool, especially on apps I use…"
+2026-02-11 15:54:17.226 [TYPING] bot=Vivian false
+2026-02-11 15:54:18.227 [TYPING] bot=Vivian true
+2026-02-11 15:54:20.084 [TYPING] moderator false
+2026-02-11 15:54:20.085 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 15:54:20.085 [TYPING] moderator true
+2026-02-11 15:54:21.428 [TYPING] bot=Vivian false
+2026-02-11 15:54:21.428 [MESSAGE] [Vivian] "I usually check out new features pretty fast if they look useful or cool, especially on apps I use daily."
+2026-02-11 15:54:22.430 [TYPING] bot=Vivian true
+2026-02-11 15:54:24.288 [TYPING] moderator false
+2026-02-11 15:54:24.290 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 15:54:24.290 [QUEUE] intro: bots start 1–3s timers from 'To start us off', type in parallel
+2026-02-11 15:54:25.631 [TYPING] bot=Vivian false
+2026-02-11 15:54:25.631 [MESSAGE] [Vivian] "But if it seems complicated or unnecessary, I just ignore it and stick with what I know until it gets more hype."
+2026-02-11 15:54:26.626 [TYPING] bot=Jae true
+2026-02-11 15:54:26.632 [TYPING] bot=Vivian true
+2026-02-11 15:54:26.923 [TYPING] bot=Vivian true
+2026-02-11 15:54:28.210 [TYPING] bot=Sid true
+2026-02-11 15:54:29.828 [TYPING] bot=Jae false
+2026-02-11 15:54:29.829 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-11 15:54:29.834 [TYPING] bot=Vivian false
+2026-02-11 15:54:29.835 [MESSAGE] [Vivian] "Sometimes I get annoyed when the update changes the whole layout though, like why fix what isn’t broken?"
+2026-02-11 15:54:30.124 [TYPING] bot=Vivian false
+2026-02-11 15:54:30.125 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-11 15:54:30.778 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-11 15:54:30.778 [TYPING] moderator true
+2026-02-11 15:54:31.412 [TYPING] bot=Sid false
+2026-02-11 15:54:31.413 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-11 15:54:32.522 [TYPING] moderator true
+2026-02-11 15:54:34.980 [TYPING] moderator false
+2026-02-11 15:54:34.980 [MESSAGE] [Eunice] "I get that, Vivian. Jae, how do you feel when companies introduce new features? Do you try them right away or wait it out?"
+2026-02-11 15:54:34.980 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:54:34.980 [TYPING] bot=Jae true
+2026-02-11 15:54:36.719 [OPENAI_OK] bot=Jae rtt=1739ms raw="["Usually I wait before trying new features. I like to read about them first because I get worried a…"
+2026-02-11 15:54:36.719 [TYPING] bot=Jae false
+2026-02-11 15:54:36.724 [TYPING] moderator false
+2026-02-11 15:54:36.726 [MESSAGE] [Eunice] "Thanks for sharing, Sid. Ara, how about you introduce yourself next?"
+2026-02-11 15:54:36.728 [QUEUE] waiting for human intro from ara
+2026-02-11 15:54:37.720 [TYPING] bot=Jae true
+2026-02-11 15:54:40.922 [TYPING] bot=Jae false
+2026-02-11 15:54:40.922 [MESSAGE] [Jae] "Usually I wait before trying new features. I like to read about them first because I get worried about stability and compatibility, especially across my devices…"
+2026-02-11 15:54:41.924 [TYPING] bot=Jae true
+2026-02-11 15:54:45.126 [TYPING] bot=Jae false
+2026-02-11 15:54:45.127 [MESSAGE] [Jae] "Logically, if a feature will help streamline my work, like syncing schedules or managing accounts better, I might try it sooner. But if it feels complex, I hold…"
+2026-02-11 15:54:46.128 [TYPING] bot=Jae true
+2026-02-11 15:54:47.758 [TYPING] human true
+2026-02-11 15:54:47.854 [TYPING] human true
+2026-02-11 15:54:48.190 [TYPING] human true
+2026-02-11 15:54:48.475 [TYPING] human true
+2026-02-11 15:54:48.559 [TYPING] human true
+2026-02-11 15:54:48.634 [TYPING] human true
+2026-02-11 15:54:48.880 [TYPING] human true
+2026-02-11 15:54:49.013 [TYPING] human true
+2026-02-11 15:54:49.135 [TYPING] human true
+2026-02-11 15:54:49.273 [TYPING] human true
+2026-02-11 15:54:49.330 [TYPING] bot=Jae false
+2026-02-11 15:54:49.330 [MESSAGE] [Jae] "I’ve had some issues before with updates messing up my login or account access, so I’m pretty cautious these days."
+2026-02-11 15:54:49.499 [TYPING] human true
+2026-02-11 15:54:49.596 [TYPING] human true
+2026-02-11 15:54:49.701 [TYPING] human true
+2026-02-11 15:54:49.869 [TYPING] human true
+2026-02-11 15:54:49.908 [TYPING] human true
+2026-02-11 15:54:50.018 [TYPING] human true
+2026-02-11 15:54:50.089 [TYPING] human true
+2026-02-11 15:54:50.149 [TYPING] human true
+2026-02-11 15:54:50.290 [TYPING] human true
+2026-02-11 15:54:50.360 [TYPING] human true
+2026-02-11 15:54:50.450 [TYPING] human true
+2026-02-11 15:54:50.500 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human ara, waiting for human_idle
+2026-02-11 15:54:50.500 [TYPING] moderator true
+2026-02-11 15:54:50.696 [TYPING] human false
+2026-02-11 15:54:50.708 [HUMAN_INPUT] [ara] "Hi I am ARA"
+2026-02-11 15:54:50.709 [MESSAGE] [ara] "Hi I am ARA"
+2026-02-11 15:54:50.710 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-11 15:54:50.710 [TYPING] moderator true
+2026-02-11 15:54:54.704 [TYPING] moderator false
+2026-02-11 15:54:54.705 [MESSAGE] [Eunice] "Thanks for that, Jae. Ara, how about you?"
+2026-02-11 15:54:54.912 [TYPING] moderator false
+2026-02-11 15:54:54.914 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study.
+We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-11 15:54:54.914 [TYPING] moderator true
+2026-02-11 15:54:59.117 [TYPING] moderator false
+2026-02-11 15:54:59.118 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-11 15:55:01.976 [MESSAGE] [Sid] "Got it!"
+2026-02-11 15:55:01.977 [QUEUE] study_goal ack done, starting first big_question
+2026-02-11 15:55:01.977 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-11 15:55:01.978 [TYPING] moderator true
+2026-02-11 15:55:06.181 [TYPING] moderator false
+2026-02-11 15:55:06.182 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-11 15:55:07.439 [TYPING] moderator true
+2026-02-11 15:55:11.642 [TYPING] moderator false
+2026-02-11 15:55:11.643 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-11 15:55:11.644 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:55:11.645 [TYPING] bot=Sid true
+2026-02-11 15:55:12.405 [OPENAI_OK] bot=Sid rtt=761ms raw="["I usually keep an eye on new features but don’t jump in right away. Too many times they break some…"
+2026-02-11 15:55:12.405 [TYPING] bot=Sid false
+2026-02-11 15:55:13.406 [TYPING] bot=Sid true
+2026-02-11 15:55:16.609 [TYPING] bot=Sid false
+2026-02-11 15:55:16.610 [MESSAGE] [Sid] "I usually keep an eye on new features but don’t jump in right away. Too many times they break something or add bloat."
+2026-02-11 15:55:17.493 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-11 15:55:17.493 [TYPING] moderator true
+2026-02-11 15:55:21.697 [TYPING] moderator false
+2026-02-11 15:55:21.698 [MESSAGE] [Eunice] "Got it, Sid. Vivian, what do you think? Do you try new features right away or wait?"
+2026-02-11 15:55:21.699 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:55:21.699 [TYPING] bot=Vivian true
+2026-02-11 15:55:23.315 [OPENAI_OK] bot=Vivian rtt=1616ms raw="["I usually try new features quickly, especially if they sound convenient or save time. But if they …"
+2026-02-11 15:55:23.316 [TYPING] bot=Vivian false
+2026-02-11 15:55:24.317 [TYPING] bot=Vivian true
+2026-02-11 15:55:27.520 [TYPING] bot=Vivian false
+2026-02-11 15:55:27.522 [MESSAGE] [Vivian] "I usually try new features quickly, especially if they sound convenient or save time. But if they seem complicated, I just ignore them at first."
+2026-02-11 15:55:28.524 [TYPING] bot=Vivian true
+2026-02-11 15:55:31.725 [TYPING] bot=Vivian false
+2026-02-11 15:55:31.727 [MESSAGE] [Vivian] "I’m all about quick wins or anything that makes multitasking easier since I’m always juggling stuff. But yeah, if it looks like it will slow me down, I scroll p…"
+2026-02-11 15:55:32.731 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-11 15:55:32.732 [TYPING] moderator true
+2026-02-11 15:55:36.935 [TYPING] moderator false
+2026-02-11 15:55:36.936 [MESSAGE] [Eunice] "Thanks for sharing, Vivian. Jae, how about you? Do you dive into new features or take your time?"
+2026-02-11 15:55:36.937 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-11 15:55:36.937 [TYPING] bot=Jae true
+2026-02-11 15:55:38.799 [OPENAI_OK] bot=Jae rtt=1862ms raw="["I usually take my time to try new features. I get a bit cautious because sometimes updates cause i…"
+2026-02-11 15:55:38.800 [TYPING] bot=Jae false
+2026-02-11 15:55:39.803 [TYPING] bot=Jae true
+2026-02-11 15:55:43.005 [TYPING] bot=Jae false
+2026-02-11 15:55:43.006 [MESSAGE] [Jae] "I usually take my time to try new features. I get a bit cautious because sometimes updates cause issues with the apps I rely on for work."
+2026-02-11 15:55:44.007 [TYPING] bot=Jae true
+2026-02-11 15:55:47.210 [TYPING] bot=Jae false
+2026-02-11 15:55:47.212 [MESSAGE] [Jae] "I tend to read up on how a feature works or if others have had problems before fully adopting it. Syncing across my devices is especially tricky."
+2026-02-11 15:55:48.214 [TYPING] bot=Jae true
+2026-02-11 15:55:51.415 [TYPING] bot=Jae false
+2026-02-11 15:55:51.418 [MESSAGE] [Jae] "If the new feature clearly simplifies my routine or improves stability, I’ll give it a go, but I prefer gradual change over sudden shifts."
+2026-02-11 15:55:52.290 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human ara, waiting for human_idle
+2026-02-11 15:55:52.291 [TYPING] moderator true
+2026-02-11 15:55:56.494 [TYPING] moderator false
+2026-02-11 15:55:56.495 [MESSAGE] [Eunice] "Got it, Jae. Ara, how about you?"
+2026-02-11 15:56:02.337 [TYPING] human true
+2026-02-11 15:56:02.392 [TYPING] human true
+2026-02-11 15:56:02.557 [TYPING] human true
+2026-02-11 15:56:02.725 [TYPING] human true
+2026-02-11 15:56:02.783 [TYPING] human true
+2026-02-11 15:56:02.930 [TYPING] human true
+2026-02-11 15:56:03.043 [TYPING] human true
+2026-02-11 15:56:03.156 [TYPING] human true
+2026-02-11 15:56:03.217 [TYPING] human true
+2026-02-11 15:56:03.305 [TYPING] human true
+2026-02-11 15:56:04.109 [TYPING] human false
+2026-02-11 15:56:05.561 [TYPING] human true
+2026-02-11 15:56:05.629 [TYPING] human true
+2026-02-11 15:56:05.703 [TYPING] human true
+2026-02-11 15:56:05.750 [TYPING] human true
+2026-02-11 15:56:05.765 [TYPING] human true
+2026-02-11 15:56:05.783 [TYPING] human true
+2026-02-11 15:56:06.127 [TYPING] human true
+2026-02-11 15:56:06.322 [TYPING] human true
+2026-02-11 15:56:07.106 [TYPING] human true
+2026-02-11 15:56:07.332 [TYPING] human true
+2026-02-11 15:56:07.695 [TYPING] human true
+2026-02-11 15:56:07.841 [TYPING] human true
+2026-02-11 15:56:07.943 [TYPING] human true
+2026-02-11 15:56:08.214 [TYPING] human true
+2026-02-11 15:56:08.368 [TYPING] human true
+2026-02-11 15:56:08.590 [TYPING] human true
+2026-02-11 15:56:08.708 [TYPING] human true
+2026-02-11 15:56:08.934 [TYPING] human true
+2026-02-11 15:56:09.021 [TYPING] human true
+2026-02-11 15:56:09.190 [TYPING] human true
+2026-02-11 15:56:09.418 [TYPING] human true
+2026-02-11 15:56:09.792 [TYPING] human true
+2026-02-11 15:56:09.970 [TYPING] human true
+2026-02-11 15:56:10.102 [TYPING] human true
+2026-02-11 15:56:10.206 [TYPING] human true
+2026-02-11 15:56:10.343 [TYPING] human true
+2026-02-11 15:56:11.006 [TYPING] human true
+2026-02-11 15:56:11.077 [TYPING] human true
+2026-02-11 15:56:11.135 [TYPING] human true
+2026-02-11 15:56:11.197 [TYPING] human true
+2026-02-11 15:56:11.274 [TYPING] human true
+2026-02-11 15:56:11.363 [TYPING] human true
+2026-02-11 15:56:11.467 [TYPING] human true
+2026-02-11 15:56:11.587 [TYPING] human true
+2026-02-11 15:56:11.677 [TYPING] human true
+2026-02-11 15:56:11.781 [TYPING] human true
+2026-02-11 15:56:11.828 [TYPING] human true
+2026-02-11 15:56:11.963 [TYPING] human true
+2026-02-11 15:56:12.066 [TYPING] human true
+2026-02-11 15:56:12.219 [TYPING] human true
+2026-02-11 15:56:12.291 [TYPING] human true
+2026-02-11 15:56:12.364 [TYPING] human true
+2026-02-11 15:56:12.484 [TYPING] human true
+2026-02-11 15:56:12.606 [TYPING] human true
+2026-02-11 15:56:12.838 [TYPING] human true
+2026-02-11 15:56:12.952 [TYPING] human true
+2026-02-11 15:56:13.087 [TYPING] human true
+2026-02-11 15:56:13.225 [TYPING] human true
+2026-02-11 15:56:13.328 [TYPING] human true
+2026-02-11 15:56:13.479 [TYPING] human true
+2026-02-11 15:56:13.534 [TYPING] human true
+2026-02-11 15:56:13.640 [TYPING] human true
+2026-02-11 15:56:13.685 [TYPING] human true
+2026-02-11 15:56:13.933 [TYPING] human true
+2026-02-11 15:56:14.019 [TYPING] human true
+2026-02-11 15:56:14.823 [TYPING] human false
+2026-02-11 15:56:15.566 [TYPING] human true
+2026-02-11 15:56:15.623 [TYPING] human true
+2026-02-11 15:56:15.824 [TYPING] human true
+2026-02-11 15:56:15.905 [TYPING] human true
+2026-02-11 15:56:16.078 [TYPING] human true
+2026-02-11 15:56:16.289 [TYPING] human true
+2026-02-11 15:56:16.451 [TYPING] human true
+2026-02-11 15:56:16.567 [TYPING] human true
+2026-02-11 15:56:16.703 [TYPING] human true
+2026-02-11 15:56:16.791 [TYPING] human true
+2026-02-11 15:56:16.881 [TYPING] human true
+2026-02-11 15:56:16.943 [TYPING] human true
+2026-02-11 15:56:17.045 [TYPING] human true
+2026-02-11 15:56:17.167 [TYPING] human true
+2026-02-11 15:56:17.242 [TYPING] human true
+2026-02-11 15:56:17.346 [TYPING] human true
+2026-02-11 15:56:17.419 [TYPING] human true
+2026-02-11 15:56:17.635 [TYPING] human true
+2026-02-11 15:56:17.781 [TYPING] human true
+2026-02-11 15:56:17.796 [TYPING] human true
+2026-02-11 15:56:18.205 [TYPING] human true
+2026-02-11 15:56:18.444 [TYPING] human true
+2026-02-11 15:56:18.533 [TYPING] human true
+2026-02-11 15:56:18.605 [TYPING] human true
+2026-02-11 15:56:18.695 [TYPING] human true
+2026-02-11 15:56:18.739 [TYPING] human true
+2026-02-11 15:56:18.907 [TYPING] human true
+2026-02-11 15:56:18.980 [TYPING] human true
+2026-02-11 15:56:19.069 [TYPING] human true
+2026-02-11 15:56:19.146 [TYPING] human true
+2026-02-11 15:56:19.250 [TYPING] human true
+2026-02-11 15:56:19.735 [TYPING] human true
+2026-02-11 15:56:19.865 [TYPING] human true
+2026-02-11 15:56:19.971 [TYPING] human true
+2026-02-11 15:56:20.397 [TYPING] human true
+2026-02-11 15:56:20.651 [TYPING] human true
+2026-02-11 15:56:20.690 [TYPING] human true
+2026-02-11 15:56:20.783 [TYPING] human true
+2026-02-11 15:56:20.898 [TYPING] human false
+2026-02-11 15:56:20.907 [HUMAN_INPUT] [ara] "I usually don't use it right away. I am too lazy to adopt"
+2026-02-11 15:56:20.907 [MESSAGE] [ara] "I usually don't use it right away. I am too lazy to adopt"
+2026-02-11 15:56:20.907 [QUEUE] human_message during call-on: ara replied, waiting for idle to advance
+2026-02-11 15:56:21.901 [QUEUE] human_idle from ara (replied this turn), advancing
+2026-02-11 15:56:21.901 [QUEUE] call-on round done, running disagreement phase
+2026-02-11 15:56:21.902 [QUEUE] disagreement phase started
+2026-02-11 15:56:22.476 [QUEUE] no disagreements detected
+2026-02-11 15:56:22.477 [QUEUE] advancing to question 2/4: "Moving on, one of the new popular technology is generative A…"
+2026-02-11 15:56:22.477 [TYPING] moderator true
+2026-02-11 15:56:26.679 [TYPING] moderator false
+2026-02-11 15:56:26.682 [MESSAGE] [Eunice] "Moving on, one of the new popular technology is generative AI such as Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made …"
+2026-02-11 15:56:27.494 [TYPING] moderator true
+2026-02-11 15:56:31.699 [TYPING] moderator false
+2026-02-11 15:56:31.700 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-11 15:56:31.700 [OPENAI_REQ] bot=Sid question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-11 15:56:31.701 [TYPING] bot=Sid true
+2026-02-11 15:56:33.569 [OPENAI_OK] bot=Sid rtt=1869ms raw="["I’ve used a few, mostly out of curiosity and to see if they can actually help with work tasks or d…"
+2026-02-11 15:56:33.570 [TYPING] bot=Sid false
+2026-02-11 15:56:34.571 [TYPING] bot=Sid true
+2026-02-11 15:56:37.773 [TYPING] bot=Sid false
+2026-02-11 15:56:37.774 [MESSAGE] [Sid] "I’ve used a few, mostly out of curiosity and to see if they can actually help with work tasks or debugging. They can be handy, but the answers still need a lot …"
+2026-02-11 15:56:38.775 [TYPING] bot=Sid true
+2026-02-11 15:56:41.977 [TYPING] bot=Sid false
+2026-02-11 15:56:41.977 [MESSAGE] [Sid] "Honestly, I’m cautious about accuracy and security risks. Plus, they sometimes give out outdated or wrong info, which can be worse than googling sometimes."
+2026-02-11 15:56:42.874 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-11 15:56:42.874 [TYPING] moderator true
+2026-02-11 15:56:47.076 [TYPING] moderator false
+2026-02-11 15:56:47.078 [MESSAGE] [Eunice] "Good point, Sid. Vivian, what about you? Have you used generative AI tools?"
+2026-02-11 15:56:47.078 [OPENAI_REQ] bot=Vivian question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-11 15:56:47.079 [TYPING] bot=Vivian true
+2026-02-11 15:56:48.672 [OPENAI_OK] bot=Vivian rtt=1594ms raw="["Yeah I’ve used ChatGPT a few times, mostly to brainstorm essay ideas or get quick explanations for…"
+2026-02-11 15:56:48.672 [TYPING] bot=Vivian false
+2026-02-11 15:56:49.674 [TYPING] bot=Vivian true
+2026-02-11 15:56:52.876 [TYPING] bot=Vivian false
+2026-02-11 15:56:52.877 [MESSAGE] [Vivian] "Yeah I’ve used ChatGPT a few times, mostly to brainstorm essay ideas or get quick explanations for psych concepts that confuse me."
+2026-02-11 15:56:53.880 [TYPING] bot=Vivian true

@@ -1,7 +1,7 @@
 /**
  * Study-chat server: moderator-led call-on flow.
  * No queue. Eunice (moderator) calls on one participant at a time; only that participant gets one OpenAI request (up to 3 messages).
- * Human turn: wait for human_idle (idle = empty input no typing 4s, or non-empty no typing 10s) OR when user sends a message (advance immediately).
+ * Human turn: moderator advances only when human has sent at least 1 message AND is idle. Idle = no typing 3s with empty input, or no typing 7s with non-empty input.
  * After first round: detect disagreements, then prompt only the person who was disagreed WITH (one OpenAI call per).
  */
 
@@ -109,17 +109,16 @@ const MODERATOR_SCRIPT = [
   {
     type: "big_question",
     messages: [
-      "For some Google accounts, users can switch their account login to *passkey*.\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
+      "For some Google accounts, users can switch their account login to \"passkey\".\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
     ],
   },
 ];
 
-const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
+const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"]; // one bot says one of these after study_goal
 const BOT_INTRO_STAGGER_MS_MIN = 1000;
 const BOT_INTRO_STAGGER_MS_MAX = 3000;
-const STUDY_GOAL_FIRST_ACK_DELAY_MS_MIN = 2000;
-const STUDY_GOAL_FIRST_ACK_DELAY_MS_MAX = 3000;
-const STUDY_GOAL_SECOND_ACK_DELAY_MS = 1000;
+const STUDY_GOAL_ACK_DELAY_MS_MIN = 2000;
+const STUDY_GOAL_ACK_DELAY_MS_MAX = 3000;
 const BOT_THINKING_DELAY_MS = 1000;  // Delay before showing "typing" for each bubble (thinking phase)
 const BOT_TYPING_DELAY_MS = 3200;   // How long typing indicator shows before each message bubble
 const MODERATOR_THINKING_DELAY_MS = 1000;  // Moderator "thinking" before typing
@@ -217,6 +216,8 @@ async function getBotResponse(botName, context) {
     .map((a) => a.text)
     .join(" | ") || "(none)";
 
+  const maxBubbles = Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
+
   const userPrompt = buildUserPrompt({
     transcript,
     recentBot,
@@ -227,6 +228,7 @@ async function getBotResponse(botName, context) {
     respondTo: directive ? { type: "directive", text: directive } : null,
     moderatorName: MODERATOR_NAME,
     humanParticipantName: humanParticipantName || "You",
+    maxBubbles,
   });
 
   const model = getModelForBot(botName);
@@ -236,12 +238,12 @@ async function getBotResponse(botName, context) {
       { role: "system", content: sys },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 600,
+    max_tokens: maxBubbles <= 2 ? 400 : 600,
   });
 
   const raw =
     completion?.choices?.[0]?.message?.content ?? "";
-  return parseJsonArray(raw, 3);
+  return parseJsonArray(raw, maxBubbles);
 }
 
 // =====================
@@ -307,6 +309,18 @@ Output ONLY one sentence (e.g. "${disagreedBy} disagreed with you—what do you 
 }
 
 // =====================
+/** True if the message is asking what passkey is (so moderator should explain briefly). */
+function isAskingWhatPasskeyIs(text) {
+  if (!text || typeof text !== "string") return false;
+  const t = text.toLowerCase().trim();
+  return (
+    t.includes("what is passkey") ||
+    t.includes("what's passkey") ||
+    t.includes("what is a passkey") ||
+    (t.includes("passkey") && (t.includes("what is") || t.includes("not sure what") || t.includes("don't know what")))
+  );
+}
+
 // Generate moderator cue: short ack of latest message + cue next person (OpenAI)
 // =====================
 async function generateModeratorCue(latestMessage, nextName, opts = {}) {
@@ -315,14 +329,37 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
     ? `${latestMessage.name} said: "${String(latestMessage.text || "").slice(0, 200)}"`
     : "(no prior message)";
 
+  const roundIsAboutPasskey = [roundQuestion, bigQuestion].some(
+    (q) => q && String(q).toLowerCase().includes("passkey")
+  );
+  const participantAskedWhatPasskeyIs =
+    roundIsAboutPasskey && latestMessage && isAskingWhatPasskeyIs(latestMessage.text);
+
   const sys = `You are a discussion moderator. Generate ONE short message that:
-1. Briefly acknowledges the latest message (one short phrase, e.g. "Good point.", "Thanks for sharing.", "Got it.")
+1. Briefly acknowledges the latest message (one short phrase, then cue the next person)
 2. Then cues the next person to speak (e.g. "[Name], what do you think?" or "How about you, [Name]?")
+
+ACKNOWLEDGMENT VARIETY: Vary your acknowledgment phrases. Use different ones throughout the conversation. Examples:
+- "Thanks for sharing, [Name]."
+- "That's interesting, [Name]."
+- "I see, [Name]."
+- "Got it, [Name]."
+- "Right, [Name]."
+- "Makes sense, [Name]."
+- "Thanks, [Name]."
+- "Good point, [Name]." (use sparingly, not every time)
+- "Interesting perspective, [Name]."
+- "Thanks for that, [Name]."
+- "[Name], that's helpful."
+- "Appreciate that, [Name]."
+
 Keep it natural and conversational. Output ONLY the message text—no JSON, no quotes, no extra formatting. Do NOT use "---" or similar separators.
 When you are in the middle of a round, do NOT ask a new or different question—only acknowledge and cue the next person to respond to the same question for this round.`;
 
   let userPrompt;
-  if (isIntro) {
+  if (participantAskedWhatPasskeyIs) {
+    userPrompt = `A participant just asked what passkey is. First give ONE short sentence explaining passkey (e.g. it's a way to sign in with your face, fingerprint, or device instead of a password). Then briefly acknowledge and cue the next person: ${nextName}. Output one flowing message: explanation + ack + cue.`;
+  } else if (isIntro) {
     userPrompt = `The latest message: ${latestStr}. Next person to cue: ${nextName}. Write a brief ack and then ask ${nextName} to introduce themselves.`;
   } else if (isFirstInRound && bigQuestion) {
     userPrompt = `We're starting a new question: "${String(bigQuestion).slice(0, 300)}". No one has answered this question yet. Cue ${nextName} to answer first (brief transition only, e.g. "[Name], what do you think?"). Do NOT thank or acknowledge anyone as having just responded—no one has responded to this question yet.`;
@@ -415,6 +452,7 @@ function createSession(participantName) {
       whoSpoke: [],
       currentIndex: 0,
       waitingForHumanIdle: false,
+      humanRepliedThisTurn: false,
       roundDone: false,
       disagreementPhase: false,
       disagreementQueue: [],
@@ -547,6 +585,7 @@ io.on("connection", (socket) => {
       logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${nextName}, waiting for human_idle`);
       await emitModeratorLine(cue);
       co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = false;
       return;
     }
 
@@ -675,6 +714,7 @@ io.on("connection", (socket) => {
     co.whoSpoke = [];
     co.currentIndex = 0;
     co.waitingForHumanIdle = false;
+    co.humanRepliedThisTurn = false;
     co.roundDone = false;
     co.disagreementPhase = false;
     co.disagreementQueue = [];
@@ -711,29 +751,28 @@ io.on("connection", (socket) => {
     await runIntroRound();
   }
 
-  /** Intro: hardcoded bot intros (1–3s stagger + typing), then AI-generated cue for human. */
+  /** Intro: all bots start their 1–3s timer as soon as "To start us off..." is shown; they type in parallel. */
   async function runIntroRound() {
     if (!session?.bots?.length) return;
-    logLine("QUEUE", "intro: bots stagger 1–3s with typing, then human");
-    for (const bot of session.bots) {
-      await delay(randomBetween(BOT_INTRO_STAGGER_MS_MIN, BOT_INTRO_STAGGER_MS_MAX));
-      if (botTypingTimeout) clearTimeout(botTypingTimeout);
-      await new Promise((r) => {
-        botTypingTimeout = setTimeout(r, BOT_THINKING_DELAY_MS);
+    logLine("QUEUE", "intro: bots start 1–3s timers from 'To start us off', type in parallel");
+    const botPromises = session.bots.map((bot) => {
+      const staggerMs = randomBetween(BOT_INTRO_STAGGER_MS_MIN, BOT_INTRO_STAGGER_MS_MAX);
+      return new Promise((resolve) => {
+        setTimeout(async () => {
+          await new Promise((r) => setTimeout(r, BOT_THINKING_DELAY_MS));
+          emitTyping(bot, true);
+          await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+          emitTyping(bot, false);
+          const options = BOT_INTROS[bot];
+          const intro = options?.length
+            ? options[Math.floor(Math.random() * options.length)]
+            : `Hi, I'm ${bot}.`;
+          emitMessage(bot, intro);
+          resolve();
+        }, staggerMs);
       });
-      emitTyping(bot, true);
-      await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
-      emitTyping(bot, false);
-      const options = BOT_INTROS[bot];
-      const intro = options?.length
-        ? options[Math.floor(Math.random() * options.length)]
-        : `Hi, I'm ${bot}.`;
-      emitMessage(bot, intro);
-    }
-    if (botTypingTimeout) {
-      clearTimeout(botTypingTimeout);
-      botTypingTimeout = null;
-    }
+    });
+    await Promise.all(botPromises);
     if (hasHumanRepliedAfterIntroPrompt(session)) {
       logLine("QUEUE", `intro: human already replied after "To start us off", advancing to study_goal`);
       await runStudyGoal();
@@ -751,7 +790,7 @@ io.on("connection", (socket) => {
     logLine("QUEUE", `waiting for human intro from ${session.participantName}`);
   }
 
-  /** Study goal: moderator messages, then 2 acks (2–3s then 1s, random bots). */
+  /** Study goal: moderator messages, then 1 ack (one random bot). */
   async function runStudyGoal() {
     const segment = MODERATOR_SCRIPT.find((s) => s.type === "study_goal");
     if (!segment?.messages?.length) {
@@ -762,20 +801,13 @@ io.on("connection", (socket) => {
       await emitModeratorLine(text);
     }
     const bots = [...session.bots];
-    const firstBotIndex = Math.floor(Math.random() * bots.length);
-    const firstBot = bots[firstBotIndex];
-    const secondBotCandidates = bots.filter((_, i) => i !== firstBotIndex);
-    const secondBot = secondBotCandidates[Math.floor(Math.random() * secondBotCandidates.length)];
+    const botIndex = Math.floor(Math.random() * bots.length);
+    const bot = bots[botIndex];
+    const ack = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
+    await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS_MIN, STUDY_GOAL_ACK_DELAY_MS_MAX));
+    emitMessage(bot, ack);
 
-    const firstAck = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
-    const secondAck = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
-
-    await delay(randomBetween(STUDY_GOAL_FIRST_ACK_DELAY_MS_MIN, STUDY_GOAL_FIRST_ACK_DELAY_MS_MAX));
-    emitMessage(firstBot, firstAck);
-    await delay(STUDY_GOAL_SECOND_ACK_DELAY_MS);
-    emitMessage(secondBot, secondAck);
-
-    logLine("QUEUE", "study_goal acks done, starting first big_question");
+    logLine("QUEUE", "study_goal ack done, starting first big_question");
     startFirstBigQuestion();
   }
 
@@ -788,6 +820,7 @@ io.on("connection", (socket) => {
     co.whoSpoke = [];
     co.currentIndex = 0;
     co.waitingForHumanIdle = false;
+    co.humanRepliedThisTurn = false;
     co.roundDone = false;
     co.disagreementPhase = false;
     co.disagreementQueue = [];
@@ -902,8 +935,12 @@ io.on("connection", (socket) => {
       await runStudyGoal();
       return;
     }
-    if (!session?.callOnState?.waitingForHumanIdle) return;
-    logLine("QUEUE", `human_idle from ${session.participantName}`);
+    const co = session?.callOnState;
+    if (!co?.waitingForHumanIdle) return;
+    // Moderator only moves on when human has sent at least 1 message AND is idle
+    if (!co.humanRepliedThisTurn) return;
+    logLine("QUEUE", `human_idle from ${session.participantName} (replied this turn), advancing`);
+    co.waitingForHumanIdle = false;
     await advanceCallOn();
   });
 
@@ -918,11 +955,10 @@ io.on("connection", (socket) => {
       await runStudyGoal();
       return;
     }
-    // When it's the human's turn and they send a message, advance immediately so the next participant is called
+    // When it's the human's turn: mark that they replied; do NOT advance yet—wait for human_idle
     if (session.callOnState?.waitingForHumanIdle) {
-      session.callOnState.waitingForHumanIdle = false;
-      logLine("QUEUE", `human_message during call-on: advancing after ${session.participantName}'s response`);
-      await advanceCallOn();
+      session.callOnState.humanRepliedThisTurn = true;
+      logLine("QUEUE", `human_message during call-on: ${session.participantName} replied, waiting for idle to advance`);
     }
   });
 

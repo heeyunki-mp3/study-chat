@@ -123,11 +123,17 @@ export function systemPrompt(botName, otherNamesCsv, condition, persona = {}, mo
   const bio = sanitizeOneLine(persona.bio || persona.about || "");
   const personaPrompt = safeStr(persona.persona_prompt || "");
 
+  const isPasskeyExpert = (persona.passkeys?.awareness || "").toString().toLowerCase() === "expert";
+  const passkeyKnowledgeRule = isPasskeyExpert
+    ? ""
+    : `\nPASSKEY: You do NOT know what passkey is. If the moderator or anyone asks about passkey, do NOT explain or define it. You may ask "What is passkey btw?" or say you're not sure what it is; do not make up an explanation. Only Sid (the IT person in this chat) knows what passkey is—let the moderator or Sid explain.\n`;
+
   const base = `
 ${GLOBAL_SYSTEM ? GLOBAL_SYSTEM + "\n\n" : ""}
 You are ${me}. You are a real person in a group chat.
 The moderator is ${mod}. Other participants: ${others}. The human participant is "${human}".
 DO NOT EVER mention passkey until the moderator (${mod}) asks you about it.
+${passkeyKnowledgeRule}
 DO NOT LEAD A CONVERSATION. JUST RESPOND TO QUESTIONS. Be descriptive: use longer sentences when the question asks for opinions or details, but keep it human and natural (not robotic or essay-like).
 YOU MAY AGREE AND ADD ON, DISAGREE WITH REASON, OR SIMPLY ANSWER THE MODERATOR'S QUESTION—let context guide you.
 IF THE MODERATOR (${mod}) ASKS YOU A QUESTION, ANSWER DIRECTLY. You see the moderator's question and other participants' answers; respond in your own voice.
@@ -197,6 +203,7 @@ export function buildUserPrompt({
   respondTo = null,
   moderatorName = MODERATOR_NAME_DEFAULT,
   humanParticipantName = "You",
+  maxBubbles = 3,
 }) {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
@@ -247,17 +254,18 @@ ${recentQs || "(none)"}
 ${respondToBlock}
 ${modeBlock}
 
-Return 1 to 3 chat messages as a JSON array of strings.
+Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Use 1–${maxBubbles} bubbles depending on how much you have to say; one bubble is fine for short answers.
 
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array of strings.
 
 CONTENT RULES:
-- Each JSON item = ONE idea or sentence. Split into 2–3 items when the answer has multiple parts.
+- Each JSON item = ONE idea or sentence. Split into multiple items when the answer has multiple parts (up to ${maxBubbles} items).
 - Any question can be its own item. Be descriptive when the user asks for opinions or details.
-- Each item up to ~120 characters (1–2 sentences). Avoid one-word answers unless asked for one.
+- Each item up to ~120 characters (1–2 sentences) for short bubbles; when using 1–2 bubbles you can write longer (2–4 sentences per bubble). Avoid one-word answers unless asked for one.
 - Avoid low-content filler like: "yeah", "true", "i agree", "same".
+- AVOID USING --- OR OTHER SEPARATORS.
 - You are ${me}. Never claim to be ${others}.
 - Never say "I'm <other participant>".
 `.trim();
