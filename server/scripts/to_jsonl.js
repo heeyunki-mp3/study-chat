@@ -66,8 +66,9 @@ const dataDir = path.join(serverDir, "fine_tune_data");
 
 const filename = process.argv[2];
 if (!filename || typeof filename !== "string") {
-  console.error("Usage: node scripts/to_jsonl.js <filename>");
+  console.error("Usage: node scripts/to_jsonl.js <filename-or-path>");
   console.error("  e.g. node scripts/to_jsonl.js Mina.train.prettified.jsonl");
+  console.error("  e.g. node scripts/to_jsonl.js fine_tune_data/temp/Mina.train.prettified.jsonl");
   process.exit(1);
 }
 
@@ -77,14 +78,17 @@ if (!base.endsWith(".prettified.jsonl")) {
   process.exit(1);
 }
 
-const inputPath = path.join(dataDir, base);
+// Support path (e.g. fine_tune_data/temp/X.prettified.jsonl) or basename (e.g. X.prettified.jsonl)
+const inputPath = filename.includes(path.sep)
+  ? path.resolve(serverDir, filename)
+  : path.join(dataDir, base);
 if (!fs.existsSync(inputPath)) {
   console.error(`File not found: ${inputPath}`);
   process.exit(1);
 }
 
 const outputBase = base.replace(/\.prettified\.jsonl$/, ".jsonl");
-const outputPath = path.join(dataDir, outputBase);
+const outputPath = path.join(path.dirname(inputPath), outputBase);
 
 const count = toJsonl(inputPath, outputPath);
 console.log(`${base} -> ${outputBase} (${count} records)`);

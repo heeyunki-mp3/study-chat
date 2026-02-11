@@ -83,6 +83,26 @@ export function pickRandomCast(k = 4) {
   return shuffled.slice(0, k);
 }
 
+// =====================
+// Export: getCastByHandles(handles) — cast for specific bot names (order preserved)
+// =====================
+export function getCastByHandles(handles) {
+  if (!Array.isArray(handles) || handles.length === 0) return [];
+  const pool = uniqByHandle(PERSONAS);
+  const byHandle = new Map(pool.map((p) => [safeStr(p.handle).toLowerCase(), p]));
+  const cast = [];
+  for (const name of handles) {
+    const h = safeStr(name).toLowerCase();
+    if (h && byHandle.has(h)) cast.push(byHandle.get(h));
+  }
+  return cast;
+}
+
+/** All valid bot handles (for usage / validation). */
+export function getAllHandles() {
+  return uniqByHandle(PERSONAS).map((p) => p.handle);
+}
+
 // Moderator bot name (used in prompts so bots know who the moderator is)
 const MODERATOR_NAME_DEFAULT = "Eunice";
 

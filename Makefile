@@ -3,7 +3,7 @@
 # Python targets (finetune, status) use server/.venv if present — run "make venv" once to fix "openai not found"
 
 .DEFAULT_GOAL := help
-.PHONY: finetune prettify to-jsonl status server client chat venv help
+.PHONY: finetune prettify to-jsonl clean status server client chat venv help
 
 # --- Create Python venv in server/ and install openai (fixes "ModuleNotFoundError: No module named 'openai'")
 # Usage: make venv   (run once from project root, or from server/)
@@ -33,6 +33,19 @@ to-jsonl:
 	@if [ -z "$(FILE)" ]; then echo "Usage: make to-jsonl <filename>  (e.g. make to-jsonl Mina.train.prettified.jsonl)"; exit 1; fi
 	cd server && node scripts/to_jsonl.js $(FILE)
 
+# --- Clean: convert all *.prettified.jsonl -> .jsonl, remove prettified files and server logs
+# Usage: make clean
+clean:
+	@echo "Converting prettified JSONL to compact JSONL..."
+	@cd server && for f in $$(find fine_tune_data -name '*.prettified.jsonl' 2>/dev/null); do \
+	  node scripts/to_jsonl.js "$$f" || true; \
+	done
+	@echo "Removing *.prettified.jsonl..."
+	@cd server && find fine_tune_data -name '*.prettified.jsonl' -delete
+	@echo "Removing server/logs..."
+	@rm -rf server/logs
+	@echo "Done."
+
 # --- Print status of a fine-tune job
 # Usage: make status ftjob-abc123
 status: JOBID := $(word 1,$(filter-out status,$(MAKECMDGOALS)))
@@ -40,9 +53,10 @@ status:
 	@if [ -z "$(JOBID)" ]; then echo "Usage: make status <job_id>  (e.g. make status ftjob-abc123)"; exit 1; fi
 	cd server && (P=python3; [ -f .venv/bin/python3 ] && P=.venv/bin/python3; $$P scripts/check_status.py $(JOBID))
 
-# --- Run the backend server
+# --- Run the backend server (optional: BOTS="Sid Vivian" for fixed cast)
+# Usage: make server   or   make server BOTS="Sid Vivian Mina"
 server:
-	cd server && npm start
+	cd server && npm start -- $(BOTS)
 
 # --- Run the client (Vite dev server)
 client:
@@ -63,8 +77,9 @@ help:
 	@echo "  make finetune <name>   — run fine-tuning (e.g. make finetune Mina)"
 	@echo "  make prettify <file>   — prettify JSONL (e.g. make prettify Mina.train.jsonl)"
 	@echo "  make to-jsonl <file>   — prettified back to compact (e.g. make to-jsonl Mina.train.prettified.jsonl)"
+	@echo "  make clean            — convert all prettified JSONL to .jsonl, delete prettified files and logs"
 	@echo "  make status <job_id>   — print fine-tune job status (e.g. make status ftjob-abc123)"
-	@echo "  make server           — run backend server"
+	@echo "  make server [BOTS=\"Sid Vivian\"] — run backend (optional fixed cast)"
 	@echo "  make client           — run client (Vite dev)"
 	@echo "  make chat <name> [condition] — run chat CLI (e.g. make chat Mina control)"
 	@echo "  make help             — this help"

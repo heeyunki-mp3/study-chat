@@ -9,7 +9,7 @@ import cors from "cors";
 import OpenAI from "openai";
 import fs from "fs";
 
-import { systemPrompt, buildUserPrompt, pickRandomCast } from "./prompts.js";
+import { systemPrompt, buildUserPrompt, pickRandomCast, getCastByHandles, getAllHandles } from "./prompts.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +35,23 @@ try {
   if (!MODELS.bots) MODELS.bots = {};
 } catch (e) {
   console.warn("[WARN] Could not load models.json, using default model only:", e?.message);
+}
+
+// Optional fixed cast: bot names from CLI args (e.g. node index.js Sid Vivian).
+// If non-empty, every new session uses only these bots; otherwise random cast.
+const REQUESTED_BOT_NAMES = process.argv.slice(2).map((s) => String(s).trim()).filter(Boolean);
+if (REQUESTED_BOT_NAMES.length > 0) {
+  const valid = getAllHandles();
+  const validLower = new Set(valid.map((h) => h.toLowerCase()));
+  const unknown = REQUESTED_BOT_NAMES.filter((n) => !validLower.has(String(n).trim().toLowerCase()));
+  if (unknown.length > 0) {
+    console.warn("[WARN] Unknown bot name(s), will be skipped:", unknown.join(", "));
+    console.warn("[WARN] Valid handles:", valid.join(", "));
+  }
+  console.log("[CAST] Fixed cast for this run:", REQUESTED_BOT_NAMES.join(", "));
+} else {
+  console.log("[CAST] No bot names provided; each session will get a random cast of 4 bots.");
+  console.log("[CAST] To fix the cast, run: node index.js <name1> [name2 ...]  (e.g. node index.js Sid Vivian Mina)");
 }
 
 function getModelForBot(botName) {
@@ -82,7 +99,7 @@ const IMPLICIT_WINDOW = 10;
 // Moderator bot: name used in transcript and for directive handling.
 const MODERATOR_NAME = "Eunice";
 
-// Moderator (Eunice) transcript: 5 sets of bubbles, sent in order based on timing rules.
+// Moderator (Eunice) transcript: 6 sets of bubbles, sent in order based on timing rules.
 const MODERATOR_TRANSCRIPT = [
   [
     "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!",
@@ -97,6 +114,9 @@ const MODERATOR_TRANSCRIPT = [
   ],
   [
     "Moving on, Google recently introduced Gemini as part of its products.\n\nHave any of you used Gemini before?\nWhat made you try it, or what made you decide not to?",
+  ],
+  [
+    "Sometimes when companies introduce new features, they also change how accounts work behind the scenes.\n\nHave you noticed changes to how you access or manage your account over time?\nDo those changes usually feel helpful or annoying?\nDo they ever make you pause before continuing?",
   ],
   [
     "For some Google accounts, users can switch their account login to *passkey*.\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
@@ -295,9 +315,14 @@ function decomposeJsonMessage(text) {
 }
 
 function containsHardBanned(text) {
-  return /(as an ai|language model|chatgpt|openai|policy|experiment|study|irb|deception)/i.test(
-    text || ""
-  );
+  const t = text || "";
+  // Block AI/research/experiment meta mentions; allow "I study psych" / "studying at Emory"
+  if (/(as an ai|language model|chatgpt|openai|policy|experiment|irb|deception)/i.test(t))
+    return true;
+  // Block only when "study" means the research (not "I study X" / "studying Y")
+  if (/(this is a study|in this study|our study|the study\b|participat(e|ing) in (a )?study)/i.test(t))
+    return true;
+  return false;
 }
 
 const FILLER_SET = new Set([
@@ -1046,13 +1071,8 @@ function getNextModeratorBubble(session) {
   const setIndex = session.moderatorSetIndex ?? 0;
   if (setIndex >= MODERATOR_TRANSCRIPT.length) return null;
 
-  const participantCount = session.history.filter((m) => m.name !== MODERATOR_NAME).length;
-
-  // Set 1: after 1–2 participant bubbles (e.g. after seed’s 2 bubbles)
-  if (setIndex === 0) {
-    if (participantCount >= 2) return MODERATOR_TRANSCRIPT[0];
-    return null;
-  }
+  // Set 1 (Eunice intro): send immediately so "Hi everyone! My name is Eunice..." is the first thing participants see
+  if (setIndex === 0) return MODERATOR_TRANSCRIPT[0];
 
   // Set 2 ("Before we dive in..." / "There are no right or wrong..."): after all have replied since set 1
   if (setIndex === 1) {
@@ -1087,11 +1107,16 @@ function getNextModeratorBubble(session) {
 async function checkDiscussionDoneOrLooping(session) {
   const lastModIdx = session.lastModeratorMessageHistoryIndex ?? getLastModeratorMessageIndex(session);
   if (lastModIdx < 0) return false;
+  const participants = getParticipantNames(session);
   const window = session.history.slice(lastModIdx + 1, lastModIdx + 1 + 20);
-  if (window.length < 3) return false;
+  // Need enough messages that there was actual discussion on the moderator's topic (not just 1–2 replies)
+  if (window.length < Math.max(3, participants.length + 2)) return false;
   const chat = window.map((m) => `${m.name}: ${m.text}`).join("\n");
-  const sys = "You judge if the discussion has reached a natural pause or is repeating the same points. Answer only YES or NO.";
-  const user = `Chat (recent):\n${chat}\n\nHas the discussion reached a natural pause or is it repeating the same points? Answer only YES or NO.`;
+  const sys =
+    "You judge whether the moderator's last question or topic has had real discussion and then reached a natural pause or repetition. " +
+    "Only answer YES if (1) multiple participants have replied to the moderator's last topic, and (2) the discussion has reached a natural pause or is repeating the same points. " +
+    "If there has been little or no discussion on the moderator's last topic, answer NO. Answer only YES or NO.";
+  const user = `Chat since moderator's last message:\n${chat}\n\nHas there been real discussion on the moderator's last topic and has it reached a natural pause or repetition? Answer only YES or NO.`;
   try {
     const startMs = Date.now();
     const resp = await openai.responses.create(
@@ -1122,6 +1147,12 @@ async function getNextModeratorBubbleFromTimer(session) {
   // For 3rd set and later: moderator waits for everyone to respond before moving on
   if (!allIntroductionsDone(session)) return null;
 
+  // Require substantive discussion on this question: at least (everyone replied) + 2 extra messages since current moderator message
+  const participants = getParticipantNames(session);
+  const minMessagesForDiscussion = participants.length + 2;
+  const countSinceLastMod = countParticipantMessagesSinceLastModerator(session);
+  if (countSinceLastMod < minMessagesForDiscussion) return null;
+
   const lastAt = session.lastModeratorMessageAt ?? 0;
   const elapsed = Date.now() - lastAt;
   if (elapsed < MODERATOR_NEXT_SET_AFTER_MS) {
@@ -1136,19 +1167,21 @@ async function getNextModeratorBubbleFromTimer(session) {
  * Send one or more messages as the moderator (Eunice). Uses moderatorDelayForText (faster than bots).
  * Updates moderator state when setIndex is provided.
  * Set moderatorSetIndex immediately so a mid-send trySendNextModeratorSet (from setImmediate) does not re-send the same set.
+ * options.instant: if true, no thinking/typing delay (message pops up immediately).
  */
-async function emitModeratorMessage(session, text, setIndex = null) {
+async function emitModeratorMessage(session, text, setIndex = null, options = {}) {
   if (setIndex != null) {
     session.moderatorSetIndex = setIndex;
     session.moderatorNudgeSentAfterLastMessage = false;
   }
 
+  const instant = !!options.instant;
   const bubbles = Array.isArray(text) ? text : [text];
   for (const t of bubbles) {
     const msg = { name: MODERATOR_NAME, text: String(t || "").trim(), ts: Date.now() };
     if (!msg.text) continue;
 
-    const { thinking, typingTime } = moderatorDelayForText(msg.text);
+    const { thinking, typingTime } = instant ? { thinking: 0, typingTime: 0 } : moderatorDelayForText(msg.text);
     await delay(thinking);
     io.to(session.sessionId).emit("typing", { who: MODERATOR_NAME, isTyping: true });
     logLine("TYPING", `moderator true`);
@@ -1163,6 +1196,27 @@ async function emitModeratorMessage(session, text, setIndex = null) {
   if (setIndex != null) {
     session.lastModeratorMessageHistoryIndex = session.history.length - 1;
   }
+}
+
+/**
+ * Send Eunice's intro: first bubble at 1s (instant), second bubble with normal thinking/typing.
+ * No bots send in between. Bot loops start only after the second bubble is sent.
+ */
+function sendFirstModeratorSetAfterLoad(session) {
+  if ((session.moderatorSetIndex ?? 0) !== 0) return;
+  const firstSet = MODERATOR_TRANSCRIPT[0];
+  if (!firstSet || firstSet.length < 2) return;
+  // First bubble only: instant at 1s (do not advance moderatorSetIndex yet)
+  emitModeratorMessage(session, firstSet[0], null, { instant: true })
+    .then(() => {
+      // Second bubble: normal thinking → typing → send (no bots in between)
+      return emitModeratorMessage(session, firstSet[1], 1, { instant: false });
+    })
+    .then(() => {
+      logLine("QUEUE", "moderator set 1 (Eunice intro) complete; starting bot loops");
+      startNormalEnqueueLoop(session);
+      startDequeueLoop(session);
+    });
 }
 
 /**
@@ -1301,8 +1355,8 @@ async function generateBubbles({ session, botName, source = "normal", priorityQu
     const rttMs = Date.now() - startMs;
     logLine("OPENAI_RTT", `bot=${botName} rtt=${rttMs}ms`);
 
-    // logLine("OPENAI_REQ_SYSTEM", sys);
-    // logLine("OPENAI_REQ_USER", userPrompt);
+    logLine("OPENAI_REQ_SYSTEM", sys);
+    logLine("OPENAI_REQ_USER", userPrompt);
 
     const raw = (resp.output_text || "").trim();
     logLine("OPENAI_OK", `bot=${botName} raw="${clip(raw, 220)}"`);
@@ -1359,13 +1413,22 @@ function emitAndRecordMessage(session, msg) {
 
   if (!firstNormalized) return;
 
+  // No one may respond between Eunice's first bubble ("Hi everyone!...") and second ("To start us off...").
+  // When moderatorSetIndex is still 0, we've only sent the first bubble; skip enqueue/dequeue until the second is sent.
+  const isIntroFirstBubbleOnly = isModeratorMessage(firstNormalized) && (session.moderatorSetIndex ?? 0) === 0;
+
   // Interrupt applies to ALL messages (human "You", moderator Eunice, or any bot)—unchanged from before.
   interruptAllBotsOnNewMessage(session, { from: name, reason: "new_message" });
-  setImmediate(() => tryDequeueNow(session).catch(() => {}));
+  if (!isIntroFirstBubbleOnly) {
+    setImmediate(() => tryDequeueNow(session).catch(() => {}));
+  }
 
   // Moderator directive updates directions; use first message for logic (commentary/nudge/directive)
   if (isModeratorMessage(firstNormalized)) {
-    if (isCommentaryOnly(firstNormalized.text)) {
+    if (isIntroFirstBubbleOnly) {
+      logLine("QUEUE", "moderator intro first bubble only: not enqueueing bots or next moderator set");
+      // Do not enqueue directive or trySendNextModeratorSet; second bubble will be sent by sendFirstModeratorSetAfterLoad
+    } else if (isCommentaryOnly(firstNormalized.text)) {
       logLine("QUEUE", `moderator commentary only: not updating directions`);
       runMentionDetectors(session, firstNormalized).catch(() => {});
     } else if (isModeratorNudge(firstNormalized.text)) {
@@ -1773,8 +1836,14 @@ io.on("connection", (socket) => {
   const sessionId = socket.id;
   const condition = pickCondition();
 
-  const cast = pickRandomCast(4);
+  const cast =
+    REQUESTED_BOT_NAMES.length > 0
+      ? getCastByHandles(REQUESTED_BOT_NAMES)
+      : pickRandomCast(4);
   const botNames = cast.map((p) => p.handle);
+  if (cast.length < 2) {
+    logLine("SESSION_START", `WARN: only ${cast.length} bot(s) in cast; seed may repeat.`);
+  }
 
   const personasByHandle = {};
   for (const p of cast) personasByHandle[p.handle] = p;
@@ -1824,28 +1893,10 @@ io.on("connection", (socket) => {
 
   socket.emit("session", { sessionId, condition, bots: botNames, moderatorName: MODERATOR_NAME });
 
-  // Seed (your exact seed rule)
-  const shuffled = [...botNames].sort(() => Math.random() - 0.5);
-  const seed = [
-    { name: shuffled[0], text: "heyy 👋", ts: Date.now() },
-    { name: shuffled[1], text: "hello!", ts: Date.now() },
-  ];
+  // Eunice's first bubble at 1s (instant); second bubble with thinking/typing; then start bots (no bot messages in between).
+  setTimeout(() => sendFirstModeratorSetAfterLoad(session), 1000);
 
-  seed.forEach((m) => {
-    session.msgSeq = (session.msgSeq || 0) + 1;
-    session.history.push(m);
-    logLine("MESSAGE", `[${m.name}] "${clip(m.text, 140)}"`);
-  });
-  socket.emit("seed", seed);
-
-  // detect mentions on seed (optional)
-  seed.forEach((m) => runMentionDetectors(session, m).catch(() => {}));
-
-  // Moderator set 1: after 1–2 participant bubbles (seed counts as 2), so send right after seed.
-  setImmediate(() => trySendNextModeratorSet(session));
-
-  startNormalEnqueueLoop(session);
-  startDequeueLoop(session);
+  // Bot enqueue/dequeue start only after Eunice's second bubble (inside sendFirstModeratorSetAfterLoad).
 
   // Moderator timer: nudge after 30s if someone hasn’t replied; send sets 4–5 after 2 min or when discussion done/looping.
   session.moderatorTimer = setInterval(() => {

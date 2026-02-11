@@ -1,0 +1,121 @@
+2026-02-11 02:00:10.105 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 02:00:12.668 [SESSION_START] id=vU57QGVqzXV-LRrEAAAB condition=norm bots=Sid,Vivian,Mina
+2026-02-11 02:00:12.671 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 02:00:13.672 [TYPING] moderator true
+2026-02-11 02:00:13.674 [TYPING] moderator false
+2026-02-11 02:00:13.674 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 02:00:13.675 [QUEUE] directive order rotated by 1 (set 1) first=Vivian
+2026-02-11 02:00:13.675 [QUEUE] directive + all bots (3) len=3
+2026-02-11 02:00:13.675 [QUEUE] DUMP after moderator directive | schedule=[0:Vivian*(d) 1:Mina*(d) 2:Sid*(d)] | mentions=[]
+2026-02-11 02:00:13.675 [BOT_STATE] bot=Vivian IDLE -> GENERATING source=directive
+2026-02-11 02:00:13.676 [OPENAI_REQ] bot=Vivian mode=human condition=norm priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-11 02:00:13.676 [OPENAI_REQ] bot=Vivian ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 02:00:13.676 [OPENAI_REQ] bot=Vivian model=ft:gpt-4o-mini-2024-07-18:test::D7renhxY
+2026-02-11 02:00:13.713 [TYPING] moderator true
+2026-02-11 02:00:13.713 [TYPING] moderator false
+2026-02-11 02:00:13.713 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 02:00:13.714 [QUEUE] cleared all 3 scheduled tasks for new moderator directive
+2026-02-11 02:00:13.714 [QUEUE] directive order rotated by 1 (set 1) first=Vivian
+2026-02-11 02:00:13.714 [QUEUE] directive + all bots (3) len=3
+2026-02-11 02:00:13.714 [QUEUE] DUMP after moderator directive | schedule=[0:Vivian*(d) 1:Mina*(d) 2:Sid*(d)] | mentions=[]
+2026-02-11 02:00:13.714 [QUEUE] moderator set 1 (Eunice intro) sent after 1s load delay
+2026-02-11 02:00:13.714 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 02:00:13.714 [OPENAI_REQ] bot=Mina mode=human condition=norm priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-11 02:00:13.714 [OPENAI_REQ] bot=Mina ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentionin…"
+2026-02-11 02:00:13.714 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D7reaIE5
+2026-02-11 02:00:13.727 [SESSION_START] id=8iFg6fTKlVi85sohAAAD condition=control bots=Sid,Vivian,Mina
+2026-02-11 02:00:13.821 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 02:00:14.148 [DISCONNECT] id=vU57QGVqzXV-LRrEAAAB
+2026-02-11 02:00:14.181 [SESSION_START] id=0yvFyJRyrj1N0Y3UAAAF condition=skeptic bots=Sid,Vivian,Mina
+2026-02-11 02:00:14.184 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 02:00:14.729 [TYPING] moderator true
+2026-02-11 02:00:14.729 [TYPING] moderator false
+2026-02-11 02:00:14.730 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 02:00:14.730 [QUEUE] directive order rotated by 1 (set 1) first=Vivian
+2026-02-11 02:00:14.730 [QUEUE] directive + all bots (3) len=3
+2026-02-11 02:00:14.730 [QUEUE] DUMP after moderator directive | schedule=[0:Vivian*(d) 1:Mina*(d) 2:Sid*(d)] | mentions=[]
+2026-02-11 02:00:14.730 [BOT_STATE] bot=Vivian IDLE -> GENERATING source=directive
+2026-02-11 02:00:14.730 [OPENAI_REQ] bot=Vivian mode=human condition=control priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-11 02:00:14.731 [OPENAI_REQ] bot=Vivian ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 02:00:14.731 [OPENAI_REQ] bot=Vivian model=ft:gpt-4o-mini-2024-07-18:test::D7renhxY
+2026-02-11 02:00:14.732 [TYPING] moderator true
+2026-02-11 02:00:14.734 [TYPING] moderator false
+2026-02-11 02:00:14.734 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 02:00:14.734 [QUEUE] cleared all 3 scheduled tasks for new moderator directive
+2026-02-11 02:00:14.734 [QUEUE] directive order rotated by 1 (set 1) first=Vivian
+2026-02-11 02:00:14.734 [QUEUE] directive + all bots (3) len=3
+2026-02-11 02:00:14.734 [QUEUE] DUMP after moderator directive | schedule=[0:Vivian*(d) 1:Mina*(d) 2:Sid*(d)] | mentions=[]
+2026-02-11 02:00:14.734 [QUEUE] moderator set 1 (Eunice intro) sent after 1s load delay
+2026-02-11 02:00:14.734 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 02:00:14.734 [OPENAI_REQ] bot=Mina mode=human condition=control priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-11 02:00:14.735 [OPENAI_REQ] bot=Mina ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentionin…"
+2026-02-11 02:00:14.735 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D7reaIE5
+2026-02-11 02:00:15.185 [TYPING] moderator true
+2026-02-11 02:00:15.186 [TYPING] moderator false
+2026-02-11 02:00:15.186 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 02:00:15.186 [QUEUE] directive order rotated by 1 (set 1) first=Vivian
+2026-02-11 02:00:15.186 [QUEUE] directive + all bots (3) len=3
+2026-02-11 02:00:15.186 [QUEUE] DUMP after moderator directive | schedule=[0:Vivian*(d) 1:Mina*(d) 2:Sid*(d)] | mentions=[]
+2026-02-11 02:00:15.187 [BOT_STATE] bot=Vivian IDLE -> GENERATING source=directive
+2026-02-11 02:00:15.187 [OPENAI_REQ] bot=Vivian mode=human condition=skeptic priorityQ="Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for join…"
+2026-02-11 02:00:15.187 [OPENAI_REQ] bot=Vivian ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 02:00:15.187 [OPENAI_REQ] bot=Vivian model=ft:gpt-4o-mini-2024-07-18:test::D7renhxY
+2026-02-11 02:00:15.188 [TYPING] moderator true
+2026-02-11 02:00:15.189 [TYPING] moderator false
+2026-02-11 02:00:15.189 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-11 02:00:15.189 [QUEUE] cleared all 3 scheduled tasks for new moderator directive
+2026-02-11 02:00:15.189 [QUEUE] directive order rotated by 1 (set 1) first=Vivian
+2026-02-11 02:00:15.189 [QUEUE] directive + all bots (3) len=3
+2026-02-11 02:00:15.190 [QUEUE] DUMP after moderator directive | schedule=[0:Vivian*(d) 1:Mina*(d) 2:Sid*(d)] | mentions=[]
+2026-02-11 02:00:15.190 [QUEUE] moderator set 1 (Eunice intro) sent after 1s load delay
+2026-02-11 02:00:15.190 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 02:00:15.190 [OPENAI_REQ] bot=Mina mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-11 02:00:15.190 [OPENAI_REQ] bot=Mina ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentionin…"
+2026-02-11 02:00:15.190 [OPENAI_REQ] bot=Mina model=ft:gpt-4o-mini-2024-07-18:test::D7reaIE5
+2026-02-11 02:00:15.683 [OPENAI_RTT] bot=Mina rtt=948ms
+2026-02-11 02:00:15.683 [OPENAI_OK] bot=Mina raw="["Hi! I am Mina, nice to meet you all!","I live in Koreatown, LA, and I work as a retail associate at Abercrombie, haha."]"
+2026-02-11 02:00:15.684 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 02:00:15.684 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 02:00:15.684 [OPENAI_REQ] bot=Sid mode=human condition=control priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-11 02:00:15.684 [OPENAI_REQ] bot=Sid ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentionin…"
+2026-02-11 02:00:15.684 [OPENAI_REQ] bot=Sid model=ft:gpt-4o-mini-2024-07-18:test::D7U99FmK
+2026-02-11 02:00:15.984 [OPENAI_RTT] bot=Mina rtt=2270ms
+2026-02-11 02:00:15.985 [OPENAI_OK] bot=Mina raw="["Hi, I'm Mina! I work at Abercrombie. Nice to meet everyone!"]"
+2026-02-11 02:00:15.985 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 02:00:15.985 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 02:00:15.985 [OPENAI_REQ] bot=Sid mode=human condition=norm priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-11 02:00:15.985 [OPENAI_REQ] bot=Sid ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentionin…"
+2026-02-11 02:00:15.985 [OPENAI_REQ] bot=Sid model=ft:gpt-4o-mini-2024-07-18:test::D7U99FmK
+2026-02-11 02:00:16.053 [OPENAI_RTT] bot=Vivian rtt=2377ms
+2026-02-11 02:00:16.054 [OPENAI_OK] bot=Vivian raw="["Hey Eunice! I'm Vivian. I'm a student at Emory :) Nice to meet you" ]"
+2026-02-11 02:00:16.054 [BOT_STATE] bot=Vivian GENERATING -> THINKING
+2026-02-11 02:00:16.244 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/2
+2026-02-11 02:00:16.245 [TYPING] bot=Mina true
+2026-02-11 02:00:16.380 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/1
+2026-02-11 02:00:16.383 [TYPING] bot=Mina true
+2026-02-11 02:00:16.451 [BOT_STATE] bot=Vivian THINKING -> TYPING bubble=1/1
+2026-02-11 02:00:16.451 [TYPING] bot=Vivian true
+2026-02-11 02:00:16.453 [OPENAI_RTT] bot=Sid rtt=769ms
+2026-02-11 02:00:16.455 [OPENAI_OK] bot=Sid raw="["Sid here. I live in New Jersey. I work in IT support."]"
+2026-02-11 02:00:16.455 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 02:00:16.601 [OPENAI_RTT] bot=Mina rtt=1411ms
+2026-02-11 02:00:16.602 [OPENAI_OK] bot=Mina raw="["Hey! I am Mina, 26, living in Koreatown, LA. I work as a retail associate at Abercrombie!"]"
+2026-02-11 02:00:16.602 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 02:00:16.602 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 02:00:16.602 [OPENAI_REQ] bot=Sid mode=human condition=skeptic priorityQ="To start us off, can we go around and do quick introductions? You can just share your name…"
+2026-02-11 02:00:16.602 [OPENAI_REQ] bot=Sid ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentionin…"
+2026-02-11 02:00:16.602 [OPENAI_REQ] bot=Sid model=ft:gpt-4o-mini-2024-07-18:test::D7U99FmK
+2026-02-11 02:00:16.677 [OPENAI_RTT] bot=Sid rtt=692ms
+2026-02-11 02:00:16.677 [OPENAI_OK] bot=Sid raw="["Hey I am Sid.","I live in Edison NJ and I work in IT support."]"
+2026-02-11 02:00:16.677 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 02:00:16.765 [OPENAI_RTT] bot=Vivian rtt=1578ms
+2026-02-11 02:00:16.765 [OPENAI_OK] bot=Vivian raw="["Hey Eunice! I’m Vivian. Nice to meet you all"]"
+2026-02-11 02:00:16.767 [BOT_STATE] bot=Vivian GENERATING -> THINKING
+2026-02-11 02:00:17.119 [BOT_STATE] bot=Vivian THINKING -> TYPING bubble=1/1
+2026-02-11 02:00:17.120 [TYPING] bot=Vivian true
+2026-02-11 02:00:17.346 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/1
+2026-02-11 02:00:17.347 [TYPING] bot=Sid true
+2026-02-11 02:00:17.455 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-11 02:00:17.455 [TYPING] bot=Sid true
+2026-02-11 02:00:17.484 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/1
+2026-02-11 02:00:17.484 [TYPING] bot=Mina true
