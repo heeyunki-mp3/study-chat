@@ -26,15 +26,15 @@ if (!OPENAI_API_KEY || !String(OPENAI_API_KEY).trim()) {
 const PORT = 3001;
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-// Load per-bot model config (default + fine-tuned model IDs)
-let MODELS = { default: "gpt-4.1-mini", bots: {} };
+// Use normal gpt-4o-mini for all bots (no fine-tuning).
+let MODELS = { default: "gpt-4o-mini" };
 try {
   const modelsPath = path.join(__dirname, "models.json");
   const raw = fs.readFileSync(modelsPath, "utf8");
-  MODELS = JSON.parse(raw);
-  if (!MODELS.bots) MODELS.bots = {};
+  const parsed = JSON.parse(raw);
+  if (parsed.default) MODELS.default = parsed.default;
 } catch (e) {
-  console.warn("[WARN] Could not load models.json, using default model only:", e?.message);
+  console.warn("[WARN] Could not load models.json, using default model:", e?.message);
 }
 
 // Optional fixed cast: bot names from CLI args (e.g. node index.js Sid Vivian).
@@ -54,11 +54,9 @@ if (REQUESTED_BOT_NAMES.length > 0) {
   console.log("[CAST] To fix the cast, run: node index.js <name1> [name2 ...]  (e.g. node index.js Sid Vivian Mina)");
 }
 
-function getModelForBot(botName) {
-  const id = MODELS.bots[botName];
-  // Placeholder IDs (e.g. ft:...:ORG:MINA_MODEL_ID) mean "not trained yet" → use default
-  if (!id || String(id).includes("_MODEL_ID")) return MODELS.default;
-  return id;
+// All bots use the same default model (no per-bot fine-tuned models).
+function getModelForBot() {
+  return MODELS.default;
 }
 
 // =====================
@@ -82,11 +80,12 @@ const runStamp =
 fs.mkdirSync(LOG_DIR, { recursive: true });
 const LOG_PATH = path.join(LOG_DIR, `${runStamp}.txt`);
 
-const NORMAL_ENQUEUE_MS = 3000;
-const DEQUEUE_MIN_MS = 1000;
-const DEQUEUE_MAX_MS = 2000;
+// Human idle: consider turn "done" when client sends human_idle.
+// Client uses: (empty box + no typing 4s) OR (non-empty box + no typing 10s).
+const IDLE_EMPTY_MS = 4000;   // empty text box, no typing for this long → idle
+const IDLE_TYPING_MS = 10000; // non-empty text box, no typing for this long → idle
 
-const MAX_ACTIVE_BOTS = 3; // bots that can be in GENERATING/THINKING/TYPING at once
+const MAX_ACTIVE_BOTS = 1; // call-on flow: only one bot speaks at a time
 
 // Your rule: anything that hasn't typed for >=10s is fully interruptible.
 // - If interrupted in stages 1-3 (GENERATING/THINKING/TYPING<10s before first send): cancel ENTIRE reply and keep them scheduled.
@@ -99,12 +98,44 @@ const IMPLICIT_WINDOW = 10;
 // Moderator bot: name used in transcript and for directive handling.
 const MODERATOR_NAME = "Eunice";
 
-// Moderator (Eunice) transcript: 6 sets of bubbles, sent in order based on timing rules.
+// Hardcoded introduction: moderator + what each bot says. No OpenAI during intro.
+const INTRO_BUBBLES = [
+  "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!",
+  "Let's go around and introduce ourselves—just your name and anything you'd like to share.",
+];
+
+const INTRO_BY_BOT = {
+  Jae: "Hi, I'm Jae. I teach high school math in Arlington.",
+  Mina: "Hey, I'm Mina. I work retail in LA, Koreatown.",
+  Derek: "Hi, I'm Derek. I'm a case worker in Tacoma.",
+  Vivian: "Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta.",
+  Anika: "Hi, I'm Anika. I'm a massage therapist in Fremont.",
+  Alex: "Hi, I'm Alex. I work at a bank in Bellevue.",
+  Dario: "Hey, I'm Dario. I bartend in Austin.",
+  Faith: "Hi, I'm Faith. I'm a college student in Irvine.",
+  Sid: "Hey, I'm Sid. I do IT support in New Jersey.",
+  Alayna: "Hi, I'm Alayna. I work in HR in Raleigh.",
+  Lukas: "Hi, I'm Lukas. I'm an engineer in Munich.",
+  Camille: "Hi, I'm Camille. I do marketing in Paris.",
+  Erik: "Hi, I'm Erik. I work in public-sector IT in Stockholm.",
+};
+
+function getIntroForBot(session, botName) {
+  const line = INTRO_BY_BOT[botName];
+  if (line) return line;
+  const p = session.personasByHandle?.[botName];
+  const name = p?.full_name || p?.name || botName;
+  const city = p?.city ? ` I'm from ${p.city}.` : "";
+  return `Hi, I'm ${name}.${city}`.trim();
+}
+
+// Intro only: delay between each bot starting to type (ms). Bots can type at once.
+const INTRO_STAGGER_MIN_MS = 1000;
+const INTRO_STAGGER_MAX_MS = 3000;
+
+// Moderator (Eunice) transcript: sets 1+ (after intro). Set 0 is replaced by INTRO_BUBBLES.
 const MODERATOR_TRANSCRIPT = [
-  [
-    "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!",
-    "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.",
-  ],
+  INTRO_BUBBLES,
   [
     "Before we dive in, just a quick note about the goal of this study.\nWe are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
     "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology.",
@@ -506,31 +537,9 @@ function scheduleHasBot(session, botName) {
   return session.scheduleQueue.some((x) => x.bot === botName);
 }
 
-function enqueueSchedule(session, item, { front = false } = {}) {
-  // item: { bot, source: "mention"|"normal"|"directive", mentionId?: string, createdAt?: number, priorityQ?: string }
-  if (!item?.bot) return;
-
-  // Directive tasks are only removed when (1) that bot sends a message (dequeueScheduleAfterFirstSend) or (2) new moderator directive. Message from another bot must not replace or flush a directed bot's task.
-  const existing = session.scheduleQueue.find((x) => x.bot === item.bot);
-  if (existing?.source === "directive" && item.source !== "directive") return;
-
-  // Prune expired mentions before enqueueing
-  pruneExpiredMentions(session);
-
-  // prevent duplicates (unless it's a directive, which can override)
-  if (scheduleHasBot(session, item.bot) && item.source !== "directive") return;
-
-  // if enqueue mention or directive, remove any existing entry for same bot
-  session.scheduleQueue = session.scheduleQueue.filter((x) => x.bot !== item.bot);
-
-  // Set createdAt if not provided
-  if (!item.createdAt) item.createdAt = Date.now();
-
-  if (front) session.scheduleQueue.unshift(item);
-  else session.scheduleQueue.push(item);
-
-  logLine("QUEUE", `schedule +${item.source} bot=${item.bot} len=${session.scheduleQueue.length}`);
-  dumpQueues(session, `after enqueue ${item.bot}`);
+/** No-op: bots are cued only by moderator (call-on), not by a schedule queue. */
+function enqueueSchedule(_session, _item, _opts = {}) {
+  // Bots are cued only by moderator; no queue.
 }
 
 // Only place that removes a bot's scheduled task when they send. Directive tasks are removed only here (when that bot messages out) or by enqueueModeratorDirective (new directive clears all). Message from another bot must not flush a directed bot's queue.
@@ -587,8 +596,7 @@ function createMentionTicket(session, targetBot, question, askedBy) {
     dumpQueues(session, `after create mention ${targetBot}`);
   }
 
-  // ensure scheduled (mentions have priority)
-  enqueueSchedule(session, { bot: targetBot, source: "mention", mentionId: ticket.id }, { front: true });
+  // Bots are cued only by moderator; no scheduling from mentions.
 }
 
 function resolveMention(session, botName, mentionId) {
@@ -644,40 +652,19 @@ function pruneExpiredMentions(session) {
 }
 
 
-// Priority constants
-const PRIORITY = { directive: 3, mention: 2, normal: 1 };
-
+/** Moderator-cue only: who may speak next is the current call-on participant (if a bot). No queue. */
 function nextScheduleItem(session) {
-  // Prune expired mentions first
-  pruneExpiredMentions(session);
-
-  // ensure mention targets are in schedule (front)
-  if (session.mentionQueue.length) {
-    for (const t of session.mentionQueue) {
-      if (!scheduleHasBot(session, t.target)) {
-        enqueueSchedule(session, { bot: t.target, source: "mention", mentionId: t.id }, { front: true });
-      }
-    }
-  }
-
-  // Sort: directive > mention > normal; then moderator-mentioned first; then createdAt (older first)
-  const sorted = [...session.scheduleQueue].sort((a, b) => {
-    const pa = PRIORITY[a.source] ?? 0;
-    const pb = PRIORITY[b.source] ?? 0;
-    if (pb !== pa) return pb - pa;
-    const am = a.moderatorMentioned ? 1 : 0;
-    const bm = b.moderatorMentioned ? 1 : 0;
-    if (bm !== am) return bm - am;
-    return (a.createdAt ?? 0) - (b.createdAt ?? 0);
-  });
-
-  // Return first item whose bot is IDLE so we don't block on one busy bot (e.g. directive for Mina
-  // while Mina is GENERATING — we can start Vivian, Anika, Erik instead)
-  for (const item of sorted) {
-    ensureBot(session, item.bot);
-    if (session.bots[item.bot].stage === "IDLE") return item;
-  }
-  return null;
+  if (!session.callOnOrder?.length || session.currentCallOnIndex >= session.callOnOrder.length) return null;
+  const current = session.callOnOrder[session.currentCallOnIndex];
+  const humanName = getHumanParticipantName(session);
+  if (current === humanName) return null;
+  ensureBot(session, current);
+  if (session.bots[current].stage !== "IDLE") return null;
+  return {
+    bot: current,
+    source: "directive",
+    priorityQ: session.currentQuestionText,
+  };
 }
 
 // =====================
@@ -881,108 +868,390 @@ function isModeratorNudge(text) {
 }
 
 /**
- * If the moderator text mentions a specific participant by name (@Name or "…, Name" / "Name, …"), return that name.
- * Only returns names that are bots (human responds manually). Returns null if none or not a bot.
+ * Only the moderator (Eunice) cues who speaks. Return the participant the moderator is explicitly asking to speak
+ * (e.g. "Vivian, what do you think?"), not every name in the message. "Thanks, Sid." or "Good point, Sid" = no cue (slipped by).
  */
-function getModeratorMentionedParticipant(session, text) {
+function getModeratorCuedParticipant(session, text) {
   const s = String(text || "").trim();
   if (!s) return null;
-  const participants = getParticipantNames(session);
-  for (const name of participants) {
+  const bots = session.botNames;
+  for (const name of bots) {
     if (!name) continue;
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const atMention = new RegExp(`@${escaped}\\b`, "i");
-    const commaMention = new RegExp(`[,，]\\s*${escaped}\\b|\\b${escaped}\\s*[,，]`, "i");
-    const wordMention = new RegExp(`\\b${escaped}\\b`, "i");
-    if (atMention.test(s) || commaMention.test(s) || wordMention.test(s)) {
-      if (session.botNames.includes(name)) return name;
-      break;
-    }
+    // Name immediately before a cue phrase (e.g. "Vivian, would you agree?" or "Vivian. What do you think?")
+    const beforeCueComma = new RegExp(`\\b${escaped}\\s*[,，]\\s*(?:would you|what do you|how do you|do you think|your thoughts|agree|see this)`, "i");
+    const beforeCuePeriod = new RegExp(`\\b${escaped}\\s*\\.\\s*(?:What do you|How do you|How about you)`, "i");
+    const nameThenQuestion = new RegExp(`\\b${escaped}\\s*\\?`, "i");
+    const howAboutYouName = new RegExp(`(?:how about you|what do you think|and you),?\\s*${escaped}\\b`, "i");
+    // "Let's start with Sid." / "Start with Sid." / "Begin with Vivian."
+    const startWithName = new RegExp(`(?:let'?s?|we'?ll?)?\\s*start\\s+with\\s+${escaped}\\b`, "i");
+    const beginWithName = new RegExp(`(?:let'?s?|we'?ll?)?\\s*begin\\s+with\\s+${escaped}\\b`, "i");
+    if (beforeCueComma.test(s) || beforeCuePeriod.test(s) || nameThenQuestion.test(s) || howAboutYouName.test(s) || startWithName.test(s) || beginWithName.test(s)) return name;
   }
   return null;
 }
 
-/**
- * Non-nudge moderator message: reset direction queue, clear all mentions, requeue only this message's directive for all bots.
- */
-function enqueueModeratorDirective(session, text) {
-  pruneExpiredMentions(session);
-  session.mentionQueue = [];
-  session.pendingMentionByBot = {};
-
-  const before = session.scheduleQueue.length;
-  session.scheduleQueue = [];
-  if (before > 0) {
-    logLine("QUEUE", `cleared all ${before} scheduled tasks for new moderator directive`);
-  }
-
-  const now = Date.now();
-  const mentionedBot = getModeratorMentionedParticipant(session, text);
-
-  const directiveTasks = session.botNames.map((bot) => ({
-    kind: "directive",
-    bot,
-    source: "directive",
-    priorityQ: text,
-    createdAt: now,
-    createdMsgSeq: session.msgSeq || 0,
-    moderatorMentioned: bot === mentionedBot,
-  }));
-
-  if (mentionedBot) {
-    const idx = directiveTasks.findIndex((t) => t.bot === mentionedBot);
-    if (idx > 0) {
-      const [task] = directiveTasks.splice(idx, 1);
-      directiveTasks.unshift(task);
-    }
-    logLine("QUEUE", `moderator mentioned ${mentionedBot} → front of queue`);
-  } else {
-    // Rotate who goes first each moderator set so the same bot doesn't always respond first.
-    const setIndex = session.moderatorSetIndex ?? 0;
-    const offset = setIndex % session.botNames.length;
-    if (offset > 0) {
-      const rotated = [...directiveTasks.slice(offset), ...directiveTasks.slice(0, offset)];
-      directiveTasks.length = 0;
-      directiveTasks.push(...rotated);
-      logLine("QUEUE", `directive order rotated by ${offset} (set ${setIndex}) first=${directiveTasks[0]?.bot}`);
-    }
-  }
-
-  session.scheduleQueue = directiveTasks;
-  session.lastModeratorDirectiveText = text;
-  logLine("QUEUE", `directive + all bots (${session.botNames.length}) len=${session.scheduleQueue.length}`);
-  dumpQueues(session, `after moderator directive`);
+/** True if this moderator message is the round-start question (topic question), not a short ack. */
+function isRoundStartQuestion(session, text) {
+  const s = String(text || "").trim();
+  if (s.length < 50) return false;
+  return /\b(goal|study|interested|dive in|First question|Moving on|right or wrong)\b/i.test(s) || s.length > 80;
 }
 
 /**
- * Nudge: only move the nudged bot to the front of the queue. Keep their existing direction (priorityQ); do not set the nudge as the new direction.
+ * Going-around flow: randomly decide order, generate Eunice's cue for first person (OpenAI), emit it, then run first person.
+ * Who is cued is always read from the ordered list we created, not from parsing Eunice's message.
+ */
+async function startGoingAroundRound(session, questionText) {
+  const humanName = getHumanParticipantName(session);
+  const names = [...session.botNames, humanName];
+  const order = shuffleArray([...names]);
+  session.callOnOrder = order;
+  session.currentCallOnIndex = 0;
+  session.currentQuestionText = questionText || null;
+  session.respondedToCurrentRound = new Set();
+  session.disagreementFollowUps = [];
+  session.currentCallOnBot = null;
+  session.waitingForHumanIdle = false;
+  logLine("QUEUE", `call-on started question="${clip(session.currentQuestionText, 60)}" order=[${session.callOnOrder.join(", ")}] (random)`);
+  const firstPerson = session.callOnOrder[0];
+  const cueLine = await generateEuniceFirstCue(session, firstPerson);
+  await emitModeratorMessage(session, cueLine || `Let's start with ${firstPerson}.`);
+  startCallOnTurn(session);
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Generate Eunice's first cue for the going-around round (e.g. "Let's start with Sid." or "Sid, what do you think?"). */
+async function generateEuniceFirstCue(session, firstPersonName) {
+  const transcript = buildTranscript(session.history, 15);
+  const sys = `You are ${MODERATOR_NAME}, the moderator. Generate a single short line (1 sentence) to cue ${firstPersonName} to speak first. Examples: "Let's start with ${firstPersonName}." or "${firstPersonName}, what do you think?" Keep it natural and brief. Output ONLY that line, no quotes or extra text.`;
+  const user = `Discussion so far:\n${transcript}\n\nCue ${firstPersonName} to respond first. Output one short line only.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    return (resp.output_text || "").trim().slice(0, 200) || null;
+  } catch (e) {
+    logLine("OPENAI_ERR", `Eunice first cue: ${e?.message || e}`);
+    return null;
+  }
+}
+
+/**
+ * Call-on flow: who speaks is always from the pre-decided order (set in startGoingAroundRound), not from parsing Eunice's message.
+ * When we receive a moderator directive with no cue and it's the round-start question, we start the round (random order, generate cue, emit, run first).
+ * When we already have an active round and receive a cue message (our own generated cue), we do not overwrite the order.
+ */
+function enqueueModeratorDirective(session, text) {
+  const question = session.lastModeratorDirectiveText; // previous bubble was the question
+  session.lastModeratorDirectiveText = text;
+  const cued = getModeratorCuedParticipant(session, text);
+  if (cued && session.callOnOrder?.length > 0) {
+    return;
+  }
+  if (!cued) {
+    if (isRoundStartQuestion(session, text)) {
+      setImmediate(() => startGoingAroundRound(session, text).catch((e) => logLine("ERROR", e?.message || e)));
+      return;
+    }
+    logLine("QUEUE", "directive no cue: not starting call-on");
+    return;
+  }
+  const humanName = getHumanParticipantName(session);
+  const others = session.botNames.filter((n) => n !== cued);
+  session.callOnOrder = [cued, ...others, humanName];
+  session.currentCallOnIndex = 0;
+  session.currentQuestionText = question || text;
+  session.respondedToCurrentRound = new Set();
+  session.disagreementFollowUps = [];
+  session.currentCallOnBot = null;
+  session.waitingForHumanIdle = false;
+  logLine("QUEUE", `call-on started question="${clip(session.currentQuestionText, 60)}" order=[${session.callOnOrder.join(", ")}] who_spoke=[]`);
+  startCallOnTurn(session);
+}
+
+/** Who has spoken in the current round (Stage 1 going-around). */
+function getParticipantsWhoSpokeThisRound(session) {
+  return new Set(session.respondedToCurrentRound || []);
+}
+
+/** Who should speak next in call-on order (first in order who hasn't spoken yet). */
+function getNextParticipantToSpeak(session) {
+  if (!session.callOnOrder?.length || session.currentCallOnIndex >= session.callOnOrder.length) return null;
+  return session.callOnOrder[session.currentCallOnIndex];
+}
+
+/**
+ * Nudge: in call-on flow we don't use a queue; nudge just logs (or could re-prompt current participant).
  */
 function enqueueModeratorNudge(session, text) {
-  const mentionedBot = getModeratorMentionedParticipant(session, text);
-  if (!mentionedBot) return;
+  const cuedBot = getModeratorCuedParticipant(session, text);
+  if (cuedBot) logLine("QUEUE", `moderator nudge: ${cuedBot} (call-on flow)`);
+}
 
-  const existingIdx = session.scheduleQueue.findIndex((t) => t.bot === mentionedBot);
-  if (existingIdx < 0) {
-    // Not in queue: add at front with the last moderator directive (not the nudge text)
-    const priorityQ = session.lastModeratorDirectiveText || text;
-    const now = Date.now();
-    session.scheduleQueue.unshift({
-      kind: "directive",
-      bot: mentionedBot,
-      source: "directive",
-      priorityQ,
-      createdAt: now,
-      createdMsgSeq: session.msgSeq || 0,
-      moderatorMentioned: true,
-    });
-    logLine("QUEUE", `moderator nudge: ${mentionedBot} added at front (direction=last directive)`);
-  } else {
-    // Already in queue: move existing task to front without changing its direction
-    const [existingTask] = session.scheduleQueue.splice(existingIdx, 1);
-    session.scheduleQueue.unshift(existingTask);
-    logLine("QUEUE", `moderator nudge: ${mentionedBot} moved to front (direction unchanged)`);
+/**
+ * Start the current call-on turn: either run the bot or prompt the human and wait for human_idle.
+ * options.alreadyPrompted: true when Eunice already acknowledged and prompted (from onCallOnParticipantDone).
+ */
+async function startCallOnTurn(session, options = {}) {
+  if (!session.callOnOrder?.length || session.currentCallOnIndex >= session.callOnOrder.length) {
+    runAfterRoundComplete(session);
+    return;
   }
-  dumpQueues(session, `after moderator nudge`);
+  const current = session.callOnOrder[session.currentCallOnIndex];
+  const humanName = getHumanParticipantName(session);
+  const isHuman = current === humanName;
+
+  if (isHuman) {
+    session.waitingForHumanIdle = true;
+    if (options.alreadyPrompted) {
+      logLine("QUEUE", `call-on waiting for human ${current} (idle, already prompted)`);
+      return;
+    }
+    const promptText = await generateEuniceCallOnPrompt(session, current);
+    if (promptText) {
+      await emitModeratorMessage(session, promptText);
+    } else {
+      await emitModeratorMessage(session, `How about you, ${current}?`);
+    }
+    logLine("QUEUE", `call-on waiting for human ${current} (idle)`);
+    return;
+  }
+
+  session.currentCallOnBot = current;
+  logLine("QUEUE", `call-on turn: ${current}`);
+  await startBotJobIfPossible(session);
+}
+
+/** Generate Eunice's "How about you, X?" style prompt via OpenAI to fit context. */
+async function generateEuniceCallOnPrompt(session, participantName) {
+  const transcript = buildTranscript(session.history, 20);
+  const sys = `You are ${MODERATOR_NAME}, the moderator. Generate a single short line (1 sentence) to call on the next participant. Examples: "How about you, Vivian?" or "Vivian, what do you think?" Keep it natural and brief. Output ONLY that line, no quotes or extra text.`;
+  const user = `Discussion so far:\n${transcript}\n\nCall on ${participantName} to respond next. Output one short line only.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    const line = (resp.output_text || "").trim().slice(0, 200);
+    return line || null;
+  } catch (e) {
+    logLine("OPENAI_ERR", `Eunice call-on prompt: ${e?.message || e}`);
+    return null;
+  }
+}
+
+/**
+ * Stage 1: Generate Eunice's message after someone spoke — short (2–3 word) acknowledgment of their response + cue the next participant.
+ * Single OpenAI call; output is one short line (e.g. "Good point. Vivian, what do you think?").
+ */
+async function generateEuniceAckAndCueNext(session, justSpokeName, nextName) {
+  const transcript = buildTranscript(session.history, 25);
+  const lastFromSpeaker = [...session.history].reverse().find((m) => m.name === justSpokeName);
+  const lastResponse = lastFromSpeaker ? lastFromSpeaker.text : "";
+  const sys = `You are ${MODERATOR_NAME}, the moderator. Generate ONE short line that: (1) starts with a very brief acknowledgment (2–3 words) of what ${justSpokeName} just said, then (2) cues ${nextName} to speak next (e.g. "${nextName}, what do you think?" or "How about you, ${nextName}?"). Keep the whole line natural and concise. Output ONLY that single line, no quotes or labels.`;
+  const user = `Discussion so far:\n${transcript}\n\n${justSpokeName} just said: "${clip(lastResponse, 200)}"\n\nWrite ${MODERATOR_NAME}'s brief acknowledgment (2–3 words) plus cue for ${nextName}. One line only.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    const line = (resp.output_text || "").trim().slice(0, 300);
+    return line || null;
+  } catch (e) {
+    logLine("OPENAI_ERR", `Eunice ack+cue: ${e?.message || e}`);
+    return null;
+  }
+}
+
+/** After a participant (bot or human) finishes their call-on turn: track who spoke, Eunice ack+cue next (OpenAI), then advance. */
+async function onCallOnParticipantDone(session, participantName) {
+  session.respondedToCurrentRound.add(participantName);
+  const whoSpoke = Array.from(session.respondedToCurrentRound);
+  logLine("QUEUE", `call-on who_spoke=[${whoSpoke.join(", ")}] next_index=${session.currentCallOnIndex + 1}`);
+  session.currentCallOnIndex += 1;
+  session.currentCallOnBot = null;
+  session.waitingForHumanIdle = false;
+  if (session.currentCallOnIndex >= session.callOnOrder.length) {
+    runAfterRoundComplete(session);
+    return;
+  }
+  const nextName = session.callOnOrder[session.currentCallOnIndex];
+  const euniceLine = await generateEuniceAckAndCueNext(session, participantName, nextName);
+  if (euniceLine) {
+    await emitModeratorMessage(session, euniceLine);
+  } else {
+    await emitModeratorMessage(session, `Thanks, ${participantName}. ${nextName}, what do you think?`);
+  }
+  setImmediate(() => startCallOnTurn(session, { alreadyPrompted: true }).catch((e) => logLine("ERROR", e?.message || e)));
+}
+
+/** Stage 2: After everyone has responded once (going around done), check disagreements, re-prompt only the disagreed-with person, then next moderator set. */
+async function runAfterRoundComplete(session) {
+  session.callOnOrder = [];
+  session.currentCallOnIndex = 0;
+  logLine("QUEUE", "round complete: who_spoke=" + Array.from(session.respondedToCurrentRound || []).join(", ") + "; checking disagreements");
+  const disagreements = await detectDisagreements(session);
+  if (disagreements.length > 0) {
+    session.inDisagreementFollowUp = true;
+    for (const { disagreedWith, by } of disagreements) {
+      const promptText = await generateEuniceDisagreementPrompt(session, disagreedWith, by);
+      if (promptText) await emitModeratorMessage(session, promptText);
+      else await emitModeratorMessage(session, `${by} disagreed with you. What do you think about their viewpoint?`);
+      session.callOnOrder = [disagreedWith];
+      session.currentCallOnIndex = 0;
+      session.currentQuestionText = promptText || `${by} disagreed with you. What do you think?`;
+      session.currentCallOnBot = disagreedWith;
+      await startBotJobIfPossible(session);
+      while (session.bots[disagreedWith]?.stage !== "IDLE") {
+        await delay(300);
+      }
+      session.currentCallOnBot = null;
+    }
+    session.inDisagreementFollowUp = false;
+  }
+  const humanName = getHumanParticipantName(session);
+  const humanDisagreed = disagreements.filter((d) => d.disagreedWith === humanName);
+  if (humanDisagreed.length > 0) {
+    const by = humanDisagreed[0].by;
+    const promptText = await generateEuniceDisagreementPrompt(session, humanName, by);
+    if (promptText) await emitModeratorMessage(session, promptText);
+    else await emitModeratorMessage(session, `${by} had a different view. What do you think about that?`);
+    session.waitingForHumanDisagreementResponse = true;
+    return;
+  }
+  setImmediate(() => trySendNextModeratorSet(session));
+}
+
+/** Generate Eunice's prompt when someone was disagreed with (e.g. "Vivian disagreed with you. What do you think?"). */
+async function generateEuniceDisagreementPrompt(session, disagreedWith, by) {
+  const transcript = buildTranscript(session.history, 25);
+  const sys = `You are ${MODERATOR_NAME}, the moderator. Someone (${by}) disagreed with ${disagreedWith}. Generate one short sentence asking ${disagreedWith} to respond to ${by}'s viewpoint. Natural and brief. Output ONLY that sentence.`;
+  const user = `Discussion:\n${transcript}\n\nGenerate one short line for ${MODERATOR_NAME} to ask ${disagreedWith} to respond.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    return (resp.output_text || "").trim().slice(0, 200) || null;
+  } catch (e) {
+    logLine("OPENAI_ERR", `Eunice disagreement prompt: ${e?.message || e}`);
+    return null;
+  }
+}
+
+/**
+ * When a participant (bot or human) mentions/cues another participant, moderator intervenes:
+ * paraphrases the speaker's point and cues the mentioned person by name (so the cue comes from Eunice, not the participant).
+ */
+async function triggerModeratorParaphraseAndCueIfParticipantCuedSomeone(session, lastMessage) {
+  if (!lastMessage || lastMessage.name === MODERATOR_NAME) return;
+  if (session.waitingForHumanIntro || session.inHardcodedIntro) return;
+  const speaker = lastMessage.name;
+  const text = lastMessage.text || "";
+  const explicit = detectExplicitMentions(text, session.botNames).filter((t) => t !== speaker);
+  const implicit = await detectImplicitMention({ history: session.history, botNames: session.botNames });
+  const targets = [...new Set([...explicit, ...implicit])].filter((t) => t && t !== speaker);
+  if (targets.length === 0) return;
+  const cuedName = targets[0];
+  const paraphraseLine = await generateModeratorParaphraseAndCue(session, lastMessage, cuedName);
+  if (paraphraseLine) await emitModeratorMessage(session, paraphraseLine);
+}
+
+async function generateModeratorParaphraseAndCue(session, lastMessage, cuedName) {
+  const transcript = buildTranscript(session.history, 20);
+  const sys = `You are ${MODERATOR_NAME}, the moderator. A participant just addressed or cued ${cuedName}. Write ONE short line that: (1) briefly paraphrases or acknowledges what the speaker said, then (2) explicitly cues ${cuedName} to respond (e.g. "${cuedName}, what do you think?" or "How about you, ${cuedName}?"). The cue must come from the moderator, not the participant. Output ONLY that line, no quotes or labels.`;
+  const user = `Discussion:\n${transcript}\n\n${lastMessage.name} said: "${clip(lastMessage.text, 300)}"\n\nWrite ${MODERATOR_NAME}'s brief paraphrase and cue for ${cuedName}. One line only.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    return (resp.output_text || "").trim().slice(0, 400) || null;
+  } catch (e) {
+    logLine("OPENAI_ERR", `moderator paraphrase+cue: ${e?.message || e}`);
+    return null;
+  }
+}
+
+/** Check if moderator (Eunice) should intervene after a message (e.g. clarify terms, answer confusion). Do NOT intervene for intros or follow-up chitchat. */
+async function checkModeratorIntervention(session, lastMessage) {
+  if (!lastMessage || lastMessage.name === MODERATOR_NAME) return;
+  if (session.waitingForHumanIntro || session.inHardcodedIntro) return;
+  const transcript = buildTranscript(session.history, 25);
+  const sys = `You are ${MODERATOR_NAME}, the moderator. Decide if you should intervene after the latest message. Intervene ONLY when: (1) someone is confused about a term or the question and needs a definition, (2) someone explicitly asks for clarification of the task or a term, (3) the discussion needs a brief factual clarification only. Do NOT intervene for: introductions, "great to meet you", follow-up questions (e.g. "what are you studying?"), social chitchat, normal agreement/disagreement, or general chat. Reply with exactly "YES" or "NO" only.`;
+  const user = `Discussion:\n${transcript}\n\nShould ${MODERATOR_NAME} intervene to give a clarification or answer a confusion after the latest message? YES or NO only.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    const raw = (resp.output_text || "").trim().toUpperCase();
+    if (!raw.startsWith("YES")) return;
+    const reply = await getModeratorInterventionResponse(session, lastMessage);
+    if (reply) await emitModeratorMessage(session, reply);
+  } catch (e) {
+    logLine("OPENAI_ERR", `moderator intervention check: ${e?.message || e}`);
+  }
+}
+
+/** Generate Eunice's clarification/response when she intervenes. Only factual clarifications or direct answers to confusion—no follow-up questions or chitchat. */
+async function getModeratorInterventionResponse(session, lastMessage) {
+  const transcript = buildTranscript(session.history, 25);
+  const sys = `You are ${MODERATOR_NAME}, the moderator. Write a SHORT clarification or direct answer (1-3 sentences) to address the person's confusion or question only. Do NOT ask follow-up questions (e.g. "What are you studying?"), do NOT say "great to meet you" or social chitchat. Only clarify a term, answer a factual question, or briefly explain the task. Output ONLY the moderator's reply, no quotes or labels.`;
+  const user = `Discussion:\n${transcript}\n\nLatest message: ${lastMessage.name}: "${lastMessage.text}"\n\nWrite ${MODERATOR_NAME}'s brief clarification or answer to their confusion/question only. No follow-up questions or social reply.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    return (resp.output_text || "").trim().slice(0, 500) || null;
+  } catch (e) {
+    logLine("OPENAI_ERR", `moderator intervention response: ${e?.message || e}`);
+    return null;
+  }
+}
+
+/**
+ * Stage 2: Detect disagreements (disagreedWith = person to re-prompt; we prompt them, not the one who disagreed).
+ * Include: (1) A disagreed with B → re-ask B. (2) A bot expressed opposing view to the human's view → re-ask the human.
+ * Only real disagreements/opposing views, not agreements or neutral comments.
+ */
+async function detectDisagreements(session) {
+  const lastMajorIdx = session.lastMajorModeratorMessageHistoryIndex ?? getLastModeratorMessageIndex(session);
+  if (lastMajorIdx < 0) return [];
+  const window = session.history.slice(lastMajorIdx + 1);
+  if (window.length < 2) return [];
+  const chat = window.map((m) => `${m.name}: ${m.text}`).join("\n");
+  const participants = getParticipantNames(session).join(", ");
+  const humanName = getHumanParticipantName(session);
+  const sys = `You detect DISAGREEMENTS or opposing views in the discussion. For each case where someone should be re-asked to respond:
+1) A clearly disagreed with B (B's view was challenged by A) → we re-ask B: {"disagreedWith": "B", "by": "A"}.
+2) A bot expressed an opposing or disagreeing view toward the human's view (even if the human spoke last) → we re-ask the human: {"disagreedWith": "${humanName}", "by": "BotName"}.
+Only include real disagreements or opposing viewpoints, not agreements or neutral comments. Output a JSON array of objects: [{"disagreedWith": "NameOfPersonToReAsk", "by": "NameOfPersonWhoDisagreedOrOpposed"}]. If no disagreements, output []. Output ONLY the JSON array.`;
+  const user = `Participants: ${participants}. Human participant: ${humanName}.\n\nDiscussion:\n${chat}\n\nList each disagreement: who should be re-asked (disagreedWith) and who disagreed/opposed (by). JSON only.`;
+  try {
+    const resp = await openai.responses.create({
+      model: MODELS.default,
+      input: [{ role: "system", content: sys }, { role: "user", content: user }],
+    }, { timeout: OPENAI_TIMEOUT_MS });
+    const raw = (resp.output_text || "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const arr = JSON.parse(raw || "[]");
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((x) => x && x.disagreedWith && x.by).slice(0, 10);
+  } catch (e) {
+    logLine("OPENAI_ERR", `detect disagreements: ${e?.message || e}`);
+    return [];
+  }
 }
 
 // =====================
@@ -1064,6 +1333,17 @@ function allIntroductionsDone(session) {
   return true;
 }
 
+/** For sets 1+, return only the question; going-around order and first cue are decided in startGoingAroundRound (random order, OpenAI-generated cue). */
+function getModeratorSetBubbles(session, setIndex) {
+  if (setIndex >= 1 && setIndex < MODERATOR_TRANSCRIPT.length) {
+    const question = Array.isArray(MODERATOR_TRANSCRIPT[setIndex])
+      ? MODERATOR_TRANSCRIPT[setIndex][0]
+      : MODERATOR_TRANSCRIPT[setIndex];
+    return question;
+  }
+  return MODERATOR_TRANSCRIPT[setIndex];
+}
+
 /**
  * Next moderator set when triggered by participant messages (sets 1–3).
  */
@@ -1071,17 +1351,13 @@ function getNextModeratorBubble(session) {
   const setIndex = session.moderatorSetIndex ?? 0;
   if (setIndex >= MODERATOR_TRANSCRIPT.length) return null;
 
-  // Set 1 (Eunice intro): send immediately so "Hi everyone! My name is Eunice..." is the first thing participants see
   if (setIndex === 0) return MODERATOR_TRANSCRIPT[0];
 
-  // Set 2 ("Before we dive in..." / "There are no right or wrong..."): after all have replied since set 1
   if (setIndex === 1) {
-    if (allIntroductionsDone(session)) return MODERATOR_TRANSCRIPT[1];
+    if (allIntroductionsDone(session)) return getModeratorSetBubbles(session, 1);
     return null;
   }
 
-  // Set 3 ("First question..."): after "Before we dive in...", only need 2 participant bubbles (since last major mod; don't wait for everyone).
-  // Only apply when last major moderator message is actually from set 2 (we set moderatorSetIndex=2 at start of emit, so a mid-send setImmediate can run before set 2 bubbles are in history).
   if (setIndex === 2) {
     const lastMajorIdx =
       session.lastMajorModeratorMessageHistoryIndex ??
@@ -1090,14 +1366,13 @@ function getNextModeratorBubble(session) {
     const lastMajorText = lastMajorIdx >= 0 && session.history[lastMajorIdx] ? (session.history[lastMajorIdx].text || "") : "";
     const lastMajorIsSet2 =
       lastMajorText.includes("Before we dive in") || lastMajorText.includes("There are no right or wrong");
-    if (!lastMajorIsSet2) return null; // still sending set 2 or not sent yet
+    if (!lastMajorIsSet2) return null;
     const countSinceMajor = countParticipantMessagesSinceLastMajorModerator(session);
     logLine("QUEUE", `moderator set 3 check: ${countSinceMajor} participant bubbles since last major (need 2)`);
-    if (countSinceMajor >= 2) return MODERATOR_TRANSCRIPT[2];
+    if (countSinceMajor >= 2) return getModeratorSetBubbles(session, 2);
     return null;
   }
 
-  // Sets 4 and 5 are sent from the timer; they wait for everyone and nudge if needed (allIntroductionsDone in timer path)
   return null;
 }
 
@@ -1160,7 +1435,7 @@ async function getNextModeratorBubbleFromTimer(session) {
     if (!done) return null;
   }
 
-  return MODERATOR_TRANSCRIPT[setIndex];
+  return getModeratorSetBubbles(session, setIndex);
 }
 
 /**
@@ -1204,19 +1479,46 @@ async function emitModeratorMessage(session, text, setIndex = null, options = {}
  */
 function sendFirstModeratorSetAfterLoad(session) {
   if ((session.moderatorSetIndex ?? 0) !== 0) return;
-  const firstSet = MODERATOR_TRANSCRIPT[0];
-  if (!firstSet || firstSet.length < 2) return;
-  // First bubble only: instant at 1s (do not advance moderatorSetIndex yet)
-  emitModeratorMessage(session, firstSet[0], null, { instant: true })
-    .then(() => {
-      // Second bubble: normal thinking → typing → send (no bots in between)
-      return emitModeratorMessage(session, firstSet[1], 1, { instant: false });
-    })
-    .then(() => {
-      logLine("QUEUE", "moderator set 1 (Eunice intro) complete; starting bot loops");
-      startNormalEnqueueLoop(session);
-      startDequeueLoop(session);
+  const intro = INTRO_BUBBLES;
+  if (!intro || intro.length < 2) return;
+  emitModeratorMessage(session, intro[0], null, { instant: true })
+    .then(() => emitModeratorMessage(session, intro[1], 1, { instant: false }))
+    .then(() => runHardcodedIntro(session));
+}
+
+/** One bot's intro: thinking → typing → send. Used in parallel with staggered start. */
+async function runOneBotIntro(session, botName) {
+  const text = getIntroForBot(session, botName);
+  const { thinking, typingTime } = humanDelayForText(text);
+  await delay(thinking);
+  io.to(session.sessionId).emit("typing", { who: botName, isTyping: true });
+  logLine("TYPING", `bot=${botName} true`);
+  await delay(typingTime);
+  io.to(session.sessionId).emit("typing", { who: botName, isTyping: false });
+  logLine("TYPING", `bot=${botName} false`);
+  emitAndRecordMessage(session, { name: botName, text, ts: Date.now() });
+}
+
+/** Play hardcoded intro: bots start typing with 1–3s stagger (can type at once), then moderator asks the human. */
+async function runHardcodedIntro(session) {
+  logLine("QUEUE", "hardcoded intro: bots stagger 1–3s, then human");
+  session.inHardcodedIntro = true;
+  const staggerMs = () =>
+    INTRO_STAGGER_MIN_MS + Math.random() * (INTRO_STAGGER_MAX_MS - INTRO_STAGGER_MIN_MS);
+  let delayMs = 0;
+  const promises = session.botNames.map((botName) => {
+    const startAfter = delayMs;
+    delayMs += staggerMs();
+    return new Promise((resolve) => {
+      setTimeout(() => runOneBotIntro(session, botName).then(resolve), startAfter);
     });
+  });
+  await Promise.all(promises);
+  const humanName = getHumanParticipantName(session);
+  session.inHardcodedIntro = false;
+  await emitModeratorMessage(session, `How about you, ${humanName}?`);
+  session.waitingForHumanIntro = true;
+  logLine("QUEUE", `waiting for human intro from ${humanName}`);
 }
 
 /**
@@ -1271,25 +1573,14 @@ async function runModeratorTimerTick(session) {
 // =====================
 // Mention detectors runner
 // =====================
+/**
+ * Participant mentions/cues are not used for queue. Only the moderator (Eunice) cues who speaks.
+ * When a participant cues someone, triggerModeratorParaphraseAndCueIfParticipantCuedSomeone (from emitAndRecordMessage) handles it:
+ * moderator intervenes with paraphrase + cue. We do not create mention tickets from participant messages.
+ */
 async function runMentionDetectors(session, newestMsg) {
-  const text = newestMsg?.text || "";
-  const speaker = newestMsg?.name || "";
-
-  // Explicit @name (can be multiple)
-  const explicit = detectExplicitMentions(text, session.botNames).filter((t) => t !== speaker);
-  for (const target of explicit) {
-    createMentionTicket(session, target, text, speaker || "unknown");
-  }
-
-  // Implicit (can return multiple targets, including "all")
-  const implicitTargets = await detectImplicitMention({ history: session.history, botNames: session.botNames });
-  if (Array.isArray(implicitTargets) && implicitTargets.length > 0) {
-    for (const target of implicitTargets) {
-      if (target && target !== speaker) {
-        createMentionTicket(session, target, text, speaker || "unknown");
-      }
-    }
-  }
+  if (!newestMsg || newestMsg.name === MODERATOR_NAME) return;
+  // Do not create mention tickets when a participant cues another—moderator will intervene with paraphrase + cue instead.
 }
 
 // =====================
@@ -1355,8 +1646,8 @@ async function generateBubbles({ session, botName, source = "normal", priorityQu
     const rttMs = Date.now() - startMs;
     logLine("OPENAI_RTT", `bot=${botName} rtt=${rttMs}ms`);
 
-    logLine("OPENAI_REQ_SYSTEM", sys);
-    logLine("OPENAI_REQ_USER", userPrompt);
+    // logLine("OPENAI_REQ_SYSTEM", sys);
+    // logLine("OPENAI_REQ_USER", userPrompt);
 
     const raw = (resp.output_text || "").trim();
     logLine("OPENAI_OK", `bot=${botName} raw="${clip(raw, 220)}"`);
@@ -1384,7 +1675,7 @@ async function generateBubbles({ session, botName, source = "normal", priorityQu
 // We trigger an immediate dequeue after interrupt so they restart quickly with current context.
 
 async function tryDequeueNow(session) {
-  // Fill slots up to MAX_ACTIVE_BOTS so interrupted/scheduled bots run with current history soon.
+  // If moderator has cued someone (call-on), run that bot once. No queue.
   while (activeBotCount(session) < MAX_ACTIVE_BOTS) {
     const before = activeBotCount(session);
     await startBotJobIfPossible(session);
@@ -1417,9 +1708,8 @@ function emitAndRecordMessage(session, msg) {
   // When moderatorSetIndex is still 0, we've only sent the first bubble; skip enqueue/dequeue until the second is sent.
   const isIntroFirstBubbleOnly = isModeratorMessage(firstNormalized) && (session.moderatorSetIndex ?? 0) === 0;
 
-  // Interrupt applies to ALL messages (human "You", moderator Eunice, or any bot)—unchanged from before.
   interruptAllBotsOnNewMessage(session, { from: name, reason: "new_message" });
-  if (!isIntroFirstBubbleOnly) {
+  if (!isIntroFirstBubbleOnly && !session.inHardcodedIntro) {
     setImmediate(() => tryDequeueNow(session).catch(() => {}));
   }
 
@@ -1430,7 +1720,6 @@ function emitAndRecordMessage(session, msg) {
       // Do not enqueue directive or trySendNextModeratorSet; second bubble will be sent by sendFirstModeratorSetAfterLoad
     } else if (isCommentaryOnly(firstNormalized.text)) {
       logLine("QUEUE", `moderator commentary only: not updating directions`);
-      runMentionDetectors(session, firstNormalized).catch(() => {});
     } else if (isModeratorNudge(firstNormalized.text)) {
       enqueueModeratorNudge(session, firstNormalized.text);
     } else {
@@ -1438,8 +1727,19 @@ function emitAndRecordMessage(session, msg) {
       enqueueModeratorDirective(session, firstNormalized.text);
     }
   } else {
-    runMentionDetectors(session, firstNormalized).catch(() => {});
-    setImmediate(() => trySendNextModeratorSet(session));
+    if (session.inHardcodedIntro) {
+      // Skip mention/directive/next-set during hardcoded intro
+    } else {
+      const inCallOn = session.callOnOrder?.length > 0 && session.currentCallOnIndex < session.callOnOrder.length;
+      const fromCurrentCallOnBot = inCallOn && session.currentCallOnBot === name;
+      if (!fromCurrentCallOnBot) {
+        setImmediate(() => trySendNextModeratorSet(session));
+      }
+      // When a participant cues another, moderator intervenes with paraphrase + cue (so the cue comes from Eunice, not the participant).
+      setImmediate(() => triggerModeratorParaphraseAndCueIfParticipantCuedSomeone(session, firstNormalized).catch((e) => logLine("OPENAI_ERR", e?.message || e)));
+      // For all participant messages (bot and human): check if moderator should intervene (e.g. clarify terms, answer confusion).
+      setImmediate(() => checkModeratorIntervention(session, firstNormalized).catch((e) => logLine("OPENAI_ERR", e?.message || e)));
+    }
   }
 }
 
@@ -1459,37 +1759,15 @@ async function startBotJobIfPossible(session) {
   b.gen += 1;
   const myGen = b.gen;
 
-  b.source = item.source || "normal";
-  b.mentionId = item.mentionId || null;
+  // Only moderator-cued: item is always from call-on (directive).
+  b.source = "directive";
+  b.mentionId = null;
   b.bubbles = [];
   b.idx = 0;
   b.sentCount = 0;
   b.finishCurrentThenStop = false;
 
-  // Resolve priorityQ based on task type
-  let priorityQuestion = null;
-  let priorityMeta = null;
-  
-  if (b.source === "directive") {
-    // Directive: use priorityQ from task
-    priorityQuestion = item.priorityQ || null;
-    priorityMeta = `This is a direct message from the moderator (${MODERATOR_NAME}). Respond to it directly.`;
-  } else if (b.source === "mention") {
-    // Mention: look up from mention ticket
-    const t = session.pendingMentionByBot[botName];
-    if (t && (!b.mentionId || t.id === b.mentionId)) {
-      priorityQuestion = t.question;
-      const msgsAgo = Math.max(0, session.history.length - 1 - t.anchorIndex);
-      priorityMeta =
-        `You were directly addressed earlier by ${t.askedBy} (${msgsAgo} messages ago). ` +
-        `Answer that FIRST, then (optionally) react to the newest messages.`;
-    } else {
-      // Mention expired - skip this task
-      logLine("QUEUE", `mention expired for bot=${botName} mentionId=${b.mentionId}`);
-      setStage(session, botName, "IDLE");
-      return;
-    }
-  }
+  const priorityQuestion = item.priorityQ || null;
 
   // Stage 1: GENERATING (OpenAI)
   setStage(session, botName, "GENERATING", `source=${b.source}`);
@@ -1538,10 +1816,8 @@ async function startBotJobIfPossible(session) {
 
       emitAndRecordMessage(session, msg);
 
-      // After FIRST send, dequeue schedule + resolve mention
       if (b.sentCount === 0) {
-        dequeueScheduleAfterFirstSend(session, botName);
-        if (b.source === "mention") resolveMention(session, botName, b.mentionId);
+        // call-on: no queue to dequeue
       }
       b.sentCount += 1;
 
@@ -1560,13 +1836,16 @@ async function startBotJobIfPossible(session) {
       // Next bubble?
       b.idx += 1;
       if (b.idx >= b.bubbles.length) {
-        // Done
         b.bubbles = [];
         b.idx = 0;
         b.sentCount = 0;
         b.source = "normal";
         b.mentionId = null;
         setStage(session, botName, "IDLE");
+        if (!session.inDisagreementFollowUp && session.currentCallOnBot === botName) {
+          session.currentCallOnBot = null;
+          setImmediate(() => onCallOnParticipantDone(session, botName).catch((e) => logLine("ERROR", e?.message || e)));
+        }
         return;
       }
 
@@ -1616,6 +1895,10 @@ async function startBotJobIfPossible(session) {
             b.source = "normal";
             b.mentionId = null;
             setStage(session, botName, "IDLE");
+            if (!session.inDisagreementFollowUp && session.currentCallOnBot === botName) {
+              session.currentCallOnBot = null;
+              setImmediate(() => onCallOnParticipantDone(session, botName).catch((e) => logLine("ERROR", e?.message || e)));
+            }
             return;
           }
 
@@ -1659,13 +1942,16 @@ async function startBotJobIfPossible(session) {
                 return;
               }
 
-              // done
               b.bubbles = [];
               b.idx = 0;
               b.sentCount = 0;
               b.source = "normal";
               b.mentionId = null;
               setStage(session, botName, "IDLE");
+              if (!session.inDisagreementFollowUp && session.currentCallOnBot === botName) {
+                session.currentCallOnBot = null;
+                setImmediate(() => onCallOnParticipantDone(session, botName).catch((e) => logLine("ERROR", e?.message || e)));
+              }
             }, typing3);
 
             b.timers.push(tType3);
@@ -1687,18 +1973,12 @@ async function startBotJobIfPossible(session) {
 }
 
 // =====================
-// Tickers
+// Tickers (no queue: bots cued only by moderator)
 // =====================
-function startNormalEnqueueLoop(session) {
-  if (session.normalEnqueueTimer) clearInterval(session.normalEnqueueTimer);
-  session.normalEnqueueTimer = setInterval(() => {
-    enqueueNormalSpeaker(session);
-  }, NORMAL_ENQUEUE_MS);
+function startNormalEnqueueLoop(_session) {
+  // No-op: no schedule queue; bots are cued only by moderator.
 }
 
-// =====================
-// Human idle detection
-// =====================
 function isHumanIdle(session) {
   const now = Date.now();
   const timeSinceLastTyping = now - (session.humanLastTypingAt || 0);
@@ -1709,115 +1989,8 @@ function resetDequeueCounter(session) {
   session.dequeuedCountSinceHumanActive = 0;
 }
 
-// =====================
-// Dequeue loop with human activity awareness
-// =====================
-function startDequeueLoop(session) {
-  const tick = async () => {
-    // Check if first item in queue is a directive - if so, bypass human idle rules
-    const nextItem = nextScheduleItem(session);
-    const isDirectiveFirst = nextItem?.source === "directive";
-    
-    if (isDirectiveFirst) {
-      // Directive has priority - dequeue normally regardless of human idle state
-      logLine("QUEUE", `directive first: bypassing human idle counter rules`);
-      
-      while (activeBotCount(session) < MAX_ACTIVE_BOTS) {
-        const before = activeBotCount(session);
-        await startBotJobIfPossible(session);
-        const after = activeBotCount(session);
-        if (after === before) break;
-      }
-      
-      const wait = DEQUEUE_MIN_MS + Math.random() * (DEQUEUE_MAX_MS - DEQUEUE_MIN_MS);
-      session.dequeueTimer = setTimeout(tick, wait);
-      return;
-    }
-
-    const humanIdle = isHumanIdle(session);
-
-    if (humanIdle) {
-      // Human is idle: dequeue 3 messages spread across 10 seconds
-      const messagesToDequeue = IDLE_DEQUEUE_COUNT;
-      const totalSpread = IDLE_DEQUEUE_SPREAD_MS;
-      
-      // Generate random delays that sum to approximately totalSpread
-      // Use a simple approach: divide into roughly equal parts with some randomness
-      const delays = [];
-      let remaining = totalSpread;
-      for (let i = 0; i < messagesToDequeue - 1; i++) {
-        // Each delay is a portion of remaining time with some randomness
-        const portion = remaining / (messagesToDequeue - i);
-        const delay = portion * (0.5 + Math.random() * 0.5); // 50-100% of portion
-        delays.push(Math.max(100, delay)); // ensure minimum 100ms
-        remaining -= delay;
-      }
-      delays.push(Math.max(100, remaining)); // last one gets the remainder
-
-      // Shuffle delays for more natural distribution
-      delays.sort(() => Math.random() - 0.5);
-
-      logLine("QUEUE", `human idle: scheduling ${messagesToDequeue} messages over ${totalSpread}ms`);
-
-      // Schedule messages with delays
-      let cumulativeDelay = 0;
-      for (let i = 0; i < messagesToDequeue; i++) {
-        const delay = delays[i];
-        cumulativeDelay += delay;
-        
-        setTimeout(async () => {
-          // Check if still idle and can dequeue (but allow directives to bypass)
-          const nextItem = nextScheduleItem(session);
-          const isDirective = nextItem?.source === "directive";
-          
-          if (isDirective || (isHumanIdle(session) && activeBotCount(session) < MAX_ACTIVE_BOTS)) {
-            const before = activeBotCount(session);
-            await startBotJobIfPossible(session);
-            const after = activeBotCount(session);
-            if (after > before) {
-              logLine("QUEUE", `human idle: dequeued message ${i + 1}/${messagesToDequeue}${isDirective ? " (directive)" : ""}`);
-            }
-          }
-        }, cumulativeDelay);
-      }
-
-      // Reset counter after idle dequeues
-      resetDequeueCounter(session);
-
-      // Schedule next tick after all idle messages are scheduled
-      const wait = totalSpread + DEQUEUE_MIN_MS;
-      session.dequeueTimer = setTimeout(tick, wait);
-    } else {
-      // Human is active: limit to 3 messages
-      let dequeuedThisTick = 0;
-      
-      while (
-        activeBotCount(session) < MAX_ACTIVE_BOTS &&
-        session.dequeuedCountSinceHumanActive < MAX_DEQUEUE_WHEN_HUMAN_ACTIVE
-      ) {
-        const before = activeBotCount(session);
-        await startBotJobIfPossible(session);
-        const after = activeBotCount(session);
-        
-        if (after > before) {
-          session.dequeuedCountSinceHumanActive++;
-          dequeuedThisTick++;
-        } else {
-          break; // No more bots can start
-        }
-      }
-
-      if (session.dequeuedCountSinceHumanActive >= MAX_DEQUEUE_WHEN_HUMAN_ACTIVE) {
-        logLine("QUEUE", `human active: reached max dequeue limit (${MAX_DEQUEUE_WHEN_HUMAN_ACTIVE})`);
-      }
-
-      const wait = DEQUEUE_MIN_MS + Math.random() * (DEQUEUE_MAX_MS - DEQUEUE_MIN_MS);
-      session.dequeueTimer = setTimeout(tick, wait);
-    }
-  };
-
-  if (session.dequeueTimer) clearTimeout(session.dequeueTimer);
-  session.dequeueTimer = setTimeout(tick, DEQUEUE_MIN_MS);
+function startDequeueLoop(_session) {
+  // No-op: no queue; moderator cues set callOnOrder and startCallOnTurn runs the bot once.
 }
 
 function stopLoops(session) {
@@ -1853,26 +2026,31 @@ io.on("connection", (socket) => {
     condition,
     startedAt: Date.now(),
     history: [],
-    msgSeq: 0, // message sequence counter for TTL
+    msgSeq: 0,
 
     botNames,
     personasByHandle,
 
-    // schedule + mention
-    scheduleQueue: [], // { bot, source, mentionId?, createdAt?, priorityQ? }
+    // call-on flow (no queue): one participant at a time
+    callOnOrder: [],
+    currentCallOnIndex: 0,
+    currentQuestionText: null,
+    respondedToCurrentRound: new Set(),
+    waitingForHumanIdle: false,
+    disagreementFollowUps: [],
+    currentCallOnBot: null,
+    inDisagreementFollowUp: false,
+    waitingForHumanDisagreementResponse: false,
+    waitingForHumanIntro: false,
+    inHardcodedIntro: false,
+
+    // No schedule queue: bots cued only by moderator (callOnOrder).
+    scheduleQueue: [],
     mentionQueue: [],
     pendingMentionByBot: {},
 
     // per-bot jobs
     bots: {},
-
-    // loops
-    normalEnqueueTimer: null,
-    dequeueTimer: null,
-
-    // human activity tracking
-    humanLastTypingAt: Date.now(),
-    dequeuedCountSinceHumanActive: 0,
 
     // moderator (Eunice) flow
     moderatorSetIndex: 0,
@@ -1883,7 +2061,7 @@ io.on("connection", (socket) => {
     moderatorNudgeSentAfterLastMessage: false,
     moderatorTimer: null,
 
-    // human participant display name (set by client via participant_name)
+    // human participant display name
     participantName: null,
   };
 
@@ -1891,7 +2069,14 @@ io.on("connection", (socket) => {
 
   logLine("SESSION_START", `id=${sessionId} condition=${condition} bots=${botNames.join(",")}`);
 
-  socket.emit("session", { sessionId, condition, bots: botNames, moderatorName: MODERATOR_NAME });
+  socket.emit("session", {
+    sessionId,
+    condition,
+    bots: botNames,
+    moderatorName: MODERATOR_NAME,
+    idleEmptyMs: IDLE_EMPTY_MS,
+    idleTypingMs: IDLE_TYPING_MS,
+  });
 
   // Eunice's first bubble at 1s (instant); second bubble with thinking/typing; then start bots (no bot messages in between).
   setTimeout(() => sendFirstModeratorSetAfterLoad(session), 1000);
@@ -1927,12 +2112,26 @@ io.on("connection", (socket) => {
     logLine("HUMAN_INPUT", `[${humanName}] "${clip(t, 160)}"`);
 
     session.humanLastTypingAt = Date.now();
-    resetDequeueCounter(session);
+    if (session.waitingForHumanIntro) {
+      session.waitingForHumanIntro = false;
+      setImmediate(() => trySendNextModeratorSet(session));
+    } else if (session.waitingForHumanDisagreementResponse) {
+      session.waitingForHumanDisagreementResponse = false;
+      setImmediate(() => trySendNextModeratorSet(session));
+    }
 
     interruptAllBotsOnNewMessage(session, { from: humanName, reason: "new_human_message" });
 
     const msg = { name: humanName, text: t, ts: Date.now() };
     emitAndRecordMessage(session, msg);
+  });
+
+  socket.on("human_idle", () => {
+    if (!session.waitingForHumanIdle) return;
+    const humanName = getHumanParticipantName(session);
+    logLine("QUEUE", `human_idle from ${humanName}`);
+    session.waitingForHumanIdle = false;
+    onCallOnParticipantDone(session, humanName).catch((e) => logLine("ERROR", e?.message || e));
   });
 
   socket.on("disconnect", () => {

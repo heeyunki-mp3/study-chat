@@ -1,0 +1,335 @@
+2026-02-11 03:44:47.223 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 03:44:47.590 [SESSION_START] id=poAETgzCvIC_6hcmAAAB condition=authority bots=Sid,Vivian,Mina
+2026-02-11 03:44:47.594 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 03:44:48.595 [TYPING] moderator true
+2026-02-11 03:44:48.596 [TYPING] moderator false
+2026-02-11 03:44:48.596 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 03:44:48.597 [QUEUE] moderator intro first bubble only: not enqueueing bots or next moderator set
+2026-02-11 03:44:48.837 [TYPING] moderator true
+2026-02-11 03:44:50.404 [SESSION_START] id=RF1_gjM0bzuVYCmxAAAD condition=accountability bots=Sid,Vivian,Mina
+2026-02-11 03:44:50.406 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 03:44:51.407 [TYPING] moderator true
+2026-02-11 03:44:51.409 [TYPING] moderator false
+2026-02-11 03:44:51.409 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 03:44:51.409 [QUEUE] moderator intro first bubble only: not enqueueing bots or next moderator set
+2026-02-11 03:44:51.573 [TYPING] moderator true
+2026-02-11 03:44:53.050 [DISCONNECT] id=poAETgzCvIC_6hcmAAAB
+2026-02-11 03:44:53.067 [TYPING] moderator false
+2026-02-11 03:44:53.067 [MESSAGE] [Eunice] "Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 03:44:53.068 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:44:53.069 [QUEUE] hardcoded intro: bots stagger 1–3s, then human
+2026-02-11 03:44:53.109 [SESSION_START] id=O9v57fUMa99zdsELAAAF condition=norm bots=Sid,Vivian,Mina
+2026-02-11 03:44:53.113 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 03:44:53.639 [TYPING] bot=Sid true
+2026-02-11 03:44:54.112 [TYPING] moderator true
+2026-02-11 03:44:54.114 [TYPING] moderator false
+2026-02-11 03:44:54.115 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 03:44:54.115 [QUEUE] moderator intro first bubble only: not enqueueing bots or next moderator set
+2026-02-11 03:44:54.342 [TYPING] moderator true
+2026-02-11 03:44:54.546 [TYPING] moderator false
+2026-02-11 03:44:54.547 [MESSAGE] [Eunice] "Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 03:44:54.548 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:44:54.548 [QUEUE] hardcoded intro: bots stagger 1–3s, then human
+2026-02-11 03:44:54.709 [TYPING] bot=Vivian true
+2026-02-11 03:44:54.836 [TYPING] bot=Sid true
+2026-02-11 03:44:57.741 [TYPING] bot=Mina true
+2026-02-11 03:44:57.801 [TYPING] bot=Vivian true
+2026-02-11 03:44:58.051 [TYPING] bot=Sid false
+2026-02-11 03:44:58.052 [MESSAGE] [Sid] "Hey, I'm Sid. I do IT support in New Jersey."
+2026-02-11 03:44:59.047 [TYPING] moderator false
+2026-02-11 03:44:59.049 [MESSAGE] [Eunice] "Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 03:44:59.051 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:44:59.051 [QUEUE] hardcoded intro: bots stagger 1–3s, then human
+2026-02-11 03:44:59.495 [TYPING] bot=Sid false
+2026-02-11 03:44:59.501 [MESSAGE] [Sid] "Hey, I'm Sid. I do IT support in New Jersey."
+2026-02-11 03:44:59.575 [TYPING] human true
+2026-02-11 03:44:59.575 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:44:59.667 [TYPING] human true
+2026-02-11 03:44:59.668 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:44:59.901 [TYPING] human true
+2026-02-11 03:44:59.902 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:44:59.940 [TYPING] bot=Sid true
+2026-02-11 03:45:00.090 [TYPING] human true
+2026-02-11 03:45:00.090 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:00.466 [TYPING] human true
+2026-02-11 03:45:00.467 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:00.530 [TYPING] human true
+2026-02-11 03:45:00.530 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:00.704 [TYPING] human true
+2026-02-11 03:45:00.704 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:00.827 [TYPING] human true
+2026-02-11 03:45:00.827 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:00.868 [TYPING] human true
+2026-02-11 03:45:00.868 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.024 [TYPING] bot=Mina true
+2026-02-11 03:45:01.174 [TYPING] human true
+2026-02-11 03:45:01.174 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.288 [TYPING] human true
+2026-02-11 03:45:01.288 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.413 [TYPING] human true
+2026-02-11 03:45:01.414 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.472 [TYPING] human true
+2026-02-11 03:45:01.473 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.548 [TYPING] human true
+2026-02-11 03:45:01.548 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.665 [TYPING] human true
+2026-02-11 03:45:01.665 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:01.983 [TYPING] human true
+2026-02-11 03:45:01.984 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:02.019 [TYPING] bot=Mina false
+2026-02-11 03:45:02.019 [MESSAGE] [Mina] "Hey, I'm Mina. I work retail in LA, Koreatown."
+2026-02-11 03:45:02.086 [TYPING] human true
+2026-02-11 03:45:02.087 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:02.210 [TYPING] bot=Vivian false
+2026-02-11 03:45:02.210 [MESSAGE] [Vivian] "Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta."
+2026-02-11 03:45:02.323 [TYPING] moderator true
+2026-02-11 03:45:02.485 [TYPING] bot=Vivian true
+2026-02-11 03:45:02.622 [TYPING] human true
+2026-02-11 03:45:02.622 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:02.699 [TYPING] human true
+2026-02-11 03:45:02.699 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:02.802 [TYPING] human true
+2026-02-11 03:45:02.804 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:02.844 [TYPING] bot=Vivian false
+2026-02-11 03:45:02.844 [MESSAGE] [Vivian] "Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta."
+2026-02-11 03:45:02.930 [TYPING] human true
+2026-02-11 03:45:02.930 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.002 [TYPING] human true
+2026-02-11 03:45:03.002 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.061 [TYPING] human true
+2026-02-11 03:45:03.062 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.180 [TYPING] moderator false
+2026-02-11 03:45:03.182 [MESSAGE] [Eunice] "How about you, Hailey?"
+2026-02-11 03:45:03.184 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:45:03.185 [QUEUE] waiting for human intro from Hailey
+2026-02-11 03:45:03.211 [TYPING] human true
+2026-02-11 03:45:03.212 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.297 [TYPING] human true
+2026-02-11 03:45:03.297 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.360 [TYPING] human true
+2026-02-11 03:45:03.360 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.478 [TYPING] human true
+2026-02-11 03:45:03.478 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.556 [TYPING] human true
+2026-02-11 03:45:03.556 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.710 [TYPING] human true
+2026-02-11 03:45:03.710 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.844 [TYPING] human true
+2026-02-11 03:45:03.845 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.947 [TYPING] human true
+2026-02-11 03:45:03.947 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:03.981 [TYPING] bot=Mina true
+2026-02-11 03:45:04.049 [TYPING] human true
+2026-02-11 03:45:04.050 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:04.095 [TYPING] human true
+2026-02-11 03:45:04.095 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:04.211 [TYPING] human true
+2026-02-11 03:45:04.211 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:04.322 [TYPING] human true
+2026-02-11 03:45:04.323 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:04.376 [TYPING] bot=Sid false
+2026-02-11 03:45:04.377 [MESSAGE] [Sid] "Hey, I'm Sid. I do IT support in New Jersey."
+2026-02-11 03:45:04.744 [TYPING] bot=Mina false
+2026-02-11 03:45:04.746 [MESSAGE] [Mina] "Hey, I'm Mina. I work retail in LA, Koreatown."
+2026-02-11 03:45:04.885 [TYPING] human true
+2026-02-11 03:45:04.887 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:04.960 [TYPING] human true
+2026-02-11 03:45:04.960 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.099 [TYPING] human true
+2026-02-11 03:45:05.099 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.099 [TYPING] moderator true
+2026-02-11 03:45:05.248 [TYPING] human true
+2026-02-11 03:45:05.248 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.404 [TYPING] human true
+2026-02-11 03:45:05.404 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.476 [TYPING] human true
+2026-02-11 03:45:05.476 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.598 [TYPING] human true
+2026-02-11 03:45:05.598 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.660 [TYPING] human true
+2026-02-11 03:45:05.660 [QUEUE] human typing: reset dequeue counter
+2026-02-11 03:45:05.776 [TYPING] human false
+2026-02-11 03:45:05.782 [HUMAN_INPUT] [Hailey] "Hi! I am Hailey. I am a student at columbia"
+2026-02-11 03:45:05.783 [MESSAGE] [Hailey] "Hi! I am Hailey. I am a student at columbia"
+2026-02-11 03:45:05.951 [TYPING] moderator true
+2026-02-11 03:45:06.286 [TYPING] moderator false
+2026-02-11 03:45:06.288 [MESSAGE] [Eunice] "How about you, Hailey?"
+2026-02-11 03:45:06.290 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:45:06.290 [QUEUE] waiting for human intro from Hailey
+2026-02-11 03:45:08.047 [TYPING] moderator true
+2026-02-11 03:45:08.419 [TYPING] bot=Mina false
+2026-02-11 03:45:08.420 [MESSAGE] [Mina] "Hey, I'm Mina. I work retail in LA, Koreatown."
+2026-02-11 03:45:10.636 [TYPING] bot=Vivian false
+2026-02-11 03:45:10.636 [MESSAGE] [Vivian] "Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta."
+2026-02-11 03:45:10.991 [TYPING] moderator true
+2026-02-11 03:45:11.003 [TYPING] moderator false
+2026-02-11 03:45:11.006 [MESSAGE] [Eunice] "Great to meet you, Hailey! What are you studying at Columbia?"
+2026-02-11 03:45:11.006 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:45:11.913 [TYPING] moderator false
+2026-02-11 03:45:11.914 [MESSAGE] [Eunice] "How about you, Hailey?"
+2026-02-11 03:45:11.914 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:45:11.915 [QUEUE] waiting for human intro from Hailey
+2026-02-11 03:45:14.398 [TYPING] moderator false
+2026-02-11 03:45:14.403 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-11 03:45:14.404 [QUEUE] directive no mention: not starting call-on
+2026-02-11 03:45:14.517 [TYPING] moderator true
+2026-02-11 03:45:15.386 [TYPING] moderator false
+2026-02-11 03:45:15.386 [MESSAGE] [Eunice] "Let's start with Sid."
+2026-02-11 03:45:15.387 [QUEUE] call-on started question="Before we dive in, just a quick note about the goal of this …" order=[Sid, Vivian, Mina, Hailey] who_spoke=[]
+2026-02-11 03:45:15.387 [QUEUE] call-on turn: Sid
+2026-02-11 03:45:15.387 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:45:15.388 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-11 03:45:15.388 [OPENAI_REQ] bot=Sid ctx="Hailey: Hi! I am Hailey. I am a student at columbia | Eunice: How about you, Hailey? | Eunice: Great to meet you, Hailey! What are you studying at Columbia? | Eunice: Before we dive in, just a quick note about the goal of this study. | We a…"
+2026-02-11 03:45:15.388 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:45:15.389 [QUEUE] moderator set 2 sent (after participant message)
+2026-02-11 03:45:17.403 [OPENAI_RTT] bot=Sid rtt=2015ms
+2026-02-11 03:45:17.403 [OPENAI_OK] bot=Sid raw="[ "Well, from an IT perspective, it's always interesting to see how users react to changes, especially with security features.", "Adoption usually depends on how seamless and intuitive the feature feels, and if it actual…"
+2026-02-11 03:45:17.404 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:45:17.987 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-11 03:45:17.987 [TYPING] bot=Sid true
+2026-02-11 03:45:28.555 [TYPING] bot=Sid false
+2026-02-11 03:45:28.555 [MESSAGE] [Sid] "Well, from an IT perspective, it's always interesting to see how users react to changes, especially with security features."
+2026-02-11 03:45:28.556 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/3
+2026-02-11 03:45:29.272 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/3
+2026-02-11 03:45:29.273 [TYPING] bot=Sid true
+2026-02-11 03:45:44.288 [TYPING] bot=Sid false
+2026-02-11 03:45:44.288 [MESSAGE] [Sid] "Adoption usually depends on how seamless and intuitive the feature feels, and if it actually solves a pain point."
+2026-02-11 03:45:44.288 [INTERRUPT] by=Sid reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-11 03:45:44.288 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=3/3
+2026-02-11 03:45:44.591 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=3/3
+2026-02-11 03:45:44.593 [TYPING] bot=Sid true
+2026-02-11 03:45:52.165 [TYPING] bot=Sid false
+2026-02-11 03:45:52.167 [MESSAGE] [Sid] "People tend to resist if something is complicated or feels like extra hassle, even if it's more secure."
+2026-02-11 03:45:52.170 [INTERRUPT] by=Sid reason=new_message action=skip_other_bots (continuation bubble sentCount=2)
+2026-02-11 03:45:52.171 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-11 03:45:52.173 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:45:52.173 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Before we dive in, just a quick note about the goal of this study. We are interested in ho…"
+2026-02-11 03:45:52.173 [OPENAI_REQ] bot=Sid ctx="Eunice: Before we dive in, just a quick note about the goal of this study. | We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not. | Eunice: Let's start…"
+2026-02-11 03:45:52.173 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:45:52.178 [QUEUE] call-on who_spoke=[Sid] next_index=1
+2026-02-11 03:45:53.116 [NUDGE] not replied: ["Sid","Vivian","Mina","Hailey"]
+2026-02-11 03:45:53.338 [TYPING] moderator true
+2026-02-11 03:45:53.348 [TYPING] moderator true
+2026-02-11 03:45:54.179 [OPENAI_RTT] bot=Sid rtt=2005ms
+2026-02-11 03:45:54.179 [OPENAI_OK] bot=Sid raw="[ "New features need to show clear value and fit seamlessly; otherwise, users just see them as annoying obstacles.", "From my IT viewpoint, things that fix real pain points tend to get adopted even if they have a slight …"
+2026-02-11 03:45:54.180 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:45:54.542 [TYPING] moderator false
+2026-02-11 03:45:54.543 [MESSAGE] [Eunice] "What do you think, Hailey?"
+2026-02-11 03:45:54.543 [QUEUE] moderator nudge sent to Hailey
+2026-02-11 03:45:54.788 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-11 03:45:54.788 [TYPING] bot=Sid true
+2026-02-11 03:45:55.673 [TYPING] moderator false
+2026-02-11 03:45:55.673 [MESSAGE] [Eunice] "Good point, Sid—Vivian, how do you see this?"
+2026-02-11 03:45:55.674 [TYPING] bot=Sid false
+2026-02-11 03:45:55.674 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_entire (typedMs=886)
+2026-02-11 03:45:55.674 [QUEUE] DUMP after cancel entire Sid | schedule=[] | mentions=[]
+2026-02-11 03:45:55.675 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-11 03:45:55.675 [QUEUE] call-on started question="Let's start with Sid." order=[Sid, Vivian, Mina, Hailey] who_spoke=[]
+2026-02-11 03:45:55.675 [QUEUE] call-on turn: Sid
+2026-02-11 03:45:55.675 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:45:55.675 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Let's start with Sid."
+2026-02-11 03:45:55.675 [OPENAI_REQ] bot=Sid ctx="We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not. | Eunice: Let's start with Sid. | Sid: Well, from an IT perspective, it's always interesting to se…"
+2026-02-11 03:45:55.676 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:45:55.678 [QUEUE] call-on turn: Sid
+2026-02-11 03:45:56.876 [OPENAI_RTT] bot=Sid rtt=1200ms
+2026-02-11 03:45:56.876 [OPENAI_OK] bot=Sid raw="["From my IT support angle, most users really dislike anything that feels like a hurdle or extra step, even if it ups security.", "So features that are seamless and reduce friction tend to get adopted faster. Complicated…"
+2026-02-11 03:45:56.876 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:45:57.468 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/2
+2026-02-11 03:45:57.470 [TYPING] bot=Sid true
+2026-02-11 03:46:06.650 [TYPING] bot=Sid false
+2026-02-11 03:46:06.650 [MESSAGE] [Sid] "From my IT support angle, most users really dislike anything that feels like a hurdle or extra step, even if it ups security."
+2026-02-11 03:46:06.650 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/2
+2026-02-11 03:46:07.563 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/2
+2026-02-11 03:46:07.564 [TYPING] bot=Sid true
+2026-02-11 03:46:08.275 [TYPING] moderator true
+2026-02-11 03:46:14.664 [TYPING] moderator false
+2026-02-11 03:46:14.664 [MESSAGE] [Eunice] "Thanks for emphasizing that, Sid. It sounds like balancing security improvements with ease of use is a key factor in adoption. Vivian, would you agree?"
+2026-02-11 03:46:14.664 [TYPING] bot=Sid false
+2026-02-11 03:46:14.664 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_remaining (typedMs=7101)
+2026-02-11 03:46:14.664 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-11 03:46:14.664 [QUEUE] call-on started question="Good point, Sid—Vivian, how do you see this?" order=[Sid, Vivian, Mina, Hailey] who_spoke=[]
+2026-02-11 03:46:14.665 [QUEUE] call-on turn: Sid
+2026-02-11 03:46:14.665 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:46:14.665 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Good point, Sid—Vivian, how do you see this?"
+2026-02-11 03:46:14.665 [OPENAI_REQ] bot=Sid ctx="Sid: Well, from an IT perspective, it's always interesting to see how users react to changes, especially with security features. | Sid: Adoption usually depends on how seamless and intuitive the feature feels, and if it actually solves a pa…"
+2026-02-11 03:46:14.665 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:46:16.396 [OPENAI_RTT] bot=Sid rtt=1731ms
+2026-02-11 03:46:16.396 [OPENAI_OK] bot=Sid raw="[ "Exactly, Vivian. If security features feel like extra work, most people just avoid them or find workarounds.", "From what I see, users really value convenience over strong security unless the threat is obvious.", "So …"
+2026-02-11 03:46:16.396 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:46:17.244 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-11 03:46:17.245 [TYPING] bot=Sid true
+2026-02-11 03:46:31.236 [TYPING] bot=Sid false
+2026-02-11 03:46:31.236 [MESSAGE] [Sid] "Exactly, Vivian. If security features feel like extra work, most people just avoid them or find workarounds."
+2026-02-11 03:46:31.236 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/3
+2026-02-11 03:46:32.173 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/3
+2026-02-11 03:46:32.174 [TYPING] bot=Sid true
+2026-02-11 03:46:33.535 [TYPING] moderator true
+2026-02-11 03:46:39.513 [TYPING] bot=Sid false
+2026-02-11 03:46:39.513 [MESSAGE] [Sid] "From what I see, users really value convenience over strong security unless the threat is obvious."
+2026-02-11 03:46:39.513 [INTERRUPT] by=Sid reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-11 03:46:39.513 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=3/3
+2026-02-11 03:46:40.068 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=3/3
+2026-02-11 03:46:40.068 [TYPING] bot=Sid true
+2026-02-11 03:46:40.761 [TYPING] moderator false
+2026-02-11 03:46:40.761 [MESSAGE] [Eunice] "Thanks for highlighting that, Sid. Vivian, do you have any thoughts on how users’ perceptions or psychology might impact their willingness to adopt these featur…"
+2026-02-11 03:46:40.761 [TYPING] bot=Sid false
+2026-02-11 03:46:40.761 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_remaining (typedMs=693)
+2026-02-11 03:46:40.761 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-11 03:46:40.762 [QUEUE] call-on started question="Thanks for emphasizing that, Sid. It sounds like balancing s…" order=[Sid, Vivian, Mina, Hailey] who_spoke=[]
+2026-02-11 03:46:40.762 [QUEUE] call-on turn: Sid
+2026-02-11 03:46:40.762 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:46:40.762 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Thanks for emphasizing that, Sid. It sounds like balancing security improvements with ease…"
+2026-02-11 03:46:40.762 [OPENAI_REQ] bot=Sid ctx="Eunice: Good point, Sid—Vivian, how do you see this? | Sid: From my IT support angle, most users really dislike anything that feels like a hurdle or extra step, even if it ups security. | Eunice: Thanks for emphasizing that, Sid. It sounds …"
+2026-02-11 03:46:40.762 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:46:42.384 [TYPING] moderator true
+2026-02-11 03:46:42.499 [OPENAI_RTT] bot=Sid rtt=1737ms
+2026-02-11 03:46:42.499 [OPENAI_OK] bot=Sid raw="[ "Yeah, it’s a tricky balance. People want better security but not at the cost of getting locked out or spending extra time.", "The perception of risk plays a huge role too—if folks don’t see a reason to change, they wo…"
+2026-02-11 03:46:42.500 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:46:43.299 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-11 03:46:43.300 [TYPING] bot=Sid true
+2026-02-11 03:46:49.286 [TYPING] moderator false
+2026-02-11 03:46:49.287 [MESSAGE] [Eunice] "Thanks for that insight, Sid. Vivian, do you think users' risk perception or trust in the company influences how much convenience they're willing to trade for s…"
+2026-02-11 03:46:49.287 [TYPING] bot=Sid false
+2026-02-11 03:46:49.287 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_entire (typedMs=5988)
+2026-02-11 03:46:49.287 [QUEUE] DUMP after cancel entire Sid | schedule=[] | mentions=[]
+2026-02-11 03:46:49.287 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-11 03:46:49.287 [QUEUE] call-on started question="Thanks for highlighting that, Sid. Vivian, do you have any t…" order=[Sid, Vivian, Mina, Hailey] who_spoke=[]
+2026-02-11 03:46:49.287 [QUEUE] call-on turn: Sid
+2026-02-11 03:46:49.287 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:46:49.288 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Thanks for highlighting that, Sid. Vivian, do you have any thoughts on how users’ percepti…"
+2026-02-11 03:46:49.288 [OPENAI_REQ] bot=Sid ctx="Sid: From my IT support angle, most users really dislike anything that feels like a hurdle or extra step, even if it ups security. | Eunice: Thanks for emphasizing that, Sid. It sounds like balancing security improvements with ease of use i…"
+2026-02-11 03:46:49.288 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:46:51.219 [OPENAI_RTT] bot=Sid rtt=1931ms
+2026-02-11 03:46:51.219 [OPENAI_OK] bot=Sid raw="["People’s willingness to adopt often hinges on how real or immediate they feel the risk is; vague threats get ignored fast.", "Trust in the company matters a lot—if users suspect shady data practices, they won’t bother …"
+2026-02-11 03:46:51.219 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:46:51.848 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-11 03:46:51.849 [TYPING] bot=Sid true
+2026-02-11 03:47:01.984 [TYPING] bot=Sid false
+2026-02-11 03:47:01.984 [MESSAGE] [Sid] "People’s willingness to adopt often hinges on how real or immediate they feel the risk is; vague threats get ignored fast."
+2026-02-11 03:47:01.985 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=2/3
+2026-02-11 03:47:02.354 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=2/3
+2026-02-11 03:47:02.355 [TYPING] bot=Sid true
+2026-02-11 03:47:04.021 [TYPING] moderator true
+2026-02-11 03:47:10.940 [TYPING] bot=Sid false
+2026-02-11 03:47:10.946 [MESSAGE] [Sid] "Trust in the company matters a lot—if users suspect shady data practices, they won’t bother with extra security."
+2026-02-11 03:47:10.947 [INTERRUPT] by=Sid reason=new_message action=skip_other_bots (continuation bubble sentCount=1)
+2026-02-11 03:47:10.947 [BOT_STATE] bot=Sid TYPING -> THINKING nextBubble=3/3
+2026-02-11 03:47:11.199 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=3/3
+2026-02-11 03:47:11.199 [TYPING] bot=Sid true
+2026-02-11 03:47:12.157 [TYPING] moderator false
+2026-02-11 03:47:12.161 [MESSAGE] [Eunice] "Thanks for that, Sid. So it sounds like clear communication about the risks and benefits is crucial for encouraging adoption. Vivian, do you have anything to ad…"
+2026-02-11 03:47:12.162 [TYPING] bot=Sid false
+2026-02-11 03:47:12.163 [INTERRUPT] by=Eunice bot=Sid reason=new_message action=cancel_remaining (typedMs=963)
+2026-02-11 03:47:12.163 [BOT_STATE] bot=Sid TYPING -> IDLE
+2026-02-11 03:47:12.164 [QUEUE] call-on started question="Thanks for that insight, Sid. Vivian, do you think users' ri…" order=[Sid, Vivian, Mina, Hailey] who_spoke=[]
+2026-02-11 03:47:12.164 [QUEUE] call-on turn: Sid
+2026-02-11 03:47:12.164 [BOT_STATE] bot=Sid IDLE -> GENERATING source=directive
+2026-02-11 03:47:12.164 [OPENAI_REQ] bot=Sid mode=human condition=accountability priorityQ="Thanks for that insight, Sid. Vivian, do you think users' risk perception or trust in the …"
+2026-02-11 03:47:12.164 [OPENAI_REQ] bot=Sid ctx="Sid: From what I see, users really value convenience over strong security unless the threat is obvious. | Eunice: Thanks for highlighting that, Sid. Vivian, do you have any thoughts on how users’ perceptions or psychology might impact their…"
+2026-02-11 03:47:12.164 [OPENAI_REQ] bot=Sid model=gpt-4.1-mini
+2026-02-11 03:47:13.790 [OPENAI_RTT] bot=Sid rtt=1626ms
+2026-02-11 03:47:13.791 [OPENAI_OK] bot=Sid raw="[ "Trust plays a huge role; if users feel the company won't misuse their data, they're more willing to accept extra steps.", "Risk perception needs to be concrete—if it's abstract, most users won't care enough to trade c…"
+2026-02-11 03:47:13.791 [BOT_STATE] bot=Sid GENERATING -> THINKING
+2026-02-11 03:47:13.806 [TYPING] moderator true
+2026-02-11 03:47:14.148 [BOT_STATE] bot=Sid THINKING -> TYPING bubble=1/3
+2026-02-11 03:47:14.149 [TYPING] bot=Sid true

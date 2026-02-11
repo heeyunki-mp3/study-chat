@@ -1,0 +1,550 @@
+2026-02-11 04:09:58.991 [SESSION_START] backend running on http://localhost:3001
+2026-02-11 04:10:01.631 [SESSION_START] id=tiHTiu4Pvs9qoontAAAB condition=control bots=Sid,Vivian,Mina
+2026-02-11 04:10:01.635 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 04:10:01.822 [SESSION_START] id=lFBBx18laWXQ0HvZAAAD condition=control bots=Sid,Vivian,Mina
+2026-02-11 04:10:01.824 [SESSION_START] participant_name set to "Hailey"
+2026-02-11 04:10:02.635 [TYPING] moderator true
+2026-02-11 04:10:02.636 [TYPING] moderator false
+2026-02-11 04:10:02.637 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 04:10:02.637 [QUEUE] moderator intro first bubble only: not enqueueing bots or next moderator set
+2026-02-11 04:10:02.825 [TYPING] moderator true
+2026-02-11 04:10:02.827 [TYPING] moderator false
+2026-02-11 04:10:02.827 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-11 04:10:02.827 [QUEUE] moderator intro first bubble only: not enqueueing bots or next moderator set
+2026-02-11 04:10:02.975 [TYPING] moderator true
+2026-02-11 04:10:03.176 [TYPING] moderator true
+2026-02-11 04:10:06.510 [TYPING] moderator false
+2026-02-11 04:10:06.510 [MESSAGE] [Eunice] "Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 04:10:06.513 [QUEUE] hardcoded intro: bots stagger 1–3s, then human
+2026-02-11 04:10:06.515 [QUEUE] call-on started question="Let's go around and introduce ourselves—just your name and a…" order=[Mina, Hailey, Vivian, Sid] (random)
+2026-02-11 04:10:07.067 [TYPING] bot=Sid true
+2026-02-11 04:10:07.477 [TYPING] moderator false
+2026-02-11 04:10:07.478 [MESSAGE] [Eunice] "Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 04:10:07.481 [QUEUE] hardcoded intro: bots stagger 1–3s, then human
+2026-02-11 04:10:07.482 [QUEUE] call-on started question="Let's go around and introduce ourselves—just your name and a…" order=[Hailey, Sid, Mina, Vivian] (random)
+2026-02-11 04:10:07.909 [TYPING] moderator true
+2026-02-11 04:10:08.133 [TYPING] bot=Sid true
+2026-02-11 04:10:08.254 [TYPING] bot=Vivian true
+2026-02-11 04:10:08.608 [TYPING] moderator true
+2026-02-11 04:10:09.469 [TYPING] moderator false
+2026-02-11 04:10:09.469 [MESSAGE] [Eunice] "Mina, would you like to start us off?"
+2026-02-11 04:10:09.472 [QUEUE] call-on turn: Mina
+2026-02-11 04:10:09.473 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 04:10:09.474 [OPENAI_REQ] bot=Mina mode=human condition=control priorityQ="Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 04:10:09.474 [OPENAI_REQ] bot=Mina ctx="Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining! | Eunice: Let's go around and introduce ourselves—just your name and anything you'd like to share. | Eunice: Mina, would you like to star…"
+2026-02-11 04:10:09.475 [OPENAI_REQ] bot=Mina model=gpt-4.1-mini
+2026-02-11 04:10:10.019 [TYPING] bot=Mina true
+2026-02-11 04:10:10.026 [TYPING] bot=Vivian true
+2026-02-11 04:10:10.366 [TYPING] bot=Sid false
+2026-02-11 04:10:10.366 [MESSAGE] [Sid] "Hey, I'm Sid. I do IT support in New Jersey."
+2026-02-11 04:10:10.442 [TYPING] moderator false
+2026-02-11 04:10:10.442 [MESSAGE] [Eunice] "Hailey, would you like to start with your introduction?"
+2026-02-11 04:10:10.444 [QUEUE] directive no cue: not starting call-on
+2026-02-11 04:10:10.547 [OPENAI_RTT] bot=Mina rtt=1072ms
+2026-02-11 04:10:10.547 [OPENAI_OK] bot=Mina raw="[ "Hi, I'm Mina Yujin Park, living in Koreatown LA, working retail at Abercrombie.", "I love anything easy and fast in life, especially with tech and fashion.", "Usually on my iPhone a lot, and I like keeping things pret…"
+2026-02-11 04:10:10.548 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 04:10:10.956 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/3
+2026-02-11 04:10:10.957 [TYPING] bot=Mina true
+2026-02-11 04:10:11.040 [TYPING] bot=Mina true
+2026-02-11 04:10:11.353 [TYPING] bot=Sid false
+2026-02-11 04:10:11.353 [MESSAGE] [Sid] "Hey, I'm Sid. I do IT support in New Jersey."
+2026-02-11 04:10:11.577 [TYPING] moderator true
+2026-02-11 04:10:13.125 [TYPING] moderator false
+2026-02-11 04:10:13.125 [MESSAGE] [Eunice] "Hailey, please tell us a bit about yourself."
+2026-02-11 04:10:13.127 [QUEUE] directive no cue: not starting call-on
+2026-02-11 04:10:13.128 [QUEUE] call-on waiting for human Hailey (idle)
+2026-02-11 04:10:14.278 [TYPING] bot=Mina false
+2026-02-11 04:10:14.278 [MESSAGE] [Mina] "Hey, I'm Mina. I work retail in LA, Koreatown."
+2026-02-11 04:10:14.426 [TYPING] bot=Mina false
+2026-02-11 04:10:14.427 [MESSAGE] [Mina] "Hey, I'm Mina. I work retail in LA, Koreatown."
+2026-02-11 04:10:14.788 [TYPING] bot=Vivian false
+2026-02-11 04:10:14.789 [MESSAGE] [Vivian] "Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta."
+2026-02-11 04:10:15.047 [TYPING] bot=Vivian false
+2026-02-11 04:10:15.048 [MESSAGE] [Vivian] "Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta."
+2026-02-11 04:10:15.050 [TYPING] bot=Mina false
+2026-02-11 04:10:15.050 [INTERRUPT] by=Vivian bot=Mina reason=new_message action=cancel_entire (typedMs=4092)
+2026-02-11 04:10:15.050 [QUEUE] DUMP after cancel entire Mina | schedule=[] | mentions=[]
+2026-02-11 04:10:15.050 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-11 04:10:15.091 [TYPING] moderator true
+2026-02-11 04:10:15.232 [TYPING] moderator true
+2026-02-11 04:10:16.097 [TYPING] moderator false
+2026-02-11 04:10:16.097 [MESSAGE] [Eunice] "How about you, Hailey?"
+2026-02-11 04:10:16.098 [QUEUE] directive no cue: not starting call-on
+2026-02-11 04:10:16.099 [QUEUE] waiting for human intro from Hailey
+2026-02-11 04:10:16.191 [TYPING] moderator false
+2026-02-11 04:10:16.191 [MESSAGE] [Eunice] "How about you, Hailey?"
+2026-02-11 04:10:16.191 [QUEUE] directive no cue: not starting call-on
+2026-02-11 04:10:16.191 [QUEUE] waiting for human intro from Hailey
+2026-02-11 04:10:16.191 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 04:10:16.192 [OPENAI_REQ] bot=Mina mode=human condition=control priorityQ="Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 04:10:16.192 [OPENAI_REQ] bot=Mina ctx="Eunice: Let's go around and introduce ourselves—just your name and anything you'd like to share. | Eunice: Mina, would you like to start us off? | Sid: Hey, I'm Sid. I do IT support in New Jersey. | Mina: Hey, I'm Mina. I work retail in LA,…"
+2026-02-11 04:10:16.192 [OPENAI_REQ] bot=Mina model=gpt-4.1-mini
+2026-02-11 04:10:17.693 [OPENAI_RTT] bot=Mina rtt=1501ms
+2026-02-11 04:10:17.693 [OPENAI_OK] bot=Mina raw="["Hey Eunice, nice to officially introduce myself. I'm Mina, working retail in Koreatown near LA, so I see a lot of different people every day.", "I'm really into fashion and convenience, so I like stuff that's easy and …"
+2026-02-11 04:10:17.694 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 04:10:18.424 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/3
+2026-02-11 04:10:18.425 [TYPING] bot=Mina true
+2026-02-11 04:10:19.058 [TYPING] human true
+2026-02-11 04:10:19.059 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.186 [TYPING] human true
+2026-02-11 04:10:19.187 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.232 [TYPING] human true
+2026-02-11 04:10:19.232 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.413 [TYPING] human true
+2026-02-11 04:10:19.413 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.486 [TYPING] human true
+2026-02-11 04:10:19.487 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.595 [TYPING] human true
+2026-02-11 04:10:19.595 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.683 [TYPING] human true
+2026-02-11 04:10:19.683 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:19.786 [TYPING] human true
+2026-02-11 04:10:19.787 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.019 [TYPING] human true
+2026-02-11 04:10:20.019 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.136 [TYPING] human true
+2026-02-11 04:10:20.137 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.226 [TYPING] human true
+2026-02-11 04:10:20.226 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.312 [TYPING] human true
+2026-02-11 04:10:20.313 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.370 [TYPING] human true
+2026-02-11 04:10:20.371 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.447 [TYPING] human true
+2026-02-11 04:10:20.448 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.687 [TYPING] human true
+2026-02-11 04:10:20.687 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:20.866 [TYPING] human false
+2026-02-11 04:10:20.880 [HUMAN_INPUT] [Hailey] "Hi I am Hailey!"
+2026-02-11 04:10:20.881 [TYPING] bot=Mina false
+2026-02-11 04:10:20.881 [INTERRUPT] by=Hailey bot=Mina reason=new_human_message action=cancel_entire (typedMs=2455)
+2026-02-11 04:10:20.881 [QUEUE] DUMP after cancel entire Mina | schedule=[] | mentions=[]
+2026-02-11 04:10:20.881 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-11 04:10:20.881 [MESSAGE] [Hailey] "Hi I am Hailey!"
+2026-02-11 04:10:20.882 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 04:10:20.882 [OPENAI_REQ] bot=Mina mode=human condition=control priorityQ="Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 04:10:20.882 [OPENAI_REQ] bot=Mina ctx="Eunice: Mina, would you like to start us off? | Sid: Hey, I'm Sid. I do IT support in New Jersey. | Mina: Hey, I'm Mina. I work retail in LA, Koreatown. | Vivian: Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta. | Eunice: How abo…"
+2026-02-11 04:10:20.882 [OPENAI_REQ] bot=Mina model=gpt-4.1-mini
+2026-02-11 04:10:20.885 [OPENAI_REQ] implicit_detect newest="Hi I am Hailey!"
+2026-02-11 04:10:21.152 [TYPING] moderator true
+2026-02-11 04:10:21.853 [OPENAI_RTT] implicit_detect rtt=968ms
+2026-02-11 04:10:21.853 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General self-introduction with no direct addressee"}"
+2026-02-11 04:10:21.981 [OPENAI_RTT] bot=Mina rtt=1098ms
+2026-02-11 04:10:21.981 [OPENAI_OK] bot=Mina raw="["I'm Mina, living in Koreatown, working retail at Abercrombie.","Just into keeping things simple and efficient, honestly.","Love quick tech and all things Instagram-worthy."]"
+2026-02-11 04:10:21.982 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 04:10:22.422 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/3
+2026-02-11 04:10:22.423 [TYPING] bot=Mina true
+2026-02-11 04:10:29.851 [TYPING] bot=Mina false
+2026-02-11 04:10:29.852 [MESSAGE] [Mina] "I'm Mina, living in Koreatown, working retail at Abercrombie."
+2026-02-11 04:10:29.852 [BOT_STATE] bot=Mina TYPING -> THINKING nextBubble=2/3
+2026-02-11 04:10:30.202 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=2/3
+2026-02-11 04:10:30.202 [TYPING] bot=Mina true
+2026-02-11 04:10:30.298 [TYPING] moderator false
+2026-02-11 04:10:30.299 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-11 04:10:30.299 [TYPING] bot=Mina false
+2026-02-11 04:10:30.299 [INTERRUPT] by=Eunice bot=Mina reason=new_message action=cancel_remaining (typedMs=97)
+2026-02-11 04:10:30.299 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-11 04:10:30.300 [QUEUE] moderator set 2 sent (after participant message)
+2026-02-11 04:10:30.300 [BOT_STATE] bot=Mina IDLE -> GENERATING source=directive
+2026-02-11 04:10:30.301 [OPENAI_REQ] bot=Mina mode=human condition=control priorityQ="Let's go around and introduce ourselves—just your name and anything you'd like to share."
+2026-02-11 04:10:30.301 [OPENAI_REQ] bot=Mina ctx="Vivian: Hey everyone, I'm Vivian. I'm a psych undergrad in Atlanta. | Eunice: How about you, Hailey? | Hailey: Hi I am Hailey! | Mina: I'm Mina, living in Koreatown, working retail at Abercrombie. | Eunice: Before we dive in, just a quick n…"
+2026-02-11 04:10:30.301 [OPENAI_REQ] bot=Mina model=gpt-4.1-mini
+2026-02-11 04:10:30.303 [QUEUE] call-on started question="Before we dive in, just a quick note about the goal of this …" order=[Hailey, Sid, Mina, Vivian] (random)
+2026-02-11 04:10:31.356 [TYPING] moderator true
+2026-02-11 04:10:32.108 [OPENAI_RTT] bot=Mina rtt=1807ms
+2026-02-11 04:10:32.108 [OPENAI_OK] bot=Mina raw="["Hey, Mina here. I work retail at Abercrombie in Koreatown, LA.", "I’m pretty into fashion and convenience apps that save time, since my job keeps me busy.", "Not super techy but I use my iPhone a ton for everything, so…"
+2026-02-11 04:10:32.109 [BOT_STATE] bot=Mina GENERATING -> THINKING
+2026-02-11 04:10:32.481 [BOT_STATE] bot=Mina THINKING -> TYPING bubble=1/3
+2026-02-11 04:10:32.483 [TYPING] bot=Mina true
+2026-02-11 04:10:33.990 [TYPING] moderator false
+2026-02-11 04:10:33.990 [MESSAGE] [Eunice] "Hailey, what’s your initial experience with new tech features?"
+2026-02-11 04:10:33.990 [TYPING] bot=Mina false
+2026-02-11 04:10:33.991 [INTERRUPT] by=Eunice bot=Mina reason=new_message action=cancel_entire (typedMs=1508)
+2026-02-11 04:10:33.991 [QUEUE] DUMP after cancel entire Mina | schedule=[] | mentions=[]
+2026-02-11 04:10:33.991 [BOT_STATE] bot=Mina TYPING -> IDLE
+2026-02-11 04:10:33.992 [QUEUE] directive no cue: not starting call-on
+2026-02-11 04:10:35.133 [TYPING] moderator true
+2026-02-11 04:10:38.562 [TYPING] moderator false
+2026-02-11 04:10:38.565 [MESSAGE] [Eunice] "Hailey, what are your thoughts on trying out new tech features?"
+2026-02-11 04:10:38.566 [QUEUE] directive no cue: not starting call-on
+2026-02-11 04:10:38.566 [QUEUE] call-on waiting for human Hailey (idle)
+2026-02-11 04:10:46.634 [NUDGE] not replied: ["Sid","Vivian","Mina","Hailey"]
+2026-02-11 04:10:46.831 [TYPING] moderator true
+2026-02-11 04:10:47.776 [TYPING] moderator false
+2026-02-11 04:10:47.776 [MESSAGE] [Eunice] "What do you think, Hailey?"
+2026-02-11 04:10:47.776 [QUEUE] moderator nudge sent to Hailey
+2026-02-11 04:10:57.564 [TYPING] human true
+2026-02-11 04:10:57.565 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:57.803 [TYPING] human true
+2026-02-11 04:10:57.803 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:57.934 [TYPING] human true
+2026-02-11 04:10:57.935 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.055 [TYPING] human true
+2026-02-11 04:10:58.056 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.263 [TYPING] human true
+2026-02-11 04:10:58.263 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.321 [TYPING] human true
+2026-02-11 04:10:58.321 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.509 [TYPING] human true
+2026-02-11 04:10:58.510 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.607 [TYPING] human true
+2026-02-11 04:10:58.608 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.680 [TYPING] human true
+2026-02-11 04:10:58.681 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.802 [TYPING] human true
+2026-02-11 04:10:58.802 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.892 [TYPING] human true
+2026-02-11 04:10:58.892 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:58.996 [TYPING] human true
+2026-02-11 04:10:58.996 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.104 [TYPING] human true
+2026-02-11 04:10:59.105 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.270 [TYPING] human true
+2026-02-11 04:10:59.270 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.391 [TYPING] human true
+2026-02-11 04:10:59.392 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.462 [TYPING] human true
+2026-02-11 04:10:59.462 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.538 [TYPING] human true
+2026-02-11 04:10:59.538 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.673 [TYPING] human true
+2026-02-11 04:10:59.674 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:10:59.747 [TYPING] human true
+2026-02-11 04:10:59.747 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:00.549 [TYPING] human false
+2026-02-11 04:11:01.711 [TYPING] human true
+2026-02-11 04:11:01.712 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:01.785 [TYPING] human true
+2026-02-11 04:11:01.785 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:01.920 [TYPING] human true
+2026-02-11 04:11:01.921 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:01.979 [TYPING] human true
+2026-02-11 04:11:01.979 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:02.071 [TYPING] human true
+2026-02-11 04:11:02.071 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:02.222 [TYPING] human true
+2026-02-11 04:11:02.223 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:02.305 [TYPING] human true
+2026-02-11 04:11:02.305 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:02.386 [TYPING] human true
+2026-02-11 04:11:02.386 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:02.618 [TYPING] human true
+2026-02-11 04:11:02.618 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:03.097 [TYPING] human true
+2026-02-11 04:11:03.098 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:03.901 [TYPING] human false
+2026-02-11 04:11:05.392 [TYPING] human true
+2026-02-11 04:11:05.393 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:05.455 [TYPING] human true
+2026-02-11 04:11:05.455 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:05.691 [TYPING] human true
+2026-02-11 04:11:05.692 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:05.870 [TYPING] human true
+2026-02-11 04:11:05.871 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:05.943 [TYPING] human true
+2026-02-11 04:11:05.943 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.055 [TYPING] human true
+2026-02-11 04:11:06.055 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.170 [TYPING] human true
+2026-02-11 04:11:06.170 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.303 [TYPING] human true
+2026-02-11 04:11:06.304 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.395 [TYPING] human true
+2026-02-11 04:11:06.395 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.505 [TYPING] human true
+2026-02-11 04:11:06.506 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.780 [TYPING] human true
+2026-02-11 04:11:06.780 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:06.976 [TYPING] human true
+2026-02-11 04:11:06.976 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:07.124 [TYPING] human true
+2026-02-11 04:11:07.125 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:07.229 [TYPING] human true
+2026-02-11 04:11:07.229 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:07.444 [TYPING] human true
+2026-02-11 04:11:07.444 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:07.970 [TYPING] human true
+2026-02-11 04:11:07.971 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:08.257 [TYPING] human true
+2026-02-11 04:11:08.258 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:08.359 [TYPING] human true
+2026-02-11 04:11:08.359 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:08.405 [TYPING] human true
+2026-02-11 04:11:08.405 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:08.490 [TYPING] human true
+2026-02-11 04:11:08.490 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:08.702 [TYPING] human true
+2026-02-11 04:11:08.702 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:08.839 [TYPING] human true
+2026-02-11 04:11:08.840 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.042 [TYPING] human true
+2026-02-11 04:11:09.042 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.170 [TYPING] human true
+2026-02-11 04:11:09.171 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.325 [TYPING] human true
+2026-02-11 04:11:09.325 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.442 [TYPING] human true
+2026-02-11 04:11:09.442 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.664 [TYPING] human true
+2026-02-11 04:11:09.664 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.786 [TYPING] human true
+2026-02-11 04:11:09.786 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:09.969 [TYPING] human true
+2026-02-11 04:11:09.969 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.056 [TYPING] human true
+2026-02-11 04:11:10.056 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.139 [TYPING] human true
+2026-02-11 04:11:10.139 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.248 [TYPING] human true
+2026-02-11 04:11:10.249 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.322 [TYPING] human true
+2026-02-11 04:11:10.322 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.461 [TYPING] human true
+2026-02-11 04:11:10.462 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.505 [TYPING] human true
+2026-02-11 04:11:10.505 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.591 [TYPING] human true
+2026-02-11 04:11:10.591 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.681 [TYPING] human true
+2026-02-11 04:11:10.681 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.808 [TYPING] human true
+2026-02-11 04:11:10.809 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:10.910 [TYPING] human true
+2026-02-11 04:11:10.910 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:11.005 [TYPING] human true
+2026-02-11 04:11:11.006 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:11.116 [TYPING] human true
+2026-02-11 04:11:11.116 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:11.227 [TYPING] human true
+2026-02-11 04:11:11.227 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:11.358 [TYPING] human true
+2026-02-11 04:11:11.358 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:11.449 [TYPING] human true
+2026-02-11 04:11:11.449 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:11.522 [TYPING] human true
+2026-02-11 04:11:11.523 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:12.327 [TYPING] human false
+2026-02-11 04:11:12.592 [TYPING] human true
+2026-02-11 04:11:12.592 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:12.726 [TYPING] human true
+2026-02-11 04:11:12.727 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:12.796 [TYPING] human true
+2026-02-11 04:11:12.797 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:12.956 [TYPING] human true
+2026-02-11 04:11:12.956 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:13.309 [TYPING] human true
+2026-02-11 04:11:13.310 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:13.446 [TYPING] human true
+2026-02-11 04:11:13.446 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:13.513 [TYPING] human true
+2026-02-11 04:11:13.514 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:13.655 [TYPING] human true
+2026-02-11 04:11:13.655 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:13.879 [TYPING] human true
+2026-02-11 04:11:13.880 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:14.068 [TYPING] human true
+2026-02-11 04:11:14.069 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:14.210 [TYPING] human true
+2026-02-11 04:11:14.210 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:14.325 [TYPING] human true
+2026-02-11 04:11:14.326 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:14.403 [TYPING] human true
+2026-02-11 04:11:14.403 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:15.210 [TYPING] human false
+2026-02-11 04:11:15.903 [TYPING] human true
+2026-02-11 04:11:15.903 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:16.043 [TYPING] human true
+2026-02-11 04:11:16.043 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:16.193 [TYPING] human true
+2026-02-11 04:11:16.193 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:16.292 [TYPING] human true
+2026-02-11 04:11:16.292 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:16.717 [TYPING] human true
+2026-02-11 04:11:16.717 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:16.837 [TYPING] human true
+2026-02-11 04:11:16.837 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:16.968 [TYPING] human true
+2026-02-11 04:11:16.968 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:17.121 [TYPING] human true
+2026-02-11 04:11:17.122 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:17.922 [TYPING] human false
+2026-02-11 04:11:17.926 [TYPING] human true
+2026-02-11 04:11:17.926 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.023 [TYPING] human true
+2026-02-11 04:11:18.023 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.149 [TYPING] human true
+2026-02-11 04:11:18.149 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.259 [TYPING] human true
+2026-02-11 04:11:18.259 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.325 [TYPING] human true
+2026-02-11 04:11:18.325 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.438 [TYPING] human true
+2026-02-11 04:11:18.439 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.540 [TYPING] human true
+2026-02-11 04:11:18.541 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.655 [TYPING] human true
+2026-02-11 04:11:18.655 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.735 [TYPING] human true
+2026-02-11 04:11:18.735 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.876 [TYPING] human true
+2026-02-11 04:11:18.876 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:18.946 [TYPING] human true
+2026-02-11 04:11:18.946 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.023 [TYPING] human true
+2026-02-11 04:11:19.023 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.139 [TYPING] human true
+2026-02-11 04:11:19.140 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.237 [TYPING] human true
+2026-02-11 04:11:19.237 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.551 [TYPING] human true
+2026-02-11 04:11:19.551 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.762 [TYPING] human true
+2026-02-11 04:11:19.763 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.772 [TYPING] human true
+2026-02-11 04:11:19.773 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.861 [TYPING] human true
+2026-02-11 04:11:19.861 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:19.997 [TYPING] human true
+2026-02-11 04:11:19.998 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:20.362 [TYPING] human true
+2026-02-11 04:11:20.362 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:20.511 [TYPING] human true
+2026-02-11 04:11:20.512 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:20.611 [TYPING] human true
+2026-02-11 04:11:20.611 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:20.769 [TYPING] human true
+2026-02-11 04:11:20.769 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:20.835 [TYPING] human true
+2026-02-11 04:11:20.835 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.042 [TYPING] human true
+2026-02-11 04:11:21.042 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.173 [TYPING] human true
+2026-02-11 04:11:21.173 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.261 [TYPING] human true
+2026-02-11 04:11:21.262 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.349 [TYPING] human true
+2026-02-11 04:11:21.349 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.502 [TYPING] human true
+2026-02-11 04:11:21.502 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.572 [TYPING] human true
+2026-02-11 04:11:21.573 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.743 [TYPING] human true
+2026-02-11 04:11:21.743 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.846 [TYPING] human true
+2026-02-11 04:11:21.846 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:21.918 [TYPING] human true
+2026-02-11 04:11:21.918 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:22.205 [TYPING] human true
+2026-02-11 04:11:22.206 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:22.261 [TYPING] human true
+2026-02-11 04:11:22.261 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:22.428 [TYPING] human true
+2026-02-11 04:11:22.429 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:22.953 [TYPING] human true
+2026-02-11 04:11:22.953 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.057 [TYPING] human true
+2026-02-11 04:11:23.057 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.116 [TYPING] human true
+2026-02-11 04:11:23.116 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.223 [TYPING] human true
+2026-02-11 04:11:23.223 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.526 [TYPING] human true
+2026-02-11 04:11:23.527 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.595 [TYPING] human true
+2026-02-11 04:11:23.596 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.729 [TYPING] human true
+2026-02-11 04:11:23.729 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.839 [TYPING] human true
+2026-02-11 04:11:23.840 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:23.926 [TYPING] human true
+2026-02-11 04:11:23.926 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.058 [TYPING] human true
+2026-02-11 04:11:24.059 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.123 [TYPING] human true
+2026-02-11 04:11:24.123 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.227 [TYPING] human true
+2026-02-11 04:11:24.228 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.517 [TYPING] human true
+2026-02-11 04:11:24.517 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.586 [TYPING] human true
+2026-02-11 04:11:24.586 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.660 [TYPING] human true
+2026-02-11 04:11:24.660 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.722 [TYPING] human true
+2026-02-11 04:11:24.722 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:24.823 [TYPING] human true
+2026-02-11 04:11:24.823 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.218 [TYPING] human true
+2026-02-11 04:11:25.219 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.360 [TYPING] human true
+2026-02-11 04:11:25.360 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.429 [TYPING] human true
+2026-02-11 04:11:25.429 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.517 [TYPING] human true
+2026-02-11 04:11:25.517 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.591 [TYPING] human true
+2026-02-11 04:11:25.591 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.731 [TYPING] human true
+2026-02-11 04:11:25.732 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.854 [TYPING] human true
+2026-02-11 04:11:25.854 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:25.921 [TYPING] human true
+2026-02-11 04:11:25.921 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:26.273 [TYPING] human true
+2026-02-11 04:11:26.273 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:26.375 [TYPING] human true
+2026-02-11 04:11:26.376 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:27.033 [TYPING] human true
+2026-02-11 04:11:27.033 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:27.518 [TYPING] human true
+2026-02-11 04:11:27.518 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:27.601 [TYPING] human true
+2026-02-11 04:11:27.601 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:27.690 [TYPING] human true
+2026-02-11 04:11:27.690 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:27.796 [TYPING] human true
+2026-02-11 04:11:27.797 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:27.871 [TYPING] human true
+2026-02-11 04:11:27.871 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:28.158 [TYPING] human true
+2026-02-11 04:11:28.158 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:28.229 [TYPING] human true
+2026-02-11 04:11:28.230 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:28.755 [TYPING] human true
+2026-02-11 04:11:28.755 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:28.848 [TYPING] human true
+2026-02-11 04:11:28.848 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.014 [TYPING] human true
+2026-02-11 04:11:29.014 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.175 [TYPING] human true
+2026-02-11 04:11:29.175 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.290 [TYPING] human true
+2026-02-11 04:11:29.290 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.494 [TYPING] human true
+2026-02-11 04:11:29.495 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.625 [TYPING] human true
+2026-02-11 04:11:29.625 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.790 [TYPING] human true
+2026-02-11 04:11:29.791 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:29.944 [TYPING] human true
+2026-02-11 04:11:29.945 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:30.138 [TYPING] human true
+2026-02-11 04:11:30.138 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:30.721 [TYPING] human true
+2026-02-11 04:11:30.721 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:31.342 [TYPING] human true
+2026-02-11 04:11:31.342 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:31.474 [TYPING] human true
+2026-02-11 04:11:31.475 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:31.545 [TYPING] human true
+2026-02-11 04:11:31.545 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:31.641 [TYPING] human true
+2026-02-11 04:11:31.642 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:31.757 [TYPING] human true
+2026-02-11 04:11:31.757 [QUEUE] human typing: reset dequeue counter
+2026-02-11 04:11:31.860 [TYPING] human false
+2026-02-11 04:11:31.869 [HUMAN_INPUT] [Hailey] "Uhh I am not sure. I think I usually try whatever is out there first. and if it is too annoying or useless, I just tend to stop using it. but I give a try first"
+2026-02-11 04:11:31.869 [MESSAGE] [Hailey] "Uhh I am not sure. I think I usually try whatever is out there first. and if it is too annoying or useless, I just tend to stop using it. but I give a try first"
+2026-02-11 04:11:31.870 [OPENAI_REQ] implicit_detect newest="Uhh I am not sure. I think I usually try whatever is out there first. and if it is too ann…"
+2026-02-11 04:11:32.834 [OPENAI_RTT] implicit_detect rtt=964ms
+2026-02-11 04:11:32.834 [OPENAI_OK] implicit_detect raw="{"targets": [], "confidence": 1, "reason": "General statement with no clear addressee"}"
