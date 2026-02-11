@@ -114,10 +114,10 @@ const BOT_INTRO_STAGGER_MS_MAX = 3000;
 const STUDY_GOAL_FIRST_ACK_DELAY_MS_MIN = 2000;
 const STUDY_GOAL_FIRST_ACK_DELAY_MS_MAX = 3000;
 const STUDY_GOAL_SECOND_ACK_DELAY_MS = 1000;
-const BOT_THINKING_DELAY_MS = 600;  // Delay before showing "typing" for each bubble (thinking phase)
-const BOT_TYPING_DELAY_MS = 2000;   // How long typing indicator shows before each message bubble
-const MODERATOR_THINKING_DELAY_MS = 600;  // Moderator "thinking" before typing
-const MODERATOR_TYPING_DELAY_MS = 2000;   // Moderator typing indicator before message
+const BOT_THINKING_DELAY_MS = 1000;  // Delay before showing "typing" for each bubble (thinking phase)
+const BOT_TYPING_DELAY_MS = 3200;   // How long typing indicator shows before each message bubble
+const MODERATOR_THINKING_DELAY_MS = 1000;  // Moderator "thinking" before typing
+const MODERATOR_TYPING_DELAY_MS = 3200;   // Moderator typing indicator before message
 const CONDITION = "control";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -304,7 +304,7 @@ Output ONLY one sentence (e.g. "${disagreedBy} disagreed with you—what do you 
 // Generate moderator cue: short ack of latest message + cue next person (OpenAI)
 // =====================
 async function generateModeratorCue(latestMessage, nextName, opts = {}) {
-  const { isFirstInRound = false, isIntro = false, bigQuestion } = opts;
+  const { isFirstInRound = false, isIntro = false, bigQuestion, roundQuestion } = opts;
   const latestStr = latestMessage
     ? `${latestMessage.name} said: "${String(latestMessage.text || "").slice(0, 200)}"`
     : "(no prior message)";
@@ -312,13 +312,16 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
   const sys = `You are a discussion moderator. Generate ONE short message that:
 1. Briefly acknowledges the latest message (one short phrase, e.g. "Good point.", "Thanks for sharing.", "Got it.")
 2. Then cues the next person to speak (e.g. "[Name], what do you think?" or "How about you, [Name]?")
-Keep it natural and conversational. Output ONLY the message text—no JSON, no quotes, no extra formatting. Do NOT use "---" or similar separators.`;
+Keep it natural and conversational. Output ONLY the message text—no JSON, no quotes, no extra formatting. Do NOT use "---" or similar separators.
+When you are in the middle of a round, do NOT ask a new or different question—only acknowledge and cue the next person to respond to the same question for this round.`;
 
   let userPrompt;
   if (isIntro) {
     userPrompt = `The latest message: ${latestStr}. Next person to cue: ${nextName}. Write a brief ack and then ask ${nextName} to introduce themselves.`;
   } else if (isFirstInRound && bigQuestion) {
-    userPrompt = `We're starting a new question: "${String(bigQuestion).slice(0, 300)}". Latest prior message: ${latestStr}. Cue ${nextName} to answer first (brief transition + cue).`;
+    userPrompt = `We're starting a new question: "${String(bigQuestion).slice(0, 300)}". No one has answered this question yet. Cue ${nextName} to answer first (brief transition only, e.g. "[Name], what do you think?"). Do NOT thank or acknowledge anyone as having just responded—no one has responded to this question yet.`;
+  } else if (roundQuestion) {
+    userPrompt = `The current question for this round is: "${String(roundQuestion).slice(0, 300)}". Latest message to acknowledge: ${latestStr}. Next person to cue: ${nextName}. Brief ack, then cue them to respond to this same question. Do NOT introduce a new or different question.`;
   } else {
     userPrompt = `Latest message to acknowledge: ${latestStr}. Next person to cue: ${nextName}. Brief ack, then cue them.`;
   }
@@ -348,6 +351,23 @@ function getLastParticipantMessage(session) {
     if (m?.name && m.name !== MODERATOR_NAME) return m;
   }
   return null;
+}
+
+/** True if the human has sent any message after Eunice's last "To start us off" intro prompt. */
+function hasHumanRepliedAfterIntroPrompt(session) {
+  if (!session?.messages?.length || !session.participantName) return false;
+  let lastIntroPromptIndex = -1;
+  for (let i = 0; i < session.messages.length; i++) {
+    const m = session.messages[i];
+    if (m?.name === MODERATOR_NAME && String(m?.text || "").includes("To start us off")) {
+      lastIntroPromptIndex = i;
+    }
+  }
+  if (lastIntroPromptIndex < 0) return false;
+  for (let i = lastIntroPromptIndex + 1; i < session.messages.length; i++) {
+    if (session.messages[i]?.name === session.participantName) return true;
+  }
+  return false;
 }
 
 // =====================
@@ -537,7 +557,7 @@ io.on("connection", (socket) => {
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, nextName);
+      cue = await generateModeratorCue(latest, nextName, { roundQuestion: co.question });
     } catch (e) {
       cue = `How about you, ${nextName}?`;
     }
@@ -682,10 +702,9 @@ io.on("connection", (socket) => {
     const firstBot = co.order[0];
     logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
     await emitModeratorLine(nextQuestion);
-    const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, firstBot, { isFirstInRound: true, bigQuestion: nextQuestion });
+      cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: nextQuestion });
     } catch (e) {
       cue = `Let's start with ${firstBot}.`;
     }
@@ -733,6 +752,10 @@ io.on("connection", (socket) => {
     if (botTypingTimeout) {
       clearTimeout(botTypingTimeout);
       botTypingTimeout = null;
+    }
+    if (hasHumanRepliedAfterIntroPrompt(session)) {
+      logLine("QUEUE", `intro: human already replied after "To start us off", skipping cue`);
+      return;
     }
     const latest = getLastParticipantMessage(session);
     let cue;
@@ -790,10 +813,9 @@ io.on("connection", (socket) => {
     const firstBot = co.order[0];
     logLine("QUEUE", `first big_question: "${clip(co.question, 60)}"`);
     await emitModeratorLine(co.question);
-    const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, firstBot, { isFirstInRound: true, bigQuestion: co.question });
+      cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: co.question });
     } catch (e) {
       cue = `Let's start with ${firstBot}.`;
     }
