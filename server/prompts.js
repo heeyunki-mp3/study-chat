@@ -1,10 +1,12 @@
-// ~/study-chat/server/prompts.js
+/**
+ * Prompts and persona loading for study-chat bots.
+ */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 // =====================
-// Load personas.json
+// Personas (personas.json)
 // =====================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,7 +71,7 @@ function uniqByHandle(arr) {
 }
 
 // =====================
-// Export: pickRandomCast(k)
+// Cast selection
 // =====================
 export function pickRandomCast(k = 4) {
   const pool = uniqByHandle(PERSONAS);
@@ -83,9 +85,6 @@ export function pickRandomCast(k = 4) {
   return shuffled.slice(0, k);
 }
 
-// =====================
-// Export: getCastByHandles(handles) — cast for specific bot names (order preserved)
-// =====================
 export function getCastByHandles(handles) {
   if (!Array.isArray(handles) || handles.length === 0) return [];
   const pool = uniqByHandle(PERSONAS);
@@ -98,16 +97,11 @@ export function getCastByHandles(handles) {
   return cast;
 }
 
-/** All valid bot handles (for usage / validation). */
-export function getAllHandles() {
-  return uniqByHandle(PERSONAS).map((p) => p.handle);
-}
-
-// Moderator bot name (used in prompts so bots know who the moderator is)
+// Moderator name used in prompts
 const MODERATOR_NAME_DEFAULT = "Eunice";
 
 // =====================
-// System prompt
+// System / user prompts
 // =====================
 export function systemPrompt(botName, otherNamesCsv, condition, persona = {}, moderatorName = MODERATOR_NAME_DEFAULT, humanParticipantName = "You") {
   const me = sanitizeOneLine(botName);
@@ -186,13 +180,6 @@ OUTPUT FORMAT:
   return `${base}\n\n${conditionRules[condition] || conditionRules.control}`;
 }
 
-// =====================
-// buildUserPrompt
-// - respondTo: { type: "directive"|"mention"|"normal", text?: string }
-//   - directive: include "Latest directive message to respond to" (moderator's message); transcript is enough for context.
-//   - mention: include "Latest message to respond to" (the message that mentioned the bot).
-//   - normal: no "latest message to respond to" block; only transcript and other necessary parts.
-// =====================
 export function buildUserPrompt({
   transcript,
   recentBot,

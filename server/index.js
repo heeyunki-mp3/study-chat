@@ -66,11 +66,12 @@ function logLine(tag, message) {
 }
 
 // =====================
-// Constants (easy to change at top of code)
+// Constants
 // =====================
-const IDLE_EMPTY_MS = 4000;   // Participant idle when text box empty and no typing for this long
-const IDLE_TYPING_MS = 10000; // Participant idle when text box not empty and no typing for this long
+const IDLE_EMPTY_MS = 4000;   // Human idle: empty input, no typing this long
+const IDLE_TYPING_MS = 10000; // Human idle: non-empty input, no typing this long
 const MODERATOR_NAME = "Eunice";
+const CONDITION = "control";
 
 const MODERATOR_SCRIPT = [
   {
@@ -86,7 +87,6 @@ const MODERATOR_SCRIPT = [
       "Before we dive in, just a quick note about the goal of this study.\nWe are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
       "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology.",
     ],
-    thenAcks: 2, // 2 random bots say "Got it!" / "Ok!" / "Sure!" with 1–2s delay
   },
   {
     type: "big_question",
@@ -114,41 +114,27 @@ const MODERATOR_SCRIPT = [
   },
 ];
 
-const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"]; // one bot says one of these after study_goal
+const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
 const STUDY_GOAL_ACK_DELAY_MS_MIN = 2000;
 const STUDY_GOAL_ACK_DELAY_MS_MAX = 3000;
-const BOT_THINKING_DELAY_MS = 1000;  // Delay before showing "typing" for each bubble (thinking phase)
-const BOT_TYPING_DELAY_MS = 3200;   // How long typing indicator shows before each message bubble
-const MODERATOR_THINKING_DELAY_MS = 1000;  // Moderator "thinking" before typing
-const MODERATOR_TYPING_DELAY_MS = 3200;   // Moderator typing indicator before message
-const CONDITION = "control";
+const BOT_THINKING_DELAY_MS = 1000;
+const BOT_TYPING_DELAY_MS = 3200;
+const MODERATOR_THINKING_DELAY_MS = 1000;
+const MODERATOR_TYPING_DELAY_MS = 3200;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-let MODELS = { default: "gpt-4o-mini", bots: {} };
+let MODELS = { default: "gpt-4o-mini" };
 try {
   const raw = fs.readFileSync(path.join(__dirname, "models.json"), "utf8");
-  MODELS = JSON.parse(raw);
-  if (!MODELS.bots) MODELS.bots = {};
+  const parsed = JSON.parse(raw);
+  if (parsed?.default) MODELS.default = parsed.default;
 } catch (e) {
   console.warn("Using default gpt-4o-mini (models.json not found or invalid)");
-}
-
-function getModelForBot(/* botName */) {
-  return MODELS.default;
 }
 
 // =====================
 // Helpers
 // =====================
-function buildTranscript(messages, maxLines = 50) {
-  if (!Array.isArray(messages) || messages.length === 0) return "";
-  return messages
-    .slice(-maxLines)
-    .map((m) => `${m.name}: ${(m.text || "").trim()}`)
-    .filter((line) => line.length > 0)
-    .join("\n");
-}
-
 function parseJsonArray(rawText, maxItems = 3) {
   if (!rawText) return [];
   let s = String(rawText).trim();
@@ -176,7 +162,7 @@ function parseJsonArray(rawText, maxItems = 3) {
   return s ? [s.replace(/---/g, "").trim().slice(0, 220)] : [];
 }
 
-function ts() {
+function timestamp() {
   return Date.now();
 }
 
@@ -229,15 +215,17 @@ async function getBotResponse(botName, context) {
     maxBubbles,
   });
 
-  const model = getModelForBot(botName);
   const completion = await openai.chat.completions.create({
-    model,
+    model: MODELS.default,
     messages: [
       { role: "system", content: sys },
       { role: "user", content: userPrompt },
     ],
     max_tokens: maxBubbles <= 2 ? 400 : 600,
   });
+
+  logLine("OPENAI_USER_PROMPT", userPrompt);
+  logLine("OPENAI_SYS", sys);
 
   const raw =
     completion?.choices?.[0]?.message?.content ?? "";
@@ -307,7 +295,6 @@ Output ONLY one sentence (e.g. "${disagreedBy} disagreed with you—what do you 
   return text || `${disagreedBy} disagreed with you. What do you think about their viewpoint?`;
 }
 
-// =====================
 /** True if the message is asking what passkey is (so moderator should explain briefly). */
 function isAskingWhatPasskeyIs(text) {
   if (!text || typeof text !== "string") return false;
@@ -320,8 +307,7 @@ function isAskingWhatPasskeyIs(text) {
   );
 }
 
-// Generate moderator cue: short ack of latest message + cue next person (OpenAI)
-// =====================
+/** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
 async function generateModeratorCue(latestMessage, nextName, opts = {}) {
   const { isFirstInRound = false, isIntro = false, bigQuestion, roundQuestion } = opts;
   const latestStr = latestMessage
@@ -462,12 +448,14 @@ function createSession(participantName) {
 }
 
 function addMessage(session, name, text) {
-  const m = { name, text: String(text).trim(), ts: ts() };
+  const m = { name, text: String(text).trim(), ts: timestamp() };
   session.messages.push(m);
   return m;
 }
 
-/** Hardcoded intro options per bot (2–3 sentences). One is chosen at random. */
+// =====================
+// Bot intro messages (one chosen at random per bot)
+// =====================
 const BOT_INTROS = {
   Jae: [
     "Hi I'm Jae. I teach math at high school",
@@ -924,6 +912,7 @@ io.on("connection", (socket) => {
     runNextDisagreementFollowUp();
   }
 
+  // --- Socket handlers ---
   socket.on("participant_name", (data) => {
     const name = (data?.name || "").trim() || "Participant";
     session = createSession(name);
@@ -980,10 +969,6 @@ io.on("connection", (socket) => {
       session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", `human_message during call-on: ${session.participantName} replied, waiting for idle to advance`);
     }
-  });
-
-  socket.on("end", () => {
-    // Optional: persist sessionId for login flow
   });
 
   socket.on("disconnect", () => {
