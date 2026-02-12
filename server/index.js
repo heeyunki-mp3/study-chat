@@ -71,7 +71,6 @@ function logLine(tag, message) {
 const IDLE_EMPTY_MS = 4000;   // Human idle: empty input, no typing this long
 const IDLE_TYPING_MS = 10000; // Human idle: non-empty input, no typing this long
 const MODERATOR_NAME = "Eunice";
-const CONDITION = "control";
 
 const MODERATOR_SCRIPT = [
   {
@@ -179,7 +178,6 @@ async function getBotResponse(botName, context) {
   const sys = systemPrompt(
     botName,
     others,
-    CONDITION,
     persona,
     MODERATOR_NAME,
     humanParticipantName || "You"
@@ -424,7 +422,6 @@ function createSession(participantName) {
     sessionId,
     moderatorName: MODERATOR_NAME,
     bots,
-    condition: CONDITION,
     participantName,
     messages: [], // intro messages sent with typing after join, not pre-loaded
     idleEmptyMs: IDLE_EMPTY_MS,
@@ -916,7 +913,7 @@ io.on("connection", (socket) => {
   socket.on("participant_name", (data) => {
     const name = (data?.name || "").trim() || "Participant";
     session = createSession(name);
-    logLine("SESSION_START", `id=${socket.id} condition=${session.condition} bots=${session.bots.join(",")}`);
+    logLine("SESSION_START", `id=${socket.id} bots=${session.bots.join(",")}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     socket.emit("session", {
       sessionId: session.sessionId,
