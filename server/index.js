@@ -521,21 +521,25 @@ io.on("connection", (socket) => {
   }
 
   function emitTyping(who, isTyping) {
-    const label = session?.bots?.includes(who) ? `bot=${who}` : who === MODERATOR_NAME ? "moderator" : "human";
+    if (!session) return;
+    const label = session.bots?.includes(who) ? `bot=${who}` : who === MODERATOR_NAME ? "moderator" : "human";
     logLine("TYPING", `${label} ${isTyping}`);
     io.to(socket.id).emit("typing", { who, isTyping });
   }
 
   function emitMessage(name, text) {
+    if (!session) return;
     const m = addMessage(session, name, text);
     logLine("MESSAGE", `[${name}] "${clip(m.text, 160)}"`);
     io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
   }
 
   async function emitModeratorLine(text) {
+    if (!session) return;
     emitTyping(MODERATOR_NAME, true);
     await new Promise((r) => setTimeout(r, MODERATOR_THINKING_DELAY_MS));
     await new Promise((r) => setTimeout(r, MODERATOR_TYPING_DELAY_MS));
+    if (!session) return;
     emitTyping(MODERATOR_NAME, false);
     const m = addMessage(session, MODERATOR_NAME, text);
     logLine("MESSAGE", `[${MODERATOR_NAME}] "${clip(m.text, 160)}"`);
@@ -564,10 +568,12 @@ io.on("connection", (socket) => {
     } catch (e) {
       cue = `How about you, ${nextName}?`;
     }
+    if (!session) return;
 
     if (isHuman) {
       logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${nextName}, waiting for human_idle`);
       await emitModeratorLine(cue);
+      if (!session) return;
       co.waitingForHumanIdle = true;
       co.humanRepliedThisTurn = false;
       return;
@@ -575,10 +581,12 @@ io.on("connection", (socket) => {
 
     logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=${nextName}`);
     await emitModeratorLine(cue);
+    if (!session) return;
     runBotTurn(nextName, cue);
   }
 
   async function runBotTurn(botName, directiveOverride) {
+    if (!session?.callOnState) return;
     const co = session.callOnState;
     const previousAnswers = co.whoSpoke.map((name) => {
       const msgs = session.messages.filter((m) => m.name === name);
@@ -609,6 +617,7 @@ io.on("connection", (socket) => {
       console.error("OpenAI error for", botName, e?.message || e);
       bubbles = ["(Sorry, I didn't get that.)"];
     }
+    if (!session) return;
     emitTyping(botName, false);
 
     if (!Array.isArray(bubbles) || bubbles.length === 0) {
@@ -618,14 +627,15 @@ io.on("connection", (socket) => {
     }
 
     for (let i = 0; i < bubbles.length; i++) {
+      if (!session) return;
       if (botTypingTimeout) clearTimeout(botTypingTimeout);
-      // Thinking phase: delay before showing typing indicator
       await new Promise((r) => {
         botTypingTimeout = setTimeout(r, BOT_THINKING_DELAY_MS);
       });
+      if (!session) return;
       emitTyping(botName, true);
-      // Typing phase: show typing indicator for a bit before sending the message
       await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+      if (!session) return;
       emitTyping(botName, false);
       emitMessage(botName, bubbles[i]);
     }
@@ -633,12 +643,13 @@ io.on("connection", (socket) => {
       clearTimeout(botTypingTimeout);
       botTypingTimeout = null;
     }
-
+    if (!session) return;
     co.whoSpoke.push(botName);
     await advanceCallOn();
   }
 
   async function runDisagreementPhase() {
+    if (!session?.callOnState) return;
     const co = session.callOnState;
     if (co.disagreementPhase) return;
     co.disagreementPhase = true;
@@ -669,7 +680,7 @@ io.on("connection", (socket) => {
     } catch (e) {
       console.error("Disagreement detection error", e?.message || e);
     }
-
+    if (!session) return;
     const botNames = session.bots;
     const participantName = session.participantName;
     const toPrompt = [];
@@ -712,6 +723,7 @@ io.on("connection", (socket) => {
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today!");
       return;
     }
+    if (!session) return;
     const co = session.callOnState;
     const nextQuestion = session.bigQuestions[bigQuestionIndex];
     co.question = nextQuestion;
@@ -727,6 +739,7 @@ io.on("connection", (socket) => {
     const firstBot = co.order[0];
     logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
     await emitModeratorLine(nextQuestion);
+    if (!session) return;
     let cue;
     try {
       cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: nextQuestion });
@@ -734,6 +747,7 @@ io.on("connection", (socket) => {
       cue = `Let's start with ${firstBot}.`;
     }
     await emitModeratorLine(cue);
+    if (!session) return;
     runBotTurn(firstBot, cue);
   }
 
@@ -747,10 +761,12 @@ io.on("connection", (socket) => {
 
   /** Plays moderator intro messages with typing, then bot intros with typing, then cue. */
   async function runIntroWithTyping() {
+    if (!session) return;
     const introSegment = MODERATOR_SCRIPT.find((s) => s.type === "intro");
     const introMessages = introSegment?.messages || [];
     for (const text of introMessages) {
       await emitModeratorLine(text);
+      if (!session) return;
     }
     await runIntroRound();
   }
@@ -778,6 +794,7 @@ io.on("connection", (socket) => {
       });
     });
     await Promise.all(botPromises);
+    if (!session) return;
     if (hasHumanRepliedAfterIntroPrompt(session)) {
       logLine("QUEUE", `intro: human already replied after "To start us off", advancing to study_goal`);
       await runStudyGoal();
@@ -791,12 +808,14 @@ io.on("connection", (socket) => {
       cue = `How about you, ${session.participantName}?`;
     }
     await emitModeratorLine(cue);
+    if (!session) return;
     session.waitingForHumanIntro = true;
     logLine("QUEUE", `waiting for human intro from ${session.participantName}`);
   }
 
   /** Study goal: moderator messages, then 1 ack (one random bot). */
   async function runStudyGoal() {
+    if (!session) return;
     const segment = MODERATOR_SCRIPT.find((s) => s.type === "study_goal");
     if (!segment?.messages?.length) {
       startFirstBigQuestion();
@@ -804,6 +823,7 @@ io.on("connection", (socket) => {
     }
     for (const text of segment.messages) {
       await emitModeratorLine(text);
+      if (!session) return;
     }
     const bots = [...session.bots];
     const botIndex = Math.floor(Math.random() * bots.length);
@@ -818,6 +838,7 @@ io.on("connection", (socket) => {
 
   /** Start first big_question: set question, emit moderator, run first bot. */
   async function startFirstBigQuestion() {
+    if (!session) return;
     session.scriptIndex = 2;
     session.waitingForHumanIntro = false;
     const co = session.callOnState;
@@ -833,6 +854,7 @@ io.on("connection", (socket) => {
     const firstBot = co.order[0];
     logLine("QUEUE", `first big_question: "${clip(co.question, 60)}"`);
     await emitModeratorLine(co.question);
+    if (!session) return;
     let cue;
     try {
       cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: co.question });
@@ -840,10 +862,12 @@ io.on("connection", (socket) => {
       cue = `Let's start with ${firstBot}.`;
     }
     await emitModeratorLine(cue);
+    if (!session) return;
     runBotTurn(firstBot, cue);
   }
 
   async function runNextDisagreementFollowUp() {
+    if (!session?.callOnState) return;
     const co = session.callOnState;
     if (co.disagreementIndex >= co.disagreementQueue.length) {
       advanceToNextQuestion();
@@ -864,9 +888,9 @@ io.on("connection", (socket) => {
     } catch (e) {
       followUpText = `${item.disagreedBy} disagreed with you. What do you think about their viewpoint?`;
     }
-
+    if (!session) return;
     await emitModeratorLine(followUpText);
-
+    if (!session) return;
     const previousAnswers = session.messages
       .filter((m) => co.order.includes(m.name))
       .map((m) => ({ name: m.name, text: m.text }));
@@ -887,16 +911,20 @@ io.on("connection", (socket) => {
       console.error("OpenAI disagreement follow-up error", e?.message || e);
       bubbles = ["(I'll think about it.)"];
     }
+    if (!session) return;
     emitTyping(botName, false);
 
     if (Array.isArray(bubbles) && bubbles.length > 0) {
       for (let i = 0; i < bubbles.length; i++) {
+        if (!session) return;
         if (botTypingTimeout) clearTimeout(botTypingTimeout);
         await new Promise((r) => {
           botTypingTimeout = setTimeout(r, BOT_THINKING_DELAY_MS);
         });
+        if (!session) return;
         emitTyping(botName, true);
         await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+        if (!session) return;
         emitTyping(botName, false);
         emitMessage(botName, bubbles[i]);
       }
@@ -905,7 +933,7 @@ io.on("connection", (socket) => {
       clearTimeout(botTypingTimeout);
       botTypingTimeout = null;
     }
-
+    if (!session) return;
     runNextDisagreementFollowUp();
   }
 
@@ -970,7 +998,9 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     if (session) logLine("DISCONNECT", `id=${socket.id}`);
+    session = null;
     if (botTypingTimeout) clearTimeout(botTypingTimeout);
+    botTypingTimeout = null;
   });
 });
 

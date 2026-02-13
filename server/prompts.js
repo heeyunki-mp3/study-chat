@@ -27,14 +27,14 @@ try {
   const arr = Array.isArray(parsed)
     ? parsed
     : Array.isArray(parsed?.people)
-    ? parsed.people
-    : Array.isArray(parsed?.personas)
-    ? parsed.personas
-    : Array.isArray(parsed?.bots)
-    ? parsed.bots
-    : Array.isArray(parsed?.data)
-    ? parsed.data
-    : null;
+      ? parsed.people
+      : Array.isArray(parsed?.personas)
+        ? parsed.personas
+        : Array.isArray(parsed?.bots)
+          ? parsed.bots
+          : Array.isArray(parsed?.data)
+            ? parsed.data
+            : null;
 
   if (!arr) {
     throw new Error("personas.json must have an array at root or under people/personas/bots/data");
@@ -117,10 +117,15 @@ export function systemPrompt(botName, otherNamesCsv, persona = {}, moderatorName
   const bio = sanitizeOneLine(persona.bio || persona.about || "");
   const personaPrompt = safeStr(persona.persona_prompt || "");
 
-  const isPasskeyExpert = (persona.passkeys?.awareness || "").toString().toLowerCase() === "expert";
-  const passkeyDontKnowBlock = isPasskeyExpert
-    ? ""
-    : `
+  const awareness = (persona.passkeys?.awareness || "").toString().toLowerCase();
+  let passkeyBlock;
+  switch (awareness) {
+    case "expert":
+      // Knows passkeys; no restrictions.
+      passkeyBlock = "";
+      break;
+    case "none":
+      passkeyBlock = `
 You do NOT know what a passkey is.
 
 If anyone (including the moderator) asks about passkeys:
@@ -132,6 +137,28 @@ Instead, respond naturally with confusion or uncertainty (e.g., "Wait, what's a 
 
 Only after someone clearly explains what a passkey is in the chat history, may you respond to questions about it and only based on the explanation provided. Do not add outside knowledge.
 `;
+      break;
+    case "vague":
+      passkeyBlock = "You have heard about passkey but you don't know what it is. You vaguely know that it is about login. You may ask the moderator to explain it. For example, you may say: 'What is a passkey? I had heard about it but I don't know what it is.' or 'I only know that it is about login. Can someone explain what passkey is?'";
+      break;
+    case "tried_setup_once":
+      passkeyBlock = "You have tried to set up passkey once but you didn't succeed. You do know what passkey is, but you don't really like it. You may directly answer to the moderator's question about the passkey with your views on the passkey.'";
+      break;
+    default:
+      // Unknown or missing awareness: treat as none.
+      passkeyBlock = `
+You do NOT know what a passkey is.
+
+If anyone (including the moderator) asks about passkeys:
+• Do NOT explain, define, or guess what it is.
+• Do NOT answer as if you understand it.
+• Do NOT make up information.
+
+Instead, respond naturally with confusion or uncertainty (e.g., "Wait, what's a passkey?" or "I'm not sure what that is.").
+
+Only after someone clearly explains what a passkey is in the chat history, may you respond to questions about it and only based on the explanation provided. Do not add outside knowledge.
+`;
+  }
 
   const base = `
 ${GLOBAL_SYSTEM ? GLOBAL_SYSTEM + "\n\n" : ""}
@@ -140,7 +167,7 @@ You are ${me}. You are a real person in a group chat.
 The moderator is ${mod}. Other participants: ${others}. The human participant is "${human}".
 
 DO NOT EVER mention passkey until the moderator (${mod}) asks you about it.
-${passkeyDontKnowBlock}
+${passkeyBlock}
 DO NOT LEAD A CONVERSATION. JUST RESPOND TO QUESTIONS. Be descriptive: use longer sentences when the question asks for opinions or details, but keep it human and natural (not robotic or essay-like).
 
 YOU MAY AGREE AND ADD ON, DISAGREE WITH REASON to other participant's answer in the chat history, OR SIMPLY ANSWER THE MODERATOR'S (${mod}'s) QUESTION. Let context guide you.
@@ -212,11 +239,11 @@ export function buildUserPrompt({
 - Do NOT ask the human questions.
 - Keep it low pressure.`
       : mode === "idle_nudge"
-      ? `MODE=idle_nudge
+        ? `MODE=idle_nudge
 - Human has been quiet.
 - Send ONE gentle check-in to the human.
 - You may ask ONE simple question.`
-      : `MODE=human
+        : `MODE=human
 - Respond naturally to the chat.
 - If there is a directive or a message that mentioned you, answer it first.`;
 
@@ -229,12 +256,12 @@ Latest directive message to respond to (from moderator ${mod}):
 Respond to this directive directly. The transcript above gives full context.
 `
       : respondTo?.type === "mention" && respondTo?.text
-      ? `
+        ? `
 Latest message to respond to (you were mentioned / addressed):
 "${sanitizeOneLine(respondTo.text)}"
 Answer this first, then you may react to newer messages in the transcript.
 `
-      : "";
+        : "";
 
   const prompt = `
 Chat so far:
