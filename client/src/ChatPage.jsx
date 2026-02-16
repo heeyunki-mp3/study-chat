@@ -125,7 +125,7 @@ export default function ChatPage() {
   const [session, setSession] = useState(null);
   const [input, setInput] = useState("");
 
-  // Debounce: stop-typing after 800ms; then idle = 3s (empty) or 7s (has text)
+  // Debounce: stop-typing after 800ms; then idle = session.idleEmptyMs (empty) or session.idleTypingMs (has text)
   const typingTimeoutRef = useRef(null);
   const idleTimeoutRef = useRef(null);
   const inputRef = useRef("");
@@ -214,10 +214,12 @@ export default function ChatPage() {
       typingTimeoutRef.current = null;
     }, 800);
 
-    // Idle: 1s if empty, 7s if has text — timer starts from this keystroke so moderator can advance
+    // Idle: use server timings so we don't fire human_idle while user might still be typing
     if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
     const isEmpty = String(val ?? "").trim() === "";
-    const idleMs = isEmpty ? 1000 : 7000;
+    const idleEmptyMs = session?.idleEmptyMs ?? 4000;
+    const idleTypingMs = session?.idleTypingMs ?? 10000;
+    const idleMs = isEmpty ? idleEmptyMs : idleTypingMs;
     idleTimeoutRef.current = setTimeout(() => {
       socket.emit("human_idle");
       idleTimeoutRef.current = null;
@@ -242,11 +244,12 @@ export default function ChatPage() {
     setInput("");
     inputRef.current = "";
 
-    // After sending, start 1s idle timer so moderator advances once user is "done" (empty input)
+    // After sending, wait for idle (same as empty input) so we don't advance while user might type again
+    const idleEmptyMs = session?.idleEmptyMs ?? 4000;
     idleTimeoutRef.current = setTimeout(() => {
       socket.emit("human_idle");
       idleTimeoutRef.current = null;
-    }, 1000);
+    }, idleEmptyMs);
   }
 
   function goLogin() {

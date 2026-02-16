@@ -428,6 +428,8 @@ function createSession(participantName) {
     idleTypingMs: IDLE_TYPING_MS,
     scriptIndex: 0, // 0=intro, 1=study_goal, 2..=big_question
     waitingForHumanIntro: false,
+    moderatorTypingIntroCue: false,
+    userRepliedDuringIntroCue: false,
     callOnState: {
       question: bigQuestions[0] || "",
       order,
@@ -534,25 +536,55 @@ io.on("connection", (socket) => {
     io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
   }
 
-  async function emitModeratorLine(text) {
+  async function emitModeratorLine(text, opts = {}) {
+    const { skipIfUserReplied: skipIfUserRepliedDuringCue } = opts;
     if (!session) return;
+    if (session.cancelAdvanceFromIdle) return;
     emitTyping(MODERATOR_NAME, true);
     await new Promise((r) => setTimeout(r, MODERATOR_THINKING_DELAY_MS));
+    if (session?.cancelAdvanceFromIdle) {
+      emitTyping(MODERATOR_NAME, false);
+      return;
+    }
     await new Promise((r) => setTimeout(r, MODERATOR_TYPING_DELAY_MS));
     if (!session) return;
+    if (session.cancelAdvanceFromIdle) {
+      emitTyping(MODERATOR_NAME, false);
+      return;
+    }
+    if (skipIfUserRepliedDuringCue && session.userRepliedDuringIntroCue) {
+      emitTyping(MODERATOR_NAME, false);
+      return;
+    }
     emitTyping(MODERATOR_NAME, false);
     const m = addMessage(session, MODERATOR_NAME, text);
     logLine("MESSAGE", `[${MODERATOR_NAME}] "${clip(m.text, 160)}"`);
     io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
   }
 
-  async function advanceCallOn() {
+  async function advanceCallOn(opts = {}) {
+    const fromHumanIdle = !!opts.fromHumanIdle;
+    if (fromHumanIdle && session) session.pendingAdvanceFromIdle = true;
+
     if (!session?.callOnState) return;
     const co = session.callOnState;
     co.currentIndex += 1;
     co.waitingForHumanIdle = false;
 
+    if (fromHumanIdle && session?.cancelAdvanceFromIdle) {
+      co.currentIndex -= 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      if (session) {
+        session.pendingAdvanceFromIdle = false;
+        session.cancelAdvanceFromIdle = false;
+      }
+      logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+      return;
+    }
+
     if (co.currentIndex >= co.order.length) {
+      // Keep pendingAdvanceFromIdle set so human_typing can cancel before next question is shown
       co.roundDone = true;
       logLine("QUEUE", "call-on round done, running disagreement phase");
       runDisagreementPhase();
@@ -569,10 +601,29 @@ io.on("connection", (socket) => {
       cue = `How about you, ${nextName}?`;
     }
     if (!session) return;
+    if (fromHumanIdle && session.cancelAdvanceFromIdle) {
+      co.currentIndex -= 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+      return;
+    }
 
     if (isHuman) {
       logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${nextName}, waiting for human_idle`);
       await emitModeratorLine(cue);
+      if (fromHumanIdle && session?.cancelAdvanceFromIdle) {
+        co.currentIndex -= 1;
+        co.waitingForHumanIdle = true;
+        co.humanRepliedThisTurn = true;
+        session.pendingAdvanceFromIdle = false;
+        session.cancelAdvanceFromIdle = false;
+        logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+        return;
+      }
+      if (session) session.pendingAdvanceFromIdle = false;
       if (!session) return;
       co.waitingForHumanIdle = true;
       co.humanRepliedThisTurn = false;
@@ -581,6 +632,16 @@ io.on("connection", (socket) => {
 
     logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=${nextName}`);
     await emitModeratorLine(cue);
+    if (fromHumanIdle && session?.cancelAdvanceFromIdle) {
+      co.currentIndex -= 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+      return;
+    }
+    if (session) session.pendingAdvanceFromIdle = false;
     if (!session) return;
     runBotTurn(nextName, cue);
   }
@@ -652,6 +713,17 @@ io.on("connection", (socket) => {
     if (!session?.callOnState) return;
     const co = session.callOnState;
     if (co.disagreementPhase) return;
+    // If user started typing after human_idle, cancel the scheduled next question and wait for idle again
+    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
+      co.currentIndex -= 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      co.roundDone = false;
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advance cancelled (user typing in disagreement phase), waiting for human_idle again");
+      return;
+    }
     co.disagreementPhase = true;
     logLine("QUEUE", "disagreement phase started");
 
@@ -681,6 +753,17 @@ io.on("connection", (socket) => {
       console.error("Disagreement detection error", e?.message || e);
     }
     if (!session) return;
+    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
+      co.currentIndex -= 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      co.roundDone = false;
+      co.disagreementPhase = false;
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advance cancelled (user typing), waiting for human_idle again");
+      return;
+    }
     const botNames = session.bots;
     const participantName = session.participantName;
     const toPrompt = [];
@@ -710,22 +793,68 @@ io.on("connection", (socket) => {
       advanceToNextQuestion();
       return;
     }
+    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
+      co.currentIndex -= 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      co.roundDone = false;
+      co.disagreementPhase = false;
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advance cancelled (user typing), waiting for human_idle again");
+      return;
+    }
     logLine("QUEUE", `disagreements: ${toPrompt.map((p) => `${p.disagreedBy}->${p.disagreedWith}`).join(", ")}`);
     runNextDisagreementFollowUp();
   }
 
   async function advanceToNextQuestion() {
     if (!session?.bigQuestions) return;
-    session.scriptIndex = (session.scriptIndex ?? 2) + 1;
-    const bigQuestionIndex = session.scriptIndex - 2; // scriptIndex 2 -> first big_question
+    const co = session.callOnState;
+    // If user started typing after human_idle, cancel and wait for next idle
+    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
+      if (co) {
+        co.currentIndex = co.order.length - 1;
+        co.waitingForHumanIdle = true;
+        co.humanRepliedThisTurn = true;
+        co.roundDone = false;
+        co.disagreementPhase = false;
+      }
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advanceToNextQuestion cancelled (user typing), waiting for human_idle again");
+      return;
+    }
+    // Don't clear pendingAdvanceFromIdle or update state yet — emit next question first so human_typing can cancel during moderator typing
+    const nextScriptIndex = (session.scriptIndex ?? 2) + 1;
+    const bigQuestionIndex = nextScriptIndex - 2; // scriptIndex 2 -> first big_question
     if (bigQuestionIndex >= session.bigQuestions.length) {
+      session.pendingAdvanceFromIdle = false;
       logLine("QUEUE", "all questions done, wrapping up");
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today!");
       return;
     }
-    if (!session) return;
-    const co = session.callOnState;
     const nextQuestion = session.bigQuestions[bigQuestionIndex];
+    logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
+    await emitModeratorLine(nextQuestion);
+    if (!session) return;
+    // If user started typing during moderator typing, roll back and wait for human_idle again
+    if (session.cancelAdvanceFromIdle) {
+      if (co) {
+        co.currentIndex = co.order.length - 1;
+        co.waitingForHumanIdle = true;
+        co.humanRepliedThisTurn = true;
+        co.roundDone = false;
+        co.disagreementPhase = false;
+      }
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+      logLine("QUEUE", "advanceToNextQuestion cancelled (user typing during mod line), waiting for human_idle again");
+      return;
+    }
+    // Committed: persist state and clear pending
+    session.scriptIndex = nextScriptIndex;
+    session.pendingAdvanceFromIdle = false;
     co.question = nextQuestion;
     co.whoSpoke = [];
     co.currentIndex = 0;
@@ -737,9 +866,6 @@ io.on("connection", (socket) => {
     co.disagreementIndex = 0;
 
     const firstBot = co.order[0];
-    logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
-    await emitModeratorLine(nextQuestion);
-    if (!session) return;
     let cue;
     try {
       cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: nextQuestion });
@@ -807,8 +933,16 @@ io.on("connection", (socket) => {
     } catch (e) {
       cue = `How about you, ${session.participantName}?`;
     }
-    await emitModeratorLine(cue);
     if (!session) return;
+    session.moderatorTypingIntroCue = true;
+    await emitModeratorLine(cue, { skipIfUserReplied: true });
+    if (!session) return;
+    session.moderatorTypingIntroCue = false;
+    if (session.userRepliedDuringIntroCue) {
+      session.userRepliedDuringIntroCue = false;
+      logLine("QUEUE", "intro cue cancelled: user already sent intro, advancing to study_goal");
+      return;
+    }
     session.waitingForHumanIntro = true;
     logLine("QUEUE", `waiting for human intro from ${session.participantName}`);
   }
@@ -960,6 +1094,11 @@ io.on("connection", (socket) => {
 
   socket.on("human_typing", ({ isTyping } = {}) => {
     if (isTyping !== undefined) logLine("TYPING", `human ${isTyping}`);
+    // If we scheduled "next question" after human_idle and user started typing again, cancel and wait for idle again
+    if (isTyping && session?.pendingAdvanceFromIdle) {
+      session.cancelAdvanceFromIdle = true;
+      logLine("QUEUE", "human_typing: cancelling scheduled advance, waiting for human_idle again");
+    }
   });
 
   socket.on("human_idle", async () => {
@@ -975,14 +1114,25 @@ io.on("connection", (socket) => {
     if (!co.humanRepliedThisTurn) return;
     logLine("QUEUE", `human_idle from ${session.participantName} (replied this turn), advancing`);
     co.waitingForHumanIdle = false;
-    await advanceCallOn();
+    session.cancelAdvanceFromIdle = false;
+    await advanceCallOn({ fromHumanIdle: true });
   });
 
   socket.on("human_message", async (data) => {
     const text = (data?.text || "").trim();
     if (!text || !session) return;
     logLine("HUMAN_INPUT", `[${session.participantName}] "${clip(text, 160)}"`);
+    const repliedWhileModeratorTypingIntroCue = !!session.moderatorTypingIntroCue;
+    if (repliedWhileModeratorTypingIntroCue) {
+      session.userRepliedDuringIntroCue = true;
+      session.moderatorTypingIntroCue = false;
+    }
     emitMessage(session.participantName, text);
+    if (repliedWhileModeratorTypingIntroCue) {
+      logLine("QUEUE", "human_message during intro cue: cancelling cue, advancing to study_goal");
+      await runStudyGoal();
+      return;
+    }
     if (session.waitingForHumanIntro) {
       session.waitingForHumanIntro = false;
       logLine("QUEUE", `human_message after intro: advancing to study_goal`);
@@ -993,6 +1143,12 @@ io.on("connection", (socket) => {
     if (session.callOnState?.waitingForHumanIdle) {
       session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", `human_message during call-on: ${session.participantName} replied, waiting for idle to advance`);
+    }
+    // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle
+    if (session.pendingAdvanceFromIdle) {
+      session.cancelAdvanceFromIdle = true;
+      if (session.callOnState) session.callOnState.humanRepliedThisTurn = true;
+      logLine("QUEUE", "human_message during scheduled advance: cancelling, waiting for human_idle again");
     }
   });
 
