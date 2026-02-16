@@ -114,12 +114,9 @@ const MODERATOR_SCRIPT = [
 ];
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
-const STUDY_GOAL_ACK_DELAY_MS_MIN = 2000;
-const STUDY_GOAL_ACK_DELAY_MS_MAX = 3000;
-const BOT_THINKING_DELAY_MS = 1000;
-const BOT_TYPING_DELAY_MS = 3200;
-const MODERATOR_THINKING_DELAY_MS = 1000;
-const MODERATOR_TYPING_DELAY_MS = 3200;
+const STUDY_GOAL_ACK_DELAY_MS = { min: 2000, max: 3000 };
+const THINKING_DELAY_MS = 1000;  // before showing typing indicator
+const TYPING_DELAY_MS = 3200;    // how long typing shows before message
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 let MODELS = { default: "gpt-4o-mini" };
@@ -159,10 +156,6 @@ function parseJsonArray(rawText, maxItems = 3) {
     if (result) return result;
   }
   return s ? [s.replace(/---/g, "").trim().slice(0, 220)] : [];
-}
-
-function timestamp() {
-  return Date.now();
 }
 
 // =====================
@@ -447,7 +440,7 @@ function createSession(participantName) {
 }
 
 function addMessage(session, name, text) {
-  const m = { name, text: String(text).trim(), ts: timestamp() };
+  const m = { name, text: String(text).trim(), ts: Date.now() };
   session.messages.push(m);
   return m;
 }
@@ -513,14 +506,12 @@ const io = new Server(httpServer, {
 
 const PORT = process.env.PORT || 3001;
 
+// =====================
+// Socket: per-connection state and helpers
+// =====================
 io.on("connection", (socket) => {
   let session = null;
   let botTypingTimeout = null;
-
-  function broadcast(msg) {
-    if (!session) return;
-    io.to(socket.id).emit(msg.event, msg.payload);
-  }
 
   function emitTyping(who, isTyping) {
     if (!session) return;
@@ -536,17 +527,51 @@ io.on("connection", (socket) => {
     io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
   }
 
+  function delay(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  function randomBetween(minMs, maxMs) {
+    return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+  }
+
+  /** If advance was cancelled (user started typing), roll back and wait for human_idle again. opts: "prev" | "last" | { rollbackIndex, clearRound }. */
+  function cancelAdvance(session, reason, opts = "prev") {
+    const rollbackIndex = typeof opts === "string" ? opts : opts.rollbackIndex ?? "prev";
+    const clearRound = typeof opts === "object" && opts.clearRound;
+    const co = session?.callOnState;
+    if (co) {
+      if (rollbackIndex === "prev") co.currentIndex -= 1;
+      else if (rollbackIndex === "last") co.currentIndex = co.order.length - 1;
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = true;
+      if (clearRound || rollbackIndex === "last") {
+        co.roundDone = false;
+        co.disagreementPhase = false;
+      }
+    }
+    if (session) {
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+    }
+    logLine("QUEUE", reason);
+  }
+
+  function wasAdvanceCancelled(session) {
+    return !!(session?.pendingAdvanceFromIdle && session?.cancelAdvanceFromIdle);
+  }
+
   async function emitModeratorLine(text, opts = {}) {
     const { skipIfUserReplied: skipIfUserRepliedDuringCue } = opts;
     if (!session) return;
     if (session.cancelAdvanceFromIdle) return;
     emitTyping(MODERATOR_NAME, true);
-    await new Promise((r) => setTimeout(r, MODERATOR_THINKING_DELAY_MS));
+    await delay(THINKING_DELAY_MS);
     if (session?.cancelAdvanceFromIdle) {
       emitTyping(MODERATOR_NAME, false);
       return;
     }
-    await new Promise((r) => setTimeout(r, MODERATOR_TYPING_DELAY_MS));
+    await delay(TYPING_DELAY_MS);
     if (!session) return;
     if (session.cancelAdvanceFromIdle) {
       emitTyping(MODERATOR_NAME, false);
@@ -571,15 +596,8 @@ io.on("connection", (socket) => {
     co.currentIndex += 1;
     co.waitingForHumanIdle = false;
 
-    if (fromHumanIdle && session?.cancelAdvanceFromIdle) {
-      co.currentIndex -= 1;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = true;
-      if (session) {
-        session.pendingAdvanceFromIdle = false;
-        session.cancelAdvanceFromIdle = false;
-      }
-      logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+    if (fromHumanIdle && wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
       return;
     }
 
@@ -601,26 +619,16 @@ io.on("connection", (socket) => {
       cue = `How about you, ${nextName}?`;
     }
     if (!session) return;
-    if (fromHumanIdle && session.cancelAdvanceFromIdle) {
-      co.currentIndex -= 1;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = true;
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+    if (fromHumanIdle && wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
       return;
     }
 
     if (isHuman) {
       logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${nextName}, waiting for human_idle`);
       await emitModeratorLine(cue);
-      if (fromHumanIdle && session?.cancelAdvanceFromIdle) {
-        co.currentIndex -= 1;
-        co.waitingForHumanIdle = true;
-        co.humanRepliedThisTurn = true;
-        session.pendingAdvanceFromIdle = false;
-        session.cancelAdvanceFromIdle = false;
-        logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+      if (fromHumanIdle && wasAdvanceCancelled(session)) {
+        cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
         return;
       }
       if (session) session.pendingAdvanceFromIdle = false;
@@ -632,13 +640,8 @@ io.on("connection", (socket) => {
 
     logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=${nextName}`);
     await emitModeratorLine(cue);
-    if (fromHumanIdle && session?.cancelAdvanceFromIdle) {
-      co.currentIndex -= 1;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = true;
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advanceCallOn cancelled (user typing), waiting for human_idle again");
+    if (fromHumanIdle && wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
       return;
     }
     if (session) session.pendingAdvanceFromIdle = false;
@@ -691,11 +694,11 @@ io.on("connection", (socket) => {
       if (!session) return;
       if (botTypingTimeout) clearTimeout(botTypingTimeout);
       await new Promise((r) => {
-        botTypingTimeout = setTimeout(r, BOT_THINKING_DELAY_MS);
+        botTypingTimeout = setTimeout(r, THINKING_DELAY_MS);
       });
       if (!session) return;
       emitTyping(botName, true);
-      await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+      await delay(TYPING_DELAY_MS);
       if (!session) return;
       emitTyping(botName, false);
       emitMessage(botName, bubbles[i]);
@@ -714,14 +717,8 @@ io.on("connection", (socket) => {
     const co = session.callOnState;
     if (co.disagreementPhase) return;
     // If user started typing after human_idle, cancel the scheduled next question and wait for idle again
-    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
-      co.currentIndex -= 1;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = true;
-      co.roundDone = false;
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advance cancelled (user typing in disagreement phase), waiting for human_idle again");
+    if (wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advance cancelled (user typing in disagreement phase), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
     co.disagreementPhase = true;
@@ -793,15 +790,8 @@ io.on("connection", (socket) => {
       advanceToNextQuestion();
       return;
     }
-    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
-      co.currentIndex -= 1;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = true;
-      co.roundDone = false;
-      co.disagreementPhase = false;
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advance cancelled (user typing), waiting for human_idle again");
+    if (wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advance cancelled (user typing), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
     logLine("QUEUE", `disagreements: ${toPrompt.map((p) => `${p.disagreedBy}->${p.disagreedWith}`).join(", ")}`);
@@ -811,18 +801,8 @@ io.on("connection", (socket) => {
   async function advanceToNextQuestion() {
     if (!session?.bigQuestions) return;
     const co = session.callOnState;
-    // If user started typing after human_idle, cancel and wait for next idle
-    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
-      if (co) {
-        co.currentIndex = co.order.length - 1;
-        co.waitingForHumanIdle = true;
-        co.humanRepliedThisTurn = true;
-        co.roundDone = false;
-        co.disagreementPhase = false;
-      }
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advanceToNextQuestion cancelled (user typing), waiting for human_idle again");
+    if (wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advanceToNextQuestion cancelled (user typing), waiting for human_idle again", "last");
       return;
     }
     // Don't clear pendingAdvanceFromIdle or update state yet — emit next question first so human_typing can cancel during moderator typing
@@ -838,21 +818,10 @@ io.on("connection", (socket) => {
     logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
     await emitModeratorLine(nextQuestion);
     if (!session) return;
-    // If user started typing during moderator typing, roll back and wait for human_idle again
-    if (session.cancelAdvanceFromIdle) {
-      if (co) {
-        co.currentIndex = co.order.length - 1;
-        co.waitingForHumanIdle = true;
-        co.humanRepliedThisTurn = true;
-        co.roundDone = false;
-        co.disagreementPhase = false;
-      }
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advanceToNextQuestion cancelled (user typing during mod line), waiting for human_idle again");
+    if (wasAdvanceCancelled(session)) {
+      cancelAdvance(session, "advanceToNextQuestion cancelled (user typing during mod line), waiting for human_idle again", "last");
       return;
     }
-    // Committed: persist state and clear pending
     session.scriptIndex = nextScriptIndex;
     session.pendingAdvanceFromIdle = false;
     co.question = nextQuestion;
@@ -877,15 +846,7 @@ io.on("connection", (socket) => {
     runBotTurn(firstBot, cue);
   }
 
-  function delay(ms) {
-    return new Promise((r) => setTimeout(r, ms));
-  }
-
-  function randomBetween(minMs, maxMs) {
-    return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-  }
-
-  /** Plays moderator intro messages with typing, then bot intros with typing, then cue. */
+  // --- Flow: intro → study goal → big questions (call-on + disagreement) ---
   async function runIntroWithTyping() {
     if (!session) return;
     const introSegment = MODERATOR_SCRIPT.find((s) => s.type === "intro");
@@ -906,9 +867,9 @@ io.on("connection", (socket) => {
       const staggerMs = randomBetween(1000, maxSec * 1000);
       return new Promise((resolve) => {
         setTimeout(async () => {
-          await new Promise((r) => setTimeout(r, BOT_THINKING_DELAY_MS));
+          await delay(THINKING_DELAY_MS);
           emitTyping(bot, true);
-          await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+          await delay(TYPING_DELAY_MS);
           emitTyping(bot, false);
           const options = BOT_INTROS[bot];
           const intro = options?.length
@@ -963,7 +924,7 @@ io.on("connection", (socket) => {
     const botIndex = Math.floor(Math.random() * bots.length);
     const bot = bots[botIndex];
     const ack = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
-    await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS_MIN, STUDY_GOAL_ACK_DELAY_MS_MAX));
+    await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS.min, STUDY_GOAL_ACK_DELAY_MS.max));
     emitMessage(bot, ack);
 
     logLine("QUEUE", "study_goal ack done, starting first big_question");
@@ -1053,11 +1014,11 @@ io.on("connection", (socket) => {
         if (!session) return;
         if (botTypingTimeout) clearTimeout(botTypingTimeout);
         await new Promise((r) => {
-          botTypingTimeout = setTimeout(r, BOT_THINKING_DELAY_MS);
+          botTypingTimeout = setTimeout(r, THINKING_DELAY_MS);
         });
         if (!session) return;
         emitTyping(botName, true);
-        await new Promise((r) => setTimeout(r, BOT_TYPING_DELAY_MS));
+        await delay(TYPING_DELAY_MS);
         if (!session) return;
         emitTyping(botName, false);
         emitMessage(botName, bubbles[i]);
