@@ -1,0 +1,185 @@
+2026-02-17 01:17:59.583 [SESSION_START] backend running on http://localhost:3001
+2026-02-17 01:17:59.584 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-17 01:18:01.599 [SESSION_START] id=M5h-DtNBdx30XZMlAAAB bots=Sid,Vivian,Jae
+2026-02-17 01:18:01.599 [SESSION_START] participant_name set to "Hailey"
+2026-02-17 01:18:01.599 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 01:18:01.599 [TYPING] moderator true
+2026-02-17 01:18:05.802 [TYPING] moderator false
+2026-02-17 01:18:05.804 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 01:18:05.808 [TYPING] moderator true
+2026-02-17 01:18:10.011 [TYPING] moderator false
+2026-02-17 01:18:10.016 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-17 01:18:10.019 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-17 01:18:12.578 [TYPING] bot=Sid true
+2026-02-17 01:18:12.953 [TYPING] bot=Vivian true
+2026-02-17 01:18:13.029 [TYPING] bot=Jae true
+2026-02-17 01:18:15.780 [TYPING] bot=Sid false
+2026-02-17 01:18:15.782 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-02-17 01:18:16.156 [TYPING] bot=Vivian false
+2026-02-17 01:18:16.156 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-17 01:18:16.230 [TYPING] bot=Jae false
+2026-02-17 01:18:16.231 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-17 01:18:17.367 [TYPING] moderator true
+2026-02-17 01:18:21.570 [TYPING] moderator false
+2026-02-17 01:18:21.571 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Hailey, could you introduce yourself next?"
+2026-02-17 01:18:21.572 [QUEUE] waiting for human intro from Hailey
+2026-02-17 01:19:32.203 [TYPING] human true
+2026-02-17 01:19:32.259 [TYPING] human true
+2026-02-17 01:19:32.413 [TYPING] human false
+2026-02-17 01:19:32.423 [HUMAN_INPUT] [Hailey] "hi"
+2026-02-17 01:19:32.424 [MESSAGE] [Hailey] "hi"
+2026-02-17 01:19:32.424 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-17 01:19:32.425 [TYPING] moderator true
+2026-02-17 01:19:36.627 [TYPING] moderator false
+2026-02-17 01:19:36.628 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study.
+We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-17 01:19:36.632 [TYPING] moderator true
+2026-02-17 01:19:40.834 [TYPING] moderator false
+2026-02-17 01:19:40.835 [MESSAGE] [Eunice] "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology."
+2026-02-17 01:19:43.379 [MESSAGE] [Sid] "Got it!"
+2026-02-17 01:19:43.380 [QUEUE] study_goal ack done, starting first big_question
+2026-02-17 01:19:43.380 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-17 01:19:43.380 [TYPING] moderator true
+2026-02-17 01:19:47.582 [TYPING] moderator false
+2026-02-17 01:19:47.583 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-17 01:19:49.500 [TYPING] moderator true
+2026-02-17 01:19:53.701 [TYPING] moderator false
+2026-02-17 01:19:53.702 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-17 01:19:53.702 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 01:19:53.702 [TYPING] bot=Sid true
+2026-02-17 01:19:55.478 [OPENAI_OK] bot=Sid rtt=1776ms raw="["Honestly, I’m skeptical at first. Big companies push updates that sometimes add bugs or unnecessar…"
+2026-02-17 01:19:55.479 [TYPING] bot=Sid false
+2026-02-17 01:19:56.481 [TYPING] bot=Sid true
+2026-02-17 01:19:59.684 [TYPING] bot=Sid false
+2026-02-17 01:19:59.686 [MESSAGE] [Sid] "Honestly, I’m skeptical at first. Big companies push updates that sometimes add bugs or unnecessary stuff rather than real improvements."
+2026-02-17 01:20:00.687 [TYPING] bot=Sid true
+2026-02-17 01:20:03.889 [TYPING] bot=Sid false
+2026-02-17 01:20:03.890 [MESSAGE] [Sid] "I usually wait to see if there’s positive feedback before trying new features. That way, I avoid breaking my workflow or dealing with surprises."
+2026-02-17 01:20:04.763 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-17 01:20:04.763 [TYPING] moderator true
+2026-02-17 01:20:08.965 [TYPING] moderator false
+2026-02-17 01:20:08.966 [MESSAGE] [Eunice] "Good approach, Sid. Vivian, how do you feel about trying new features when they’re introduced?"
+2026-02-17 01:20:08.969 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 01:20:08.970 [TYPING] bot=Vivian true
+2026-02-17 01:20:10.493 [OPENAI_OK] bot=Vivian rtt=1523ms raw="["i usually dive into new features pretty quickly especially if they seem like they'll save time or …"
+2026-02-17 01:20:10.494 [TYPING] bot=Vivian false
+2026-02-17 01:20:11.495 [TYPING] bot=Vivian true
+2026-02-17 01:20:14.697 [TYPING] bot=Vivian false
+2026-02-17 01:20:14.698 [MESSAGE] [Vivian] "i usually dive into new features pretty quickly especially if they seem like they'll save time or reduce hassle"
+2026-02-17 01:20:15.700 [TYPING] bot=Vivian true
+2026-02-17 01:20:18.901 [TYPING] bot=Vivian false
+2026-02-17 01:20:18.903 [MESSAGE] [Vivian] "i dont like wasting mental energy learning stuff that might be a dead end so if it looks clunky or overcomplicated i skip it"
+2026-02-17 01:20:19.905 [TYPING] bot=Vivian true
+2026-02-17 01:20:23.107 [TYPING] bot=Vivian false
+2026-02-17 01:20:23.107 [MESSAGE] [Vivian] "efficiency matters a lot to me so i guess im more about trying them fast and dropping what doesnt really improve my flow"
+2026-02-17 01:20:24.112 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-17 01:20:24.113 [TYPING] moderator true
+2026-02-17 01:20:28.316 [TYPING] moderator false
+2026-02-17 01:20:28.317 [MESSAGE] [Eunice] "Thanks for that, Vivian. Jae, how about you?"
+2026-02-17 01:20:28.317 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 01:20:28.317 [TYPING] bot=Jae true
+2026-02-17 01:20:30.320 [OPENAI_OK] bot=Jae rtt=2003ms raw="["I tend to be cautious when new features come out. I usually wait until I see clear, step-by-step g…"
+2026-02-17 01:20:30.321 [TYPING] bot=Jae false
+2026-02-17 01:20:31.323 [TYPING] bot=Jae true
+2026-02-17 01:20:34.524 [TYPING] bot=Jae false
+2026-02-17 01:20:34.526 [MESSAGE] [Jae] "I tend to be cautious when new features come out. I usually wait until I see clear, step-by-step guidance before trying them."
+2026-02-17 01:20:35.528 [TYPING] bot=Jae true
+2026-02-17 01:20:38.729 [TYPING] bot=Jae false
+2026-02-17 01:20:38.730 [MESSAGE] [Jae] "In my experience, jumping in too fast can mess up my workflow, especially when I use multiple devices that need syncing. Predictability matters to me."
+2026-02-17 01:20:39.262 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human Hailey, waiting for human_idle
+2026-02-17 01:20:39.263 [TYPING] moderator true
+2026-02-17 01:20:43.465 [TYPING] moderator false
+2026-02-17 01:20:43.466 [MESSAGE] [Eunice] "Got it, Jae. Hailey, how about you?"
+2026-02-17 01:20:48.971 [TYPING] human true
+2026-02-17 01:20:49.068 [TYPING] human true
+2026-02-17 01:20:49.174 [TYPING] human true
+2026-02-17 01:20:49.244 [TYPING] human true
+2026-02-17 01:20:49.336 [TYPING] human true
+2026-02-17 01:20:49.373 [TYPING] human true
+2026-02-17 01:20:49.473 [TYPING] human true
+2026-02-17 01:20:49.625 [TYPING] human true
+2026-02-17 01:20:49.705 [TYPING] human true
+2026-02-17 01:20:49.765 [TYPING] human true
+2026-02-17 01:20:49.840 [TYPING] human true
+2026-02-17 01:20:49.915 [TYPING] human true
+2026-02-17 01:20:50.027 [TYPING] human true
+2026-02-17 01:20:50.097 [TYPING] human true
+2026-02-17 01:20:50.184 [TYPING] human true
+2026-02-17 01:20:50.258 [TYPING] human true
+2026-02-17 01:20:50.335 [TYPING] human true
+2026-02-17 01:20:50.457 [TYPING] human true
+2026-02-17 01:20:51.265 [TYPING] human false
+2026-02-17 01:20:54.196 [TYPING] human true
+2026-02-17 01:20:54.323 [TYPING] human true
+2026-02-17 01:20:54.441 [TYPING] human true
+2026-02-17 01:20:54.490 [TYPING] human true
+2026-02-17 01:20:54.607 [TYPING] human true
+2026-02-17 01:20:54.668 [TYPING] human true
+2026-02-17 01:20:54.747 [TYPING] human true
+2026-02-17 01:20:54.790 [TYPING] human true
+2026-02-17 01:20:54.907 [TYPING] human false
+2026-02-17 01:20:54.920 [HUMAN_INPUT] [Hailey] "i just don't know about it"
+2026-02-17 01:20:54.920 [MESSAGE] [Hailey] "i just don't know about it"
+2026-02-17 01:20:54.920 [QUEUE] human_message during call-on: Hailey replied, waiting for idle to advance
+2026-02-17 01:20:58.911 [QUEUE] human_idle from Hailey (replied this turn), advancing
+2026-02-17 01:20:58.912 [QUEUE] call-on round done, running view-misalignment phase
+2026-02-17 01:20:58.912 [QUEUE] view-misalignment phase started
+2026-02-17 01:20:58.913 [DISAGREEMENT CHECK] Moderator question: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Sid: Honestly, I’m skeptical at first. Big companies push updates that sometimes add bugs or unnecessary stuff rather than real improvements. I usually wait to see if there’s positive feedback before trying new features. That way, I avoid breaking my workflow or dealing with surprises.
+Vivian: i usually dive into new features pretty quickly especially if they seem like they'll save time or reduce hassle i dont like wasting mental energy learning stuff that might be a dead end so if it looks clunky or overcomplicated i skip it efficiency matters a lot to me so i guess im more about trying them fast and dropping what doesnt really improve my flow
+Jae: I tend to be cautious when new features come out. I usually wait until I see clear, step-by-step guidance before trying them. In my experience, jumping in too fast can mess up my workflow, especially when I use multiple devices that need syncing. Predictability matters to me.
+Hailey: i just don't know about it
+2026-02-17 01:21:04.374 [DISAGREEMENT CHECK RESULT] [
+  {
+    "participantA": "Sid",
+    "participantB": "Vivian",
+    "differenceSummary": "Sid is skeptical and prefers to wait for positive feedback before trying new features, while Vivian tends to try new features quickly to improve efficiency and drops those that don't help."
+  },
+  {
+    "participantA": "Jae",
+    "participantB": "Vivian",
+    "differenceSummary": "Jae is cautious and waits for clear guidance before trying new features to avoid disrupting workflow, whereas Vivian tries new features quickly based on efficiency and ease of use."
+  },
+  {
+    "participantA": "Sid",
+    "participantB": "Jae",
+    "differenceSummary": "Sid waits based on community feedback, while Jae waits for clear step-by-step guidance, indicating different thresholds for trying new features."
+  },
+  {
+    "participantA": "Hailey",
+    "participantB": "Sid",
+    "differenceSummary": "Hailey expresses uncertainty or lack of opinion about new features, contrasting with Sid's defined cautious stance."
+  },
+  {
+    "participantA": "Hailey",
+    "participantB": "Vivian",
+    "differenceSummary": "Hailey is unsure about new features, contrasting with Vivian's proactive and selective approach to trying them."
+  },
+  {
+    "participantA": "Hailey",
+    "participantB": "Jae",
+    "differenceSummary": "Hailey expresses uncertainty,
+2026-02-17 01:21:04.375 [QUEUE] no view misalignments detected
+2026-02-17 01:21:04.375 [QUEUE] advancing to question 2/4: "Moving on, one of the new popular technology is generative A…"
+2026-02-17 01:21:04.376 [TYPING] moderator true
+2026-02-17 01:21:08.578 [TYPING] moderator false
+2026-02-17 01:21:08.579 [MESSAGE] [Eunice] "Moving on, one of the new popular technology is generative AI such as Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made …"
+2026-02-17 01:21:09.376 [TYPING] moderator true
+2026-02-17 01:21:13.579 [TYPING] moderator false
+2026-02-17 01:21:13.580 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-17 01:21:13.582 [OPENAI_REQ] bot=Sid question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-17 01:21:13.584 [TYPING] bot=Sid true
+2026-02-17 01:21:15.505 [OPENAI_OK] bot=Sid rtt=1923ms raw="["I've used generative AI tools like ChatGPT for quick info and scripting tasks, but I'm cautious ab…"
+2026-02-17 01:21:15.505 [TYPING] bot=Sid false
+2026-02-17 01:21:16.509 [TYPING] bot=Sid true
+2026-02-17 01:21:19.712 [TYPING] bot=Sid false
+2026-02-17 01:21:19.712 [MESSAGE] [Sid] "I've used generative AI tools like ChatGPT for quick info and scripting tasks, but I'm cautious about relying too much on them. They’re useful but not always ac…"

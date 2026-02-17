@@ -2,7 +2,7 @@
  * Study-chat server: moderator-led call-on flow.
  * No queue. Eunice (moderator) calls on one participant at a time; only that participant gets one OpenAI request (up to 3 messages).
  * Human turn: moderator advances only when human has sent at least 1 message AND is idle. Idle = no typing 3s with empty input, or no typing 7s with non-empty input.
- * After first round: detect disagreements, then prompt only the person who was disagreed WITH (one OpenAI call per).
+ * After first round: detect view misalignments (participantA/participantB/differenceSummary), then prompt each "person to ask" to respond (one OpenAI call per).
  */
 
 import "dotenv/config";
@@ -215,8 +215,9 @@ async function getBotResponse(botName, context) {
     max_tokens: maxBubbles <= 2 ? 400 : 600,
   });
 
-  logLine("OPENAI_USER_PROMPT", userPrompt);
-  logLine("OPENAI_SYS", sys);
+    //
+  // logLine("OPENAI_USER_PROMPT", userPrompt);
+  // logLine("OPENAI_SYS", sys);
 
   const raw =
     completion?.choices?.[0]?.message?.content ?? "";
@@ -233,13 +234,40 @@ async function detectDisagreements(moderatorQuestion, answersByPerson) {
     lines.push(`${name}: ${full}`);
   }
   const transcript = lines.join("\n");
+  logLine("DISAGREEMENT CHECK", transcript);
 
-  const sys = `You analyze discussion transcripts. Identify DISAGREEMENTS: one participant expressed a view and another disagreed, contradicted, or pushed back (even mildly).
-Output a JSON array. Each item: { "disagreedWith": "Name of person who was disagreed with", "disagreedBy": "Name of person who disagreed" }.
-Include: explicit disagreement ("I disagree", "I don't agree"), contradiction, pushback ("I see it differently", "not sure I agree", "I'd say the opposite"), or when someone corrects or challenges another's view. Use the EXACT names as they appear in the transcript.
-Do NOT include: simple agreements, neutral comments, or just adding on without disagreeing.
-If there are no disagreements, output: [].
-Output ONLY valid JSON, no other text.`;
+
+  const sys = `You analyze discussion transcripts.
+
+Your task is to identify VIEW MISALIGNMENT (stance divergence), not interpersonal disagreement.
+
+Definition of VIEW MISALIGNMENT:
+Two or more participants express substantively different positions, attitudes, or preferences about the same topic — even if they do not directly respond to each other.
+
+This includes:
+- One participant expressing strong resistance while another expresses openness.
+- One expressing skepticism while another expresses enthusiasm.
+- One prioritizing security while another dismisses security.
+- Any meaningful contrast in stance, even if no one explicitly disagrees.
+
+This does NOT require:
+- Direct replies to each other.
+- Explicit phrases like “I disagree”.
+- Pushback or confrontation.
+
+For every pair of participants whose views differ meaningfully, output an object:
+
+{
+  "participantA": "Name",
+  "participantB": "Name",
+  "differenceSummary": "Brief explanation of how their views differ"
+}
+
+Use EXACT names as they appear in the transcript.
+
+If all participants express essentially the same stance, output: [].
+
+Output ONLY valid JSON. No extra text.`;
 
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
@@ -247,31 +275,46 @@ Output ONLY valid JSON, no other text.`;
       { role: "system", content: sys },
       { role: "user", content: transcript },
     ],
-    max_tokens: 300,
+    max_tokens: 800,
   });
 
   const raw = completion?.choices?.[0]?.message?.content ?? "[]";
-  let arr;
-  try {
-    const s = raw.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-    const parsed = JSON.parse(s);
-    arr = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    arr = [];
-  }
+  logLine("DISAGREEMENT CHECK RESULT", raw);
+  let arr = parseDisagreementJson(raw);
   return arr.filter(
     (x) =>
-      x && typeof x.disagreedWith === "string" && typeof x.disagreedBy === "string"
+      x &&
+      typeof x.participantA === "string" &&
+      typeof x.participantB === "string" &&
+      typeof x.differenceSummary === "string"
   );
 }
 
+/** Parse view-misalignment JSON; on truncation, try closing the last string/array and re-parse. */
+function parseDisagreementJson(raw) {
+  const s = String(raw ?? "").replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+  if (!s.startsWith("[")) return [];
+  try {
+    const parsed = JSON.parse(s);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    const closed = s.replace(/,?\s*$/, "") + "\"]}";
+    try {
+      const parsed = JSON.parse(closed);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+}
+
 // =====================
-// Generate follow-up prompt text for disagreed-with person (OpenAI)
+// Generate follow-up prompt for disagreed-with person (view-misalignment wording)
 // =====================
-async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagreedByText, moderatorQuestion) {
-  const sys = `You generate one short moderator-style sentence to ask ${disagreedWith} to respond to ${disagreedBy}'s disagreement.
-Context: The moderator had asked: "${moderatorQuestion}". ${disagreedBy} said: "${(disagreedByText || "").slice(0, 300)}".
-Output ONLY one sentence (e.g. "${disagreedBy} disagreed with you—what do you think about their viewpoint?"). No quotes, no JSON.`;
+async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagreedByText, moderatorQuestion, differenceSummary) {
+  const sys = `You generate one short moderator-style sentence to ask ${disagreedWith} to respond to ${disagreedBy}'s differing view.
+Context: The moderator had asked: "${moderatorQuestion}". View misalignment: ${(differenceSummary || "").slice(0, 200)}. ${disagreedBy} said: "${(disagreedByText || "").slice(0, 200)}".
+Output ONLY one sentence (e.g. "${disagreedBy} had a different take—what do you think?"). No quotes, no JSON.`;
 
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
@@ -283,7 +326,7 @@ Output ONLY one sentence (e.g. "${disagreedBy} disagreed with you—what do you 
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
-  return text || `${disagreedBy} disagreed with you. What do you think about their viewpoint?`;
+  return text || `${disagreedBy} had a different view. What do you think?`;
 }
 
 /** True if the message is asking what passkey is (so moderator should explain briefly). */
@@ -416,10 +459,10 @@ function createSession(participantName) {
     moderatorName: MODERATOR_NAME,
     bots,
     participantName,
-    messages: [], // intro messages sent with typing after join, not pre-loaded
+    messages: [],
     idleEmptyMs: IDLE_EMPTY_MS,
     idleTypingMs: IDLE_TYPING_MS,
-    scriptIndex: 0, // 0=intro, 1=study_goal, 2..=big_question
+    scriptIndex: 0,
     waitingForHumanIntro: false,
     moderatorTypingIntroCue: false,
     userRepliedDuringIntroCue: false,
@@ -602,9 +645,8 @@ io.on("connection", (socket) => {
     }
 
     if (co.currentIndex >= co.order.length) {
-      // Keep pendingAdvanceFromIdle set so human_typing can cancel before next question is shown
       co.roundDone = true;
-      logLine("QUEUE", "call-on round done, running disagreement phase");
+      logLine("QUEUE", "call-on round done, running view-misalignment phase");
       runDisagreementPhase();
       return;
     }
@@ -718,11 +760,11 @@ io.on("connection", (socket) => {
     if (co.disagreementPhase) return;
     // If user started typing after human_idle, cancel the scheduled next question and wait for idle again
     if (wasAdvanceCancelled(session)) {
-      cancelAdvance(session, "advance cancelled (user typing in disagreement phase), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
+      cancelAdvance(session, "advance cancelled (user typing in view-misalignment phase), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
     co.disagreementPhase = true;
-    logLine("QUEUE", "disagreement phase started");
+    logLine("QUEUE", "view-misalignment phase started");
 
     // Only include messages from the current round (after moderator asked this question)
     const questionPrefix = String(co.question).slice(0, 80);
@@ -747,7 +789,7 @@ io.on("connection", (socket) => {
     try {
       pairs = await detectDisagreements(co.question, answersByPerson);
     } catch (e) {
-      console.error("Disagreement detection error", e?.message || e);
+      console.error("View-misalignment detection error", e?.message || e);
     }
     if (!session) return;
     if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
@@ -765,28 +807,30 @@ io.on("connection", (socket) => {
     const participantName = session.participantName;
     const toPrompt = [];
     for (const p of pairs) {
-      let who = String(p.disagreedWith).trim();
-      let by = String(p.disagreedBy).trim();
-      // Normalize names (model may return different casing)
-      const matchedBotWho = botNames.find((b) => b.toLowerCase() === who.toLowerCase());
-      if (!matchedBotWho || matchedBotWho.toLowerCase() === by.toLowerCase()) continue;
+      let who = String(p.participantA ?? "").trim();
+      let by = String(p.participantB ?? "").trim();
+      const differenceSummary = String(p.differenceSummary ?? "").trim();
+      const matchedBotWho = botNames.find((b) => b.toLowerCase() === who.toLowerCase())
+        || (participantName && participantName.toLowerCase() === who.toLowerCase() ? participantName : null);
+      const matchedBotBy = botNames.find((b) => b.toLowerCase() === by.toLowerCase())
+        || (participantName && participantName.toLowerCase() === by.toLowerCase() ? participantName : null);
+      if (!matchedBotWho || !matchedBotBy || matchedBotWho === matchedBotBy) continue;
       who = matchedBotWho;
-      const byBot = botNames.find((b) => b.toLowerCase() === by.toLowerCase());
-      const byHuman = participantName && participantName.toLowerCase() === by.toLowerCase();
-      by = byBot || (byHuman ? participantName : by);
-      if (who === by) continue;
-      const byText = Array.isArray(answersByPerson[by]) ? answersByPerson[by].join(" ") : (answersByPerson[by] ?? "");
+      by = matchedBotBy;
+      const disagreedByText = Array.isArray(answersByPerson[by]) ? answersByPerson[by].join(" ") : (answersByPerson[by] ?? "");
       toPrompt.push({
         disagreedWith: who,
         disagreedBy: by,
-        disagreedByText: byText,
+        disagreedByText,
+        differenceSummary,
+        isHuman: who === participantName,
       });
     }
 
     co.disagreementQueue = toPrompt;
     co.disagreementIndex = 0;
     if (toPrompt.length === 0) {
-      logLine("QUEUE", "no disagreements detected");
+      logLine("QUEUE", "no view misalignments detected");
       advanceToNextQuestion();
       return;
     }
@@ -794,7 +838,10 @@ io.on("connection", (socket) => {
       cancelAdvance(session, "advance cancelled (user typing), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
-    logLine("QUEUE", `disagreements: ${toPrompt.map((p) => `${p.disagreedBy}->${p.disagreedWith}`).join(", ")}`);
+    session.lastViewMisalignments = toPrompt.map((p) => ({ participantA: p.disagreedWith, participantB: p.disagreedBy, differenceSummary: p.differenceSummary }));
+    for (const p of toPrompt) {
+      logLine("QUEUE", `view misalignment: ${p.disagreedWith} ↔ ${p.disagreedBy} — ${p.differenceSummary}`);
+    }
     runNextDisagreementFollowUp();
   }
 
@@ -978,14 +1025,23 @@ io.on("connection", (socket) => {
         item.disagreedWith,
         item.disagreedBy,
         item.disagreedByText,
-        co.question
+        co.question,
+        item.differenceSummary
       );
     } catch (e) {
-      followUpText = `${item.disagreedBy} disagreed with you. What do you think about their viewpoint?`;
+      followUpText = `${item.disagreedBy} had a different view. What do you think?`;
     }
     if (!session) return;
     await emitModeratorLine(followUpText);
     if (!session) return;
+
+    if (item.isHuman) {
+      session.waitingForHumanDisagreementResponse = true;
+      session.humanRepliedDisagreementTurn = false;
+      logLine("QUEUE", `view-misalignment follow-up: waiting for human ${session.participantName} to respond (${item.differenceSummary})`);
+      return;
+    }
+
     const previousAnswers = session.messages
       .filter((m) => co.order.includes(m.name))
       .map((m) => ({ name: m.name, text: m.text }));
@@ -1003,7 +1059,7 @@ io.on("connection", (socket) => {
     try {
       bubbles = await getBotResponse(botName, context);
     } catch (e) {
-      console.error("OpenAI disagreement follow-up error", e?.message || e);
+      console.error("OpenAI view-misalignment follow-up error", e?.message || e);
       bubbles = ["(I'll think about it.)"];
     }
     if (!session) return;
@@ -1032,7 +1088,6 @@ io.on("connection", (socket) => {
     runNextDisagreementFollowUp();
   }
 
-  // --- Socket handlers ---
   socket.on("participant_name", (data) => {
     const name = (data?.name || "").trim() || "Participant";
     session = createSession(name);
@@ -1067,6 +1122,13 @@ io.on("connection", (socket) => {
       logLine("QUEUE", `human_idle after intro from ${session.participantName}`);
       session.waitingForHumanIntro = false;
       await runStudyGoal();
+      return;
+    }
+    if (session?.waitingForHumanDisagreementResponse && session.humanRepliedDisagreementTurn) {
+      logLine("QUEUE", `human_idle after view-misalignment response from ${session.participantName}, advancing to next follow-up or question`);
+      session.waitingForHumanDisagreementResponse = false;
+      session.humanRepliedDisagreementTurn = false;
+      await runNextDisagreementFollowUp();
       return;
     }
     const co = session?.callOnState;
@@ -1104,6 +1166,10 @@ io.on("connection", (socket) => {
     if (session.callOnState?.waitingForHumanIdle) {
       session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", `human_message during call-on: ${session.participantName} replied, waiting for idle to advance`);
+    }
+    if (session.waitingForHumanDisagreementResponse) {
+      session.humanRepliedDisagreementTurn = true;
+      logLine("QUEUE", `human_message: replied to view-misalignment follow-up, waiting for idle to advance`);
     }
     // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle
     if (session.pendingAdvanceFromIdle) {
