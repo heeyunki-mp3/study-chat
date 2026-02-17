@@ -2,7 +2,7 @@
  * Study-chat server: moderator-led call-on flow.
  * No queue. Eunice (moderator) calls on one participant at a time; only that participant gets one OpenAI request (up to 3 messages).
  * Human turn: moderator advances only when human has sent at least 1 message AND is idle. Idle = no typing 3s with empty input, or no typing 7s with non-empty input.
- * After first round: detect view misalignments (participantA/participantB/differenceSummary), then prompt each "person to ask" to respond (one OpenAI call per).
+ * After first round: detect view misalignments (disagreedWith/disagreedBy/differenceSummary), then prompt each "person to ask" to respond (one OpenAI call per).
  */
 
 import "dotenv/config";
@@ -215,10 +215,6 @@ async function getBotResponse(botName, context) {
     max_tokens: maxBubbles <= 2 ? 400 : 600,
   });
 
-    //
-  // logLine("OPENAI_USER_PROMPT", userPrompt);
-  // logLine("OPENAI_SYS", sys);
-
   const raw =
     completion?.choices?.[0]?.message?.content ?? "";
   return parseJsonArray(raw, maxBubbles);
@@ -243,6 +239,7 @@ Your task is to identify VIEW MISALIGNMENT (stance divergence), not interpersona
 
 Definition of VIEW MISALIGNMENT:
 Two or more participants express substantively different positions, attitudes, or preferences about the same topic — even if they do not directly respond to each other.
+However, if one participant explicitly said that they don't know or don't have an opinion, that does not count as a view misalignment.
 
 This includes:
 - One participant expressing strong resistance while another expresses openness.
@@ -255,13 +252,17 @@ This does NOT require:
 - Explicit phrases like “I disagree”.
 - Pushback or confrontation.
 
+Make sure that disagreedWith is the participant who went before disagreedBy in the transcript.
+
 For every pair of participants whose views differ meaningfully, output an object:
 
 {
-  "participantA": "Name",
-  "participantB": "Name",
+  "disagreedWith": "Name",
+  "disagreedBy": "Name",
   "differenceSummary": "Brief explanation of how their views differ"
 }
+
+Output a separate object for each pair whose views differ. If multiple participants share a similar stance that contrasts with another participant, include each such pair (e.g. if both Sid and Jae contrast with Vivian, output both Sid–Vivian and Jae–Vivian).
 
 Use EXACT names as they appear in the transcript.
 
@@ -284,8 +285,8 @@ Output ONLY valid JSON. No extra text.`;
   return arr.filter(
     (x) =>
       x &&
-      typeof x.participantA === "string" &&
-      typeof x.participantB === "string" &&
+      typeof x.disagreedWith === "string" &&
+      typeof x.disagreedBy === "string" &&
       typeof x.differenceSummary === "string"
   );
 }
@@ -313,7 +314,7 @@ function parseDisagreementJson(raw) {
 // =====================
 async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagreedByText, moderatorQuestion, differenceSummary) {
   const fallback = `${disagreedBy} had a different view—${disagreedWith}, what do you think?`;
-  const sys = `You generate one short human moderator-style sentence. You must ask ${disagreedWith} (and only ${disagreedWith}) to respond. The sentence must be directed AT ${disagreedWith}—do NOT address ${disagreedBy} as the person being asked (${disagreedBy} already gave their view). End with or clearly name ${disagreedWith}, e.g. "... what do you think, ${disagreedWith} or ... ${disagreedWith}, can you share your thoughts on ${disagreedBy}'s idea?" You may tell them that it is idea from ${disagreedBy}. Do not use any separators like --- or similar or any markdown or formatting."
+  const sys = `You generate one short human moderator-style sentence. You must ask ${disagreedWith} (and only ${disagreedWith}) to respond. The sentence must be directed AT ${disagreedWith}—do NOT address ${disagreedBy} as the person being asked (${disagreedBy} already gave their view). End with or clearly name ${disagreedWith}, e.g. "... what do you think, ${disagreedWith} or ... ${disagreedWith}, can you share your thoughts on ${disagreedBy}'s idea?" You may tell them that it is idea from ${disagreedBy}. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting."
 Context: The moderator had asked: "${moderatorQuestion}". View misalignment: ${(differenceSummary || "").slice(0, 200)}. ${disagreedBy} said: "${(disagreedByText || "").slice(0, 200)}".
 Output ONLY one sentence. No quotes, no JSON.`;
 
@@ -334,7 +335,7 @@ Output ONLY one sentence. No quotes, no JSON.`;
 
 /** Generate a short moderator summary of the round discussion (OpenAI). */
 async function generateRoundSummary(question, roundTranscript) {
-  const sys = `You are a discussion moderator wrapping up a conversation. In 2–3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it concise and natural. Output ONLY the summary, no labels or quotes. Thank them before you start the summary.`;
+  const sys = `You are a discussion moderator wrapping up a conversation. In 2–3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it concise and natural. Output ONLY the summary, no labels or quotes. Thank them before you start the summary. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
     messages: [
@@ -348,16 +349,41 @@ async function generateRoundSummary(question, roundTranscript) {
   return text || "Thanks everyone for sharing your views on that.";
 }
 
-/** True if the message is asking what passkey is (so moderator should explain briefly). */
-function isAskingWhatPasskeyIs(text) {
+/** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. Uses OpenAI for classification. */
+async function isAskingWhatPasskeyIs(text, roundQuestion) {
   if (!text || typeof text !== "string") return false;
-  const t = text.toLowerCase().trim();
-  return (
-    t.includes("what is passkey") ||
-    t.includes("what's passkey") ||
-    t.includes("what is a passkey") ||
-    (t.includes("passkey") && (t.includes("what is") || t.includes("not sure what") || t.includes("don't know what")))
-  );
+  const trimmed = String(text).trim();
+  if (!trimmed) return false;
+
+  const sys = `You classify whether a chat message indicates the participant does NOT know what passkey is and is asking for an explanation.
+
+Return ONLY valid JSON: {"asksWhatPasskeyIs": true} or {"asksWhatPasskeyIs": false}.
+
+True when: the participant explicitly or implicitly asks what passkey is, expresses confusion, says they don't know, or requests an explanation.
+False when: they already know, are sharing an opinion, or are not seeking an explanation.`;
+
+  const user = `Round context: ${String(roundQuestion ?? "").slice(0, 150)}
+
+Participant message: "${trimmed.slice(0, 300)}"
+
+Does this message indicate the participant doesn't know what passkey is and is asking for an explanation?`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user },
+      ],
+      max_tokens: 20,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = JSON.parse(raw || "{}");
+    return !!parsed.asksWhatPasskeyIs;
+  } catch (e) {
+    console.error("isAskingWhatPasskeyIs error", e?.message || e);
+    return false;
+  }
 }
 
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
@@ -371,7 +397,7 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
     (q) => q && String(q).toLowerCase().includes("passkey")
   );
   const participantAskedWhatPasskeyIs =
-    roundIsAboutPasskey && latestMessage && isAskingWhatPasskeyIs(latestMessage.text);
+    roundIsAboutPasskey && latestMessage && (await isAskingWhatPasskeyIs(latestMessage.text, roundQuestion ?? bigQuestion));
 
   const sys = `You are a discussion moderator. Generate ONE short message that:
 1. Briefly acknowledges the latest message (one short phrase, then cue the next person)
@@ -434,6 +460,30 @@ function getLastParticipantMessage(session) {
   return null;
 }
 
+/** Index in session.messages where the current round's answers start (after moderator asked the question). */
+function getRoundStartIndex(session, questionPrefix) {
+  if (!session?.messages?.length) return 0;
+  const prefix = String(questionPrefix ?? "").slice(0, 80);
+  for (let i = 0; i < session.messages.length; i++) {
+    const m = session.messages[i];
+    if (m?.name === MODERATOR_NAME && String(m?.text || "").includes(prefix)) return i + 1;
+  }
+  return 0;
+}
+
+/** Reset call-on state for a new question. */
+function resetCallOnState(co, question) {
+  co.question = question;
+  co.whoSpoke = [];
+  co.currentIndex = 0;
+  co.waitingForHumanIdle = false;
+  co.humanRepliedThisTurn = false;
+  co.roundDone = false;
+  co.disagreementPhase = false;
+  co.disagreementQueue = [];
+  co.disagreementIndex = 0;
+}
+
 /** True if the human has sent any message after Eunice's last "To start us off" intro prompt. */
 function hasHumanRepliedAfterIntroPrompt(session) {
   if (!session?.messages?.length || !session.participantName) return false;
@@ -479,8 +529,6 @@ function createSession(participantName) {
     bots,
     participantName,
     messages: [],
-    idleEmptyMs: IDLE_EMPTY_MS,
-    idleTypingMs: IDLE_TYPING_MS,
     scriptIndex: 0,
     waitingForHumanIntro: false,
     moderatorTypingIntroCue: false,
@@ -523,6 +571,17 @@ const ROUND_ACK_TEXTS = [
   "Thanks everyone! It is helpful to hear from each of you.",
   "Got it, thanks everyone for sharing!"
 ];
+
+/** Pick a random round-ack text not yet used this session; mark it used. Returns text. */
+function pickRoundAckText(session) {
+  const used = session.usedRoundAckIndices ?? [];
+  const available = ROUND_ACK_TEXTS.map((_, i) => i).filter((i) => !used.includes(i));
+  const idx = available.length > 0
+    ? available[Math.floor(Math.random() * available.length)]
+    : Math.floor(Math.random() * ROUND_ACK_TEXTS.length);
+  session.usedRoundAckIndices = [...used, idx];
+  return ROUND_ACK_TEXTS[idx];
+}
 
 // =====================
 // Bot intro messages (one chosen at random per bot)
@@ -590,7 +649,7 @@ const PORT = process.env.PORT || 3001;
 // =====================
 io.on("connection", (socket) => {
   let session = null;
-  let botTypingTimeout = null;
+  const botTypingTimeoutRef = { current: null };
 
   function emitTyping(who, isTyping) {
     if (!session) return;
@@ -612,6 +671,28 @@ io.on("connection", (socket) => {
 
   function randomBetween(minMs, maxMs) {
     return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+  }
+
+  /** Emit a bot's message bubbles with typing indicators; uses timeoutRef so disconnect can clear pending delay. */
+  async function emitBotBubblesWithTyping(botName, bubbles, timeoutRef) {
+    if (!Array.isArray(bubbles)) return;
+    for (let i = 0; i < bubbles.length; i++) {
+      if (!session) return;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      await new Promise((r) => {
+        timeoutRef.current = setTimeout(r, THINKING_DELAY_MS);
+      });
+      if (!session) return;
+      emitTyping(botName, true);
+      await delay(TYPING_DELAY_MS);
+      if (!session) return;
+      emitTyping(botName, false);
+      emitMessage(botName, bubbles[i]);
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   }
 
   /** If advance was cancelled (user started typing), roll back and wait for human_idle again. opts: "prev" | "last" | { rollbackIndex, clearRound }. */
@@ -683,14 +764,7 @@ io.on("connection", (socket) => {
     if (co.currentIndex >= co.order.length) {
       co.roundDone = true;
       logLine("QUEUE", "call-on round done, acknowledging then view-misalignment phase");
-      const used = session.usedRoundAckIndices ?? [];
-      const available = ROUND_ACK_TEXTS.map((_, i) => i).filter((i) => !used.includes(i));
-      const idx = available.length > 0
-        ? available[Math.floor(Math.random() * available.length)]
-        : Math.floor(Math.random() * ROUND_ACK_TEXTS.length);
-      session.usedRoundAckIndices = [...used, idx];
-      const ackText = ROUND_ACK_TEXTS[idx];
-      await emitModeratorLine(ackText);
+      await emitModeratorLine(pickRoundAckText(session));
       if (!session) return;
       runDisagreementPhase();
       return;
@@ -777,23 +851,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    for (let i = 0; i < bubbles.length; i++) {
-      if (!session) return;
-      if (botTypingTimeout) clearTimeout(botTypingTimeout);
-      await new Promise((r) => {
-        botTypingTimeout = setTimeout(r, THINKING_DELAY_MS);
-      });
-      if (!session) return;
-      emitTyping(botName, true);
-      await delay(TYPING_DELAY_MS);
-      if (!session) return;
-      emitTyping(botName, false);
-      emitMessage(botName, bubbles[i]);
-    }
-    if (botTypingTimeout) {
-      clearTimeout(botTypingTimeout);
-      botTypingTimeout = null;
-    }
+    await emitBotBubblesWithTyping(botName, bubbles, botTypingTimeoutRef);
     if (!session) return;
     co.whoSpoke.push(botName);
     await advanceCallOn();
@@ -811,16 +869,7 @@ io.on("connection", (socket) => {
     co.disagreementPhase = true;
     logLine("QUEUE", "view-misalignment phase started");
 
-    // Only include messages from the current round (after moderator asked this question)
-    const questionPrefix = String(co.question).slice(0, 80);
-    let roundStartIndex = 0;
-    for (let i = 0; i < session.messages.length; i++) {
-      const m = session.messages[i];
-      if (m?.name === MODERATOR_NAME && String(m?.text || "").includes(questionPrefix)) {
-        roundStartIndex = i + 1;
-      }
-    }
-
+    const roundStartIndex = getRoundStartIndex(session, co.question);
     const answersByPerson = {};
     for (const name of co.order) {
       const msgs = session.messages
@@ -851,30 +900,39 @@ io.on("connection", (socket) => {
     const botNames = session.bots;
     const participantName = session.participantName;
     const toPrompt = [];
+    const resolve = (name) =>
+      botNames.find((b) => b.toLowerCase() === String(name ?? "").trim().toLowerCase())
+        || (participantName && participantName.toLowerCase() === String(name ?? "").trim().toLowerCase() ? participantName : null);
+
     for (const p of pairs) {
-      let who = String(p.participantA ?? "").trim();
-      let by = String(p.participantB ?? "").trim();
+      const disagreedWith = resolve(p.disagreedWith);
+      const disagreedBy = resolve(p.disagreedBy);
+      if (!disagreedWith || !disagreedBy || disagreedWith === disagreedBy) continue;
       const differenceSummary = String(p.differenceSummary ?? "").trim();
-      const matchedBotWho = botNames.find((b) => b.toLowerCase() === who.toLowerCase())
-        || (participantName && participantName.toLowerCase() === who.toLowerCase() ? participantName : null);
-      const matchedBotBy = botNames.find((b) => b.toLowerCase() === by.toLowerCase())
-        || (participantName && participantName.toLowerCase() === by.toLowerCase() ? participantName : null);
-      if (!matchedBotWho || !matchedBotBy || matchedBotWho === matchedBotBy) continue;
-      who = matchedBotWho;
-      by = matchedBotBy;
-      const disagreedByText = Array.isArray(answersByPerson[by]) ? answersByPerson[by].join(" ") : (answersByPerson[by] ?? "");
+      const disagreedByText = Array.isArray(answersByPerson[disagreedBy])
+        ? answersByPerson[disagreedBy].join(" ")
+        : (answersByPerson[disagreedBy] ?? "");
       toPrompt.push({
-        disagreedWith: who,
-        disagreedBy: by,
+        disagreedWith,
+        disagreedBy,
         disagreedByText,
         differenceSummary,
-        isHuman: who === participantName,
+        isHuman: disagreedWith === participantName,
       });
     }
 
-    co.disagreementQueue = toPrompt;
+    // Deduplicate by (disagreedWith, disagreedBy) so we don't ask the same pair twice
+    const seen = new Set();
+    const deduped = toPrompt.filter((p) => {
+      const key = `${p.disagreedWith}\0${p.disagreedBy}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    co.disagreementQueue = deduped;
     co.disagreementIndex = 0;
-    if (toPrompt.length === 0) {
+    if (deduped.length === 0) {
       logLine("QUEUE", "no view misalignments detected");
       runRoundSummary();
       return;
@@ -883,8 +941,8 @@ io.on("connection", (socket) => {
       cancelAdvance(session, "advance cancelled (user typing), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
-    session.lastViewMisalignments = toPrompt.map((p) => ({ participantA: p.disagreedWith, participantB: p.disagreedBy, differenceSummary: p.differenceSummary }));
-    for (const p of toPrompt) {
+    session.lastViewMisalignments = deduped.map((p) => ({ disagreedWith: p.disagreedWith, disagreedBy: p.disagreedBy, differenceSummary: p.differenceSummary }));
+    for (const p of deduped) {
       logLine("QUEUE", `view misalignment: ${p.disagreedWith} ↔ ${p.disagreedBy} — ${p.differenceSummary}`);
     }
     runNextDisagreementFollowUp();
@@ -893,14 +951,7 @@ io.on("connection", (socket) => {
   async function runRoundSummary() {
     if (!session?.callOnState) return;
     const co = session.callOnState;
-    const questionPrefix = String(co.question).slice(0, 80);
-    let roundStartIndex = 0;
-    for (let i = 0; i < session.messages.length; i++) {
-      const m = session.messages[i];
-      if (m?.name === MODERATOR_NAME && String(m?.text || "").includes(questionPrefix)) {
-        roundStartIndex = i + 1;
-      }
-    }
+    const roundStartIndex = getRoundStartIndex(session, co.question);
     const roundMessages = session.messages.slice(roundStartIndex).filter((m) => m?.name && m?.text);
     const roundTranscript = roundMessages.map((m) => `${m.name}: ${m.text}`).join("\n");
     let summary;
@@ -913,7 +964,7 @@ io.on("connection", (socket) => {
     if (!session) return;
     await emitModeratorLine(summary);
     if (!session) return;
-    advanceToNextQuestion();
+    await advanceToNextQuestion();
   }
 
   async function advanceToNextQuestion() {
@@ -942,15 +993,7 @@ io.on("connection", (socket) => {
     }
     session.scriptIndex = nextScriptIndex;
     session.pendingAdvanceFromIdle = false;
-    co.question = nextQuestion;
-    co.whoSpoke = [];
-    co.currentIndex = 0;
-    co.waitingForHumanIdle = false;
-    co.humanRepliedThisTurn = false;
-    co.roundDone = false;
-    co.disagreementPhase = false;
-    co.disagreementQueue = [];
-    co.disagreementIndex = 0;
+    resetCallOnState(co, nextQuestion);
 
     const firstBot = co.order[0];
     let cue;
@@ -1055,15 +1098,7 @@ io.on("connection", (socket) => {
     session.scriptIndex = 2;
     session.waitingForHumanIntro = false;
     const co = session.callOnState;
-    co.question = session.bigQuestions[0];
-    co.whoSpoke = [];
-    co.currentIndex = 0;
-    co.waitingForHumanIdle = false;
-    co.humanRepliedThisTurn = false;
-    co.roundDone = false;
-    co.disagreementPhase = false;
-    co.disagreementQueue = [];
-    co.disagreementIndex = 0;
+    resetCallOnState(co, session.bigQuestions[0]);
     const firstBot = co.order[0];
     logLine("QUEUE", `first big_question: "${clip(co.question, 60)}"`);
     await emitModeratorLine(co.question);
@@ -1079,10 +1114,17 @@ io.on("connection", (socket) => {
     runBotTurn(firstBot, cue);
   }
 
+  const MAX_DISAGREEMENT_FOLLOWUPS = 20;
+
   async function runNextDisagreementFollowUp() {
     if (!session?.callOnState) return;
     const co = session.callOnState;
     if (co.disagreementIndex >= co.disagreementQueue.length) {
+      runRoundSummary();
+      return;
+    }
+    if (co.disagreementIndex >= MAX_DISAGREEMENT_FOLLOWUPS) {
+      logLine("QUEUE", "max disagreement follow-ups reached, running round summary");
       runRoundSummary();
       return;
     }
@@ -1100,7 +1142,7 @@ io.on("connection", (socket) => {
         item.differenceSummary
       );
     } catch (e) {
-      followUpText = `${item.disagreedBy} had a different view. What do you think?`;
+      followUpText = `${item.disagreedBy} had a different view. ${item.disagreedWith}, what do you think?`;
     }
     if (!session) return;
     await emitModeratorLine(followUpText);
@@ -1137,26 +1179,10 @@ io.on("connection", (socket) => {
     emitTyping(botName, false);
 
     if (Array.isArray(bubbles) && bubbles.length > 0) {
-      for (let i = 0; i < bubbles.length; i++) {
-        if (!session) return;
-        if (botTypingTimeout) clearTimeout(botTypingTimeout);
-        await new Promise((r) => {
-          botTypingTimeout = setTimeout(r, THINKING_DELAY_MS);
-        });
-        if (!session) return;
-        emitTyping(botName, true);
-        await delay(TYPING_DELAY_MS);
-        if (!session) return;
-        emitTyping(botName, false);
-        emitMessage(botName, bubbles[i]);
-      }
-    }
-    if (botTypingTimeout) {
-      clearTimeout(botTypingTimeout);
-      botTypingTimeout = null;
+      await emitBotBubblesWithTyping(botName, bubbles, botTypingTimeoutRef);
     }
     if (!session) return;
-    runNextDisagreementFollowUp();
+    await runNextDisagreementFollowUp();
   }
 
   socket.on("participant_name", (data) => {
@@ -1168,8 +1194,8 @@ io.on("connection", (socket) => {
       sessionId: session.sessionId,
       moderatorName: session.moderatorName,
       bots: session.bots,
-      idleEmptyMs: session.idleEmptyMs,
-      idleTypingMs: session.idleTypingMs,
+      idleEmptyMs: IDLE_EMPTY_MS,
+      idleTypingMs: IDLE_TYPING_MS,
     });
     socket.emit(
       "seed",
@@ -1199,6 +1225,8 @@ io.on("connection", (socket) => {
       logLine("QUEUE", `human_idle after view-misalignment response from ${session.participantName}, advancing to next follow-up or question`);
       session.waitingForHumanDisagreementResponse = false;
       session.humanRepliedDisagreementTurn = false;
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
       await runNextDisagreementFollowUp();
       return;
     }
@@ -1253,8 +1281,8 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     if (session) logLine("DISCONNECT", `id=${socket.id}`);
     session = null;
-    if (botTypingTimeout) clearTimeout(botTypingTimeout);
-    botTypingTimeout = null;
+    if (botTypingTimeoutRef.current) clearTimeout(botTypingTimeoutRef.current);
+    botTypingTimeoutRef.current = null;
   });
 });
 
