@@ -54,6 +54,18 @@ function clip(s, maxLen = 120) {
   return t.length <= maxLen ? t : t.slice(0, maxLen) + "…";
 }
 
+/** Append one line to the session transcript file (same pattern as log file). */
+function appendTranscriptLine(session, name, text) {
+  if (!session?.sessionId) return;
+  const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.sessionId}.txt`);
+  const line = `${name}: ${String(text ?? "").trim()}\n`;
+  try {
+    fs.appendFileSync(transcriptPath, line, "utf8");
+  } catch (e) {
+    console.error("Transcript append failed", e?.message);
+  }
+}
+
 function logLine(tag, message) {
   const ts = new Date().toISOString().replace("T", " ").slice(0, 23);
   const line = `${ts} [${tag}] ${message}\n`;
@@ -83,8 +95,8 @@ const MODERATOR_SCRIPT = [
   {
     type: "study_goal",
     messages: [
-      "Before we dive in, just a quick note about the goal of this study.\nWe are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
-      "There are no right or wrong answers here. Feel free to talk openly about your own experiences with technology.",
+      "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
+      "We will go one at a time, so please respond when I call your name. \n\nThere are no right or wrong answers. Just share your honest experiences with technology",
     ],
   },
   {
@@ -247,12 +259,15 @@ This includes:
 - One prioritizing security while another dismisses security.
 - Any meaningful contrast in stance, even if no one explicitly disagrees.
 
+This does NOT include (do NOT count as view misalignment):
+- One of the participants expressing confusion, no strong stance, or no opinion, ambivalent, or neutral.
+
 This does NOT require:
 - Direct replies to each other.
 - Explicit phrases like “I disagree”.
 - Pushback or confrontation.
 
-Make sure that disagreedWith is the participant who went before disagreedBy in the transcript.
+The value of disagreedWith must refer to a participant who spoke before the participant identified as disagreedBy in the transcript order.
 
 For every pair of participants whose views differ meaningfully, output an object:
 
@@ -471,6 +486,11 @@ function getRoundStartIndex(session, questionPrefix) {
   return 0;
 }
 
+/** True if the given name is the human participant (case-insensitive). */
+function isHumanTurn(session, name) {
+  return !!(session?.participantName && name && String(name).toLowerCase() === session.participantName.toLowerCase());
+}
+
 /** Reset call-on state for a new question. */
 function resetCallOnState(co, question) {
   co.question = question;
@@ -547,12 +567,15 @@ function createSession(participantName) {
     },
     bigQuestions,
     usedRoundAckIndices: [],
+    roundTranscript: [],  // Messages for current big-question round; reset each new question
   };
 }
 
 function addMessage(session, name, text) {
   const m = { name, text: String(text).trim(), ts: Date.now() };
   session.messages.push(m);
+  if (session.roundTranscript) session.roundTranscript.push({ name, text: m.text });
+  appendTranscriptLine(session, name, m.text);
   return m;
 }
 
@@ -771,7 +794,7 @@ io.on("connection", (socket) => {
     }
 
     const nextName = co.order[co.currentIndex];
-    const isHuman = nextName === session.participantName;
+    const isHuman = isHumanTurn(session, nextName);
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
@@ -869,12 +892,12 @@ io.on("connection", (socket) => {
     co.disagreementPhase = true;
     logLine("QUEUE", "view-misalignment phase started");
 
-    const roundStartIndex = getRoundStartIndex(session, co.question);
+    // Build answersByPerson from roundTranscript (participant messages only; moderator question passed separately)
     const answersByPerson = {};
     for (const name of co.order) {
-      const msgs = session.messages
-        .slice(roundStartIndex)
-        .filter((m) => m.name === name && !m.text.startsWith("How about you") && m.text !== co.question);
+      const msgs = (session.roundTranscript || []).filter(
+        (m) => m.name === name && m.name !== MODERATOR_NAME && m.text !== co.question
+      );
       const relevant = msgs.slice(-5).map((m) => m.text);
       if (relevant.length) answersByPerson[name] = relevant;
     }
@@ -904,10 +927,19 @@ io.on("connection", (socket) => {
       botNames.find((b) => b.toLowerCase() === String(name ?? "").trim().toLowerCase())
         || (participantName && participantName.toLowerCase() === String(name ?? "").trim().toLowerCase() ? participantName : null);
 
+    const orderIndex = (name) => {
+      const i = co.order.indexOf(name);
+      return i >= 0 ? i : 999;
+    };
+
     for (const p of pairs) {
-      const disagreedWith = resolve(p.disagreedWith);
-      const disagreedBy = resolve(p.disagreedBy);
-      if (!disagreedWith || !disagreedBy || disagreedWith === disagreedBy) continue;
+      let a = resolve(p.disagreedWith);
+      let b = resolve(p.disagreedBy);
+      if (!a || !b || a === b) continue;
+      // disagreedWith must be the one who spoke first; swap if LLM got order wrong
+      if (orderIndex(a) > orderIndex(b)) [a, b] = [b, a];
+      const disagreedWith = a;
+      const disagreedBy = b;
       const differenceSummary = String(p.differenceSummary ?? "").trim();
       const disagreedByText = Array.isArray(answersByPerson[disagreedBy])
         ? answersByPerson[disagreedBy].join(" ")
@@ -985,6 +1017,7 @@ io.on("connection", (socket) => {
     }
     const nextQuestion = session.bigQuestions[bigQuestionIndex];
     logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
+    session.roundTranscript = [];
     await emitModeratorLine(nextQuestion);
     if (!session) return;
     if (wasAdvanceCancelled(session)) {
@@ -993,18 +1026,26 @@ io.on("connection", (socket) => {
     }
     session.scriptIndex = nextScriptIndex;
     session.pendingAdvanceFromIdle = false;
+    // Rotate call-on order by 1 so each question starts with a different person
+    co.order = [...co.order.slice(1), co.order[0]];
     resetCallOnState(co, nextQuestion);
 
-    const firstBot = co.order[0];
+    const firstSpeaker = co.order[0];
     let cue;
     try {
-      cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: nextQuestion });
+      cue = await generateModeratorCue(null, firstSpeaker, { isFirstInRound: true, bigQuestion: nextQuestion });
     } catch (e) {
-      cue = `Let's start with ${firstBot}.`;
+      cue = `Let's start with ${firstSpeaker}.`;
     }
     await emitModeratorLine(cue);
     if (!session) return;
-    runBotTurn(firstBot, cue);
+    if (isHumanTurn(session, firstSpeaker)) {
+      logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${firstSpeaker}, waiting for human_idle`);
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = false;
+      return;
+    }
+    runBotTurn(firstSpeaker, cue);
   }
 
   // --- Flow: intro → study goal → big questions (call-on + disagreement) ---
@@ -1092,26 +1133,33 @@ io.on("connection", (socket) => {
     startFirstBigQuestion();
   }
 
-  /** Start first big_question: set question, emit moderator, run first bot. */
+  /** Start first big_question: set question, emit moderator, then first speaker (human or bot). */
   async function startFirstBigQuestion() {
     if (!session) return;
     session.scriptIndex = 2;
     session.waitingForHumanIntro = false;
+    session.roundTranscript = [];
     const co = session.callOnState;
     resetCallOnState(co, session.bigQuestions[0]);
-    const firstBot = co.order[0];
+    const firstSpeaker = co.order[0];
     logLine("QUEUE", `first big_question: "${clip(co.question, 60)}"`);
     await emitModeratorLine(co.question);
     if (!session) return;
     let cue;
     try {
-      cue = await generateModeratorCue(null, firstBot, { isFirstInRound: true, bigQuestion: co.question });
+      cue = await generateModeratorCue(null, firstSpeaker, { isFirstInRound: true, bigQuestion: co.question });
     } catch (e) {
-      cue = `Let's start with ${firstBot}.`;
+      cue = `Let's start with ${firstSpeaker}.`;
     }
     await emitModeratorLine(cue);
     if (!session) return;
-    runBotTurn(firstBot, cue);
+    if (isHumanTurn(session, firstSpeaker)) {
+      logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${firstSpeaker}, waiting for human_idle`);
+      co.waitingForHumanIdle = true;
+      co.humanRepliedThisTurn = false;
+      return;
+    }
+    runBotTurn(firstSpeaker, cue);
   }
 
   const MAX_DISAGREEMENT_FOLLOWUPS = 20;
@@ -1279,7 +1327,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if (session) logLine("DISCONNECT", `id=${socket.id}`);
+    if (session) {
+      logLine("DISCONNECT", `id=${socket.id}`);
+    }
     session = null;
     if (botTypingTimeoutRef.current) clearTimeout(botTypingTimeoutRef.current);
     botTypingTimeoutRef.current = null;
