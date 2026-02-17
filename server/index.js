@@ -312,9 +312,10 @@ function parseDisagreementJson(raw) {
 // Generate follow-up prompt for disagreed-with person (view-misalignment wording)
 // =====================
 async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagreedByText, moderatorQuestion, differenceSummary) {
-  const sys = `You generate one short moderator-style sentence to ask ${disagreedWith} to respond to ${disagreedBy}'s differing view.
+  const fallback = `${disagreedBy} had a different view—${disagreedWith}, what do you think?`;
+  const sys = `You generate one short human moderator-style sentence. You must ask ${disagreedWith} (and only ${disagreedWith}) to respond. The sentence must be directed AT ${disagreedWith}—do NOT address ${disagreedBy} as the person being asked (${disagreedBy} already gave their view). End with or clearly name ${disagreedWith}, e.g. "... what do you think, ${disagreedWith} or ... ${disagreedWith}, can you share your thoughts on ${disagreedBy}'s idea?" You may tell them that it is idea from ${disagreedBy}. Do not use any separators like --- or similar or any markdown or formatting."
 Context: The moderator had asked: "${moderatorQuestion}". View misalignment: ${(differenceSummary || "").slice(0, 200)}. ${disagreedBy} said: "${(disagreedByText || "").slice(0, 200)}".
-Output ONLY one sentence (e.g. "${disagreedBy} had a different take—what do you think?"). No quotes, no JSON.`;
+Output ONLY one sentence. No quotes, no JSON.`;
 
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
@@ -326,7 +327,25 @@ Output ONLY one sentence (e.g. "${disagreedBy} had a different take—what do yo
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
-  return text || `${disagreedBy} had a different view. What do you think?`;
+  const out = text || fallback;
+  if (!out.toLowerCase().includes(disagreedWith.toLowerCase())) return fallback;
+  return out;
+}
+
+/** Generate a short moderator summary of the round discussion (OpenAI). */
+async function generateRoundSummary(question, roundTranscript) {
+  const sys = `You are a discussion moderator wrapping up a conversation. In 2–3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it concise and natural. Output ONLY the summary, no labels or quotes. Thank them before you start the summary.`;
+  const completion = await openai.chat.completions.create({
+    model: MODELS.default,
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: `Question: ${question}\n\nDiscussion:\n${roundTranscript}` },
+    ],
+    max_tokens: 200,
+  });
+
+  const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
+  return text || "Thanks everyone for sharing your views on that.";
 }
 
 /** True if the message is asking what passkey is (so moderator should explain briefly). */
@@ -479,6 +498,7 @@ function createSession(participantName) {
       disagreementIndex: 0,
     },
     bigQuestions,
+    usedRoundAckIndices: [],
   };
 }
 
@@ -487,6 +507,22 @@ function addMessage(session, name, text) {
   session.messages.push(m);
   return m;
 }
+
+// =====================
+// Round-complete acknowledgment (one random per round, no repeat in session)
+// =====================
+const ROUND_ACK_TEXTS = [
+  "Ok! Thanks everyone for sharing!",
+  "Thanks for sharing, everyone!",
+  "Really appreciate everyone's input.",
+  "Thanks everyone! great to hear from all of you.",
+  "Thanks you all for those answers!",
+  "Got it, thanks for sharing!",
+  "Appreciate y'all sharing your thoughts.",
+  "Thanks for sharing your views :)",
+  "Thanks everyone! It is helpful to hear from each of you.",
+  "Got it, thanks everyone for sharing!"
+];
 
 // =====================
 // Bot intro messages (one chosen at random per bot)
@@ -646,7 +682,16 @@ io.on("connection", (socket) => {
 
     if (co.currentIndex >= co.order.length) {
       co.roundDone = true;
-      logLine("QUEUE", "call-on round done, running view-misalignment phase");
+      logLine("QUEUE", "call-on round done, acknowledging then view-misalignment phase");
+      const used = session.usedRoundAckIndices ?? [];
+      const available = ROUND_ACK_TEXTS.map((_, i) => i).filter((i) => !used.includes(i));
+      const idx = available.length > 0
+        ? available[Math.floor(Math.random() * available.length)]
+        : Math.floor(Math.random() * ROUND_ACK_TEXTS.length);
+      session.usedRoundAckIndices = [...used, idx];
+      const ackText = ROUND_ACK_TEXTS[idx];
+      await emitModeratorLine(ackText);
+      if (!session) return;
       runDisagreementPhase();
       return;
     }
@@ -831,7 +876,7 @@ io.on("connection", (socket) => {
     co.disagreementIndex = 0;
     if (toPrompt.length === 0) {
       logLine("QUEUE", "no view misalignments detected");
-      advanceToNextQuestion();
+      runRoundSummary();
       return;
     }
     if (wasAdvanceCancelled(session)) {
@@ -843,6 +888,32 @@ io.on("connection", (socket) => {
       logLine("QUEUE", `view misalignment: ${p.disagreedWith} ↔ ${p.disagreedBy} — ${p.differenceSummary}`);
     }
     runNextDisagreementFollowUp();
+  }
+
+  async function runRoundSummary() {
+    if (!session?.callOnState) return;
+    const co = session.callOnState;
+    const questionPrefix = String(co.question).slice(0, 80);
+    let roundStartIndex = 0;
+    for (let i = 0; i < session.messages.length; i++) {
+      const m = session.messages[i];
+      if (m?.name === MODERATOR_NAME && String(m?.text || "").includes(questionPrefix)) {
+        roundStartIndex = i + 1;
+      }
+    }
+    const roundMessages = session.messages.slice(roundStartIndex).filter((m) => m?.name && m?.text);
+    const roundTranscript = roundMessages.map((m) => `${m.name}: ${m.text}`).join("\n");
+    let summary;
+    try {
+      summary = await generateRoundSummary(co.question, roundTranscript);
+    } catch (e) {
+      console.error("Round summary error", e?.message || e);
+      summary = "Thanks everyone for sharing your views on that.";
+    }
+    if (!session) return;
+    await emitModeratorLine(summary);
+    if (!session) return;
+    advanceToNextQuestion();
   }
 
   async function advanceToNextQuestion() {
@@ -1012,7 +1083,7 @@ io.on("connection", (socket) => {
     if (!session?.callOnState) return;
     const co = session.callOnState;
     if (co.disagreementIndex >= co.disagreementQueue.length) {
-      advanceToNextQuestion();
+      runRoundSummary();
       return;
     }
 
