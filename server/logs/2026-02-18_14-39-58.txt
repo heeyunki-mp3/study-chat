@@ -1,0 +1,154 @@
+2026-02-18 19:39:58.812 [SESSION_START] backend running on http://localhost:3001
+2026-02-18 19:39:58.813 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-18 19:40:53.955 [SESSION_START] id=NwfNbg_wa_By41zdAAAB bots=Sid,Vivian,Jae
+2026-02-18 19:40:53.955 [SESSION_START] participant_name set to "Alana"
+2026-02-18 19:40:53.956 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:40:53.956 [TYPING] moderator true
+2026-02-18 19:40:58.159 [TYPING] moderator false
+2026-02-18 19:40:58.163 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-18 19:40:58.163 [TYPING] moderator true
+2026-02-18 19:41:02.366 [TYPING] moderator false
+2026-02-18 19:41:02.368 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-18 19:41:02.368 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-18 19:41:04.956 [TYPING] bot=Vivian true
+2026-02-18 19:41:05.256 [TYPING] bot=Sid true
+2026-02-18 19:41:06.541 [TYPING] bot=Jae true
+2026-02-18 19:41:08.158 [TYPING] bot=Vivian false
+2026-02-18 19:41:08.159 [MESSAGE] [Vivian] "Hey my name is Vivian. I live in Atlanta"
+2026-02-18 19:41:08.458 [TYPING] bot=Sid false
+2026-02-18 19:41:08.459 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-18 19:41:09.744 [TYPING] bot=Jae false
+2026-02-18 19:41:09.746 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-18 19:41:10.392 [TYPING] human true
+2026-02-18 19:41:10.487 [TYPING] human true
+2026-02-18 19:41:10.594 [TYPING] human true
+2026-02-18 19:41:10.780 [TYPING] human true
+2026-02-18 19:41:10.827 [TYPING] human true
+2026-02-18 19:41:10.953 [TYPING] human true
+2026-02-18 19:41:11.027 [TYPING] human true
+2026-02-18 19:41:11.086 [TYPING] human true
+2026-02-18 19:41:11.891 [TYPING] human false
+2026-02-18 19:41:12.157 [TYPING] human true
+2026-02-18 19:41:12.282 [TYPING] moderator true
+2026-02-18 19:41:12.397 [TYPING] human true
+2026-02-18 19:41:12.911 [TYPING] human true
+2026-02-18 19:41:13.149 [TYPING] human true
+2026-02-18 19:41:13.262 [TYPING] human true
+2026-02-18 19:41:13.632 [TYPING] human true
+2026-02-18 19:41:13.913 [TYPING] human true
+2026-02-18 19:41:14.079 [TYPING] human true
+2026-02-18 19:41:14.164 [TYPING] human true
+2026-02-18 19:41:14.170 [TYPING] human true
+2026-02-18 19:41:14.240 [TYPING] human true
+2026-02-18 19:41:14.282 [TYPING] human true
+2026-02-18 19:41:14.647 [TYPING] human true
+2026-02-18 19:41:14.673 [TYPING] human true
+2026-02-18 19:41:14.770 [TYPING] human true
+2026-02-18 19:41:14.882 [TYPING] human true
+2026-02-18 19:41:15.005 [TYPING] human true
+2026-02-18 19:41:15.159 [TYPING] human true
+2026-02-18 19:41:15.274 [TYPING] human true
+2026-02-18 19:41:15.685 [TYPING] human true
+2026-02-18 19:41:15.830 [TYPING] human true
+2026-02-18 19:41:15.963 [TYPING] human true
+2026-02-18 19:41:15.994 [TYPING] human true
+2026-02-18 19:41:16.059 [TYPING] human true
+2026-02-18 19:41:16.233 [TYPING] human true
+2026-02-18 19:41:16.247 [TYPING] human true
+2026-02-18 19:41:16.375 [TYPING] human true
+2026-02-18 19:41:16.484 [TYPING] moderator false
+2026-02-18 19:41:16.485 [MESSAGE] [Eunice] "Thanks for that, Jae. Alana, would you like to introduce yourself?"
+2026-02-18 19:41:16.487 [QUEUE] waiting for human intro from Alana
+2026-02-18 19:41:16.896 [TYPING] human true
+2026-02-18 19:41:17.031 [TYPING] human true
+2026-02-18 19:41:17.834 [TYPING] human false
+2026-02-18 19:41:17.962 [TYPING] human true
+2026-02-18 19:41:18.500 [TYPING] human true
+2026-02-18 19:41:18.650 [TYPING] human true
+2026-02-18 19:41:18.786 [TYPING] human true
+2026-02-18 19:41:18.903 [TYPING] human true
+2026-02-18 19:41:19.042 [TYPING] human true
+2026-02-18 19:41:19.193 [TYPING] human true
+2026-02-18 19:41:19.324 [TYPING] human true
+2026-02-18 19:41:19.474 [TYPING] human true
+2026-02-18 19:41:19.606 [TYPING] human true
+2026-02-18 19:41:19.772 [TYPING] human true
+2026-02-18 19:41:20.227 [TYPING] human true
+2026-02-18 19:41:20.314 [TYPING] human true
+2026-02-18 19:41:20.606 [TYPING] human true
+2026-02-18 19:41:20.844 [TYPING] human true
+2026-02-18 19:41:21.204 [TYPING] human true
+2026-02-18 19:41:21.367 [TYPING] human true
+2026-02-18 19:41:21.467 [TYPING] human true
+2026-02-18 19:41:21.515 [TYPING] human true
+2026-02-18 19:41:21.588 [TYPING] human true
+2026-02-18 19:41:21.710 [TYPING] human true
+2026-02-18 19:41:21.781 [TYPING] human true
+2026-02-18 19:41:21.887 [TYPING] human true
+2026-02-18 19:41:22.133 [TYPING] human true
+2026-02-18 19:41:22.231 [TYPING] human true
+2026-02-18 19:41:22.357 [TYPING] human true
+2026-02-18 19:41:22.411 [TYPING] human true
+2026-02-18 19:41:22.515 [TYPING] human true
+2026-02-18 19:41:22.623 [TYPING] human true
+2026-02-18 19:41:22.667 [TYPING] human true
+2026-02-18 19:41:22.742 [TYPING] human true
+2026-02-18 19:41:22.802 [TYPING] human true
+2026-02-18 19:41:22.893 [TYPING] human true
+2026-02-18 19:41:23.015 [TYPING] human true
+2026-02-18 19:41:23.135 [TYPING] human true
+2026-02-18 19:41:23.677 [TYPING] human true
+2026-02-18 19:41:23.858 [TYPING] human true
+2026-02-18 19:41:24.116 [TYPING] human true
+2026-02-18 19:41:24.417 [TYPING] human false
+2026-02-18 19:41:24.423 [HUMAN_INPUT] [Alana] "Hi I am Alan! Nice to meet you all :)"
+2026-02-18 19:41:24.424 [QUEUE] intro: using introduced name "Alan" (NamePage had "Alana")
+2026-02-18 19:41:24.425 [MESSAGE] [Alan] "Hi I am Alan! Nice to meet you all :)"
+2026-02-18 19:41:25.684 [QUEUE] human_message: response not substantive (1/4), waiting for idle then 5s before elaborate
+2026-02-18 19:41:33.422 [TYPING] moderator true
+2026-02-18 19:41:33.665 [TYPING] human true
+2026-02-18 19:41:33.738 [TYPING] human true
+2026-02-18 19:41:34.542 [TYPING] human false
+2026-02-18 19:41:34.579 [TYPING] human true
+2026-02-18 19:41:34.732 [TYPING] human true
+2026-02-18 19:41:34.807 [TYPING] human true
+2026-02-18 19:41:35.213 [TYPING] human true
+2026-02-18 19:41:35.332 [TYPING] human true
+2026-02-18 19:41:35.589 [TYPING] human true
+2026-02-18 19:41:35.741 [TYPING] human true
+2026-02-18 19:41:35.861 [TYPING] human true
+2026-02-18 19:41:35.914 [TYPING] human true
+2026-02-18 19:41:36.024 [TYPING] human true
+2026-02-18 19:41:36.078 [TYPING] human true
+2026-02-18 19:41:36.156 [TYPING] human true
+2026-02-18 19:41:36.960 [TYPING] human false
+2026-02-18 19:41:37.239 [TYPING] human true
+2026-02-18 19:41:37.352 [TYPING] human true
+2026-02-18 19:41:37.397 [TYPING] human true
+2026-02-18 19:41:37.506 [TYPING] human true
+2026-02-18 19:41:37.625 [TYPING] moderator false
+2026-02-18 19:41:37.627 [MESSAGE] [Eunice] "Could you elaborate? Please share your thoughts on the question."
+2026-02-18 19:41:37.628 [QUEUE] elaboration prompt sent after 5s idle, nudge counter reset
+2026-02-18 19:41:37.631 [TYPING] human true
+2026-02-18 19:41:37.711 [TYPING] human true
+2026-02-18 19:41:37.882 [TYPING] human true
+2026-02-18 19:41:37.937 [TYPING] human true
+2026-02-18 19:41:38.742 [TYPING] human false
+2026-02-18 19:41:38.959 [TYPING] human false
+2026-02-18 19:41:38.967 [HUMAN_INPUT] [Alan] "I am from new york"
+2026-02-18 19:41:38.968 [QUEUE] intro: using introduced name "From" (NamePage had "Alana")
+2026-02-18 19:41:38.969 [MESSAGE] [From] "I am from new york"
+2026-02-18 19:41:39.441 [QUEUE] human_message: response not substantive (2/4), waiting for idle then 5s before elaborate
+2026-02-18 19:41:42.862 [TYPING] human true
+2026-02-18 19:41:42.947 [TYPING] human true
+2026-02-18 19:41:43.070 [TYPING] human true
+2026-02-18 19:41:43.173 [TYPING] human true
+2026-02-18 19:41:43.328 [TYPING] human true
+2026-02-18 19:41:43.414 [TYPING] human true
+2026-02-18 19:41:43.703 [TYPING] human true
+2026-02-18 19:41:43.774 [TYPING] human true
+2026-02-18 19:41:43.892 [TYPING] human false
+2026-02-18 19:41:43.897 [HUMAN_INPUT] [From] "wait wut"
+2026-02-18 19:41:43.898 [MESSAGE] [From] "wait wut"
+2026-02-18 19:41:46.271 [QUEUE] human_message: response not substantive (3/4), waiting for idle then 5s before elaborate
+2026-02-18 19:41:52.897 [TYPING] moderator true

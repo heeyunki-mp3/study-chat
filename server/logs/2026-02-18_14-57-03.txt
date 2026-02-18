@@ -1,0 +1,122 @@
+2026-02-18 19:57:03.639 [SESSION_START] backend running on http://localhost:3001
+2026-02-18 19:57:03.639 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-18 19:57:05.818 [SESSION_START] id=FVI-TSzSpVq6fnhTAAAB bots=Sid,Vivian,Jae
+2026-02-18 19:57:05.819 [SESSION_START] participant_name set to "Alana"
+2026-02-18 19:57:05.819 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:57:05.819 [TYPING] moderator true
+2026-02-18 19:57:08.066 [TYPING] human true
+2026-02-18 19:57:08.236 [TYPING] human true
+2026-02-18 19:57:08.446 [TYPING] human true
+2026-02-18 19:57:08.591 [TYPING] human true
+2026-02-18 19:57:08.743 [TYPING] human true
+2026-02-18 19:57:08.863 [TYPING] human true
+2026-02-18 19:57:09.668 [TYPING] human false
+2026-02-18 19:57:09.757 [TYPING] human true
+2026-02-18 19:57:09.885 [TYPING] human true
+2026-02-18 19:57:10.022 [TYPING] moderator false
+2026-02-18 19:57:10.025 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-18 19:57:10.026 [TYPING] moderator true
+2026-02-18 19:57:10.078 [TYPING] human true
+2026-02-18 19:57:10.168 [TYPING] human true
+2026-02-18 19:57:10.302 [TYPING] human true
+2026-02-18 19:57:10.503 [TYPING] human true
+2026-02-18 19:57:10.586 [TYPING] human true
+2026-02-18 19:57:10.644 [TYPING] human true
+2026-02-18 19:57:11.195 [TYPING] human true
+2026-02-18 19:57:11.594 [TYPING] human true
+2026-02-18 19:57:11.779 [TYPING] human true
+2026-02-18 19:57:12.104 [TYPING] human false
+2026-02-18 19:57:12.112 [HUMAN_INPUT] [Alana] "Hiiii everyone :)"
+2026-02-18 19:57:12.113 [MESSAGE] [Alana] "Hiiii everyone :)"
+2026-02-18 19:57:14.229 [TYPING] moderator false
+2026-02-18 19:57:14.232 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-18 19:57:14.232 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-18 19:57:16.309 [TYPING] bot=Sid true
+2026-02-18 19:57:17.085 [TYPING] bot=Vivian true
+2026-02-18 19:57:18.219 [TYPING] bot=Jae true
+2026-02-18 19:57:19.512 [TYPING] bot=Sid false
+2026-02-18 19:57:19.513 [MESSAGE] [Sid] "Sid. I am an IT support technician in New Jersey."
+2026-02-18 19:57:20.288 [TYPING] bot=Vivian false
+2026-02-18 19:57:20.290 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-18 19:57:21.421 [TYPING] bot=Jae false
+2026-02-18 19:57:21.424 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-18 19:57:22.175 [TYPING] moderator true
+2026-02-18 19:57:26.284 [TYPING] human true
+2026-02-18 19:57:26.364 [TYPING] human true
+2026-02-18 19:57:26.378 [TYPING] moderator false
+2026-02-18 19:57:26.379 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Alana, could you introduce yourself?"
+2026-02-18 19:57:26.379 [QUEUE] waiting for human intro from Alana
+2026-02-18 19:57:27.168 [TYPING] human false
+2026-02-18 19:57:27.483 [TYPING] human true
+2026-02-18 19:57:27.644 [TYPING] human true
+2026-02-18 19:57:27.781 [TYPING] human true
+2026-02-18 19:57:28.278 [TYPING] human true
+2026-02-18 19:57:28.391 [TYPING] human true
+2026-02-18 19:57:28.481 [TYPING] human true
+2026-02-18 19:57:28.652 [TYPING] human true
+2026-02-18 19:57:28.720 [TYPING] human true
+2026-02-18 19:57:28.813 [TYPING] human true
+2026-02-18 19:57:28.916 [TYPING] human true
+2026-02-18 19:57:28.975 [TYPING] human true
+2026-02-18 19:57:29.282 [TYPING] human true
+2026-02-18 19:57:29.686 [TYPING] human true
+2026-02-18 19:57:29.773 [TYPING] human true
+2026-02-18 19:57:29.973 [TYPING] human false
+2026-02-18 19:57:29.981 [HUMAN_INPUT] [Alana] "Hi I am Ana"
+2026-02-18 19:57:29.982 [QUEUE] intro: using introduced name "Ana" (NamePage had "Alana")
+2026-02-18 19:57:29.982 [MESSAGE] [Ana] "Hi I am Ana"
+2026-02-18 19:57:30.501 [HUMAN] human_message: response is substantive, advancing
+2026-02-18 19:57:30.501 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-18 19:57:30.501 [TYPING] moderator true
+2026-02-18 19:57:31.311 [DISCONNECT] id=FVI-TSzSpVq6fnhTAAAB
+2026-02-18 19:57:31.366 [SESSION_START] id=SfUrdGI-1O5vcunGAAAD bots=Sid,Vivian,Jae
+2026-02-18 19:57:31.366 [SESSION_START] participant_name set to "Alana"
+2026-02-18 19:57:31.366 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:57:31.367 [TYPING] moderator true
+2026-02-18 19:57:32.824 [TYPING] human true
+2026-02-18 19:57:32.937 [TYPING] human true
+2026-02-18 19:57:33.075 [TYPING] human true
+2026-02-18 19:57:33.221 [TYPING] human true
+2026-02-18 19:57:33.254 [TYPING] human true
+2026-02-18 19:57:33.783 [TYPING] human true
+2026-02-18 19:57:33.916 [TYPING] human true
+2026-02-18 19:57:34.247 [TYPING] human true
+2026-02-18 19:57:34.376 [TYPING] human true
+2026-02-18 19:57:34.592 [TYPING] human true
+2026-02-18 19:57:34.726 [TYPING] human true
+2026-02-18 19:57:34.875 [TYPING] human true
+2026-02-18 19:57:35.088 [TYPING] human true
+2026-02-18 19:57:35.139 [TYPING] human true
+2026-02-18 19:57:35.218 [TYPING] human true
+2026-02-18 19:57:35.322 [TYPING] human true
+2026-02-18 19:57:35.395 [TYPING] human true
+2026-02-18 19:57:35.488 [TYPING] human true
+2026-02-18 19:57:35.569 [TYPING] moderator false
+2026-02-18 19:57:35.571 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-18 19:57:35.571 [TYPING] moderator true
+2026-02-18 19:57:35.589 [TYPING] human true
+2026-02-18 19:57:35.669 [TYPING] human true
+2026-02-18 19:57:35.988 [TYPING] human true
+2026-02-18 19:57:36.111 [TYPING] human true
+2026-02-18 19:57:36.286 [TYPING] human true
+2026-02-18 19:57:37.090 [TYPING] human false
+2026-02-18 19:57:39.774 [TYPING] moderator false
+2026-02-18 19:57:39.777 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-18 19:57:39.777 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-18 19:57:40.725 [TYPING] human false
+2026-02-18 19:57:40.733 [HUMAN_INPUT] [Alana] "Hiii!! I am ana :)"
+2026-02-18 19:57:40.734 [MESSAGE] [Alana] "Hiii!! I am ana :)"
+2026-02-18 19:57:41.923 [TYPING] bot=Vivian true
+2026-02-18 19:57:42.760 [TYPING] bot=Sid true
+2026-02-18 19:57:43.562 [TYPING] bot=Jae true
+2026-02-18 19:57:45.125 [TYPING] bot=Vivian false
+2026-02-18 19:57:45.127 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-18 19:57:45.963 [TYPING] bot=Sid false
+2026-02-18 19:57:45.964 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-02-18 19:57:46.762 [TYPING] bot=Jae false
+2026-02-18 19:57:46.765 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-18 19:57:46.765 [QUEUE] intro: human already replied after "To start us off", advancing to study_goal
+2026-02-18 19:57:46.766 [TYPING] moderator true
+2026-02-18 19:57:50.969 [TYPING] moderator false
+2026-02-18 19:57:50.970 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-18 19:57:50.971 [TYPING] moderator true

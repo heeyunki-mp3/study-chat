@@ -1,0 +1,35 @@
+2026-02-18 19:33:31.258 [SESSION_START] backend running on http://localhost:3001
+2026-02-18 19:33:31.258 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-18 19:34:00.998 [SESSION_START] id=BW94g3yKTt5N_RCFAAAB bots=Sid,Vivian,Jae
+2026-02-18 19:34:00.999 [SESSION_START] participant_name set to "Ana"
+2026-02-18 19:34:00.999 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:34:01.000 [TYPING] moderator true
+2026-02-18 19:34:05.202 [TYPING] moderator false
+2026-02-18 19:34:05.205 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-18 19:34:05.205 [TYPING] moderator true
+2026-02-18 19:34:09.406 [TYPING] moderator false
+2026-02-18 19:34:09.407 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-18 19:34:09.409 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-18 19:34:11.414 [TYPING] bot=Vivian true
+2026-02-18 19:34:11.483 [TYPING] bot=Jae true
+2026-02-18 19:34:12.293 [TYPING] bot=Sid true
+2026-02-18 19:34:14.617 [TYPING] bot=Vivian false
+2026-02-18 19:34:14.619 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-18 19:34:14.684 [TYPING] bot=Jae false
+2026-02-18 19:34:14.686 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-18 19:34:15.496 [TYPING] bot=Sid false
+2026-02-18 19:34:15.498 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-02-18 19:34:17.142 [TYPING] moderator true
+2026-02-18 19:34:21.344 [TYPING] moderator false
+2026-02-18 19:34:21.345 [MESSAGE] [Eunice] "Thanks for that, Sid. Ana, would you like to introduce yourself?"
+2026-02-18 19:34:21.346 [QUEUE] waiting for human intro from Ana
+2026-02-18 19:34:41.354 [TYPING] moderator true
+2026-02-18 19:34:43.355 [TYPING] moderator true
+2026-02-18 19:34:45.356 [TYPING] moderator true
+2026-02-18 19:34:45.558 [TYPING] moderator false
+2026-02-18 19:34:45.559 [MESSAGE] [Eunice] "Ana, are you still there? Would you respond to this question?"
+2026-02-18 19:34:45.559 [QUEUE] idle nudge 1/2 sent
+2026-02-18 19:34:47.559 [TYPING] moderator false
+2026-02-18 19:34:47.561 [MESSAGE] [Eunice] "Ana, are you still there? Would you respond to this question?"
+2026-02-18 19:34:47.562 [MESSAGE] [Eunice] "I think you are not paying attention. I am kicking you out."
+2026-02-18 19:34:47.563 [QUEUE] idle kick: closing session after 2 nudges

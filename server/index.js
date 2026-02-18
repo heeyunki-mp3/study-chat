@@ -725,6 +725,7 @@ io.on("connection", (socket) => {
     co.waitingForHumanIdle = true;
     co.humanRepliedThisTurn = false;
     session.consecutiveUnsubstantialCount = 0;
+    session.humanGaveSubstantiveResponseThisTurn = false;
     session.lastPromptForHuman = { type: "call_on", prompt: co.question };
     startIdleNudgeTimer();
   }
@@ -1238,6 +1239,11 @@ io.on("connection", (socket) => {
       cue = `How about you, ${session.humanDisplayName}?`;
     }
     if (!session) return;
+    if (hasHumanRepliedAfterIntroPrompt(session)) {
+      logLine("QUEUE", "intro: human already introduced while cue was being generated, advancing to study_goal");
+      await runStudyGoal();
+      return;
+    }
     session.moderatorTypingIntroCue = true;
     await emitModeratorLine(cue, { skipIfUserReplied: true });
     if (!session) return;
@@ -1249,6 +1255,7 @@ io.on("connection", (socket) => {
     }
     session.waitingForHumanIntro = true;
     session.consecutiveUnsubstantialCount = 0;
+    session.humanGaveSubstantiveResponseThisTurn = false;
     session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
     startIdleNudgeTimer();
     logLine("QUEUE", `waiting for human intro from ${session.humanDisplayName}`);
@@ -1345,6 +1352,7 @@ io.on("connection", (socket) => {
       session.waitingForHumanDisagreementResponse = true;
       session.humanRepliedDisagreementTurn = false;
       session.consecutiveUnsubstantialCount = 0;
+      session.humanGaveSubstantiveResponseThisTurn = false;
       session.lastPromptForHuman = { type: "disagreement", prompt: followUpText };
       startIdleNudgeTimer();
       logLine("QUEUE", `view-misalignment follow-up: waiting for human ${session.humanDisplayName} to respond (${item.differenceSummary})`);
@@ -1504,9 +1512,19 @@ io.on("connection", (socket) => {
 
     emitMessage(session.humanDisplayName, text); // show immediately; validate below
 
-    // Validate response before advancing: treat non-substantive replies as if user never responded
-    const ctx = session.lastPromptForHuman;
-    if (ctx && (session.waitingForHumanIntro || session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse || session.pendingAdvanceFromIdle)) {
+    // Validate response before advancing: treat non-substantive replies as if user never responded.
+    // Once the user has given at least one substantive response this turn, skip further checks and just wait for idle to advance.
+    const inIntroPhase = session.waitingForHumanIntro || session.moderatorTypingIntroCue;
+    const introCtx = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
+    const ctx = session.lastPromptForHuman || (inIntroPhase ? introCtx : null);
+    const needSubstantiveCheck =
+      ctx &&
+      !session.humanGaveSubstantiveResponseThisTurn &&
+      (inIntroPhase ||
+        session.callOnState?.waitingForHumanIdle ||
+        session.waitingForHumanDisagreementResponse ||
+        session.pendingAdvanceFromIdle);
+    if (needSubstantiveCheck) {
       const substantive = await isResponseSubstantive(text, ctx);
       if (!substantive) {
         session.consecutiveUnsubstantialCount = (session.consecutiveUnsubstantialCount || 0) + 1;
@@ -1519,7 +1537,8 @@ io.on("connection", (socket) => {
         return;
       }
       session.consecutiveUnsubstantialCount = 0;
-      session.waitingForElaborationAfterNonSubstantive = false; // substantive response, don't send "elaborate"
+      session.waitingForElaborationAfterNonSubstantive = false;
+      session.humanGaveSubstantiveResponseThisTurn = true;
       logLine("HUMAN", "human_message: response is substantive, advancing");
     }
 

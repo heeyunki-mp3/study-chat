@@ -1,0 +1,609 @@
+2026-02-18 19:46:56.301 [SESSION_START] backend running on http://localhost:3001
+2026-02-18 19:46:56.302 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-18 19:46:56.771 [SESSION_START] id=YhcgvflOSqsZpWtmAAAB bots=Sid,Vivian,Jae
+2026-02-18 19:46:56.771 [SESSION_START] participant_name set to "Alana"
+2026-02-18 19:46:56.772 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:46:56.773 [TYPING] moderator true
+2026-02-18 19:47:00.033 [DISCONNECT] id=YhcgvflOSqsZpWtmAAAB
+2026-02-18 19:47:00.312 [SESSION_START] id=LPqrSbcV-tOWPG82AAAD bots=Sid,Vivian,Jae
+2026-02-18 19:47:00.313 [SESSION_START] participant_name set to "Alana"
+2026-02-18 19:47:00.313 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:47:00.313 [TYPING] moderator true
+2026-02-18 19:47:02.258 [TYPING] human true
+2026-02-18 19:47:02.348 [TYPING] human true
+2026-02-18 19:47:02.466 [TYPING] human true
+2026-02-18 19:47:02.512 [TYPING] human true
+2026-02-18 19:47:02.584 [TYPING] human true
+2026-02-18 19:47:02.755 [TYPING] human true
+2026-02-18 19:47:02.845 [TYPING] human true
+2026-02-18 19:47:02.930 [TYPING] human true
+2026-02-18 19:47:03.085 [TYPING] human true
+2026-02-18 19:47:03.201 [TYPING] human true
+2026-02-18 19:47:03.334 [TYPING] human true
+2026-02-18 19:47:03.414 [TYPING] human true
+2026-02-18 19:47:03.546 [TYPING] human true
+2026-02-18 19:47:03.703 [TYPING] human true
+2026-02-18 19:47:03.800 [TYPING] human true
+2026-02-18 19:47:03.864 [TYPING] human true
+2026-02-18 19:47:03.920 [TYPING] human true
+2026-02-18 19:47:04.059 [TYPING] human true
+2026-02-18 19:47:04.166 [TYPING] human true
+2026-02-18 19:47:04.267 [TYPING] human true
+2026-02-18 19:47:04.515 [TYPING] moderator false
+2026-02-18 19:47:04.517 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-18 19:47:04.517 [TYPING] moderator true
+2026-02-18 19:47:04.568 [TYPING] human true
+2026-02-18 19:47:04.825 [TYPING] human true
+2026-02-18 19:47:05.627 [TYPING] human false
+2026-02-18 19:47:08.719 [TYPING] moderator false
+2026-02-18 19:47:08.721 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-18 19:47:08.722 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-18 19:47:11.212 [TYPING] bot=Sid true
+2026-02-18 19:47:11.332 [TYPING] bot=Vivian true
+2026-02-18 19:47:11.655 [TYPING] bot=Jae true
+2026-02-18 19:47:14.414 [TYPING] bot=Sid false
+2026-02-18 19:47:14.417 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-18 19:47:14.534 [TYPING] bot=Vivian false
+2026-02-18 19:47:14.534 [MESSAGE] [Vivian] "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology"
+2026-02-18 19:47:14.858 [TYPING] bot=Jae false
+2026-02-18 19:47:14.859 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-18 19:47:14.947 [TYPING] human false
+2026-02-18 19:47:14.952 [HUMAN_INPUT] [Alana] "nice to meet you all!"
+2026-02-18 19:47:14.952 [MESSAGE] [Alana] "nice to meet you all!"
+2026-02-18 19:47:15.490 [TYPING] moderator true
+2026-02-18 19:47:19.692 [TYPING] moderator false
+2026-02-18 19:47:19.694 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Alana, what about you? Can you introduce yourself?"
+2026-02-18 19:47:19.695 [QUEUE] waiting for human intro from Alana
+2026-02-18 19:47:19.735 [TYPING] human true
+2026-02-18 19:47:19.835 [TYPING] human true
+2026-02-18 19:47:20.639 [TYPING] human false
+2026-02-18 19:47:21.480 [TYPING] human true
+2026-02-18 19:47:21.640 [TYPING] human true
+2026-02-18 19:47:22.443 [TYPING] human false
+2026-02-18 19:47:25.642 [QUEUE] human_idle after intro from Alana
+2026-02-18 19:47:25.643 [TYPING] moderator true
+2026-02-18 19:47:29.846 [TYPING] moderator false
+2026-02-18 19:47:29.848 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-18 19:47:29.849 [TYPING] moderator true
+2026-02-18 19:47:34.052 [TYPING] moderator false
+2026-02-18 19:47:34.052 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-18 19:47:36.323 [MESSAGE] [Jae] "Ok!"
+2026-02-18 19:47:36.324 [QUEUE] study_goal ack done, starting first big_question
+2026-02-18 19:47:36.324 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-18 19:47:36.325 [TYPING] moderator true
+2026-02-18 19:47:39.121 [DISCONNECT] id=LPqrSbcV-tOWPG82AAAD
+2026-02-18 19:47:39.168 [SESSION_START] id=-tg3vRFFO3s3McfZAAAF bots=Sid,Vivian,Jae
+2026-02-18 19:47:39.168 [SESSION_START] participant_name set to "Alana"
+2026-02-18 19:47:39.168 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-18 19:47:39.169 [TYPING] moderator true
+2026-02-18 19:47:43.372 [TYPING] moderator false
+2026-02-18 19:47:43.374 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-18 19:47:43.375 [TYPING] moderator true
+2026-02-18 19:47:47.578 [TYPING] moderator false
+2026-02-18 19:47:47.580 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-18 19:47:47.580 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-18 19:47:49.583 [TYPING] bot=Vivian true
+2026-02-18 19:47:49.926 [TYPING] bot=Sid true
+2026-02-18 19:47:52.401 [TYPING] bot=Jae true
+2026-02-18 19:47:52.784 [TYPING] bot=Vivian false
+2026-02-18 19:47:52.787 [MESSAGE] [Vivian] "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology"
+2026-02-18 19:47:53.114 [TYPING] human true
+2026-02-18 19:47:53.129 [TYPING] bot=Sid false
+2026-02-18 19:47:53.132 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-18 19:47:53.262 [TYPING] human true
+2026-02-18 19:47:53.273 [TYPING] human true
+2026-02-18 19:47:53.477 [TYPING] human true
+2026-02-18 19:47:53.525 [TYPING] human true
+2026-02-18 19:47:53.729 [TYPING] human true
+2026-02-18 19:47:53.825 [TYPING] human true
+2026-02-18 19:47:53.905 [TYPING] human true
+2026-02-18 19:47:54.461 [TYPING] human true
+2026-02-18 19:47:54.612 [TYPING] human true
+2026-02-18 19:47:54.777 [TYPING] human true
+2026-02-18 19:47:54.931 [TYPING] human true
+2026-02-18 19:47:55.528 [TYPING] human true
+2026-02-18 19:47:55.603 [TYPING] bot=Jae false
+2026-02-18 19:47:55.603 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-18 19:47:55.624 [TYPING] human true
+2026-02-18 19:47:55.717 [TYPING] human true
+2026-02-18 19:47:55.942 [TYPING] human true
+2026-02-18 19:47:56.125 [TYPING] human true
+2026-02-18 19:47:56.381 [TYPING] human true
+2026-02-18 19:47:56.513 [TYPING] human true
+2026-02-18 19:47:56.787 [TYPING] human true
+2026-02-18 19:47:56.872 [TYPING] human true
+2026-02-18 19:47:57.030 [TYPING] human true
+2026-02-18 19:47:57.068 [TYPING] moderator true
+2026-02-18 19:47:57.143 [TYPING] human true
+2026-02-18 19:47:57.199 [TYPING] human true
+2026-02-18 19:47:57.428 [TYPING] human true
+2026-02-18 19:47:57.533 [TYPING] human true
+2026-02-18 19:47:57.716 [TYPING] human true
+2026-02-18 19:47:58.019 [TYPING] human true
+2026-02-18 19:47:58.181 [TYPING] human true
+2026-02-18 19:47:58.423 [TYPING] human true
+2026-02-18 19:47:58.492 [TYPING] human true
+2026-02-18 19:47:58.534 [TYPING] human true
+2026-02-18 19:47:58.611 [TYPING] human true
+2026-02-18 19:47:58.702 [TYPING] human true
+2026-02-18 19:47:58.840 [TYPING] human true
+2026-02-18 19:47:58.928 [TYPING] human true
+2026-02-18 19:47:59.001 [TYPING] human true
+2026-02-18 19:47:59.151 [TYPING] human true
+2026-02-18 19:47:59.226 [TYPING] human true
+2026-02-18 19:47:59.347 [TYPING] human true
+2026-02-18 19:47:59.390 [TYPING] human true
+2026-02-18 19:47:59.509 [TYPING] human true
+2026-02-18 19:47:59.615 [TYPING] human true
+2026-02-18 19:47:59.629 [TYPING] human true
+2026-02-18 19:47:59.724 [TYPING] human true
+2026-02-18 19:47:59.781 [TYPING] human true
+2026-02-18 19:47:59.892 [TYPING] human true
+2026-02-18 19:48:00.009 [TYPING] human true
+2026-02-18 19:48:00.131 [TYPING] human true
+2026-02-18 19:48:00.264 [TYPING] human false
+2026-02-18 19:48:00.271 [HUMAN_INPUT] [Alana] "Hi I ma ana! nice to meet you all"
+2026-02-18 19:48:00.272 [MESSAGE] [Alana] "Hi I ma ana! nice to meet you all"
+2026-02-18 19:48:00.273 [QUEUE] human_message during intro cue: cancelling cue, advancing to study_goal
+2026-02-18 19:48:00.273 [TYPING] moderator true
+2026-02-18 19:48:01.270 [TYPING] moderator false
+2026-02-18 19:48:01.271 [QUEUE] intro cue cancelled: user already sent intro, advancing to study_goal
+2026-02-18 19:48:04.475 [TYPING] moderator false
+2026-02-18 19:48:04.478 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-18 19:48:04.478 [TYPING] moderator true
+2026-02-18 19:48:08.681 [TYPING] moderator false
+2026-02-18 19:48:08.681 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-18 19:48:11.161 [MESSAGE] [Jae] "Got it!"
+2026-02-18 19:48:11.162 [QUEUE] study_goal ack done, starting first big_question
+2026-02-18 19:48:11.162 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-18 19:48:11.162 [TYPING] moderator true
+2026-02-18 19:48:15.364 [TYPING] moderator false
+2026-02-18 19:48:15.366 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-18 19:48:15.966 [TYPING] moderator true
+2026-02-18 19:48:20.169 [TYPING] moderator false
+2026-02-18 19:48:20.169 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-18 19:48:20.170 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-18 19:48:20.170 [TYPING] bot=Sid true
+2026-02-18 19:48:22.256 [OPENAI_OK] bot=Sid rtt=2086ms raw="["New features usually make me skeptical at first. Most of the time they’re buggy or just add clutte…"
+2026-02-18 19:48:22.256 [TYPING] bot=Sid false
+2026-02-18 19:48:23.258 [TYPING] bot=Sid true
+2026-02-18 19:48:26.460 [TYPING] bot=Sid false
+2026-02-18 19:48:26.461 [MESSAGE] [Sid] "New features usually make me skeptical at first. Most of the time they’re buggy or just add clutter that no one really needs."
+2026-02-18 19:48:27.462 [TYPING] bot=Sid true
+2026-02-18 19:48:30.663 [TYPING] bot=Sid false
+2026-02-18 19:48:30.664 [MESSAGE] [Sid] "I only try them if they clearly improve security or fix something annoying. Otherwise, I wait for feedback before jumping in."
+2026-02-18 19:48:32.188 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-18 19:48:32.188 [TYPING] moderator true
+2026-02-18 19:48:36.391 [TYPING] moderator false
+2026-02-18 19:48:36.391 [MESSAGE] [Eunice] "Thanks for that, Sid. Vivian, how about you?"
+2026-02-18 19:48:36.392 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-18 19:48:36.392 [TYPING] bot=Vivian true
+2026-02-18 19:48:38.742 [OPENAI_OK] bot=Vivian rtt=2350ms raw="["im usually curious so i try new features pretty quickly especially if its on apple stuff bc they u…"
+2026-02-18 19:48:38.742 [TYPING] bot=Vivian false
+2026-02-18 19:48:39.745 [TYPING] bot=Vivian true
+2026-02-18 19:48:42.948 [TYPING] bot=Vivian false
+2026-02-18 19:48:42.948 [MESSAGE] [Vivian] "im usually curious so i try new features pretty quickly especially if its on apple stuff bc they usually smooth things out fast"
+2026-02-18 19:48:43.950 [TYPING] bot=Vivian true
+2026-02-18 19:48:47.153 [TYPING] bot=Vivian false
+2026-02-18 19:48:47.153 [MESSAGE] [Vivian] "but if it feels like a hassle or takes too much time to figure out i just ignore it and wait til im forced to use it"
+2026-02-18 19:48:48.154 [TYPING] bot=Vivian true
+2026-02-18 19:48:51.357 [TYPING] bot=Vivian false
+2026-02-18 19:48:51.358 [MESSAGE] [Vivian] "honestly if it messes with my normal flow or makes anything slower im out but if it promises convenience ill give it a shot"
+2026-02-18 19:48:54.359 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-18 19:48:54.360 [TYPING] moderator true
+2026-02-18 19:48:58.563 [TYPING] moderator false
+2026-02-18 19:48:58.564 [MESSAGE] [Eunice] "Thanks for that, Vivian. Jae, how about you? Do you dive into new features quickly or take a wait-and-see approach?"
+2026-02-18 19:48:58.564 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-18 19:48:58.564 [TYPING] bot=Jae true
+2026-02-18 19:49:05.978 [OPENAI_OK] bot=Jae rtt=7414ms raw="["I usually take a wait-and-see approach with new features because I worry about how they’ll affect …"
+2026-02-18 19:49:05.978 [TYPING] bot=Jae false
+2026-02-18 19:49:06.980 [TYPING] bot=Jae true
+2026-02-18 19:49:10.181 [TYPING] bot=Jae false
+2026-02-18 19:49:10.182 [MESSAGE] [Jae] "I usually take a wait-and-see approach with new features because I worry about how they’ll affect my workflow and device compatibility."
+2026-02-18 19:49:11.183 [TYPING] bot=Jae true
+2026-02-18 19:49:14.385 [TYPING] bot=Jae false
+2026-02-18 19:49:14.385 [MESSAGE] [Jae] "If a feature doesn’t have clear instructions or causes any disruption across my devices, especially shared ones, I hold off trying it out."
+2026-02-18 19:49:15.254 [TYPING] moderator true
+2026-02-18 19:49:19.457 [TYPING] moderator false
+2026-02-18 19:49:19.460 [MESSAGE] [Eunice] "Good point, Jae. Alana, how about you?"
+2026-02-18 19:49:19.461 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human Alana, waiting for human_idle
+2026-02-18 19:49:30.212 [TYPING] human true
+2026-02-18 19:49:30.382 [TYPING] human true
+2026-02-18 19:49:30.457 [TYPING] human true
+2026-02-18 19:49:30.659 [TYPING] human true
+2026-02-18 19:49:30.777 [TYPING] human true
+2026-02-18 19:49:30.896 [TYPING] human true
+2026-02-18 19:49:30.980 [TYPING] human true
+2026-02-18 19:49:31.060 [TYPING] human true
+2026-02-18 19:49:31.132 [TYPING] human true
+2026-02-18 19:49:31.936 [TYPING] human false
+2026-02-18 19:50:03.478 [TYPING] moderator true
+2026-02-18 19:50:07.683 [TYPING] moderator false
+2026-02-18 19:50:07.683 [MESSAGE] [Eunice] "Alana, are you still there? Would you respond to this question?"
+2026-02-18 19:50:07.683 [QUEUE] idle nudge 1/2 sent
+2026-02-18 19:50:10.616 [TYPING] human true
+2026-02-18 19:50:10.855 [TYPING] human true
+2026-02-18 19:50:10.926 [TYPING] human true
+2026-02-18 19:50:11.020 [TYPING] human true
+2026-02-18 19:50:11.124 [TYPING] human true
+2026-02-18 19:50:11.196 [TYPING] human true
+2026-02-18 19:50:11.260 [TYPING] human true
+2026-02-18 19:50:11.454 [TYPING] human true
+2026-02-18 19:50:11.591 [TYPING] human true
+2026-02-18 19:50:11.710 [TYPING] human true
+2026-02-18 19:50:11.876 [TYPING] human true
+2026-02-18 19:50:11.946 [TYPING] human true
+2026-02-18 19:50:12.025 [TYPING] human true
+2026-02-18 19:50:12.095 [TYPING] human true
+2026-02-18 19:50:12.175 [TYPING] human true
+2026-02-18 19:50:12.278 [TYPING] human true
+2026-02-18 19:50:12.350 [TYPING] human true
+2026-02-18 19:50:12.627 [TYPING] human true
+2026-02-18 19:50:12.821 [TYPING] human true
+2026-02-18 19:50:12.938 [TYPING] human true
+2026-02-18 19:50:13.285 [TYPING] human true
+2026-02-18 19:50:13.406 [TYPING] human true
+2026-02-18 19:50:13.634 [TYPING] human true
+2026-02-18 19:50:13.717 [TYPING] human true
+2026-02-18 19:50:14.136 [TYPING] human true
+2026-02-18 19:50:14.303 [TYPING] human true
+2026-02-18 19:50:14.593 [TYPING] human false
+2026-02-18 19:50:14.597 [HUMAN_INPUT] [Alana] "oh yes!! I am sorry"
+2026-02-18 19:50:14.600 [MESSAGE] [Alana] "oh yes!! I am sorry"
+2026-02-18 19:50:15.489 [QUEUE] human_message: response not substantive (1/4), waiting for idle then 5s before elaborate
+2026-02-18 19:50:17.565 [TYPING] human true
+2026-02-18 19:50:17.659 [TYPING] human true
+2026-02-18 19:50:18.463 [TYPING] human false
+2026-02-18 19:50:19.077 [TYPING] human true
+2026-02-18 19:50:19.223 [TYPING] human true
+2026-02-18 19:50:19.296 [TYPING] human true
+2026-02-18 19:50:19.627 [TYPING] human true
+2026-02-18 19:50:19.779 [TYPING] human true
+2026-02-18 19:50:19.899 [TYPING] human true
+2026-02-18 19:50:20.032 [TYPING] human true
+2026-02-18 19:50:20.171 [TYPING] human true
+2026-02-18 19:50:20.290 [TYPING] human true
+2026-02-18 19:50:20.651 [TYPING] human true
+2026-02-18 19:50:20.832 [TYPING] human true
+2026-02-18 19:50:20.982 [TYPING] human true
+2026-02-18 19:50:21.328 [TYPING] human true
+2026-02-18 19:50:21.582 [TYPING] human true
+2026-02-18 19:50:21.630 [TYPING] human true
+2026-02-18 19:50:21.726 [TYPING] human true
+2026-02-18 19:50:21.832 [TYPING] human true
+2026-02-18 19:50:21.876 [TYPING] human true
+2026-02-18 19:50:21.951 [TYPING] human true
+2026-02-18 19:50:22.154 [TYPING] human true
+2026-02-18 19:50:22.194 [TYPING] human true
+2026-02-18 19:50:22.587 [TYPING] human true
+2026-02-18 19:50:22.765 [TYPING] human true
+2026-02-18 19:50:22.837 [TYPING] human true
+2026-02-18 19:50:22.926 [TYPING] human true
+2026-02-18 19:50:23.002 [TYPING] human true
+2026-02-18 19:50:23.121 [TYPING] human true
+2026-02-18 19:50:23.165 [TYPING] human true
+2026-02-18 19:50:23.637 [TYPING] human true
+2026-02-18 19:50:23.878 [TYPING] human true
+2026-02-18 19:50:23.962 [TYPING] human true
+2026-02-18 19:50:24.051 [TYPING] human true
+2026-02-18 19:50:24.140 [TYPING] human true
+2026-02-18 19:50:24.146 [TYPING] human true
+2026-02-18 19:50:24.154 [TYPING] human true
+2026-02-18 19:50:24.276 [TYPING] human true
+2026-02-18 19:50:24.444 [TYPING] human true
+2026-02-18 19:50:24.479 [TYPING] human true
+2026-02-18 19:50:24.639 [TYPING] human true
+2026-02-18 19:50:24.777 [TYPING] human true
+2026-02-18 19:50:24.895 [TYPING] human true
+2026-02-18 19:50:25.028 [TYPING] human true
+2026-02-18 19:50:25.219 [TYPING] human true
+2026-02-18 19:50:25.504 [TYPING] human true
+2026-02-18 19:50:25.749 [TYPING] human true
+2026-02-18 19:50:25.791 [TYPING] human true
+2026-02-18 19:50:25.913 [TYPING] human true
+2026-02-18 19:50:25.935 [TYPING] human true
+2026-02-18 19:50:26.032 [TYPING] human true
+2026-02-18 19:50:26.151 [TYPING] human true
+2026-02-18 19:50:26.292 [TYPING] human true
+2026-02-18 19:50:26.448 [TYPING] human true
+2026-02-18 19:50:26.525 [TYPING] human true
+2026-02-18 19:50:26.615 [TYPING] human true
+2026-02-18 19:50:26.910 [TYPING] human true
+2026-02-18 19:50:26.992 [TYPING] human true
+2026-02-18 19:50:27.145 [TYPING] human true
+2026-02-18 19:50:27.232 [TYPING] human true
+2026-02-18 19:50:27.290 [TYPING] human true
+2026-02-18 19:50:27.396 [TYPING] human true
+2026-02-18 19:50:27.438 [TYPING] human true
+2026-02-18 19:50:27.627 [TYPING] human true
+2026-02-18 19:50:27.699 [TYPING] human true
+2026-02-18 19:50:28.136 [TYPING] human true
+2026-02-18 19:50:28.252 [TYPING] human true
+2026-02-18 19:50:28.345 [TYPING] human true
+2026-02-18 19:50:28.416 [TYPING] human true
+2026-02-18 19:50:28.553 [TYPING] human true
+2026-02-18 19:50:28.656 [TYPING] human true
+2026-02-18 19:50:28.734 [TYPING] human true
+2026-02-18 19:50:28.807 [TYPING] human true
+2026-02-18 19:50:29.217 [TYPING] human true
+2026-02-18 19:50:29.316 [TYPING] human true
+2026-02-18 19:50:29.390 [TYPING] human true
+2026-02-18 19:50:29.803 [TYPING] human true
+2026-02-18 19:50:29.982 [TYPING] human true
+2026-02-18 19:50:30.036 [TYPING] human true
+2026-02-18 19:50:30.128 [TYPING] human true
+2026-02-18 19:50:30.325 [TYPING] human true
+2026-02-18 19:50:30.381 [TYPING] human true
+2026-02-18 19:50:31.185 [TYPING] human false
+2026-02-18 19:50:31.857 [TYPING] human true
+2026-02-18 19:50:31.957 [TYPING] human true
+2026-02-18 19:50:32.187 [TYPING] human true
+2026-02-18 19:50:32.205 [TYPING] human true
+2026-02-18 19:50:32.300 [TYPING] human true
+2026-02-18 19:50:32.455 [TYPING] human true
+2026-02-18 19:50:32.801 [TYPING] human true
+2026-02-18 19:50:32.872 [TYPING] human true
+2026-02-18 19:50:32.946 [TYPING] human true
+2026-02-18 19:50:33.026 [TYPING] human true
+2026-02-18 19:50:33.049 [TYPING] human true
+2026-02-18 19:50:33.094 [TYPING] human true
+2026-02-18 19:50:33.200 [TYPING] human true
+2026-02-18 19:50:33.290 [TYPING] human true
+2026-02-18 19:50:33.366 [TYPING] human true
+2026-02-18 19:50:33.400 [TYPING] human true
+2026-02-18 19:50:33.485 [TYPING] human true
+2026-02-18 19:50:33.592 [TYPING] human true
+2026-02-18 19:50:33.668 [TYPING] human true
+2026-02-18 19:50:33.714 [TYPING] human true
+2026-02-18 19:50:33.880 [TYPING] human true
+2026-02-18 19:50:33.965 [TYPING] human true
+2026-02-18 19:50:34.056 [TYPING] human true
+2026-02-18 19:50:34.117 [TYPING] human true
+2026-02-18 19:50:34.211 [TYPING] human true
+2026-02-18 19:50:34.331 [TYPING] human true
+2026-02-18 19:50:34.377 [TYPING] human true
+2026-02-18 19:50:34.445 [TYPING] human true
+2026-02-18 19:50:34.504 [TYPING] human true
+2026-02-18 19:50:34.611 [TYPING] human true
+2026-02-18 19:50:34.767 [TYPING] human true
+2026-02-18 19:50:34.929 [TYPING] human true
+2026-02-18 19:50:35.016 [TYPING] human true
+2026-02-18 19:50:35.091 [TYPING] human true
+2026-02-18 19:50:35.180 [TYPING] human true
+2026-02-18 19:50:35.983 [TYPING] human false
+2026-02-18 19:50:37.465 [TYPING] human true
+2026-02-18 19:50:37.581 [TYPING] human true
+2026-02-18 19:50:37.733 [TYPING] human true
+2026-02-18 19:50:37.868 [TYPING] human true
+2026-02-18 19:50:38.037 [TYPING] human true
+2026-02-18 19:50:38.154 [TYPING] human true
+2026-02-18 19:50:38.242 [TYPING] human true
+2026-02-18 19:50:38.331 [TYPING] human true
+2026-02-18 19:50:39.134 [TYPING] human false
+2026-02-18 19:50:40.960 [TYPING] human true
+2026-02-18 19:50:41.172 [TYPING] human true
+2026-02-18 19:50:41.515 [TYPING] human true
+2026-02-18 19:50:41.570 [TYPING] human true
+2026-02-18 19:50:41.676 [TYPING] human true
+2026-02-18 19:50:41.795 [TYPING] human true
+2026-02-18 19:50:42.054 [TYPING] human true
+2026-02-18 19:50:42.140 [TYPING] human true
+2026-02-18 19:50:42.230 [TYPING] human true
+2026-02-18 19:50:42.585 [TYPING] human true
+2026-02-18 19:50:42.728 [TYPING] human true
+2026-02-18 19:50:42.863 [TYPING] human true
+2026-02-18 19:50:42.985 [TYPING] human true
+2026-02-18 19:50:43.347 [TYPING] human true
+2026-02-18 19:50:43.619 [TYPING] human true
+2026-02-18 19:50:44.008 [TYPING] human true
+2026-02-18 19:50:44.695 [TYPING] human true
+2026-02-18 19:50:44.782 [TYPING] human true
+2026-02-18 19:50:44.903 [TYPING] human true
+2026-02-18 19:50:45.086 [TYPING] human true
+2026-02-18 19:50:45.188 [TYPING] human true
+2026-02-18 19:50:45.247 [TYPING] human true
+2026-02-18 19:50:45.351 [TYPING] human true
+2026-02-18 19:50:45.442 [TYPING] human true
+2026-02-18 19:50:45.531 [TYPING] human true
+2026-02-18 19:50:45.835 [TYPING] human true
+2026-02-18 19:50:46.122 [TYPING] human true
+2026-02-18 19:50:46.227 [TYPING] human true
+2026-02-18 19:50:46.328 [TYPING] human true
+2026-02-18 19:50:46.431 [TYPING] human true
+2026-02-18 19:50:46.536 [TYPING] human true
+2026-02-18 19:50:46.751 [TYPING] human true
+2026-02-18 19:50:46.901 [TYPING] human true
+2026-02-18 19:50:46.972 [TYPING] human true
+2026-02-18 19:50:47.092 [TYPING] human true
+2026-02-18 19:50:47.166 [TYPING] human true
+2026-02-18 19:50:47.210 [TYPING] human true
+2026-02-18 19:50:47.316 [TYPING] human true
+2026-02-18 19:50:47.501 [TYPING] human true
+2026-02-18 19:50:47.585 [TYPING] human true
+2026-02-18 19:50:47.677 [TYPING] human true
+2026-02-18 19:50:47.816 [TYPING] human true
+2026-02-18 19:50:47.886 [TYPING] human true
+2026-02-18 19:50:47.993 [TYPING] human true
+2026-02-18 19:50:48.099 [TYPING] human true
+2026-02-18 19:50:48.404 [TYPING] human true
+2026-02-18 19:50:48.500 [TYPING] human true
+2026-02-18 19:50:48.592 [TYPING] human true
+2026-02-18 19:50:48.696 [TYPING] human true
+2026-02-18 19:50:48.756 [TYPING] human true
+2026-02-18 19:50:48.845 [TYPING] human true
+2026-02-18 19:50:48.936 [TYPING] human true
+2026-02-18 19:50:49.042 [TYPING] human true
+2026-02-18 19:50:49.209 [TYPING] human true
+2026-02-18 19:50:49.424 [TYPING] human true
+2026-02-18 19:50:49.598 [TYPING] human true
+2026-02-18 19:50:49.702 [TYPING] human true
+2026-02-18 19:50:50.005 [TYPING] human true
+2026-02-18 19:50:50.229 [TYPING] human true
+2026-02-18 19:50:50.726 [TYPING] human true
+2026-02-18 19:50:50.842 [TYPING] human true
+2026-02-18 19:50:50.916 [TYPING] human true
+2026-02-18 19:50:51.056 [TYPING] human true
+2026-02-18 19:50:51.155 [TYPING] human true
+2026-02-18 19:50:51.248 [TYPING] human true
+2026-02-18 19:50:51.336 [TYPING] human true
+2026-02-18 19:50:51.896 [TYPING] human true
+2026-02-18 19:50:52.018 [TYPING] human true
+2026-02-18 19:50:52.101 [TYPING] human true
+2026-02-18 19:50:52.193 [TYPING] human true
+2026-02-18 19:50:52.299 [TYPING] human true
+2026-02-18 19:50:52.451 [TYPING] human true
+2026-02-18 19:50:53.254 [TYPING] human false
+2026-02-18 19:50:53.516 [TYPING] human true
+2026-02-18 19:50:53.757 [TYPING] human true
+2026-02-18 19:50:53.796 [TYPING] human true
+2026-02-18 19:50:53.856 [TYPING] human true
+2026-02-18 19:50:53.962 [TYPING] human true
+2026-02-18 19:50:54.535 [TYPING] human true
+2026-02-18 19:50:54.715 [TYPING] human true
+2026-02-18 19:50:54.881 [TYPING] human true
+2026-02-18 19:50:55.015 [TYPING] human true
+2026-02-18 19:50:55.103 [TYPING] human true
+2026-02-18 19:50:55.177 [TYPING] human true
+2026-02-18 19:50:55.280 [TYPING] human true
+2026-02-18 19:50:55.421 [TYPING] human true
+2026-02-18 19:50:55.493 [TYPING] human true
+2026-02-18 19:50:55.568 [TYPING] human true
+2026-02-18 19:50:55.656 [TYPING] human true
+2026-02-18 19:50:56.051 [TYPING] human true
+2026-02-18 19:50:56.561 [TYPING] human true
+2026-02-18 19:50:56.682 [TYPING] human true
+2026-02-18 19:50:56.907 [TYPING] human true
+2026-02-18 19:50:56.991 [TYPING] human true
+2026-02-18 19:50:57.238 [TYPING] human true
+2026-02-18 19:50:57.322 [TYPING] human true
+2026-02-18 19:50:57.476 [TYPING] human true
+2026-02-18 19:50:57.546 [TYPING] human true
+2026-02-18 19:50:57.667 [TYPING] human true
+2026-02-18 19:50:58.043 [TYPING] human true
+2026-02-18 19:50:58.179 [TYPING] human true
+2026-02-18 19:50:58.313 [TYPING] human true
+2026-02-18 19:50:58.451 [TYPING] human true
+2026-02-18 19:50:58.583 [TYPING] human true
+2026-02-18 19:50:58.919 [TYPING] human true
+2026-02-18 19:50:59.109 [TYPING] human false
+2026-02-18 19:50:59.119 [HUMAN_INPUT] [Alana] "I think I try to adopt it right away. because why not? I don't think there are much security flaws that happen due to early adoption."
+2026-02-18 19:50:59.119 [MESSAGE] [Alana] "I think I try to adopt it right away. because why not? I don't think there are much security flaws that happen due to early adoption."
+2026-02-18 19:50:59.747 [HUMAN] human_message: response is substantive, advancing
+2026-02-18 19:50:59.747 [QUEUE] human_message during call-on: Alana replied, waiting for idle to advance
+2026-02-18 19:50:59.759 [TYPING] human true
+2026-02-18 19:50:59.859 [TYPING] human true
+2026-02-18 19:51:00.012 [TYPING] human true
+2026-02-18 19:51:00.114 [TYPING] human true
+2026-02-18 19:51:00.462 [TYPING] human true
+2026-02-18 19:51:00.712 [TYPING] human true
+2026-02-18 19:51:00.786 [TYPING] human true
+2026-02-18 19:51:01.019 [TYPING] human true
+2026-02-18 19:51:01.148 [TYPING] human true
+2026-02-18 19:51:01.287 [TYPING] human true
+2026-02-18 19:51:01.418 [TYPING] human true
+2026-02-18 19:51:01.537 [TYPING] human true
+2026-02-18 19:51:01.751 [TYPING] human true
+2026-02-18 19:51:01.882 [TYPING] human true
+2026-02-18 19:51:01.912 [TYPING] human true
+2026-02-18 19:51:02.107 [TYPING] human true
+2026-02-18 19:51:02.181 [TYPING] human true
+2026-02-18 19:51:02.683 [TYPING] human true
+2026-02-18 19:51:02.712 [TYPING] human true
+2026-02-18 19:51:02.904 [TYPING] human true
+2026-02-18 19:51:02.992 [TYPING] human true
+2026-02-18 19:51:03.081 [TYPING] human true
+2026-02-18 19:51:03.554 [TYPING] human true
+2026-02-18 19:51:03.699 [TYPING] human true
+2026-02-18 19:51:03.911 [TYPING] human true
+2026-02-18 19:51:04.034 [TYPING] human true
+2026-02-18 19:51:04.136 [TYPING] human true
+2026-02-18 19:51:04.316 [TYPING] human true
+2026-02-18 19:51:04.387 [TYPING] human true
+2026-02-18 19:51:04.494 [TYPING] human true
+2026-02-18 19:51:04.550 [TYPING] human true
+2026-02-18 19:51:04.689 [TYPING] human true
+2026-02-18 19:51:04.777 [TYPING] human true
+2026-02-18 19:51:04.883 [TYPING] human true
+2026-02-18 19:51:04.974 [TYPING] human true
+2026-02-18 19:51:05.096 [TYPING] human true
+2026-02-18 19:51:05.170 [TYPING] human true
+2026-02-18 19:51:05.973 [TYPING] human false
+2026-02-18 19:51:06.224 [TYPING] human true
+2026-02-18 19:51:06.292 [TYPING] human true
+2026-02-18 19:51:06.414 [TYPING] human true
+2026-02-18 19:51:06.611 [TYPING] human true
+2026-02-18 19:51:06.745 [TYPING] human true
+2026-02-18 19:51:07.107 [TYPING] human true
+2026-02-18 19:51:07.256 [TYPING] human true
+2026-02-18 19:51:07.315 [TYPING] human true
+2026-02-18 19:51:07.387 [TYPING] human true
+2026-02-18 19:51:07.508 [TYPING] human true
+2026-02-18 19:51:07.600 [TYPING] human true
+2026-02-18 19:51:07.672 [TYPING] human true
+2026-02-18 19:51:07.945 [TYPING] human true
+2026-02-18 19:51:08.018 [TYPING] human true
+2026-02-18 19:51:08.108 [TYPING] human true
+2026-02-18 19:51:08.214 [TYPING] human true
+2026-02-18 19:51:08.317 [TYPING] human true
+2026-02-18 19:51:08.406 [TYPING] human true
+2026-02-18 19:51:08.604 [TYPING] human true
+2026-02-18 19:51:08.786 [TYPING] human true
+2026-02-18 19:51:08.827 [TYPING] human true
+2026-02-18 19:51:08.888 [TYPING] human true
+2026-02-18 19:51:08.978 [TYPING] human true
+2026-02-18 19:51:09.189 [TYPING] human false
+2026-02-18 19:51:09.196 [HUMAN_INPUT] [Alana] "like I only become the cool person in my group"
+2026-02-18 19:51:09.197 [MESSAGE] [Alana] "like I only become the cool person in my group"
+2026-02-18 19:51:09.419 [TYPING] human true
+2026-02-18 19:51:09.503 [TYPING] human true
+2026-02-18 19:51:09.560 [TYPING] human true
+2026-02-18 19:51:09.637 [TYPING] human true
+2026-02-18 19:51:09.695 [TYPING] human true
+2026-02-18 19:51:09.786 [TYPING] human true
+2026-02-18 19:51:10.062 [TYPING] human true
+2026-02-18 19:51:10.164 [TYPING] human true
+2026-02-18 19:51:10.525 [TYPING] human true
+2026-02-18 19:51:10.536 [QUEUE] human_message: response not substantive (1/4), waiting for idle then 5s before elaborate
+2026-02-18 19:51:10.612 [TYPING] human true
+2026-02-18 19:51:10.719 [TYPING] human true
+2026-02-18 19:51:10.748 [TYPING] human true
+2026-02-18 19:51:10.868 [TYPING] human true
+2026-02-18 19:51:11.111 [TYPING] human true
+2026-02-18 19:51:11.471 [TYPING] human true
+2026-02-18 19:51:11.575 [TYPING] human true
+2026-02-18 19:51:11.678 [TYPING] human true
+2026-02-18 19:51:11.801 [TYPING] human true
+2026-02-18 19:51:11.874 [TYPING] human true
+2026-02-18 19:51:11.962 [TYPING] human true
+2026-02-18 19:51:12.082 [TYPING] human true
+2026-02-18 19:51:12.389 [TYPING] human true
+2026-02-18 19:51:12.550 [TYPING] human true
+2026-02-18 19:51:12.591 [TYPING] human true
+2026-02-18 19:51:12.683 [TYPING] human true
+2026-02-18 19:51:12.758 [TYPING] human true
+2026-02-18 19:51:13.227 [TYPING] human true
+2026-02-18 19:51:13.280 [TYPING] human true
+2026-02-18 19:51:13.339 [TYPING] human true
+2026-02-18 19:51:13.448 [TYPING] human true
+2026-02-18 19:51:13.689 [TYPING] human true
+2026-02-18 19:51:13.780 [TYPING] human true
+2026-02-18 19:51:13.884 [TYPING] human true
+2026-02-18 19:51:13.958 [TYPING] human true
+2026-02-18 19:51:14.062 [TYPING] human true
+2026-02-18 19:51:14.667 [TYPING] human true
+2026-02-18 19:51:14.923 [TYPING] human true
+2026-02-18 19:51:15.055 [TYPING] human false
+2026-02-18 19:51:15.064 [HUMAN_INPUT] [Alana] "since I adopted it very early on!"
+2026-02-18 19:51:15.065 [MESSAGE] [Alana] "since I adopted it very early on!"
+2026-02-18 19:51:15.712 [QUEUE] human_message: response not substantive (2/4), waiting for idle then 5s before elaborate
+2026-02-18 19:51:24.059 [TYPING] moderator true
+2026-02-18 19:51:28.260 [TYPING] moderator false
+2026-02-18 19:51:28.261 [MESSAGE] [Eunice] "Could you elaborate? Please share your thoughts on the question."
+2026-02-18 19:51:28.262 [QUEUE] elaboration prompt sent after 5s idle, nudge counter reset
