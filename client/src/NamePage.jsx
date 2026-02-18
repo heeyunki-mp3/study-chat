@@ -11,26 +11,63 @@ export default function NamePage() {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [stream, setStream] = useState(null);
+  const [cameraRequested, setCameraRequested] = useState(false);
   const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let s = null;
-    (async () => {
-      try {
-        s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 320 } } });
+  function requestCamera() {
+    setCameraError(null);
+    setCameraRequested(true);
+    const promise = navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 320 } },
+    });
+    let settled = false;
+    const reset = () => {
+      if (settled) return;
+      settled = true;
+      setCameraError("Permission denied. Allow camera in browser settings (lock icon in address bar), then click Allow camera.");
+      setCameraRequested(false);
+    };
+    const timeout = setTimeout(reset, 5000);
+    promise
+      .then((s) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = s;
         setStream(s);
         setCameraError(null);
-      } catch (e) {
-        setCameraError(e?.message || "Could not access camera.");
-      }
-    })();
+      })
+      .catch(() => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        setCameraError("Permission denied. Allow camera in browser settings (lock icon in address bar), then click Allow camera.");
+        setCameraRequested(false);
+      });
+  }
+
+  useEffect(() => {
     return () => {
-      if (s) {
-        s.getTracks().forEach((t) => t.stop());
-      }
+      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  // Auto-open camera if permission was already granted (e.g. previous visit or retake)
+  useEffect(() => {
+    if (capturedPhoto || stream) return;
+    const check = async () => {
+      try {
+        const perm = await navigator.permissions?.query({ name: "camera" });
+        if (perm?.state === "granted") requestCamera();
+      } catch {
+        // Permissions API not supported (e.g. Safari) - show button
+      }
+    };
+    check();
+  }, [capturedPhoto]);
 
   useEffect(() => {
     if (!videoRef.current || !stream) return;
@@ -53,10 +90,18 @@ export default function NamePage() {
     ctx.drawImage(video, sx, sy, size, size, 0, 0, PROFILE_SIZE, PROFILE_SIZE);
     const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
     setCapturedPhoto(dataUrl);
+    // Close camera after capture
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setStream(null);
+    setCameraRequested(false);
   }
 
   function retakePhoto() {
     setCapturedPhoto(null);
+    setCameraError(null);
+    // Reopen camera if they had it before (permission already granted)
+    requestCamera();
   }
 
   function handleSubmit(e) {
@@ -124,11 +169,34 @@ export default function NamePage() {
             style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
           />
         ) : (
-          <span style={{ color: "#888", fontSize: 14, textAlign: "center", padding: 8 }}>
-            {cameraError || "Loading camera…"}
-          </span>
+          <button
+            type="button"
+            onClick={requestCamera}
+            disabled={cameraRequested && !stream}
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#1976d2",
+              color: "#fff",
+              border: "none",
+              cursor: cameraRequested && !stream ? "wait" : "pointer",
+              opacity: cameraRequested && !stream ? 0.8 : 1,
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            {cameraRequested && !stream ? "Loading…" : "Allow camera"}
+          </button>
         )}
       </div>
+      {cameraError && !stream && (
+        <p style={{ color: "#c00", fontSize: 13, marginTop: -8, marginBottom: 16, textAlign: "center", maxWidth: 280 }}>
+          {cameraError}
+        </p>
+      )}
       {!capturedPhoto && stream && !cameraError && (
         <button
           type="button"

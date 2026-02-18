@@ -1,0 +1,2 @@
+2026-02-18 00:33:11.661 [SESSION_START] backend running on http://localhost:3001
+2026-02-18 00:33:11.662 [SESSION_START] CLI bots for this run: Sid, Mina, Jae

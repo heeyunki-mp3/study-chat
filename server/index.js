@@ -85,6 +85,8 @@ const IDLE_TYPING_MS = 10000; // Human idle: non-empty input, no typing this lon
 const NUDGE_MS = 20000;                     // Nudge after 20s of no typing (or 30s if has draft in input)
 const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge if user stopped typing for 30s (has draft)
 const MAX_NUDGES = 2;                       // After 2 nudges with no response, kick out
+const MAX_UNSUBSTANTIAL_IN_ROW = 4;         // After 4 unsubstantial messages in a row for that round, kick out
+const ELABORATION_WAIT_MS = 5000;          // After user goes idle, wait 5s before sending "elaborate"
 const MODERATOR_NAME = "Eunice";
 
 const MODERATOR_SCRIPT = [
@@ -695,6 +697,7 @@ io.on("connection", (socket) => {
     logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${name}, waiting for human_idle`);
     co.waitingForHumanIdle = true;
     co.humanRepliedThisTurn = false;
+    session.consecutiveUnsubstantialCount = 0;
     session.lastPromptForHuman = { type: "call_on", prompt: co.question };
     startIdleNudgeTimer();
   }
@@ -773,6 +776,20 @@ io.on("connection", (socket) => {
     }, IDLE_CHECK_MS);
   }
 
+  /** Kick user for 4 unsubstantial messages in a row. Must be called inside human_message handler. */
+  async function kickForUnsubstantial(sess) {
+    clearIdleNudgeTimer();
+    clearElaborationPromptTimer();
+    const kickMsg = "Please provide more substantial responses. You have been removed from the session.";
+    const m = addMessage(sess, MODERATOR_NAME, kickMsg);
+    logLine("MESSAGE", `[${MODERATOR_NAME}] "${kickMsg}"`);
+    io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
+    logLine("QUEUE", "unsubstantial kick: closing session after 4 unsubstantial in a row");
+    await new Promise((r) => setTimeout(r, 1500));
+    io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
+    session = null;
+  }
+
   function delay(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
@@ -830,18 +847,18 @@ io.on("connection", (socket) => {
   }
 
   async function emitModeratorLine(text, opts = {}) {
-    const { skipIfUserReplied: skipIfUserRepliedDuringCue } = opts;
+    const { skipIfUserReplied: skipIfUserRepliedDuringCue, cancelCheck } = opts;
     if (!session) return;
-    if (session.cancelAdvanceFromIdle) return;
+    if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
     emitTyping(MODERATOR_NAME, true);
     await delay(THINKING_DELAY_MS);
-    if (session?.cancelAdvanceFromIdle) {
+    if (session?.cancelAdvanceFromIdle || cancelCheck?.()) {
       emitTyping(MODERATOR_NAME, false);
       return;
     }
     await delay(TYPING_DELAY_MS);
     if (!session) return;
-    if (session.cancelAdvanceFromIdle) {
+    if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
       emitTyping(MODERATOR_NAME, false);
       return;
     }
@@ -1188,6 +1205,7 @@ io.on("connection", (socket) => {
       return;
     }
     session.waitingForHumanIntro = true;
+    session.consecutiveUnsubstantialCount = 0;
     session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
     startIdleNudgeTimer();
     logLine("QUEUE", `waiting for human intro from ${session.participantName}`);
@@ -1280,6 +1298,7 @@ io.on("connection", (socket) => {
     if (item.isHuman) {
       session.waitingForHumanDisagreementResponse = true;
       session.humanRepliedDisagreementTurn = false;
+      session.consecutiveUnsubstantialCount = 0;
       session.lastPromptForHuman = { type: "disagreement", prompt: followUpText };
       startIdleNudgeTimer();
       logLine("QUEUE", `view-misalignment follow-up: waiting for human ${session.participantName} to respond (${item.differenceSummary})`);
@@ -1336,8 +1355,19 @@ io.on("connection", (socket) => {
     setImmediate(() => runIntroWithTyping());
   });
 
+  function clearElaborationPromptTimer() {
+    if (session?.elaborationPromptTimer) {
+      clearTimeout(session.elaborationPromptTimer);
+      session.elaborationPromptTimer = null;
+    }
+    if (session) session.elaborationPromptCancelled = true;
+  }
+
   socket.on("human_typing", ({ isTyping, hasDraft } = {}) => {
     if (isTyping !== undefined) logLine("TYPING", `human ${isTyping}`);
+    if (isTyping && session?.waitingForElaborationAfterNonSubstantive) {
+      clearElaborationPromptTimer(); // user typing again, cancel 5s countdown
+    }
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();
       if (isTyping) session.idleUserHasTyped = true;
@@ -1351,8 +1381,27 @@ io.on("connection", (socket) => {
   });
 
   socket.on("human_idle", async () => {
-    // Only clear nudge timer when we actually advance; otherwise keep it running so we can nudge again
-    // (e.g. user was nudged once, typed a draft, then went idle again — second nudge should still fire)
+    // Non-substantive response: wait for idle, then 5s before sending "elaborate"
+    if (session?.waitingForElaborationAfterNonSubstantive) {
+      clearElaborationPromptTimer();
+      session.elaborationPromptCancelled = false;
+      session.elaborationPromptTimer = setTimeout(async () => {
+        if (!session) return;
+        session.elaborationPromptTimer = null;
+        if (session.elaborationPromptCancelled) return;
+        session.waitingForElaborationAfterNonSubstantive = false;
+        await emitModeratorLine("Could you elaborate? Please share your thoughts on the question.", {
+          cancelCheck: () => session?.elaborationPromptCancelled,
+        });
+        if (!session?.elaborationPromptCancelled) {
+          session.idleNudgeCount = 0;
+          session.idleLastNudgeAt = null;
+          session.idleLastActivityAt = Date.now();
+          logLine("QUEUE", "elaboration prompt sent after 5s idle, nudge counter reset");
+        }
+      }, ELABORATION_WAIT_MS);
+      return;
+    }
     if (session?.waitingForHumanIntro) {
       clearIdleNudgeTimer();
       logLine("QUEUE", `human_idle after intro from ${session.participantName}`);
@@ -1384,6 +1433,9 @@ io.on("connection", (socket) => {
   socket.on("human_message", async (data) => {
     const text = (data?.text || "").trim();
     if (!text || !session) return;
+    if (session.waitingForElaborationAfterNonSubstantive) {
+      clearElaborationPromptTimer(); // user sent another message, cancel elaboration timer
+    }
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();
       session.idleUserHasTyped = true;
@@ -1392,16 +1444,24 @@ io.on("connection", (socket) => {
     }
     logLine("HUMAN_INPUT", `[${session.participantName}] "${clip(text, 160)}"`);
 
+    emitMessage(session.participantName, text); // show immediately; validate below
+
     // Validate response before advancing: treat non-substantive replies as if user never responded
     const ctx = session.lastPromptForHuman;
     if (ctx && (session.waitingForHumanIntro || session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse || session.pendingAdvanceFromIdle)) {
       const substantive = await isResponseSubstantive(text, ctx);
       if (!substantive) {
-        emitMessage(session.participantName, text);
-        await emitModeratorLine("Could you elaborate? Please share your thoughts on the question.");
-        logLine("HUMAN", "human_message: response not substantive, waiting for elaboration");
+        session.consecutiveUnsubstantialCount = (session.consecutiveUnsubstantialCount || 0) + 1;
+        if (session.consecutiveUnsubstantialCount >= MAX_UNSUBSTANTIAL_IN_ROW) {
+          await kickForUnsubstantial(session);
+          return;
+        }
+        session.waitingForElaborationAfterNonSubstantive = true;
+        logLine("QUEUE", `human_message: response not substantive (${session.consecutiveUnsubstantialCount}/${MAX_UNSUBSTANTIAL_IN_ROW}), waiting for idle then 5s before elaborate`);
         return;
       }
+      session.consecutiveUnsubstantialCount = 0;
+      session.waitingForElaborationAfterNonSubstantive = false; // substantive response, don't send "elaborate"
       logLine("HUMAN", "human_message: response is substantive, advancing");
     }
 
@@ -1410,7 +1470,6 @@ io.on("connection", (socket) => {
       session.userRepliedDuringIntroCue = true;
       session.moderatorTypingIntroCue = false;
     }
-    emitMessage(session.participantName, text);
     if (repliedWhileModeratorTypingIntroCue) {
       logLine("QUEUE", "human_message during intro cue: cancelling cue, advancing to study_goal");
       await runStudyGoal();
@@ -1441,6 +1500,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     clearIdleNudgeTimer();
+    clearElaborationPromptTimer();
     if (session) {
       logLine("DISCONNECT", `id=${socket.id}`);
     }
