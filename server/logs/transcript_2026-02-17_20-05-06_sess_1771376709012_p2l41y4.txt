@@ -1,0 +1,30 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hello I'm Sid. I am in IT support. Nice to meet you all
+Mina: Hi, I'm Mina. I work in retail in LA. Nice to meet you all
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Thanks for sharing, Jae. How about you, Ara? Can you introduce yourself?
+Arana: Hi i am arana!
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Jae: Got it!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Honestly, I’m skeptical at first. Most new features are gimmicks or half-baked and end up cluttering the interface.
+Sid: I only try them if they promise a clear security or usability improvement; otherwise, I wait until they're proven or forced to use.
+Eunice: Got it, Sid. Mina, how about you?
+Mina: Honestly, I usually just let new features be unless they’re super easy and make my life simpler. I don’t want extra steps or anything weird popping up.
+Mina: If it’s something like FaceID or just taps and swipes that make logging in or buying stuff faster, I’m all in. Otherwise, meh.
+Eunice: Thanks, Mina. Jae, how about you? Do you try new features right away or wait it out?
+Jae: I tend to wait it out before trying new features. In my experience, if it’s not clearly explained or if it seems complicated, I get anxious about breaking something or losing access.
+Jae: I use multiple devices for work and personal stuff, so sync and compatibility are big concerns. I usually want some reassurance first before jumping in.
+Eunice: Got it, Jae. Arana, how about you? Do you try new features right away or wait to see how they work out?
+Arana: uhh I think I am more of faster adopter. I want to try things right away!
+Eunice: Really appreciate everyone's input.
+Eunice: Sid, Ara mentioned she likes to try new features right away, what do you think about that approach?
+Sid: Trying new features right away can backfire unless you’re ready to troubleshoot. Most rollouts have bugs or UX quirks early on.

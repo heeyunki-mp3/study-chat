@@ -50,8 +50,9 @@ function getOrderedParticipantNames(session, myName) {
   return names;
 }
 
-function getColorForSender(sender, session, myName) {
+function getColorForSender(sender, session, myName, introducedName = null) {
   if (!sender) return PARTICIPANT_PALETTE[0];
+  if (sender === myName || (introducedName && sender === introducedName)) return PARTICIPANT_PALETTE[0];
   const ordered = getOrderedParticipantNames(session, myName);
   const i = ordered.indexOf(sender);
   if (i >= 0) return PARTICIPANT_PALETTE[i % PARTICIPANT_PALETTE.length];
@@ -124,6 +125,8 @@ export default function ChatPage() {
   const [typing, setTyping] = useState({});
   const [session, setSession] = useState(null);
   const [input, setInput] = useState("");
+  const [introducedName, setIntroducedName] = useState(null);
+  const introducedNameRef = useRef(null);
 
   // Debounce: stop-typing after 800ms; then idle = session.idleEmptyMs (empty) or session.idleTypingMs (has text)
   const typingTimeoutRef = useRef(null);
@@ -156,15 +159,23 @@ export default function ChatPage() {
       ]);
     });
 
+    socket.on("introduced_name", ({ name } = {}) => {
+      if (name) {
+        introducedNameRef.current = name;
+        setIntroducedName(name);
+      }
+    });
+
     socket.on("message", (m) => {
       const text = typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000);
       const sender = m?.name ?? "";
+      const isOutgoing = sender === participantName || sender === introducedNameRef.current;
       setMessages((prev) => [
         ...prev,
         {
           sender,
           message: text,
-          direction: sender === participantName ? "outgoing" : "incoming",
+          direction: isOutgoing ? "outgoing" : "incoming",
           ts: m?.ts,
         },
       ]);
@@ -371,7 +382,7 @@ export default function ChatPage() {
                     <div
                       key={i}
                       className={`sender-bubble-wrap${isModerator ? " moderator-bubble" : ""}`}
-                      style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName) }}
+                      style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName, introducedName) }}
                     >
                         <Message
                           model={{
