@@ -89,6 +89,36 @@ const MAX_UNSUBSTANTIAL_IN_ROW = 4;         // After 4 unsubstantial messages in
 const ELABORATION_WAIT_MS = 5000;          // After user goes idle, wait 5s before sending "elaborate"
 const MODERATOR_NAME = "Eunice";
 
+/** Try to extract a name from intro text (e.g. "I'm heeyun", "My name is Alice"). Returns null if none found. */
+function extractIntroducedName(text) {
+  if (!text || typeof text !== "string") return null;
+  const s = text.trim();
+  const patterns = [
+    /\b(?:I'?m|I am)\s+([A-Za-z][A-Za-z'-]*)/i,
+    /\b(?:my name is|call me|name'?s)\s+([A-Za-z][A-Za-z'-]*)/i,
+    /\b(?:this is|it'?s)\s+([A-Za-z][A-Za-z'-]*)/i,
+  ];
+  for (const re of patterns) {
+    const m = s.match(re);
+    if (m && m[1]) return m[1].trim();
+  }
+  return null;
+}
+
+/** Capitalize first character of a name. */
+function capitalizeFirst(s) {
+  if (!s || typeof s !== "string") return s ?? "";
+  const t = s.trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
+}
+
+/** Name to use when referring to the human (in prompts, moderator cues, nudges). Uses introduced name if different from NamePage; always capitalized. */
+function getHumanReferenceName(session) {
+  if (!session?.participantName) return "You";
+  const base = session.introducedName ?? session.participantName;
+  return capitalizeFirst(base);
+}
+
 const MODERATOR_SCRIPT = [
   {
     type: "intro",
@@ -770,7 +800,7 @@ io.on("connection", (socket) => {
         return;
       }
 
-      const nudgeMsg = `${session.participantName}, are you still there? Would you respond to this question?`;
+      const nudgeMsg = `${getHumanReferenceName(session)}, are you still there? Would you respond to this question?`;
       await emitModeratorLine(nudgeMsg);
       logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
     }, IDLE_CHECK_MS);
@@ -897,12 +927,13 @@ io.on("connection", (socket) => {
 
     const nextName = co.order[co.currentIndex];
     const isHuman = isHumanTurn(session, nextName);
+    const nameForCue = isHumanTurn(session, nextName) ? getHumanReferenceName(session) : nextName;
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, nextName, { roundQuestion: co.question });
+      cue = await generateModeratorCue(latest, nameForCue, { roundQuestion: co.question });
     } catch (e) {
-      cue = `How about you, ${nextName}?`;
+      cue = `How about you, ${nameForCue}?`;
     }
     if (!session) return;
     if (fromHumanIdle && wasAdvanceCancelled(session)) {
@@ -949,7 +980,7 @@ io.on("connection", (socket) => {
       moderatorQuestion: co.question,
       directive,
       previousAnswers,
-      humanParticipantName: session.participantName,
+      humanParticipantName: getHumanReferenceName(session),
       bots: session.bots,
     };
 
@@ -1131,11 +1162,12 @@ io.on("connection", (socket) => {
     resetCallOnState(co, nextQuestion);
 
     const firstSpeaker = co.order[0];
+    const nameForCue = isHumanTurn(session, firstSpeaker) ? getHumanReferenceName(session) : firstSpeaker;
     let cue;
     try {
-      cue = await generateModeratorCue(null, firstSpeaker, { isFirstInRound: true, bigQuestion: nextQuestion });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextQuestion });
     } catch (e) {
-      cue = `Let's start with ${firstSpeaker}.`;
+      cue = `Let's start with ${nameForCue}.`;
     }
     await emitModeratorLine(cue);
     if (!session) return;
@@ -1190,9 +1222,9 @@ io.on("connection", (socket) => {
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, session.participantName, { isIntro: true });
+      cue = await generateModeratorCue(latest, getHumanReferenceName(session), { isIntro: true });
     } catch (e) {
-      cue = `How about you, ${session.participantName}?`;
+      cue = `How about you, ${getHumanReferenceName(session)}?`;
     }
     if (!session) return;
     session.moderatorTypingIntroCue = true;
@@ -1243,14 +1275,15 @@ io.on("connection", (socket) => {
     const co = session.callOnState;
     resetCallOnState(co, session.bigQuestions[0]);
     const firstSpeaker = co.order[0];
+    const nameForCue = isHumanTurn(session, firstSpeaker) ? getHumanReferenceName(session) : firstSpeaker;
     logLine("QUEUE", `first big_question: "${clip(co.question, 60)}"`);
     await emitModeratorLine(co.question);
     if (!session) return;
     let cue;
     try {
-      cue = await generateModeratorCue(null, firstSpeaker, { isFirstInRound: true, bigQuestion: co.question });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: co.question });
     } catch (e) {
-      cue = `Let's start with ${firstSpeaker}.`;
+      cue = `Let's start with ${nameForCue}.`;
     }
     await emitModeratorLine(cue);
     if (!session) return;
@@ -1279,17 +1312,20 @@ io.on("connection", (socket) => {
     const item = co.disagreementQueue[co.disagreementIndex];
     co.disagreementIndex += 1;
 
+    const disagreedWithForCue = item.isHuman
+      ? getHumanReferenceName(session)
+      : item.disagreedWith;
     let followUpText;
     try {
       followUpText = await generateDisagreementFollowUp(
-        item.disagreedWith,
+        disagreedWithForCue,
         item.disagreedBy,
         item.disagreedByText,
         co.question,
         item.differenceSummary
       );
     } catch (e) {
-      followUpText = `${item.disagreedBy} had a different view. ${item.disagreedWith}, what do you think?`;
+      followUpText = `${item.disagreedBy} had a different view. ${disagreedWithForCue}, what do you think?`;
     }
     if (!session) return;
     await emitModeratorLine(followUpText);
@@ -1312,7 +1348,7 @@ io.on("connection", (socket) => {
       moderatorQuestion: co.question,
       directive: followUpText,
       previousAnswers,
-      humanParticipantName: session.participantName,
+      humanParticipantName: getHumanReferenceName(session),
       bots: session.bots,
     };
 
@@ -1471,11 +1507,21 @@ io.on("connection", (socket) => {
       session.moderatorTypingIntroCue = false;
     }
     if (repliedWhileModeratorTypingIntroCue) {
+      const introduced = extractIntroducedName(text);
+      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+        session.introducedName = introduced.trim();
+        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      }
       logLine("QUEUE", "human_message during intro cue: cancelling cue, advancing to study_goal");
       await runStudyGoal();
       return;
     }
     if (session.waitingForHumanIntro) {
+      const introduced = extractIntroducedName(text);
+      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+        session.introducedName = introduced.trim();
+        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      }
       session.waitingForHumanIntro = false;
       logLine("QUEUE", `human_message after intro: advancing to study_goal`);
       await runStudyGoal();
