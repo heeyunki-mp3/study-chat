@@ -1,0 +1,742 @@
+2026-02-17 22:55:05.958 [SESSION_START] backend running on http://localhost:3001
+2026-02-17 22:55:05.959 [SESSION_START] CLI bots for this run: Sid, Mina, Jae
+2026-02-17 22:55:25.326 [SESSION_START] id=M4MzqjcVmNl2VRWxAAAB bots=Sid,Mina,Jae
+2026-02-17 22:55:25.326 [SESSION_START] participant_name set to "hailey"
+2026-02-17 22:55:25.326 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 22:55:25.327 [TYPING] moderator true
+2026-02-17 22:55:29.529 [TYPING] moderator false
+2026-02-17 22:55:29.532 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 22:55:29.534 [TYPING] moderator true
+2026-02-17 22:55:33.736 [TYPING] moderator false
+2026-02-17 22:55:33.739 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-17 22:55:33.740 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-17 22:55:35.919 [TYPING] bot=Sid true
+2026-02-17 22:55:35.970 [TYPING] bot=Mina true
+2026-02-17 22:55:38.105 [TYPING] bot=Jae true
+2026-02-17 22:55:39.122 [TYPING] bot=Sid false
+2026-02-17 22:55:39.124 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-17 22:55:39.171 [TYPING] bot=Mina false
+2026-02-17 22:55:39.171 [MESSAGE] [Mina] "Hi, I'm Mina. I work in retail in LA. Nice to meet you all"
+2026-02-17 22:55:41.308 [TYPING] bot=Jae false
+2026-02-17 22:55:41.310 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-17 22:55:42.473 [TYPING] moderator true
+2026-02-17 22:55:43.816 [TYPING] human true
+2026-02-17 22:55:43.917 [TYPING] human true
+2026-02-17 22:55:44.019 [TYPING] human true
+2026-02-17 22:55:44.156 [TYPING] human true
+2026-02-17 22:55:44.177 [TYPING] human true
+2026-02-17 22:55:44.289 [TYPING] human true
+2026-02-17 22:55:44.725 [TYPING] human true
+2026-02-17 22:55:44.877 [TYPING] human true
+2026-02-17 22:55:44.982 [TYPING] human true
+2026-02-17 22:55:45.117 [TYPING] human true
+2026-02-17 22:55:45.233 [TYPING] human true
+2026-02-17 22:55:45.351 [TYPING] human false
+2026-02-17 22:55:45.356 [HUMAN_INPUT] [hailey] "Hi yall"
+2026-02-17 22:55:45.357 [MESSAGE] [hailey] "Hi yall"
+2026-02-17 22:55:45.357 [QUEUE] human_message during intro cue: cancelling cue, advancing to study_goal
+2026-02-17 22:55:45.358 [TYPING] moderator true
+2026-02-17 22:55:46.675 [TYPING] moderator false
+2026-02-17 22:55:46.676 [QUEUE] intro cue cancelled: user already sent intro, advancing to study_goal
+2026-02-17 22:55:49.560 [TYPING] moderator false
+2026-02-17 22:55:49.561 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-17 22:55:49.561 [TYPING] moderator true
+2026-02-17 22:55:53.763 [TYPING] moderator false
+2026-02-17 22:55:53.765 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-17 22:55:55.815 [MESSAGE] [Mina] "Sure!"
+2026-02-17 22:55:55.816 [QUEUE] study_goal ack done, starting first big_question
+2026-02-17 22:55:55.817 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-17 22:55:55.817 [TYPING] moderator true
+2026-02-17 22:56:00.020 [TYPING] moderator false
+2026-02-17 22:56:00.020 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-17 22:56:00.895 [TYPING] moderator true
+2026-02-17 22:56:05.098 [TYPING] moderator false
+2026-02-17 22:56:05.099 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-17 22:56:05.100 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 22:56:05.101 [TYPING] bot=Sid true
+2026-02-17 22:56:06.428 [OPENAI_OK] bot=Sid rtt=1328ms raw="["I usually wait and watch; jumping into new features right away is a risk unless it's clearly benef…"
+2026-02-17 22:56:06.428 [TYPING] bot=Sid false
+2026-02-17 22:56:07.430 [TYPING] bot=Sid true
+2026-02-17 22:56:10.631 [TYPING] bot=Sid false
+2026-02-17 22:56:10.633 [MESSAGE] [Sid] "I usually wait and watch; jumping into new features right away is a risk unless it's clearly beneficial."
+2026-02-17 22:56:11.634 [TYPING] bot=Sid true
+2026-02-17 22:56:14.836 [TYPING] bot=Sid false
+2026-02-17 22:56:14.837 [MESSAGE] [Sid] "Tech companies push updates fast, but many break stuff or mess with workflows, so I like to see user feedback first."
+2026-02-17 22:56:15.853 [QUEUE] call-on who_spoke=[Sid] next=Mina
+2026-02-17 22:56:15.854 [TYPING] moderator true
+2026-02-17 22:56:20.055 [TYPING] moderator false
+2026-02-17 22:56:20.057 [MESSAGE] [Eunice] "Thanks for that, Sid. Mina, how about you? Do you jump on new features immediately or wait to see how they work out?"
+2026-02-17 22:56:20.059 [OPENAI_REQ] bot=Mina question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 22:56:20.059 [TYPING] bot=Mina true
+2026-02-17 22:56:21.934 [OPENAI_OK] bot=Mina rtt=1875ms raw="["Honestly, I’m kinda ‘wait and see’ too. I don’t go for everything immediately, especially if it se…"
+2026-02-17 22:56:21.935 [TYPING] bot=Mina false
+2026-02-17 22:56:22.936 [TYPING] bot=Mina true
+2026-02-17 22:56:26.137 [TYPING] bot=Mina false
+2026-02-17 22:56:26.138 [MESSAGE] [Mina] "Honestly, I’m kinda ‘wait and see’ too. I don’t go for everything immediately, especially if it seems like a hassle or might mess up my usual flow."
+2026-02-17 22:56:26.951 [QUEUE] call-on who_spoke=[Sid, Mina] next=Jae
+2026-02-17 22:56:26.951 [TYPING] moderator true
+2026-02-17 22:56:31.154 [TYPING] moderator false
+2026-02-17 22:56:31.155 [MESSAGE] [Eunice] "Thanks for sharing, Mina. Jae, how about you? Do you jump on new features right away or take a more cautious approach?"
+2026-02-17 22:56:31.155 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 22:56:31.155 [TYPING] bot=Jae true
+2026-02-17 22:56:33.398 [OPENAI_OK] bot=Jae rtt=2243ms raw="["I usually take a cautious approach with new features, especially at work where stability matters a…"
+2026-02-17 22:56:33.399 [TYPING] bot=Jae false
+2026-02-17 22:56:34.401 [TYPING] bot=Jae true
+2026-02-17 22:56:37.603 [TYPING] bot=Jae false
+2026-02-17 22:56:37.605 [MESSAGE] [Jae] "I usually take a cautious approach with new features, especially at work where stability matters a lot. I like to read up on them first and see if they’re reall…"
+2026-02-17 22:56:38.607 [TYPING] bot=Jae true
+2026-02-17 22:56:41.809 [TYPING] bot=Jae false
+2026-02-17 22:56:41.810 [MESSAGE] [Jae] "In my experience, jumping in too fast can cause unexpected issues, so I prefer waiting until I understand the change fully and can test it safely on my own sche…"
+2026-02-17 22:56:42.677 [QUEUE] call-on who_spoke=[Sid, Mina, Jae] next=human hailey, waiting for human_idle
+2026-02-17 22:56:42.677 [TYPING] moderator true
+2026-02-17 22:56:46.878 [TYPING] moderator false
+2026-02-17 22:56:46.879 [MESSAGE] [Eunice] "Good point, Jae. Hailey, how do you usually feel about trying new features when they’re introduced?"
+2026-02-17 22:57:52.678 [TYPING] human true
+2026-02-17 22:57:52.767 [TYPING] human true
+2026-02-17 22:57:52.919 [TYPING] human true
+2026-02-17 22:57:53.044 [TYPING] human true
+2026-02-17 22:57:53.139 [TYPING] human true
+2026-02-17 22:57:53.230 [TYPING] human true
+2026-02-17 22:57:53.303 [TYPING] human true
+2026-02-17 22:57:53.503 [TYPING] human false
+2026-02-17 22:57:53.515 [HUMAN_INPUT] [hailey] "hmm idk"
+2026-02-17 22:57:53.515 [MESSAGE] [hailey] "hmm idk"
+2026-02-17 22:57:53.516 [QUEUE] human_message during call-on: hailey replied, waiting for idle to advance
+2026-02-17 22:57:57.506 [QUEUE] human_idle from hailey (replied this turn), advancing
+2026-02-17 22:57:57.507 [QUEUE] call-on round done, acknowledging then view-misalignment phase
+2026-02-17 22:57:57.507 [TYPING] moderator true
+2026-02-17 22:58:01.709 [TYPING] moderator false
+2026-02-17 22:58:01.711 [MESSAGE] [Eunice] "Thanks for sharing your views :)"
+2026-02-17 22:58:01.712 [QUEUE] view-misalignment phase started
+2026-02-17 22:58:01.712 [DISAGREEMENT CHECK] Moderator question: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Sid: I usually wait and watch; jumping into new features right away is a risk unless it's clearly beneficial. Tech companies push updates fast, but many break stuff or mess with workflows, so I like to see user feedback first.
+Mina: Honestly, I’m kinda ‘wait and see’ too. I don’t go for everything immediately, especially if it seems like a hassle or might mess up my usual flow.
+Jae: I usually take a cautious approach with new features, especially at work where stability matters a lot. I like to read up on them first and see if they’re really necessary or if they might complicate things. In my experience, jumping in too fast can cause unexpected issues, so I prefer waiting until I understand the change fully and can test it safely on my own schedule.
+hailey: hmm idk
+2026-02-17 22:58:02.553 [DISAGREEMENT CHECK RESULT] []
+2026-02-17 22:58:02.554 [QUEUE] no view misalignments detected
+2026-02-17 22:58:04.087 [TYPING] moderator true
+2026-02-17 22:58:08.289 [TYPING] moderator false
+2026-02-17 22:58:08.290 [MESSAGE] [Eunice] "Thanks everyone for sharing your thoughts! We heard a lot of caution around trying new features right away, with many of you preferring to wait and see how thin…"
+2026-02-17 22:58:08.291 [QUEUE] advancing to question 2/4: "Moving on, one of the new popular technology is generative A…"
+2026-02-17 22:58:08.291 [TYPING] moderator true
+2026-02-17 22:58:10.652 [TYPING] human false
+2026-02-17 22:58:10.655 [DISCONNECT] id=M4MzqjcVmNl2VRWxAAAB
+2026-02-17 22:58:10.657 [SESSION_START] id=SQsPp8wncVB_Vj9IAAAD bots=Sid,Mina,Jae
+2026-02-17 22:58:10.657 [SESSION_START] participant_name set to "hailey"
+2026-02-17 22:58:10.658 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 22:58:10.658 [TYPING] moderator true
+2026-02-17 22:58:14.860 [TYPING] moderator false
+2026-02-17 22:58:14.861 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 22:58:14.861 [TYPING] moderator true
+2026-02-17 22:58:19.064 [TYPING] moderator false
+2026-02-17 22:58:19.065 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-17 22:58:19.065 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-17 22:58:21.073 [TYPING] bot=Mina true
+2026-02-17 22:58:21.642 [TYPING] bot=Sid true
+2026-02-17 22:58:23.291 [TYPING] bot=Jae true
+2026-02-17 22:58:24.276 [TYPING] bot=Mina false
+2026-02-17 22:58:24.276 [MESSAGE] [Mina] "Hi, I'm Mina. I work in retail in LA. Nice to meet you all"
+2026-02-17 22:58:24.844 [TYPING] bot=Sid false
+2026-02-17 22:58:24.846 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-17 22:58:26.493 [TYPING] bot=Jae false
+2026-02-17 22:58:26.495 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-17 22:58:27.243 [TYPING] moderator true
+2026-02-17 22:58:31.446 [TYPING] moderator false
+2026-02-17 22:58:31.448 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Hailey, could you introduce yourself next?"
+2026-02-17 22:58:31.449 [QUEUE] waiting for human intro from hailey
+2026-02-17 22:59:19.239 [DISCONNECT] id=SQsPp8wncVB_Vj9IAAAD
+2026-02-17 22:59:19.581 [SESSION_START] id=O2ccrHRuV3KY0zYfAAAF bots=Sid,Mina,Jae
+2026-02-17 22:59:19.582 [SESSION_START] participant_name set to "hailey"
+2026-02-17 22:59:19.582 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 22:59:19.582 [TYPING] moderator true
+2026-02-17 22:59:23.785 [TYPING] moderator false
+2026-02-17 22:59:23.787 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 22:59:23.787 [TYPING] moderator true
+2026-02-17 22:59:27.989 [TYPING] moderator false
+2026-02-17 22:59:27.990 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-17 22:59:27.991 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-17 22:59:30.653 [TYPING] bot=Mina true
+2026-02-17 22:59:30.721 [TYPING] bot=Sid true
+2026-02-17 22:59:31.417 [TYPING] bot=Jae true
+2026-02-17 22:59:33.855 [TYPING] bot=Mina false
+2026-02-17 22:59:33.855 [MESSAGE] [Mina] "Hi yall! I'm Mina. First time doing this kind of thing!"
+2026-02-17 22:59:33.923 [TYPING] bot=Sid false
+2026-02-17 22:59:33.924 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-02-17 22:59:34.620 [TYPING] bot=Jae false
+2026-02-17 22:59:34.621 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-17 22:59:35.503 [TYPING] moderator true
+2026-02-17 22:59:37.957 [TYPING] human true
+2026-02-17 22:59:38.074 [TYPING] human true
+2026-02-17 22:59:38.225 [TYPING] human true
+2026-02-17 22:59:38.297 [TYPING] human true
+2026-02-17 22:59:38.466 [TYPING] human true
+2026-02-17 22:59:38.706 [TYPING] human true
+2026-02-17 22:59:38.840 [TYPING] human true
+2026-02-17 22:59:38.931 [TYPING] human true
+2026-02-17 22:59:38.998 [TYPING] human true
+2026-02-17 22:59:39.109 [TYPING] human true
+2026-02-17 22:59:39.212 [TYPING] human true
+2026-02-17 22:59:39.316 [TYPING] human true
+2026-02-17 22:59:39.338 [TYPING] human true
+2026-02-17 22:59:39.708 [TYPING] moderator false
+2026-02-17 22:59:39.710 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Hailey, how about you introduce yourself?"
+2026-02-17 22:59:39.710 [QUEUE] waiting for human intro from hailey
+2026-02-17 22:59:39.756 [TYPING] human true
+2026-02-17 22:59:39.839 [TYPING] human true
+2026-02-17 22:59:39.930 [TYPING] human true
+2026-02-17 22:59:40.160 [TYPING] human true
+2026-02-17 22:59:40.215 [TYPING] human true
+2026-02-17 22:59:40.414 [TYPING] human true
+2026-02-17 22:59:40.502 [TYPING] human true
+2026-02-17 22:59:40.575 [TYPING] human true
+2026-02-17 22:59:41.379 [TYPING] human false
+2026-02-17 22:59:41.509 [TYPING] human true
+2026-02-17 22:59:41.532 [TYPING] human true
+2026-02-17 22:59:41.535 [TYPING] human true
+2026-02-17 22:59:41.537 [TYPING] human true
+2026-02-17 22:59:41.548 [TYPING] human true
+2026-02-17 22:59:41.579 [TYPING] human true
+2026-02-17 22:59:41.638 [TYPING] human true
+2026-02-17 22:59:41.670 [TYPING] human true
+2026-02-17 22:59:41.757 [TYPING] human true
+2026-02-17 22:59:41.760 [TYPING] human true
+2026-02-17 22:59:41.775 [TYPING] human true
+2026-02-17 22:59:41.777 [TYPING] human true
+2026-02-17 22:59:41.848 [TYPING] human true
+2026-02-17 22:59:41.867 [TYPING] human true
+2026-02-17 22:59:41.937 [TYPING] human true
+2026-02-17 22:59:41.971 [TYPING] human true
+2026-02-17 22:59:41.984 [TYPING] human true
+2026-02-17 22:59:42.012 [TYPING] human true
+2026-02-17 22:59:42.015 [TYPING] human true
+2026-02-17 22:59:42.031 [TYPING] human true
+2026-02-17 22:59:42.106 [TYPING] human true
+2026-02-17 22:59:42.109 [TYPING] human true
+2026-02-17 22:59:42.178 [TYPING] human true
+2026-02-17 22:59:42.239 [TYPING] human true
+2026-02-17 22:59:42.254 [TYPING] human true
+2026-02-17 22:59:42.343 [TYPING] human true
+2026-02-17 22:59:42.404 [TYPING] human true
+2026-02-17 22:59:42.438 [TYPING] human true
+2026-02-17 22:59:42.538 [TYPING] human true
+2026-02-17 22:59:42.553 [TYPING] human true
+2026-02-17 22:59:42.599 [TYPING] human true
+2026-02-17 22:59:42.629 [TYPING] human true
+2026-02-17 22:59:42.720 [TYPING] human true
+2026-02-17 22:59:42.734 [TYPING] human true
+2026-02-17 22:59:42.842 [TYPING] human true
+2026-02-17 22:59:42.845 [TYPING] human true
+2026-02-17 22:59:42.854 [TYPING] human true
+2026-02-17 22:59:42.963 [TYPING] human true
+2026-02-17 22:59:42.992 [TYPING] human true
+2026-02-17 22:59:43.040 [TYPING] human true
+2026-02-17 22:59:43.095 [TYPING] human true
+2026-02-17 22:59:43.099 [TYPING] human true
+2026-02-17 22:59:43.168 [TYPING] human true
+2026-02-17 22:59:43.243 [TYPING] human true
+2026-02-17 22:59:43.275 [TYPING] human true
+2026-02-17 22:59:43.289 [TYPING] human true
+2026-02-17 22:59:43.366 [TYPING] human true
+2026-02-17 22:59:43.381 [TYPING] human true
+2026-02-17 22:59:43.424 [TYPING] human true
+2026-02-17 22:59:43.458 [TYPING] human true
+2026-02-17 22:59:43.515 [TYPING] human true
+2026-02-17 22:59:43.518 [TYPING] human true
+2026-02-17 22:59:43.561 [TYPING] human true
+2026-02-17 22:59:43.606 [TYPING] human true
+2026-02-17 22:59:43.665 [TYPING] human true
+2026-02-17 22:59:43.667 [TYPING] human true
+2026-02-17 22:59:43.696 [TYPING] human true
+2026-02-17 22:59:43.724 [TYPING] human true
+2026-02-17 22:59:43.799 [TYPING] human true
+2026-02-17 22:59:43.873 [TYPING] human true
+2026-02-17 22:59:43.906 [TYPING] human false
+2026-02-17 22:59:43.908 [HUMAN_INPUT] [hailey] "hi y'all ya I am fjasdkfjweoijfijwcndjknewnrinwekfnkwenckewnwkjdnwkjendkjwedw"
+2026-02-17 22:59:43.908 [MESSAGE] [hailey] "hi y'all ya I am fjasdkfjweoijfijwcndjknewnrinwekfnkwenckewnwkjdnwkjendkjwedw"
+2026-02-17 22:59:43.909 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-17 22:59:43.909 [TYPING] moderator true
+2026-02-17 22:59:48.112 [TYPING] moderator false
+2026-02-17 22:59:48.113 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-17 22:59:48.113 [TYPING] moderator true
+2026-02-17 22:59:52.315 [TYPING] moderator false
+2026-02-17 22:59:52.318 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-17 22:59:55.194 [MESSAGE] [Sid] "Got it!"
+2026-02-17 22:59:55.195 [QUEUE] study_goal ack done, starting first big_question
+2026-02-17 22:59:55.195 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-17 22:59:55.195 [TYPING] moderator true
+2026-02-17 22:59:59.398 [TYPING] moderator false
+2026-02-17 22:59:59.398 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-17 22:59:59.792 [TYPING] moderator true
+2026-02-17 23:00:03.996 [TYPING] moderator false
+2026-02-17 23:00:03.997 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-17 23:00:03.997 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:00:03.997 [TYPING] bot=Sid true
+2026-02-17 23:00:05.473 [OPENAI_OK] bot=Sid rtt=1476ms raw="["I usually wait a bit to see how stable the new feature is before jumping in. Too often, these roll…"
+2026-02-17 23:00:05.473 [TYPING] bot=Sid false
+2026-02-17 23:00:06.474 [TYPING] bot=Sid true
+2026-02-17 23:00:09.676 [TYPING] bot=Sid false
+2026-02-17 23:00:09.676 [MESSAGE] [Sid] "I usually wait a bit to see how stable the new feature is before jumping in. Too often, these rollouts have bugs or make things clunky."
+2026-02-17 23:00:10.677 [TYPING] bot=Sid true
+2026-02-17 23:00:13.879 [TYPING] bot=Sid false
+2026-02-17 23:00:13.879 [MESSAGE] [Sid] "If it’s something that genuinely improves security or convenience, I’ll test it early, but mostly I’m skeptical until it proves itself."
+2026-02-17 23:00:14.776 [QUEUE] call-on who_spoke=[Sid] next=Mina
+2026-02-17 23:00:14.776 [TYPING] moderator true
+2026-02-17 23:00:18.978 [TYPING] moderator false
+2026-02-17 23:00:18.979 [MESSAGE] [Eunice] "Got it, Sid. Mina, how about you?"
+2026-02-17 23:00:18.979 [OPENAI_REQ] bot=Mina question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:00:18.979 [TYPING] bot=Mina true
+2026-02-17 23:00:20.508 [OPENAI_OK] bot=Mina rtt=1529ms raw="["Honestly, I kinda just roll with it if it’s easy and doesn't mess with how I use stuff. If it’s an…"
+2026-02-17 23:00:20.508 [TYPING] bot=Mina false
+2026-02-17 23:00:21.510 [TYPING] bot=Mina true
+2026-02-17 23:00:24.713 [TYPING] bot=Mina false
+2026-02-17 23:00:24.713 [MESSAGE] [Mina] "Honestly, I kinda just roll with it if it’s easy and doesn't mess with how I use stuff. If it’s annoying, I’ll ignore it for a while."
+2026-02-17 23:00:25.714 [TYPING] bot=Mina true
+2026-02-17 23:00:28.916 [TYPING] bot=Mina false
+2026-02-17 23:00:28.918 [MESSAGE] [Mina] "Mostly I just want things to be quick and simple—like, if it helps login faster or something, I'll try it. But I don’t stress about new features too much."
+2026-02-17 23:00:30.239 [QUEUE] call-on who_spoke=[Sid, Mina] next=Jae
+2026-02-17 23:00:30.239 [TYPING] moderator true
+2026-02-17 23:00:34.442 [TYPING] moderator false
+2026-02-17 23:00:34.443 [MESSAGE] [Eunice] "Thanks for sharing, Mina. Jae, what about you? How do you usually feel when a company you use introduces something new?"
+2026-02-17 23:00:34.443 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:00:34.443 [TYPING] bot=Jae true
+2026-02-17 23:00:36.037 [OPENAI_OK] bot=Jae rtt=1594ms raw="["I usually feel cautious when new features come out, especially if they affect how I log in or acce…"
+2026-02-17 23:00:36.037 [TYPING] bot=Jae false
+2026-02-17 23:00:37.039 [TYPING] bot=Jae true
+2026-02-17 23:00:40.240 [TYPING] bot=Jae false
+2026-02-17 23:00:40.241 [MESSAGE] [Jae] "I usually feel cautious when new features come out, especially if they affect how I log in or access accounts."
+2026-02-17 23:00:41.242 [TYPING] bot=Jae true
+2026-02-17 23:00:44.443 [TYPING] bot=Jae false
+2026-02-17 23:00:44.444 [MESSAGE] [Jae] "I don't try new things right away unless there's a clear benefit and the instructions are straightforward. Complex changes make me anxious."
+2026-02-17 23:00:45.172 [QUEUE] call-on who_spoke=[Sid, Mina, Jae] next=human hailey, waiting for human_idle
+2026-02-17 23:00:45.173 [TYPING] moderator true
+2026-02-17 23:00:49.375 [TYPING] moderator false
+2026-02-17 23:00:49.376 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Hailey, how do you usually feel when a company introduces new features?"
+2026-02-17 23:00:52.596 [DISCONNECT] id=O2ccrHRuV3KY0zYfAAAF
+2026-02-17 23:00:56.636 [SESSION_START] id=gGOAkwt2WIeKgW7dAAAH bots=Sid,Mina,Jae
+2026-02-17 23:00:56.636 [SESSION_START] participant_name set to "hailey"
+2026-02-17 23:00:56.636 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 23:00:56.636 [TYPING] moderator true
+2026-02-17 23:01:00.838 [TYPING] moderator false
+2026-02-17 23:01:00.840 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 23:01:00.841 [TYPING] moderator true
+2026-02-17 23:01:05.043 [TYPING] moderator false
+2026-02-17 23:01:05.044 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-17 23:01:05.044 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-17 23:01:07.771 [TYPING] bot=Sid true
+2026-02-17 23:01:07.900 [TYPING] bot=Jae true
+2026-02-17 23:01:08.419 [TYPING] bot=Mina true
+2026-02-17 23:01:10.973 [TYPING] bot=Sid false
+2026-02-17 23:01:10.975 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-17 23:01:11.102 [TYPING] bot=Jae false
+2026-02-17 23:01:11.104 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-17 23:01:11.622 [TYPING] bot=Mina false
+2026-02-17 23:01:11.623 [MESSAGE] [Mina] "Hi yall! I'm Mina. First time doing this kind of thing!"
+2026-02-17 23:01:12.099 [TYPING] moderator true
+2026-02-17 23:01:16.302 [TYPING] moderator false
+2026-02-17 23:01:16.303 [MESSAGE] [Eunice] "Thanks for sharing, Mina. Hailey, how about you introduce yourself next?"
+2026-02-17 23:01:16.303 [QUEUE] waiting for human intro from hailey
+2026-02-17 23:01:44.034 [TYPING] human true
+2026-02-17 23:01:44.361 [TYPING] human true
+2026-02-17 23:01:44.460 [TYPING] human true
+2026-02-17 23:01:44.566 [TYPING] human true
+2026-02-17 23:01:44.989 [TYPING] human true
+2026-02-17 23:01:45.121 [TYPING] human true
+2026-02-17 23:01:45.195 [TYPING] human true
+2026-02-17 23:01:45.271 [TYPING] human true
+2026-02-17 23:01:45.406 [TYPING] human true
+2026-02-17 23:01:45.481 [TYPING] human true
+2026-02-17 23:01:45.696 [TYPING] human true
+2026-02-17 23:01:45.737 [TYPING] human true
+2026-02-17 23:01:45.825 [TYPING] human true
+2026-02-17 23:01:45.903 [TYPING] human true
+2026-02-17 23:01:45.959 [TYPING] human true
+2026-02-17 23:01:46.080 [TYPING] human true
+2026-02-17 23:01:46.170 [TYPING] human true
+2026-02-17 23:01:46.290 [TYPING] human true
+2026-02-17 23:01:46.306 [TYPING] human true
+2026-02-17 23:01:46.429 [TYPING] human true
+2026-02-17 23:01:46.486 [TYPING] human true
+2026-02-17 23:01:46.577 [TYPING] human true
+2026-02-17 23:01:46.831 [TYPING] human true
+2026-02-17 23:01:46.921 [TYPING] human true
+2026-02-17 23:01:47.017 [TYPING] human true
+2026-02-17 23:01:47.054 [TYPING] human true
+2026-02-17 23:01:47.115 [TYPING] human true
+2026-02-17 23:01:47.251 [TYPING] human true
+2026-02-17 23:01:47.295 [TYPING] human true
+2026-02-17 23:01:47.369 [TYPING] human true
+2026-02-17 23:01:47.569 [TYPING] human true
+2026-02-17 23:01:47.669 [TYPING] human true
+2026-02-17 23:01:47.807 [TYPING] human true
+2026-02-17 23:01:47.878 [TYPING] human true
+2026-02-17 23:01:47.955 [TYPING] human true
+2026-02-17 23:01:48.092 [TYPING] human true
+2026-02-17 23:01:48.135 [TYPING] human true
+2026-02-17 23:01:48.220 [TYPING] human true
+2026-02-17 23:01:48.256 [TYPING] human true
+2026-02-17 23:01:48.477 [TYPING] human true
+2026-02-17 23:01:48.511 [TYPING] human true
+2026-02-17 23:01:48.587 [TYPING] human true
+2026-02-17 23:01:48.832 [TYPING] human true
+2026-02-17 23:01:48.979 [TYPING] human true
+2026-02-17 23:01:49.111 [TYPING] human true
+2026-02-17 23:01:49.201 [TYPING] human true
+2026-02-17 23:01:49.321 [TYPING] human true
+2026-02-17 23:01:49.447 [TYPING] human true
+2026-02-17 23:01:49.517 [TYPING] human true
+2026-02-17 23:01:49.621 [TYPING] human true
+2026-02-17 23:01:49.698 [TYPING] human true
+2026-02-17 23:01:49.786 [TYPING] human true
+2026-02-17 23:01:49.832 [TYPING] human true
+2026-02-17 23:01:50.482 [TYPING] human true
+2026-02-17 23:01:50.581 [TYPING] human true
+2026-02-17 23:01:50.687 [TYPING] human true
+2026-02-17 23:01:50.780 [TYPING] human true
+2026-02-17 23:01:50.853 [TYPING] human true
+2026-02-17 23:01:50.932 [TYPING] human true
+2026-02-17 23:01:51.092 [TYPING] human true
+2026-02-17 23:01:51.232 [TYPING] human true
+2026-02-17 23:01:51.346 [TYPING] human true
+2026-02-17 23:01:51.479 [TYPING] human true
+2026-02-17 23:01:51.539 [TYPING] human true
+2026-02-17 23:01:51.630 [TYPING] human true
+2026-02-17 23:01:51.785 [TYPING] human true
+2026-02-17 23:01:51.855 [TYPING] human true
+2026-02-17 23:01:51.989 [TYPING] human true
+2026-02-17 23:01:52.051 [TYPING] human true
+2026-02-17 23:01:52.157 [TYPING] human true
+2026-02-17 23:01:52.216 [TYPING] human true
+2026-02-17 23:01:52.319 [TYPING] human true
+2026-02-17 23:01:52.489 [TYPING] human true
+2026-02-17 23:01:52.744 [TYPING] human true
+2026-02-17 23:01:53.048 [TYPING] human true
+2026-02-17 23:01:53.115 [TYPING] human true
+2026-02-17 23:01:53.205 [TYPING] human true
+2026-02-17 23:01:53.315 [TYPING] human true
+2026-02-17 23:01:53.402 [TYPING] human true
+2026-02-17 23:01:53.634 [TYPING] human true
+2026-02-17 23:01:53.784 [TYPING] human true
+2026-02-17 23:01:54.021 [TYPING] human false
+2026-02-17 23:01:54.027 [HUMAN_INPUT] [hailey] "hi yall I am hailey nice to meet you all and i am excited for the study!!"
+2026-02-17 23:01:54.028 [MESSAGE] [hailey] "hi yall I am hailey nice to meet you all and i am excited for the study!!"
+2026-02-17 23:01:54.029 [QUEUE] human_message after intro: advancing to study_goal
+2026-02-17 23:01:54.029 [TYPING] moderator true
+2026-02-17 23:01:58.230 [TYPING] moderator false
+2026-02-17 23:01:58.231 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-17 23:01:58.231 [TYPING] moderator true
+2026-02-17 23:02:02.434 [TYPING] moderator false
+2026-02-17 23:02:02.435 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-17 23:02:04.745 [MESSAGE] [Jae] "Ok!"
+2026-02-17 23:02:04.745 [QUEUE] study_goal ack done, starting first big_question
+2026-02-17 23:02:04.745 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-17 23:02:04.745 [TYPING] moderator true
+2026-02-17 23:02:08.948 [TYPING] moderator false
+2026-02-17 23:02:08.949 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-17 23:02:09.540 [TYPING] moderator true
+2026-02-17 23:02:13.743 [TYPING] moderator false
+2026-02-17 23:02:13.744 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-17 23:02:13.744 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:02:13.744 [TYPING] bot=Sid true
+2026-02-17 23:02:15.492 [OPENAI_OK] bot=Sid rtt=1748ms raw="["I usually wait before trying new features unless it's something obviously useful or fixes a pain p…"
+2026-02-17 23:02:15.493 [TYPING] bot=Sid false
+2026-02-17 23:02:16.494 [TYPING] bot=Sid true
+2026-02-17 23:02:19.696 [TYPING] bot=Sid false
+2026-02-17 23:02:19.697 [MESSAGE] [Sid] "I usually wait before trying new features unless it's something obviously useful or fixes a pain point."
+2026-02-17 23:02:20.697 [TYPING] bot=Sid true
+2026-02-17 23:02:23.900 [TYPING] bot=Sid false
+2026-02-17 23:02:23.902 [MESSAGE] [Sid] "Big tech rolls out changes so fast you can't keep up and most aren't game-changers, so I wait for user feedback or known issues before investing any time."
+2026-02-17 23:02:24.734 [QUEUE] call-on who_spoke=[Sid] next=Mina
+2026-02-17 23:02:24.735 [TYPING] moderator true
+2026-02-17 23:02:28.938 [TYPING] moderator false
+2026-02-17 23:02:28.940 [MESSAGE] [Eunice] "Got it, Sid. Mina, how about you? Do you dive into new features right away or take a wait-and-see approach?"
+2026-02-17 23:02:28.940 [OPENAI_REQ] bot=Mina question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:02:28.941 [TYPING] bot=Mina true
+2026-02-17 23:02:30.560 [OPENAI_OK] bot=Mina rtt=1620ms raw="["Honestly, I usually don't bother with new features right away unless they seem super simple or act…"
+2026-02-17 23:02:30.560 [TYPING] bot=Mina false
+2026-02-17 23:02:31.562 [TYPING] bot=Mina true
+2026-02-17 23:02:34.764 [TYPING] bot=Mina false
+2026-02-17 23:02:34.765 [MESSAGE] [Mina] "Honestly, I usually don't bother with new features right away unless they seem super simple or actually helpful."
+2026-02-17 23:02:35.767 [TYPING] bot=Mina true
+2026-02-17 23:02:38.969 [TYPING] bot=Mina false
+2026-02-17 23:02:38.971 [MESSAGE] [Mina] "Like, if it’s gonna make stuff easier or faster, then cool, but otherwise I just wait until people say it’s worth it."
+2026-02-17 23:02:39.781 [QUEUE] call-on who_spoke=[Sid, Mina] next=Jae
+2026-02-17 23:02:39.781 [TYPING] moderator true
+2026-02-17 23:02:43.984 [TYPING] moderator false
+2026-02-17 23:02:43.985 [MESSAGE] [Eunice] "Got it, Mina. Jae, how about you? Do you jump on new features immediately or take a wait-and-see approach?"
+2026-02-17 23:02:43.985 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:02:43.985 [TYPING] bot=Jae true
+2026-02-17 23:02:45.786 [OPENAI_OK] bot=Jae rtt=1801ms raw="["I usually take a wait-and-see approach because I feel like new features can sometimes cause glitch…"
+2026-02-17 23:02:45.787 [TYPING] bot=Jae false
+2026-02-17 23:02:46.788 [TYPING] bot=Jae true
+2026-02-17 23:02:49.989 [TYPING] bot=Jae false
+2026-02-17 23:02:49.991 [MESSAGE] [Jae] "I usually take a wait-and-see approach because I feel like new features can sometimes cause glitches or confuse things."
+2026-02-17 23:02:50.993 [TYPING] bot=Jae true
+2026-02-17 23:02:54.196 [TYPING] bot=Jae false
+2026-02-17 23:02:54.196 [MESSAGE] [Jae] "Especially with the multiple devices I use, I worry that new features might not sync well or could complicate things further."
+2026-02-17 23:02:54.838 [QUEUE] call-on who_spoke=[Sid, Mina, Jae] next=human hailey, waiting for human_idle
+2026-02-17 23:02:54.839 [TYPING] moderator true
+2026-02-17 23:02:59.041 [TYPING] moderator false
+2026-02-17 23:02:59.043 [MESSAGE] [Eunice] "I see, Jae. Hailey, how about you?"
+2026-02-17 23:03:47.424 [TYPING] human true
+2026-02-17 23:03:47.569 [TYPING] human true
+2026-02-17 23:03:47.640 [TYPING] human true
+2026-02-17 23:03:47.731 [TYPING] human true
+2026-02-17 23:03:47.823 [TYPING] human true
+2026-02-17 23:03:47.909 [TYPING] human true
+2026-02-17 23:03:47.955 [TYPING] human true
+2026-02-17 23:03:48.076 [TYPING] human true
+2026-02-17 23:03:48.227 [TYPING] human false
+2026-02-17 23:03:48.237 [HUMAN_INPUT] [hailey] "yeah idk"
+2026-02-17 23:03:48.237 [MESSAGE] [hailey] "yeah idk"
+2026-02-17 23:03:48.238 [QUEUE] human_message during call-on: hailey replied, waiting for idle to advance
+2026-02-17 23:03:52.230 [QUEUE] human_idle from hailey (replied this turn), advancing
+2026-02-17 23:03:52.231 [QUEUE] call-on round done, acknowledging then view-misalignment phase
+2026-02-17 23:03:52.231 [TYPING] moderator true
+2026-02-17 23:03:56.435 [TYPING] moderator false
+2026-02-17 23:03:56.435 [MESSAGE] [Eunice] "Really appreciate everyone's input."
+2026-02-17 23:03:56.435 [QUEUE] view-misalignment phase started
+2026-02-17 23:03:56.435 [DISAGREEMENT CHECK] Moderator question: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Sid: I usually wait before trying new features unless it's something obviously useful or fixes a pain point. Big tech rolls out changes so fast you can't keep up and most aren't game-changers, so I wait for user feedback or known issues before investing any time.
+Mina: Honestly, I usually don't bother with new features right away unless they seem super simple or actually helpful. Like, if it’s gonna make stuff easier or faster, then cool, but otherwise I just wait until people say it’s worth it.
+Jae: I usually take a wait-and-see approach because I feel like new features can sometimes cause glitches or confuse things. Especially with the multiple devices I use, I worry that new features might not sync well or could complicate things further.
+hailey: yeah idk
+2026-02-17 23:04:01.239 [DISAGREEMENT CHECK RESULT] [
+  {
+    "disagreedWith": "Sid",
+    "disagreedBy": "Mina",
+    "differenceSummary": "Sid is open to trying new features if they fix pain points or have positive feedback, while Mina is more dismissive and only tries if they seem very simple or actually helpful."
+  },
+  {
+    "disagreedWith": "Sid",
+    "disagreedBy": "Jae",
+    "differenceSummary": "Sid is open to trying new features based on usefulness and feedback, whereas Jae is more skeptical due to potential glitches and syncing issues."
+  },
+  {
+    "disagreedWith": "Mina",
+    "disagreedBy": "Sid",
+    "differenceSummary": "Mina usually ignores new features unless clearly helpful, showing less openness than Sid who considers trying features that fix pain points or have positive feedback."
+  },
+  {
+    "disagreedWith": "Mina",
+    "disagreedBy": "Jae",
+    "differenceSummary": "Mina is willing to try new features if they are simple or helpful, while Jae is more cautious due to fears about glitches and complications."
+  },
+  {
+    "disagreedWith": "Jae",
+    "disagreedBy": "Sid",
+    "differenceSummary": "Jae is cautious about new features because of potential glitches and syncing problems, contrasting with Sid’s more optimistic view based on usefulness and user feedback."
+  },
+  {
+    "disagreedWith": "Jae",
+    "disagreedBy": "Mina",
+    "differenceSummary": "Jae is skeptical of new features due to possible issues, whereas Mina is somewhat more open but still waits unless the feature is simple or clearly helpful."
+  }
+]
+2026-02-17 23:04:01.240 [QUEUE] view misalignment: Sid ↔ Mina — Sid is open to trying new features if they fix pain points or have positive feedback, while Mina is more dismissive and only tries if they seem very simple or actually helpful.
+2026-02-17 23:04:01.241 [QUEUE] view misalignment: Sid ↔ Jae — Sid is open to trying new features based on usefulness and feedback, whereas Jae is more skeptical due to potential glitches and syncing issues.
+2026-02-17 23:04:01.241 [QUEUE] view misalignment: Mina ↔ Jae — Mina is willing to try new features if they are simple or helpful, while Jae is more cautious due to fears about glitches and complications.
+2026-02-17 23:04:02.029 [TYPING] moderator true
+2026-02-17 23:04:06.231 [TYPING] moderator false
+2026-02-17 23:04:06.232 [MESSAGE] [Eunice] "Sid what do you think about Mina's approach to trying new features only if they seem simple or genuinely helpful can you share your thoughts on Mina's idea?"
+2026-02-17 23:04:06.233 [TYPING] bot=Sid true
+2026-02-17 23:04:07.400 [TYPING] bot=Sid false
+2026-02-17 23:04:08.401 [TYPING] bot=Sid true
+2026-02-17 23:04:11.602 [TYPING] bot=Sid false
+2026-02-17 23:04:11.603 [MESSAGE] [Sid] "Mina's approach is pretty reasonable considering how many new features flop or add complexity without real benefit."
+2026-02-17 23:04:12.605 [TYPING] bot=Sid true
+2026-02-17 23:04:15.806 [TYPING] bot=Sid false
+2026-02-17 23:04:15.807 [MESSAGE] [Sid] "Focusing on truly helpful or simple features cuts down on wasted time and reduces the risk of bugs or compatibility issues."
+2026-02-17 23:04:16.694 [TYPING] moderator true
+2026-02-17 23:04:20.897 [TYPING] moderator false
+2026-02-17 23:04:20.898 [MESSAGE] [Eunice] "Sid what do you think about Jae’s cautious approach to new features can you share your thoughts on balancing enthusiasm for innovation with potential risks Sid"
+2026-02-17 23:04:20.898 [TYPING] bot=Sid true
+2026-02-17 23:04:22.358 [TYPING] bot=Sid false
+2026-02-17 23:04:23.360 [TYPING] bot=Sid true
+2026-02-17 23:04:26.562 [TYPING] bot=Sid false
+2026-02-17 23:04:26.563 [MESSAGE] [Sid] "Jae’s cautious approach makes sense, especially from an IT perspective. New features often introduce bugs or sync issues, which can mess up workflows."
+2026-02-17 23:04:27.564 [TYPING] bot=Sid true
+2026-02-17 23:04:30.766 [TYPING] bot=Sid false
+2026-02-17 23:04:30.767 [MESSAGE] [Sid] "Balancing innovation and risk means waiting for solid feedback and stability reports before diving in, especially if your devices and setup are complex."
+2026-02-17 23:04:32.138 [TYPING] moderator true
+2026-02-17 23:04:36.340 [TYPING] moderator false
+2026-02-17 23:04:36.341 [MESSAGE] [Eunice] "Mina what do you think about Jae's cautious approach when it comes to trying new features from big tech companies can you share your thoughts on it Mina"
+2026-02-17 23:04:36.341 [TYPING] bot=Mina true
+2026-02-17 23:04:37.749 [TYPING] bot=Mina false
+2026-02-17 23:04:38.751 [TYPING] bot=Mina true
+2026-02-17 23:04:41.952 [TYPING] bot=Mina false
+2026-02-17 23:04:41.953 [MESSAGE] [Mina] "I get why Jae is cautious–new features can definitely mess things up or slow you down if they don't work right."
+2026-02-17 23:04:42.953 [TYPING] bot=Mina true
+2026-02-17 23:04:46.156 [TYPING] bot=Mina false
+2026-02-17 23:04:46.156 [MESSAGE] [Mina] "I just hope the wait doesn't mean missing out on something that could actually make stuff easier. It's a tricky balance, y'know?"
+2026-02-17 23:04:47.508 [TYPING] moderator true
+2026-02-17 23:04:51.711 [TYPING] moderator false
+2026-02-17 23:04:51.711 [MESSAGE] [Eunice] "Thanks everyone for sharing your thoughts. We heard that most of you prefer a cautious or wait-and-see approach to new features, especially when complexity or p…"
+2026-02-17 23:04:51.712 [QUEUE] advancing to question 2/4: "Moving on, one of the new popular technology is generative A…"
+2026-02-17 23:04:51.712 [TYPING] moderator true
+2026-02-17 23:04:55.914 [TYPING] moderator false
+2026-02-17 23:04:55.915 [MESSAGE] [Eunice] "Moving on, one of the new popular technology is generative AI such as Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made …"
+2026-02-17 23:04:56.734 [TYPING] moderator true
+2026-02-17 23:05:00.936 [TYPING] moderator false
+2026-02-17 23:05:00.937 [MESSAGE] [Eunice] "Let’s dive into the topic of generative AI like Gemini and Chat GPT. Mina, what do you think?"
+2026-02-17 23:05:00.937 [OPENAI_REQ] bot=Mina question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-17 23:05:00.937 [TYPING] bot=Mina true
+2026-02-17 23:05:02.384 [OPENAI_OK] bot=Mina rtt=1447ms raw="["Honestly, I’ve played around with Chat GPT a bit, mostly for fun or quick answers when I can’t be …"
+2026-02-17 23:05:02.384 [TYPING] bot=Mina false
+2026-02-17 23:05:03.386 [TYPING] bot=Mina true
+2026-02-17 23:05:06.588 [TYPING] bot=Mina false
+2026-02-17 23:05:06.589 [MESSAGE] [Mina] "Honestly, I’ve played around with Chat GPT a bit, mostly for fun or quick answers when I can’t be bothered to Google everything myself."
+2026-02-17 23:05:07.590 [TYPING] bot=Mina true
+2026-02-17 23:05:10.792 [TYPING] bot=Mina false
+2026-02-17 23:05:10.794 [MESSAGE] [Mina] "It’s kinda cool how fast it comes up with stuff, but I don’t use it a lot since I usually prefer quick Instagram or TikTok vids for info or laughs."
+2026-02-17 23:05:11.431 [QUEUE] call-on who_spoke=[Mina] next=Jae
+2026-02-17 23:05:11.432 [TYPING] moderator true
+2026-02-17 23:05:15.634 [TYPING] moderator false
+2026-02-17 23:05:15.636 [MESSAGE] [Eunice] "Thanks for sharing, Mina. Jae, what about you? Have you tried generative AI tools like Gemini or Chat GPT?"
+2026-02-17 23:05:15.637 [OPENAI_REQ] bot=Jae question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-17 23:05:15.637 [TYPING] bot=Jae true
+2026-02-17 23:05:16.950 [OPENAI_OK] bot=Jae rtt=1313ms raw="["I've tried Chat GPT a few times for quick explanations or ideas, but I don’t rely on it much since…"
+2026-02-17 23:05:16.952 [TYPING] bot=Jae false
+2026-02-17 23:05:17.953 [TYPING] bot=Jae true
+2026-02-17 23:05:21.155 [TYPING] bot=Jae false
+2026-02-17 23:05:21.156 [MESSAGE] [Jae] "I've tried Chat GPT a few times for quick explanations or ideas, but I don’t rely on it much since it can sometimes give unclear or off answers."
+2026-02-17 23:05:22.158 [TYPING] bot=Jae true
+2026-02-17 23:05:25.360 [TYPING] bot=Jae false
+2026-02-17 23:05:25.361 [MESSAGE] [Jae] "I feel like, as a teacher, I need tools that are consistent and predictable, so I’m cautious about jumping in without seeing clear benefits or knowing it won’t …"
+2026-02-17 23:05:26.280 [QUEUE] call-on who_spoke=[Mina, Jae] next=human hailey, waiting for human_idle
+2026-02-17 23:05:26.281 [TYPING] moderator true
+2026-02-17 23:05:30.484 [TYPING] moderator false
+2026-02-17 23:05:30.486 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Hailey, what do you think? Have you tried generative AI tools before, and what influenced your decision?"
+2026-02-17 23:06:03.683 [TYPING] human true
+2026-02-17 23:06:03.778 [TYPING] human true
+2026-02-17 23:06:03.855 [TYPING] human true
+2026-02-17 23:06:03.869 [TYPING] human true
+2026-02-17 23:06:04.039 [TYPING] human true
+2026-02-17 23:06:04.142 [TYPING] human true
+2026-02-17 23:06:04.294 [TYPING] human true
+2026-02-17 23:06:04.476 [TYPING] human true
+2026-02-17 23:06:04.545 [TYPING] human true
+2026-02-17 23:06:04.635 [TYPING] human true
+2026-02-17 23:06:04.663 [TYPING] human true
+2026-02-17 23:06:04.754 [TYPING] human true
+2026-02-17 23:06:04.892 [TYPING] human true
+2026-02-17 23:06:04.980 [TYPING] human true
+2026-02-17 23:06:05.070 [TYPING] human true
+2026-02-17 23:06:05.269 [TYPING] human true
+2026-02-17 23:06:05.384 [TYPING] human true
+2026-02-17 23:06:05.509 [TYPING] human true
+2026-02-17 23:06:06.169 [TYPING] human true
+2026-02-17 23:06:06.239 [TYPING] human true
+2026-02-17 23:06:06.299 [TYPING] human true
+2026-02-17 23:06:06.374 [TYPING] human true
+2026-02-17 23:06:06.545 [TYPING] human true
+2026-02-17 23:06:06.575 [TYPING] human true
+2026-02-17 23:06:07.174 [TYPING] human true
+2026-02-17 23:06:07.325 [TYPING] human true
+2026-02-17 23:06:07.595 [TYPING] human true
+2026-02-17 23:06:07.819 [TYPING] human true
+2026-02-17 23:06:07.922 [TYPING] human true
+2026-02-17 23:06:07.951 [TYPING] human true
+2026-02-17 23:06:08.024 [TYPING] human true
+2026-02-17 23:06:08.147 [TYPING] human true
+2026-02-17 23:06:08.177 [TYPING] human true
+2026-02-17 23:06:08.328 [TYPING] human true
+2026-02-17 23:06:08.447 [TYPING] human false
+2026-02-17 23:06:08.455 [HUMAN_INPUT] [hailey] "yeah i don't like those ais"
+2026-02-17 23:06:08.455 [MESSAGE] [hailey] "yeah i don't like those ais"
+2026-02-17 23:06:08.456 [QUEUE] human_message during call-on: hailey replied, waiting for idle to advance
+2026-02-17 23:06:12.452 [QUEUE] human_idle from hailey (replied this turn), advancing
+2026-02-17 23:06:13.183 [QUEUE] call-on who_spoke=[Mina, Jae] next=Sid
+2026-02-17 23:06:13.184 [TYPING] moderator true
+2026-02-17 23:06:17.387 [TYPING] moderator false
+2026-02-17 23:06:17.389 [MESSAGE] [Eunice] "Got it, Hailey. Sid, how about you? Have you used generative AI like Gemini or ChatGPT?"
+2026-02-17 23:06:17.389 [OPENAI_REQ] bot=Sid question="Moving on, one of the new popular technology is generative AI such as Gemini and…"
+2026-02-17 23:06:17.390 [TYPING] bot=Sid true
+2026-02-17 23:06:18.740 [OPENAI_OK] bot=Sid rtt=1351ms raw="["Yeah, I use generative AI tools like ChatGPT regularly at work. They’re great for quick coding hel…"
+2026-02-17 23:06:18.741 [TYPING] bot=Sid false
+2026-02-17 23:06:19.743 [TYPING] bot=Sid true
+2026-02-17 23:06:22.944 [TYPING] bot=Sid false
+2026-02-17 23:06:22.946 [MESSAGE] [Sid] "Yeah, I use generative AI tools like ChatGPT regularly at work. They’re great for quick coding help or troubleshooting ideas, but I never trust them blindly."
+2026-02-17 23:06:23.948 [TYPING] bot=Sid true
+2026-02-17 23:06:27.149 [TYPING] bot=Sid false
+2026-02-17 23:06:27.150 [MESSAGE] [Sid] "I mainly lean on them to speed things up, not replace solid technical knowledge—those tools can spit out stuff that’s mostly plausible but not always correct."
+2026-02-17 23:06:27.150 [QUEUE] call-on round done, acknowledging then view-misalignment phase
+2026-02-17 23:06:27.150 [TYPING] moderator true
+2026-02-17 23:06:31.352 [TYPING] moderator false
+2026-02-17 23:06:31.354 [MESSAGE] [Eunice] "Got it, thanks for sharing!"
+2026-02-17 23:06:31.354 [QUEUE] view-misalignment phase started
+2026-02-17 23:06:31.355 [DISAGREEMENT CHECK] Moderator question: Moving on, one of the new popular technology is generative AI such as Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made you decide not to?
+Mina: Honestly, I’ve played around with Chat GPT a bit, mostly for fun or quick answers when I can’t be bothered to Google everything myself. It’s kinda cool how fast it comes up with stuff, but I don’t use it a lot since I usually prefer quick Instagram or TikTok vids for info or laughs.
+Jae: I've tried Chat GPT a few times for quick explanations or ideas, but I don’t rely on it much since it can sometimes give unclear or off answers. I feel like, as a teacher, I need tools that are consistent and predictable, so I’m cautious about jumping in without seeing clear benefits or knowing it won’t mess up workflows.
+hailey: yeah i don't like those ais
+Sid: Yeah, I use generative AI tools like ChatGPT regularly at work. They’re great for quick coding help or troubleshooting ideas, but I never trust them blindly. I mainly lean on them to speed things up, not replace solid technical knowledge—those tools can spit out stuff that’s mostly plausible but not always correct.
+2026-02-17 23:06:33.977 [DISAGREEMENT CHECK RESULT] [
+  {
+    "disagreedWith": "hailey",
+    "disagreedBy": "Mina",
+    "differenceSummary": "Mina uses Chat GPT occasionally and finds it cool and helpful for quick answers, while hailey expresses a dislike for those AIs."
+  },
+  {
+    "disagreedWith": "hailey",
+    "disagreedBy": "Jae",
+    "differenceSummary": "Jae tries Chat GPT occasionally and considers cautious use, whereas hailey simply does not like those AIs."
+  },
+  {
+    "disagreedWith": "hailey",
+    "disagreedBy": "Sid",
+    "differenceSummary": "Sid uses generative AI regularly at work and finds it very useful, contrasting with hailey's dislike of those AIs."
+  }
+]
+2026-02-17 23:06:33.978 [QUEUE] view misalignment: Mina ↔ hailey — Mina uses Chat GPT occasionally and finds it cool and helpful for quick answers, while hailey expresses a dislike for those AIs.
+2026-02-17 23:06:33.979 [QUEUE] view misalignment: Jae ↔ hailey — Jae tries Chat GPT occasionally and considers cautious use, whereas hailey simply does not like those AIs.
+2026-02-17 23:06:33.979 [QUEUE] view misalignment: hailey ↔ Sid — Sid uses generative AI regularly at work and finds it very useful, contrasting with hailey's dislike of those AIs.
+2026-02-17 23:06:34.784 [TYPING] moderator true
+2026-02-17 23:06:38.987 [TYPING] moderator false
+2026-02-17 23:06:38.988 [MESSAGE] [Eunice] "Mina what do you think about hailey's dislike for generative AI can you share your thoughts on why you find them helpful despite that?"
+2026-02-17 23:06:38.989 [TYPING] bot=Mina true
+2026-02-17 23:06:40.349 [TYPING] bot=Mina false
+2026-02-17 23:06:41.351 [TYPING] bot=Mina true
+2026-02-17 23:06:44.554 [TYPING] bot=Mina false
+2026-02-17 23:06:44.555 [MESSAGE] [Mina] "I get where Hailey's coming from, not everyone vibes with AI stuff and it can feel kinda impersonal or complicated."
+2026-02-17 23:06:45.557 [TYPING] bot=Mina true
+2026-02-17 23:06:48.759 [TYPING] bot=Mina false
+2026-02-17 23:06:48.760 [MESSAGE] [Mina] "But for me, those AI tools are handy for quick answers or ideas when I don't want to dig through a bunch of info myself."
+2026-02-17 23:06:49.658 [TYPING] moderator true
+2026-02-17 23:06:53.860 [TYPING] moderator false
+2026-02-17 23:06:53.863 [MESSAGE] [Eunice] "Jae, hailey shared that they don't like generative AIs, so what do you think about using them cautiously like you mentioned?"
+2026-02-17 23:06:53.864 [TYPING] bot=Jae true
+2026-02-17 23:06:53.964 [DISCONNECT] id=gGOAkwt2WIeKgW7dAAAH
+2026-02-17 23:06:54.306 [SESSION_START] id=GokXWF1rma8wPWJrAAAJ bots=Sid,Mina,Jae
+2026-02-17 23:06:54.307 [SESSION_START] participant_name set to "hailey"
+2026-02-17 23:06:54.308 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 23:06:54.308 [TYPING] moderator true
+2026-02-17 23:06:58.509 [TYPING] moderator false
+2026-02-17 23:06:58.511 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 23:06:58.511 [TYPING] moderator true

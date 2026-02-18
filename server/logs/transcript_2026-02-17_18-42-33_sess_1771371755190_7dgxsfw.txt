@@ -1,0 +1,28 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hello I'm Sid. I am in IT support. Nice to meet you all
+Mina: Hi yall! I'm Mina. First time doing this kind of thing!
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Thanks for sharing, Jae. Hailey, how about you introduce yourself?
+Eunice: hailey, are you still there? Would you respond to this question?
+hailey: oh hi i am here!
+hailey: i am hailey
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Mina: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think? How do you usually feel when a company you use introduces something new? Do you try new features right away or tend to ignore them at first?
+Sid: I usually take a wait-and-see approach. Big companies push out features fast, but often they’re buggy or pointless, so I wait for others to test them first.
+Sid: If it’s security-related or something genuinely useful, I’ll jump in quickly. Otherwise, I'm skeptical until it proves itself in real use.
+Eunice: Thanks for that, Sid. Mina, how about you?
+Mina: Honestly, I’m kind of lazy about new features unless they’re super simple or save me time. I just skip most at first.
+Eunice: Got it, Mina. Jae, how about you? Do you jump on new features immediately or take a wait-and-see approach?
+Jae: I usually take a cautious approach with new features, especially from big companies. I like to wait and see if they actually work well and don't cause issues.
+Jae: In my experience, jumping into new features too quickly often messes up my synced devices or school accounts, so I prefer to understand them clearly before trying.
+Eunice: Thanks for that, Jae. Hailey, how about you?
+Eunice: hailey, are you still there? Would you respond to this question?

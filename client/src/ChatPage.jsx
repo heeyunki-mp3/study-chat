@@ -174,12 +174,18 @@ export default function ChatPage() {
       setTyping((prev) => ({ ...prev, [who]: isTyping }));
     });
 
+    socket.on("kicked", ({ message } = {}) => {
+      socket.disconnect();
+      alert(message || "You have been removed from the session.");
+      navigate("/login", { replace: true });
+    });
+
     socket.connect();
 
     return () => {
       // ✅ ensure server doesn't think you're typing forever
       try {
-        socket.emit("human_typing", { isTyping: false });
+        socket.emit("human_typing", { isTyping: false, hasDraft: false });
       } catch {
         /* ignore on cleanup */
       }
@@ -204,13 +210,15 @@ export default function ChatPage() {
   function handleInputChange(val) {
     setInput(val);
     inputRef.current = val ?? "";
+    const hasDraft = String(val ?? "").trim().length > 0;
 
-    socket.emit("human_typing", { isTyping: true });
+    socket.emit("human_typing", { isTyping: true, hasDraft });
 
     // Typing debounce: stop "typing" after 800ms
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("human_typing", { isTyping: false });
+      const stillHasDraft = String(inputRef.current ?? "").trim().length > 0;
+      socket.emit("human_typing", { isTyping: false, hasDraft: stillHasDraft });
       typingTimeoutRef.current = null;
     }, 800);
 
@@ -238,7 +246,7 @@ export default function ChatPage() {
       clearTimeout(idleTimeoutRef.current);
       idleTimeoutRef.current = null;
     }
-    socket.emit("human_typing", { isTyping: false });
+    socket.emit("human_typing", { isTyping: false, hasDraft: false });
     socket.emit("human_message", { text: t });
 
     setInput("");

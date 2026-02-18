@@ -1,0 +1,46 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Mina: Hi, I'm Mina. I work in retail in LA. Nice to meet you all
+Sid: Hello I'm Sid. I am in IT support. Nice to meet you all
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Thanks for sharing, Jae. Hailey, would you like to introduce yourself next?
+hailey: Hi I am Hailey :)
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Jae: Got it!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think? How do you usually feel when a company you use introduces something new? Do you try new features right away or tend to ignore them at first?
+Sid: Usually skeptical about new features until I see clear benefits or stability is confirmed.
+Sid: Most of the time I ignore them initially; too many glitches happen with rushed rollouts.
+Eunice: Makes sense, Sid. Mina, how about you?
+Mina: Honestly, if it's not super annoying or complicated, I’m down to try it right away. I hate dealing with stuff that makes things slower or harder.
+Eunice: Thanks for that, Mina. Jae, how do you usually feel when new features come out—do you dive in or hold back at first?
+Jae: I usually hold back at first. I prefer to read reviews or see step-by-step guides before trying new features.
+Jae: In my experience, jumping in without clear instructions often leads to confusion, especially since I work across multiple devices.
+Eunice: Got it, Jae. Hailey, how about you? Do you try new features right away or hold off?
+Eunice: hailey, are you still there? Would you respond to this question?
+hailey: oh yes! I am still here.
+Eunice: Thanks for sharing, everyone!
+Eunice: Sid what do you think about Mina’s eagerness to try new features right away can you share your thoughts?
+Sid: Mina’s eagerness is understandable for convenience, but from a support perspective, rushing into new features can cause headaches with bugs or compatibility issues.
+Sid: I prefer waiting until a feature proves stable. It saves time fixing unexpected problems that early adopters often face.
+Eunice: Mina, Jae shared that they prefer to wait and read reviews before trying new features, what do you think about trying them right away?
+Mina: I get that waiting can help avoid bugs and confusion, but honestly, I like to test things out early if it seems quick and easy.
+Mina: If a new feature messes with my flow or slows me down, I'll bail, but if it feels smooth, trying it right away saves me from playing catch-up later.
+Eunice: Thanks everyone for sharing your thoughts! We heard a range of reactions, from Sid and Jae preferring to hold off and wait for stability or reviews, to Mina being eager to dive in quickly if the feature seems easy and helpful. It was great to see how different comfort levels with new tech can shape when and how people explore updates.
+Eunice: Moving on, one of the new popular technology is generative AI such as Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made you decide not to?
+Eunice: Mina, what do you think?
+Mina: Honestly, I’ve played around with ChatGPT a bit mostly for quick answers or fun stuff, like jokes or ideas for posts.
+Mina: It's kinda cool but sometimes I feel like it overthinks simple questions, so I don’t use it all the time.
+Eunice: Thanks for sharing, Mina. Jae, what about you? Have you used generative AI before?
+Jae: I've tried generative AI a bit, mostly for lesson planning or explanations, but I stay cautious with it.
+Jae: I feel like it can be useful but sometimes it’s unpredictable, and I worry about relying on it too much without clear accuracy.
+Eunice: Good point, Jae. Hailey, have you tried generative AI, and what influenced your decision?

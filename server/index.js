@@ -82,6 +82,9 @@ function logLine(tag, message) {
 // =====================
 const IDLE_EMPTY_MS = 4000;   // Human idle: empty input, no typing this long
 const IDLE_TYPING_MS = 10000; // Human idle: non-empty input, no typing this long
+const NUDGE_MS = 20000;                     // Nudge after 20s of no typing (or 30s if has draft in input)
+const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge if user stopped typing for 30s (has draft)
+const MAX_NUDGES = 2;                       // After 2 nudges with no response, kick out
 const MODERATOR_NAME = "Eunice";
 
 const MODERATOR_SCRIPT = [
@@ -364,41 +367,39 @@ async function generateRoundSummary(question, roundTranscript) {
   return text || "Thanks everyone for sharing your views on that.";
 }
 
-/** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. Uses OpenAI for classification. */
-async function isAskingWhatPasskeyIs(text, roundQuestion) {
-  if (!text || typeof text !== "string") return false;
-  const trimmed = String(text).trim();
-  if (!trimmed) return false;
-
-  const sys = `You classify whether a chat message indicates the participant does NOT know what passkey is and is asking for an explanation.
-
-Return ONLY valid JSON: {"asksWhatPasskeyIs": true} or {"asksWhatPasskeyIs": false}.
-
-True when: the participant explicitly or implicitly asks what passkey is, expresses confusion, says they don't know, or requests an explanation.
-False when: they already know, are sharing an opinion, or are not seeking an explanation.`;
-
-  const user = `Round context: ${String(roundQuestion ?? "").slice(0, 150)}
-
-Participant message: "${trimmed.slice(0, 300)}"
-
-Does this message indicate the participant doesn't know what passkey is and is asking for an explanation?`;
-
+/** Generic OpenAI boolean classification. Returns false on error. */
+async function classifyWithOpenAI(sys, user, key) {
   try {
     const completion = await openai.chat.completions.create({
       model: MODELS.default,
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: user },
-      ],
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 20,
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const parsed = JSON.parse(raw || "{}");
-    return !!parsed.asksWhatPasskeyIs;
+    return !!parsed[key];
   } catch (e) {
-    console.error("isAskingWhatPasskeyIs error", e?.message || e);
+    console.error(`classifyWithOpenAI(${key}) error`, e?.message || e);
     return false;
   }
+}
+
+/** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
+async function isAskingWhatPasskeyIs(text, roundQuestion) {
+  if (!text || !String(text).trim()) return false;
+  const trimmed = String(text).trim();
+  const sys = `You classify whether a chat message indicates the participant does NOT know what passkey is and is asking for an explanation. Return ONLY valid JSON: {"asksWhatPasskeyIs": true} or {"asksWhatPasskeyIs": false}. True when: asks what passkey is, expresses confusion, requests explanation. False when: already knows, sharing opinion.`;
+  const user = `Round: ${String(roundQuestion ?? "").slice(0, 150)}\nMessage: "${trimmed.slice(0, 300)}"\nDoes this indicate they don't know passkey and want explanation?`;
+  return classifyWithOpenAI(sys, user, "asksWhatPasskeyIs");
+}
+
+/** True if the participant's response substantively answers the prompt (not just "ok", "idk", etc.). */
+async function isResponseSubstantive(text, context) {
+  if (!text || !String(text).trim()) return false;
+  const { type = "call_on", prompt = "" } = context || {};
+  const sys = `Classify if a participant's message substantively answers the prompt. Return ONLY valid JSON: {"substantive": true} or {"substantive": false}. True: shares relevant content—experiences, opinions, thoughts, meaningful intro. False: off-topic, filler ("ok","idk"), too vague.`;
+  const user = `Type: ${type}\nPrompt: "${String(prompt || "").slice(0, 400)}"\nMessage: "${String(text).trim().slice(0, 400)}"\nDoes this substantively respond?`;
+  return classifyWithOpenAI(sys, user, "substantive");
 }
 
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
@@ -688,6 +689,90 @@ io.on("connection", (socket) => {
     io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
   }
 
+  function startHumanTurnForCallOn(name) {
+    const co = session?.callOnState;
+    if (!co) return;
+    logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${name}, waiting for human_idle`);
+    co.waitingForHumanIdle = true;
+    co.humanRepliedThisTurn = false;
+    session.lastPromptForHuman = { type: "call_on", prompt: co.question };
+    startIdleNudgeTimer();
+  }
+
+  /** True if we are waiting for the human to respond (intro, call-on, or disagreement). */
+  function isWaitingForHuman(session) {
+    if (!session) return false;
+    return !!(
+      session.waitingForHumanIntro ||
+      (session.callOnState?.waitingForHumanIdle) ||
+      session.waitingForHumanDisagreementResponse
+    );
+  }
+
+  const IDLE_CHECK_MS = 2000;
+
+  function clearIdleNudgeTimer() {
+    if (session?.idleNudgeIntervalId) {
+      clearInterval(session.idleNudgeIntervalId);
+      session.idleNudgeIntervalId = null;
+    }
+    if (session) {
+      session.idleStartedAt = null;
+      session.idleLastActivityAt = null;
+      session.idleUserHasTyped = false;
+      session.idleHasDraft = false;
+      session.idleLastNudgeAt = null;
+      session.idleNudgeCount = 0;
+    }
+  }
+
+  function startIdleNudgeTimer() {
+    clearIdleNudgeTimer();
+    if (!session) return;
+    session.idleStartedAt = Date.now();
+    session.idleLastActivityAt = Date.now();
+    session.idleUserHasTyped = false;
+    session.idleHasDraft = false;
+    session.idleLastNudgeAt = null;
+    session.idleNudgeCount = 0;
+
+    session.idleNudgeIntervalId = setInterval(async () => {
+      if (!session || !isWaitingForHuman(session)) {
+        clearIdleNudgeTimer();
+        return;
+      }
+      const now = Date.now();
+      const nudgeInterval = session.idleHasDraft ? NUDGE_AFTER_TYPING_WITH_DRAFT_MS : NUDGE_MS;
+      const nextNudgeAt = session.idleLastNudgeAt != null
+        ? session.idleLastNudgeAt + nudgeInterval
+        : session.idleUserHasTyped
+          ? (session.idleLastActivityAt || session.idleStartedAt) + nudgeInterval
+          : session.idleStartedAt + NUDGE_MS;
+
+      if (now < nextNudgeAt) return;
+
+      session.idleLastNudgeAt = now;
+      session.idleNudgeCount = (session.idleNudgeCount || 0) + 1;
+
+      if (session.idleNudgeCount >= MAX_NUDGES) {
+        clearIdleNudgeTimer();
+        const kickMsg = "I think you are not paying attention. I am kicking you out.";
+        const m = addMessage(session, MODERATOR_NAME, kickMsg);
+        logLine("MESSAGE", `[${MODERATOR_NAME}] "${kickMsg}"`);
+        io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
+        logLine("QUEUE", "idle kick: closing session after 2 nudges");
+        await new Promise((r) => setTimeout(r, 1500));
+        io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
+        session = null;
+        return;
+      }
+
+      const nudgeMsg = `${session.participantName}, are you still there? Would you respond to this question?`;
+      await emitModeratorLine(nudgeMsg);
+      logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
+    }, IDLE_CHECK_MS);
+  }
+
   function delay(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
@@ -809,7 +894,6 @@ io.on("connection", (socket) => {
     }
 
     if (isHuman) {
-      logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${nextName}, waiting for human_idle`);
       await emitModeratorLine(cue);
       if (fromHumanIdle && wasAdvanceCancelled(session)) {
         cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
@@ -817,8 +901,7 @@ io.on("connection", (socket) => {
       }
       if (session) session.pendingAdvanceFromIdle = false;
       if (!session) return;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = false;
+      startHumanTurnForCallOn(nextName);
       return;
     }
 
@@ -1040,9 +1123,7 @@ io.on("connection", (socket) => {
     await emitModeratorLine(cue);
     if (!session) return;
     if (isHumanTurn(session, firstSpeaker)) {
-      logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${firstSpeaker}, waiting for human_idle`);
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = false;
+      startHumanTurnForCallOn(firstSpeaker);
       return;
     }
     runBotTurn(firstSpeaker, cue);
@@ -1107,6 +1188,8 @@ io.on("connection", (socket) => {
       return;
     }
     session.waitingForHumanIntro = true;
+    session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
+    startIdleNudgeTimer();
     logLine("QUEUE", `waiting for human intro from ${session.participantName}`);
   }
 
@@ -1154,9 +1237,7 @@ io.on("connection", (socket) => {
     await emitModeratorLine(cue);
     if (!session) return;
     if (isHumanTurn(session, firstSpeaker)) {
-      logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${firstSpeaker}, waiting for human_idle`);
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = false;
+      startHumanTurnForCallOn(firstSpeaker);
       return;
     }
     runBotTurn(firstSpeaker, cue);
@@ -1199,6 +1280,8 @@ io.on("connection", (socket) => {
     if (item.isHuman) {
       session.waitingForHumanDisagreementResponse = true;
       session.humanRepliedDisagreementTurn = false;
+      session.lastPromptForHuman = { type: "disagreement", prompt: followUpText };
+      startIdleNudgeTimer();
       logLine("QUEUE", `view-misalignment follow-up: waiting for human ${session.participantName} to respond (${item.differenceSummary})`);
       return;
     }
@@ -1253,8 +1336,13 @@ io.on("connection", (socket) => {
     setImmediate(() => runIntroWithTyping());
   });
 
-  socket.on("human_typing", ({ isTyping } = {}) => {
+  socket.on("human_typing", ({ isTyping, hasDraft } = {}) => {
     if (isTyping !== undefined) logLine("TYPING", `human ${isTyping}`);
+    if (session && isWaitingForHuman(session)) {
+      session.idleLastActivityAt = Date.now();
+      if (isTyping) session.idleUserHasTyped = true;
+      if (hasDraft !== undefined) session.idleHasDraft = !!hasDraft;
+    }
     // If we scheduled "next question" after human_idle and user started typing again, cancel and wait for idle again
     if (isTyping && session?.pendingAdvanceFromIdle) {
       session.cancelAdvanceFromIdle = true;
@@ -1263,13 +1351,17 @@ io.on("connection", (socket) => {
   });
 
   socket.on("human_idle", async () => {
+    // Only clear nudge timer when we actually advance; otherwise keep it running so we can nudge again
+    // (e.g. user was nudged once, typed a draft, then went idle again — second nudge should still fire)
     if (session?.waitingForHumanIntro) {
+      clearIdleNudgeTimer();
       logLine("QUEUE", `human_idle after intro from ${session.participantName}`);
       session.waitingForHumanIntro = false;
       await runStudyGoal();
       return;
     }
     if (session?.waitingForHumanDisagreementResponse && session.humanRepliedDisagreementTurn) {
+      clearIdleNudgeTimer();
       logLine("QUEUE", `human_idle after view-misalignment response from ${session.participantName}, advancing to next follow-up or question`);
       session.waitingForHumanDisagreementResponse = false;
       session.humanRepliedDisagreementTurn = false;
@@ -1282,6 +1374,7 @@ io.on("connection", (socket) => {
     if (!co?.waitingForHumanIdle) return;
     // Moderator only moves on when human has sent at least 1 message AND is idle
     if (!co.humanRepliedThisTurn) return;
+    clearIdleNudgeTimer();
     logLine("QUEUE", `human_idle from ${session.participantName} (replied this turn), advancing`);
     co.waitingForHumanIdle = false;
     session.cancelAdvanceFromIdle = false;
@@ -1291,7 +1384,27 @@ io.on("connection", (socket) => {
   socket.on("human_message", async (data) => {
     const text = (data?.text || "").trim();
     if (!text || !session) return;
+    if (session && isWaitingForHuman(session)) {
+      session.idleLastActivityAt = Date.now();
+      session.idleUserHasTyped = true;
+      session.idleNudgeCount = 0;
+      session.idleLastNudgeAt = null;
+    }
     logLine("HUMAN_INPUT", `[${session.participantName}] "${clip(text, 160)}"`);
+
+    // Validate response before advancing: treat non-substantive replies as if user never responded
+    const ctx = session.lastPromptForHuman;
+    if (ctx && (session.waitingForHumanIntro || session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse || session.pendingAdvanceFromIdle)) {
+      const substantive = await isResponseSubstantive(text, ctx);
+      if (!substantive) {
+        emitMessage(session.participantName, text);
+        await emitModeratorLine("Could you elaborate? Please share your thoughts on the question.");
+        logLine("HUMAN", "human_message: response not substantive, waiting for elaboration");
+        return;
+      }
+      logLine("HUMAN", "human_message: response is substantive, advancing");
+    }
+
     const repliedWhileModeratorTypingIntroCue = !!session.moderatorTypingIntroCue;
     if (repliedWhileModeratorTypingIntroCue) {
       session.userRepliedDuringIntroCue = true;
@@ -1327,6 +1440,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    clearIdleNudgeTimer();
     if (session) {
       logLine("DISCONNECT", `id=${socket.id}`);
     }

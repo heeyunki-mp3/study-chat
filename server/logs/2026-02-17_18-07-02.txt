@@ -1,0 +1,14 @@
+2026-02-17 23:07:02.872 [SESSION_START] backend running on http://localhost:3001
+2026-02-17 23:07:02.872 [SESSION_START] CLI bots for this run: Sid, Mina, Jae
+2026-02-17 23:07:04.194 [SESSION_START] id=DRdeJMTo_R6qOq3uAAAB bots=Sid,Mina,Jae
+2026-02-17 23:07:04.194 [SESSION_START] participant_name set to "hailey"
+2026-02-17 23:07:04.194 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 23:07:04.195 [TYPING] moderator true
+2026-02-17 23:07:04.637 [DISCONNECT] id=DRdeJMTo_R6qOq3uAAAB
+2026-02-17 23:07:04.907 [SESSION_START] id=d_X7LQKRrJRY5r30AAAD bots=Sid,Mina,Jae
+2026-02-17 23:07:04.907 [SESSION_START] participant_name set to "hailey"
+2026-02-17 23:07:04.907 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 23:07:04.908 [TYPING] moderator true
+2026-02-17 23:07:09.110 [TYPING] moderator false
+2026-02-17 23:07:09.114 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 23:07:09.114 [TYPING] moderator true

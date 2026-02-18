@@ -1,0 +1,142 @@
+2026-02-17 23:58:03.128 [SESSION_START] backend running on http://localhost:3001
+2026-02-17 23:58:03.129 [SESSION_START] CLI bots for this run: Sid, Mina, Jae
+2026-02-17 23:58:17.912 [SESSION_START] id=7sq7O3uzY3qOA_lnAAAB bots=Sid,Mina,Jae
+2026-02-17 23:58:17.912 [SESSION_START] participant_name set to "Hailey"
+2026-02-17 23:58:17.913 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 23:58:17.913 [TYPING] moderator true
+2026-02-17 23:58:21.308 [DISCONNECT] id=7sq7O3uzY3qOA_lnAAAB
+2026-02-17 23:58:51.014 [SESSION_START] id=P4P-OQFcDJh7p_e_AAAD bots=Sid,Mina,Jae
+2026-02-17 23:58:51.015 [SESSION_START] participant_name set to "hailey"
+2026-02-17 23:58:51.015 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-17 23:58:51.015 [TYPING] moderator true
+2026-02-17 23:58:55.217 [TYPING] moderator false
+2026-02-17 23:58:55.220 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-17 23:58:55.221 [TYPING] moderator true
+2026-02-17 23:58:58.574 [TYPING] human true
+2026-02-17 23:58:58.906 [TYPING] human true
+2026-02-17 23:58:59.187 [TYPING] human true
+2026-02-17 23:58:59.293 [TYPING] human true
+2026-02-17 23:58:59.423 [TYPING] moderator false
+2026-02-17 23:58:59.425 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-17 23:58:59.426 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-17 23:58:59.451 [TYPING] human true
+2026-02-17 23:58:59.936 [TYPING] human true
+2026-02-17 23:59:00.740 [TYPING] human false
+2026-02-17 23:59:01.554 [TYPING] bot=Sid true
+2026-02-17 23:59:02.669 [TYPING] bot=Jae true
+2026-02-17 23:59:03.073 [TYPING] bot=Mina true
+2026-02-17 23:59:04.757 [TYPING] bot=Sid false
+2026-02-17 23:59:04.759 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-17 23:59:05.871 [TYPING] bot=Jae false
+2026-02-17 23:59:05.873 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-17 23:59:05.987 [TYPING] human true
+2026-02-17 23:59:06.097 [TYPING] human true
+2026-02-17 23:59:06.204 [TYPING] human true
+2026-02-17 23:59:06.275 [TYPING] bot=Mina false
+2026-02-17 23:59:06.276 [MESSAGE] [Mina] "Hi, I'm Mina. I work in retail in LA. Nice to meet you all"
+2026-02-17 23:59:06.353 [TYPING] human true
+2026-02-17 23:59:06.410 [TYPING] human true
+2026-02-17 23:59:06.531 [TYPING] human true
+2026-02-17 23:59:06.637 [TYPING] human true
+2026-02-17 23:59:06.728 [TYPING] human true
+2026-02-17 23:59:07.238 [TYPING] moderator true
+2026-02-17 23:59:07.532 [TYPING] human false
+2026-02-17 23:59:09.117 [TYPING] human true
+2026-02-17 23:59:09.201 [TYPING] human true
+2026-02-17 23:59:09.326 [TYPING] human true
+2026-02-17 23:59:09.401 [TYPING] human true
+2026-02-17 23:59:09.488 [TYPING] human true
+2026-02-17 23:59:09.643 [TYPING] human true
+2026-02-17 23:59:09.974 [TYPING] human true
+2026-02-17 23:59:10.170 [TYPING] human true
+2026-02-17 23:59:10.380 [TYPING] human true
+2026-02-17 23:59:10.690 [TYPING] human false
+2026-02-17 23:59:10.700 [HUMAN_INPUT] [hailey] "Hi I am hailey :)"
+2026-02-17 23:59:10.700 [MESSAGE] [hailey] "Hi I am hailey :)"
+2026-02-17 23:59:10.701 [QUEUE] human_message during intro cue: cancelling cue, advancing to study_goal
+2026-02-17 23:59:10.701 [TYPING] moderator true
+2026-02-17 23:59:11.441 [TYPING] moderator false
+2026-02-17 23:59:11.442 [QUEUE] intro cue cancelled: user already sent intro, advancing to study_goal
+2026-02-17 23:59:14.902 [TYPING] moderator false
+2026-02-17 23:59:14.903 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-17 23:59:14.904 [TYPING] moderator true
+2026-02-17 23:59:19.106 [TYPING] moderator false
+2026-02-17 23:59:19.108 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-17 23:59:21.812 [MESSAGE] [Sid] "Ok!"
+2026-02-17 23:59:21.813 [QUEUE] study_goal ack done, starting first big_question
+2026-02-17 23:59:21.813 [QUEUE] first big_question: "First question: Big tech companies like Google roll out new …"
+2026-02-17 23:59:21.814 [TYPING] moderator true
+2026-02-17 23:59:26.016 [TYPING] moderator false
+2026-02-17 23:59:26.018 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-17 23:59:27.008 [TYPING] moderator true
+2026-02-17 23:59:31.210 [TYPING] moderator false
+2026-02-17 23:59:31.213 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-17 23:59:31.214 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:59:31.214 [TYPING] bot=Sid true
+2026-02-17 23:59:32.799 [OPENAI_OK] bot=Sid rtt=1585ms raw="["I usually wait a bit before trying new features, especially from big companies. Too often they rol…"
+2026-02-17 23:59:32.800 [TYPING] bot=Sid false
+2026-02-17 23:59:33.802 [TYPING] bot=Sid true
+2026-02-17 23:59:37.003 [TYPING] bot=Sid false
+2026-02-17 23:59:37.004 [MESSAGE] [Sid] "I usually wait a bit before trying new features, especially from big companies. Too often they roll out stuff that’s buggy or feels half-baked."
+2026-02-17 23:59:38.005 [TYPING] bot=Sid true
+2026-02-17 23:59:41.206 [TYPING] bot=Sid false
+2026-02-17 23:59:41.208 [MESSAGE] [Sid] "That said, if it’s security-related or something that could save time, I test it almost immediately to see if it’s worth adopting."
+2026-02-17 23:59:42.104 [QUEUE] call-on who_spoke=[Sid] next=Mina
+2026-02-17 23:59:42.104 [TYPING] moderator true
+2026-02-17 23:59:46.307 [TYPING] moderator false
+2026-02-17 23:59:46.309 [MESSAGE] [Eunice] "Got it, Sid. Mina, how about you?"
+2026-02-17 23:59:46.310 [OPENAI_REQ] bot=Mina question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:59:46.310 [TYPING] bot=Mina true
+2026-02-17 23:59:47.601 [OPENAI_OK] bot=Mina rtt=1291ms raw="["Honestly, I’m kinda meh about most new features. If it’s easy to use and doesn’t mess with my usua…"
+2026-02-17 23:59:47.601 [TYPING] bot=Mina false
+2026-02-17 23:59:48.604 [TYPING] bot=Mina true
+2026-02-17 23:59:51.805 [TYPING] bot=Mina false
+2026-02-17 23:59:51.806 [MESSAGE] [Mina] "Honestly, I’m kinda meh about most new features. If it’s easy to use and doesn’t mess with my usual flow, I’m down to try it."
+2026-02-17 23:59:52.620 [QUEUE] call-on who_spoke=[Sid, Mina] next=Jae
+2026-02-17 23:59:52.621 [TYPING] moderator true
+2026-02-17 23:59:56.823 [TYPING] moderator false
+2026-02-17 23:59:56.824 [MESSAGE] [Eunice] "Thanks for that, Mina. Jae, how about you? Do you jump on new features quickly or wait it out?"
+2026-02-17 23:59:56.825 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-17 23:59:56.825 [TYPING] bot=Jae true
+2026-02-17 23:59:58.546 [OPENAI_OK] bot=Jae rtt=1721ms raw="["I usually wait to see how stable a new feature is before trying it. I rely on my devices for work,…"
+2026-02-17 23:59:58.547 [TYPING] bot=Jae false
+2026-02-17 23:59:59.549 [TYPING] bot=Jae true
+2026-02-18 00:00:02.751 [TYPING] bot=Jae false
+2026-02-18 00:00:02.753 [MESSAGE] [Jae] "I usually wait to see how stable a new feature is before trying it. I rely on my devices for work, so any disruption worries me."
+2026-02-18 00:00:03.756 [TYPING] bot=Jae true
+2026-02-18 00:00:06.957 [TYPING] bot=Jae false
+2026-02-18 00:00:06.959 [MESSAGE] [Jae] "If a feature promises better security or smoother syncing across laptop and phone, I might test it carefully after some reviews."
+2026-02-18 00:00:07.607 [TYPING] moderator true
+2026-02-18 00:00:11.810 [TYPING] moderator false
+2026-02-18 00:00:11.812 [MESSAGE] [Eunice] "Thanks for that, Jae. Hailey, how about you?"
+2026-02-18 00:00:11.813 [QUEUE] call-on who_spoke=[Sid, Mina, Jae] next=human hailey, waiting for human_idle
+2026-02-18 00:00:31.822 [TYPING] moderator true
+2026-02-18 00:00:36.027 [TYPING] moderator false
+2026-02-18 00:00:36.030 [MESSAGE] [Eunice] "hailey, are you still there? Would you respond to this question?"
+2026-02-18 00:00:36.030 [QUEUE] idle nudge 1/2 sent
+2026-02-18 00:00:38.952 [TYPING] human true
+2026-02-18 00:00:39.049 [TYPING] human true
+2026-02-18 00:00:39.123 [TYPING] human true
+2026-02-18 00:00:39.519 [TYPING] human true
+2026-02-18 00:00:39.621 [TYPING] human true
+2026-02-18 00:00:39.678 [TYPING] human true
+2026-02-18 00:00:39.810 [TYPING] human true
+2026-02-18 00:00:40.167 [TYPING] human true
+2026-02-18 00:00:40.249 [TYPING] human true
+2026-02-18 00:00:40.360 [TYPING] human true
+2026-02-18 00:00:40.491 [TYPING] human true
+2026-02-18 00:00:40.611 [TYPING] human true
+2026-02-18 00:00:40.793 [TYPING] human false
+2026-02-18 00:00:40.805 [HUMAN_INPUT] [hailey] "oh yes sorry"
+2026-02-18 00:00:41.660 [MESSAGE] [hailey] "oh yes sorry"
+2026-02-18 00:00:46.715 [TYPING] moderator true
+2026-02-18 00:00:50.918 [TYPING] moderator false
+2026-02-18 00:00:50.919 [MESSAGE] [Eunice] "Could you elaborate? Please share your thoughts on the question."
+2026-02-18 00:00:50.919 [HUMAN] human_message: response not substantive, waiting for elaboration
+2026-02-18 00:00:51.831 [MESSAGE] [Eunice] "I think you are not paying attention. I am kicking you out."
+2026-02-18 00:00:51.832 [QUEUE] idle kick: closing session after 2 nudges
