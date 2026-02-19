@@ -1,0 +1,12 @@
+2026-02-19 19:03:12.882 [SESSION_START] backend running on http://localhost:3001
+2026-02-19 19:03:12.883 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-19 19:03:15.502 [SESSION_START] id=q5lLM4wEq5e3UgNhAAAB bots=Sid,Vivian,Jae
+2026-02-19 19:03:15.502 [SESSION_START] participant_name set to "minil"
+2026-02-19 19:03:15.502 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-19 19:03:15.502 [TYPING] moderator true
+2026-02-19 19:03:19.705 [TYPING] moderator false
+2026-02-19 19:03:19.705 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-19 19:03:19.706 [TYPING] moderator true
+2026-02-19 19:03:23.909 [TYPING] moderator false
+2026-02-19 19:03:23.912 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-19 19:03:23.913 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel

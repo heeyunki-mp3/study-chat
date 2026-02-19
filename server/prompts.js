@@ -266,7 +266,8 @@ Answer this first, then you may react to newer messages in the transcript.
 
   const formatBlock = questionType === "poll"
     ? `Return EXACTLY 1 chat message as a JSON array with one string. The message must be 6 words or fewer — a very short phrase or single sentence (e.g. ["Yes I use one"] or ["Nope never heard of it"] or ["Heard of it never tried"]).
-
+  If you don't know the technology that the moderator is asking about, you MUST ask a clarification question. For example, if the moderator asks about passkeys, and you don't know what it is, you must ask: "What is a passkey?" or "I don't know what a passkey is. Can you explain what it is?" or "I only know that it is about login. Can someone explain what passkey is?" depnding on your knowledge about the technology.
+  
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array with exactly 1 string.

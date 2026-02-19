@@ -1,0 +1,104 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
+Vivian: Hello everyone! I'm Vivian. I'm a student at Emory studying psychology
+Jae: Hi I'm Jae. I teach math at high school
+Mini: Hi I am Mini
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Vivian: Ok!
+Mini: okoko
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Usually I'm skeptical about new features from big tech. I've seen too many that end up buggy or useless.
+Sid: I don't jump in right away. I wait to see if it's stable or actually fixes a problem I have before trying it.
+Eunice: Got it, Sid. Vivian, how about you?
+Vivian: i usually check out new features pretty quick if they seem useful or make stuff easier for me
+Vivian: but if the update looks annoying or like it messes with my workflow i totally ignore it till people complain less
+Vivian: tbh i like smooth upgrades that dont waste my time or battery
+Eunice: Thanks for that, Vivian. Jae, how about you? Do you jump on new features right away or wait to see if they’re worth it?
+Jae: I usually prefer to wait and see how a new feature performs before trying it out since I value predictability.
+Jae: In my experience, jumping in too quick can sometimes lead to confusion or account issues, especially when using multiple devices.
+Eunice: I see, Jae. Mini, what do you think?
+Mini: Yeah I think I try to jump into right away. I love new stuff! I feel like i want to be the first one to adapt new stuff in my group!
+Eunice: Appreciate y'all sharing your thoughts.
+Eunice: Thanks for sharing, everyone!
+Eunice: Sid, Vivian shared that she tries new features quickly if they seem useful, so what do you think about that approach?
+Sid: Trying new features quickly can be a double-edged sword. Sometimes it's great to catch an advantage early, but it also risks running into bugs or security holes before they're fixed.
+Sid: I get why Vivian goes for it if the change seems useful, but I usually stick to a wait-and-see approach unless it really solves a pain point right away.
+Eunice: Sid, Mini mentioned that she loves trying new features immediately to be the first in her group—what do you think about that approach?
+Sid: Trying new features fast can be risky though, especially without understanding potential security risks or bugs.
+Sid: Being first has its perks but also means you might be the guinea pig if something breaks or compromises your data.
+Eunice: Vivian what do you think about Jae’s idea of waiting for stability before trying new features can you share your thoughts on that Vivian
+Vivian: yeah i see where jae is coming from waiting for stability makes sense to avoid annoying bugs or getting locked out of accounts
+Vivian: but sometimes waiting too long means missing out on stuff that can actually make life easier or save time
+Vivian: tbh i think its about balancing how much risk youre willing to take with what the new feature promises
+Eunice: Jae, Mini shared that they love trying new features immediately to be the first in their group—what do you think about that approach?
+Jae: I get the appeal of trying new features first, especially to stay ahead or be that go-to person in your group. But for me, there's always this worry about unexpected glitches or account issues that might come up when thi
+Jae: I feel like being cautious helps me avoid headaches later, especially with multiple devices involved. I'd rather see some reviews or fixes before diving in, even if it means missing out on being first.
+Eunice: Vivian what do you think about Mini’s enthusiasm for trying new features right away can you share your thoughts?
+Vivian: i get mini's excitement bc trying new features first can be really fun and sometimes useful
+Vivian: but i think its smart to stay a bit cautious too bc some updates can be buggy or mess with your flow
+Vivian: overall i think enthusiasm is good but a little patience never hurts especially if youre juggling lots of stuff
+Eunice: Thanks everyone for sharing your thoughts. We heard a range of reactions to new features from big tech, with some like Mini eager to try them right away to stay ahead, while others like Sid and Jae prefer a cautious, wait-and-see approach to avoid bugs or issues. Vivian helped highlight a balance between excitement and carefulness, acknowledging both the benefits of early adoption and the wisdom of patience.
+Eunice: Moving on, one of the new popular technologies is generative AI – things like Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made you decide not to?
+Eunice: Let’s start with you, Vivian. What do you think?
+Vivian: ive used chat gpt a bit for school stuff and quick questions bc its just faster than googling sometimes
+Vivian: also kinda curious but also wary how much i can trust it for like accurate info so i double check usual
+Eunice: I see, Vivian. Jae, what about you? Have you tried generative AI, and what influenced your decision?
+Jae: I've tried generative AI a couple of times mostly to see if it could help with lesson planning or quick research, but honestly, I felt a bit uneasy about relying on it too much. There's something about trusting a system
+Jae: In my experience, if the technology isn't clearly reliable across all devices I use, it adds stress instead of reducing it, and that’s a big turnoff. So, I’m cautious and usually wait until things feel stable and well su
+Eunice: Makes sense, Jae. Mini, what about you?
+Mini: I love chat gpt
+Eunice: Thanks for sharing, Mini. Sid, how about you? Have you tried generative AI tools like ChatGPT or Gemini?
+Sid: I've definitely used ChatGPT and similar tools. They can be useful for quick info or drafting stuff, but I stay skeptical about accuracy.
+Sid: For me, it's less about hype and more about practical reliability. I test these tools but never blindly trust them for anything critical.
+Eunice: Thanks everyone! It is helpful to hear from each of you.
+Eunice: Vivian, what do you think about Jae’s cautious approach to using generative AI?
+Vivian: i get why jae is cautious it makes sense to avoid headaches from bugs or glitches especially with multiple devices involved
+Vivian: i think being careful is smart if you rely on technology for work or teaching but sometimes waiting too long means missing useful tools too
+Vivian: so yeah cautious is good but it depends on how much risk and inconvenience you can tolerate
+Eunice: Vivian, Mini shared their enthusiasm for ChatGPT, what do you think about its usefulness despite the concerns about accuracy?
+Vivian: i think chatgpt is super useful for quick answers or brainstorming ideas especially when youre on a tight schedule
+Vivian: but i always double check what it says bc sometimes the info isnt fully accurate or up to date so i use it more like a helper than a source i trust 100%
+Vivian: so yeah its definitely helpful but gotta stay cautious about relying on it alone for anything important
+Eunice: Jae, Mini shared her enthusiasm for ChatGPT—what do you think about using generative AI tools in your work or daily life?
+Jae: I see where Mini’s enthusiasm comes from, and I do think generative AI can be helpful for quick lesson ideas or research prompts. However, I feel wary about fully relying on it since I use multiple devices and worry abou
+Eunice: Mini, Sid shared his practical yet cautious view on using generative AI tools like ChatGPT, what do you think?
+Mini: hmm well what ever??? like I if he doesn't need chat gpt it is good for him
+Eunice: Could you elaborate? Please share your thoughts on the question.
+Eunice: Mini, are you still there? Would you respond to this question?
+Mini: yeah
+Mini: uh like i  am just saying that he can think in his way, but I just dont' really care
+Mini: sid is also good
+Mini: like sid could be cautious about his approach, but I also don't want to change my views bc chat gpt is very helpful for me
+Eunice: Thanks everyone for sharing your experiences and thoughts. We heard a range of reactions to generative AI tools like ChatGPT—from enthusiasm and practical use for quick information to caution about accuracy and reliability, especially across multiple devices. Some of you embraced it as a helpful assistant while others prefer to stay skeptical and double-check its output. It’s clear that your comfort with these tools varies based on how you use them and what risks you’re willing to take.
+Eunice: Have you ever used or heard about VPN?
+Jae: Heard of it, never tried.
+Vivian: Yeah used one a couple times
+Sid: Used VPN for work before
+Mini: yeah
+Eunice: Looks like 3 of us have used a VPN and 1 has only heard of it!
+Eunice: Have you ever used or heard about password managers?
+Jae: I use a password manager
+Vivian: Used one but not regularly
+Sid: Yes I use one regularly
+Mini: what is a password manager?
+Eunice: A password manager is a tool that helps you store and manage all your passwords securely in one place. It can also generate strong passwords and fill them in automatically for you.
+Eunice: So, have you ever used or heard about password managers? I'd love to hear your thoughts.
+Mini: ohh nope
+Eunice: Seems like 3 of us have used password managers, and 1 person isn’t familiar with them yet!
+Eunice: Have you ever used or heard about passkeys?
+Jae: Tried once but gave up
+Sid: Yeah used them a few times
+Vivian: What is a passkey exactly
+Eunice: Mini, are you still there? Would you respond to this question?
+Eunice: I think you are not paying attention. I am kicking you out.

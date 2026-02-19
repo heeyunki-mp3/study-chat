@@ -437,6 +437,11 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
  */
 async function classifyHumanMessage(text, context, roundQuestion) {
   if (!text || !String(text).trim()) return { isQuestion: false, substantive: false };
+  const wordCount = String(text).trim().split(/\s+/).filter(Boolean).length;
+  // Hard word-count rules for substantiality — no API needed for these boundaries.
+  // We still call the API to get isQuestion (short messages can still be questions).
+  const forcedSubstantive = wordCount > 15 ? true : wordCount <= 3 ? false : null;
+
   const { type = "call_on", prompt = "" } = context || {};
   const sys = `You are a classifier. Given a participant's chat message, return ONLY valid JSON with exactly two boolean fields:
 - "isQuestion": true if the message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?", "I don't understand X"), rather than sharing an answer/opinion/experience. False for filler ("ok","idk","sad"), emotions, statements, or anything that tries to answer the prompt.
@@ -458,11 +463,11 @@ Return format: {"isQuestion": true/false, "substantive": true/false}`;
     const parsed = JSON.parse(raw || "{}");
     return {
       isQuestion: !!parsed.isQuestion,
-      substantive: !!parsed.substantive,
+      substantive: forcedSubstantive !== null ? forcedSubstantive : !!parsed.substantive,
     };
   } catch (e) {
     console.error("classifyHumanMessage error", e?.message || e);
-    return { isQuestion: false, substantive: false };
+    return { isQuestion: false, substantive: forcedSubstantive ?? false };
   }
 }
 
@@ -996,6 +1001,10 @@ io.on("connection", (socket) => {
 
     if (co.currentIndex >= co.order.length) {
       co.roundDone = true;
+      // Commit to the ack + disagreement phase: clear pending-advance flags now so
+      // user typing can no longer skip the ack or cancel the disagreement phase.
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
       logLine("QUEUE", "call-on round done, acknowledging then view-misalignment phase");
       await emitModeratorLine(pickRoundAckText(session));
       if (!session) return;
@@ -1043,6 +1052,39 @@ io.on("connection", (socket) => {
     runBotTurn(nextName, cue);
   }
 
+  /**
+   * After a bot emits its bubbles, check whether the last thing it said contains
+   * a question to the moderator. If so, have Eunice answer (2 bubbles: answer +
+   * re-ask of the round question) before the caller continues the flow.
+   */
+  async function checkAndAnswerBotQuestion(bubbles, roundQuestion) {
+    if (!Array.isArray(bubbles) || bubbles.length === 0 || !session) return;
+    const combined = bubbles.join(" ");
+    let isQuestion = false;
+    try {
+      ({ isQuestion } = await classifyHumanMessage(
+        combined,
+        { type: "call_on", prompt: roundQuestion },
+        roundQuestion
+      ));
+    } catch (e) {
+      console.error("checkAndAnswerBotQuestion classify error", e?.message || e);
+    }
+    if (!isQuestion || !session) return;
+    logLine("QUEUE", "bot asked a question, moderator answering");
+    let answerBubbles;
+    try {
+      answerBubbles = await generateModeratorQuestionAnswer(combined, roundQuestion);
+    } catch (e) {
+      console.error("generateModeratorQuestionAnswer (bot) error", e?.message || e);
+      return;
+    }
+    for (const bubble of answerBubbles) {
+      if (!session) return;
+      await emitModeratorLine(bubble);
+    }
+  }
+
   async function runBotTurn(botName, directiveOverride) {
     if (!session?.callOnState) return;
     const co = session.callOnState;
@@ -1087,6 +1129,8 @@ io.on("connection", (socket) => {
     }
 
     await emitBotBubblesWithTyping(botName, bubbles, botTypingTimeoutRef);
+    if (!session) return;
+    await checkAndAnswerBotQuestion(bubbles, co.question);
     if (!session) return;
     co.whoSpoke.push(botName);
     await advanceCallOn();
@@ -1587,6 +1631,8 @@ io.on("connection", (socket) => {
     if (Array.isArray(bubbles) && bubbles.length > 0) {
       await emitBotBubblesWithTyping(botName, bubbles, botTypingTimeoutRef);
     }
+    if (!session) return;
+    await checkAndAnswerBotQuestion(bubbles, co.question);
     if (!session) return;
     await runNextDisagreementFollowUp();
   }

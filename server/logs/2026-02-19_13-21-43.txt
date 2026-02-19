@@ -1,0 +1,64 @@
+2026-02-19 18:21:43.034 [SESSION_START] backend running on http://localhost:3001
+2026-02-19 18:21:43.035 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-19 18:22:14.361 [SESSION_START] id=s-JSux3cgOjABDacAAAB bots=Sid,Vivian,Jae
+2026-02-19 18:22:14.361 [SESSION_START] participant_name set to "mini"
+2026-02-19 18:22:14.362 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-19 18:22:14.362 [TYPING] moderator true
+2026-02-19 18:22:18.565 [TYPING] moderator false
+2026-02-19 18:22:18.571 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-19 18:22:18.576 [TYPING] moderator true
+2026-02-19 18:22:22.777 [TYPING] moderator false
+2026-02-19 18:22:22.779 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-19 18:22:22.780 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-19 18:22:25.114 [TYPING] bot=Sid true
+2026-02-19 18:22:25.507 [TYPING] bot=Jae true
+2026-02-19 18:22:25.604 [TYPING] bot=Vivian true
+2026-02-19 18:22:28.316 [TYPING] bot=Sid false
+2026-02-19 18:22:28.317 [MESSAGE] [Sid] "Sid. I am an IT support technician in New Jersey."
+2026-02-19 18:22:28.708 [TYPING] bot=Jae false
+2026-02-19 18:22:28.710 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-19 18:22:28.806 [TYPING] bot=Vivian false
+2026-02-19 18:22:28.808 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-19 18:22:29.008 [TYPING] human true
+2026-02-19 18:22:29.130 [TYPING] human true
+2026-02-19 18:22:29.254 [TYPING] human true
+2026-02-19 18:22:29.300 [TYPING] human true
+2026-02-19 18:22:29.527 [TYPING] human true
+2026-02-19 18:22:29.551 [TYPING] human true
+2026-02-19 18:22:30.005 [TYPING] human true
+2026-02-19 18:22:30.277 [TYPING] human false
+2026-02-19 18:22:30.282 [HUMAN_INPUT] [Mini] "Sure!"
+2026-02-19 18:22:30.282 [MESSAGE] [Mini] "Sure!"
+2026-02-19 18:22:31.358 [TYPING] human true
+2026-02-19 18:22:31.455 [QUEUE] intro: human already introduced while cue was being generated, advancing to study_goal
+2026-02-19 18:22:31.455 [TYPING] moderator true
+2026-02-19 18:22:31.549 [TYPING] human true
+2026-02-19 18:22:31.731 [TYPING] human true
+2026-02-19 18:22:31.859 [TYPING] human true
+2026-02-19 18:22:31.934 [TYPING] human true
+2026-02-19 18:22:32.704 [TYPING] human true
+2026-02-19 18:22:33.508 [TYPING] human false
+2026-02-19 18:22:35.657 [TYPING] moderator false
+2026-02-19 18:22:35.657 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-19 18:22:35.658 [TYPING] moderator true
+2026-02-19 18:22:35.750 [TYPING] human true
+2026-02-19 18:22:36.516 [TYPING] human true
+2026-02-19 18:22:36.696 [TYPING] human true
+2026-02-19 18:22:37.164 [TYPING] human true
+2026-02-19 18:22:37.460 [TYPING] human false
+2026-02-19 18:22:37.468 [HUMAN_INPUT] [Mini] "s"
+2026-02-19 18:22:37.469 [MESSAGE] [Mini] "s"
+2026-02-19 18:22:39.862 [TYPING] moderator false
+2026-02-19 18:22:39.863 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-19 18:22:42.031 [MESSAGE] [Vivian] "Sure!"
+2026-02-19 18:22:42.031 [QUEUE] study_goal ack done, starting first round
+2026-02-19 18:22:42.032 [QUEUE] first round [big_question]: "First question: Big tech companies like Google roll out new …"
+2026-02-19 18:22:42.032 [TYPING] moderator true
+2026-02-19 18:22:46.233 [TYPING] moderator false
+2026-02-19 18:22:46.236 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-19 18:22:46.809 [TYPING] moderator true

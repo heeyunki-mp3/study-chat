@@ -50,9 +50,16 @@ function getOrderedParticipantNames(session, myName) {
   return names;
 }
 
+function isSelf(sender, myName, introducedName) {
+  const s = String(sender || "").toLowerCase();
+  if (myName && s === String(myName).toLowerCase()) return true;
+  if (introducedName && s === String(introducedName).toLowerCase()) return true;
+  return false;
+}
+
 function getColorForSender(sender, session, myName, introducedName = null) {
   if (!sender) return PARTICIPANT_PALETTE[0];
-  if (sender === myName || (introducedName && sender === introducedName)) return PARTICIPANT_PALETTE[0];
+  if (isSelf(sender, myName, introducedName)) return PARTICIPANT_PALETTE[0];
   const ordered = getOrderedParticipantNames(session, myName);
   const i = ordered.indexOf(sender);
   if (i >= 0) return PARTICIPANT_PALETTE[i % PARTICIPANT_PALETTE.length];
@@ -163,13 +170,20 @@ export default function ChatPage() {
       if (name) {
         introducedNameRef.current = name;
         setIntroducedName(name);
+        // Retroactively rename any already-stored messages that belong to the user
+        // so the full chat history shows the introduced name consistently.
+        setMessages((prev) =>
+          prev.map((m) =>
+            isSelf(m.sender, participantName, name) ? { ...m, sender: name } : m
+          )
+        );
       }
     });
 
     socket.on("message", (m) => {
       const text = typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000);
       const sender = m?.name ?? "";
-      const isOutgoing = sender === participantName || sender === introducedNameRef.current;
+      const isOutgoing = isSelf(sender, participantName, introducedNameRef.current);
       setMessages((prev) => [
         ...prev,
         {
@@ -285,7 +299,9 @@ export default function ChatPage() {
     }
   })();
 
-  const participants = session ? getParticipants(session, participantName) : [];
+  // Use the introduced name for the sidebar if the user gave one during intro.
+  const myDisplayName = introducedName || participantName;
+  const participants = session ? getParticipants(session, myDisplayName) : [];
   if (participants.length && participants[0].isYou) participants[0].profilePic = participantProfilePic;
 
   return (
