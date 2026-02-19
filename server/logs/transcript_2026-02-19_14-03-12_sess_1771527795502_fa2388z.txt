@@ -33,3 +33,99 @@ Sid: But I’d caution that new features can have hidden security or compatibili
 Eunice: Sid, Mina shared that she jumps right in enthusiastically when new features come out, what do you think about that approach?
 Sid: Jumping in with new features can be fun and helps you stay ahead, but it’s risky if you rely on that tool heavily for work or security.
 Sid: I’d rather test on a secondary account or device first to avoid surprises and potential data loss before going full throttle.
+Eunice: Vivian, Jae shared that he prefers to wait for clear instructions before trying new features because he values predictability, what do you think about Jae's cautious approach?
+Vivian: yeah i get why jae prefers that cautious route especially with multiple devices to manage
+Vivian: predictability matters when you depend on tech for work or school stuff
+Vivian: i guess i’m more impatient but i do see the value in waiting if it avoids headaches later
+Eunice: Jae what do you think about Mina's eagerness to try new features immediately can you share your thoughts on that?
+Jae: I get why Mina’s excitement is appealing—trying new things can be refreshing and fun sometimes.
+Jae: But from my perspective, especially juggling multiple devices, rushing into new features can cause unexpected issues, so I like to make sure there's a clear benefit and some reassurance first.
+Eunice: Thank you all for sharing your thoughts on trying new features from big tech companies. We heard a range of reactions from enthusiastic early adopters like Mina and Vivian who jump in quickly when they see clear benefits, to more cautious users like Sid and Jae who prefer to wait and assess potential risks or instructions before diving in. It was great to see how everyone balances the excitement of new tools with the need for reliability and security in different ways.
+Eunice: Moving on, one of the new popular technologies is generative AI – things like Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made you decide not to?
+Eunice: Let’s start with you, Vivian. What do you think?
+Vivian: tbh ive played around with chat gpt for quick info or brainstorming since its fast and easy to use
+Vivian: i tried it mainly bc i wanted something more efficient than googling through articles all the time
+Vivian: sometimes it feels like cheating but i guess its just tech helping me be less overwhelmed
+Eunice: Thanks for that, Vivian. Jae, what about you? Have you used generative AI, and what influenced your decision?
+Jae: I've tried generative AI a bit but mostly hesitated to fully use it. I worry about how reliable it is for accurate info, especially when I rely on clear facts for teaching.
+Jae: I also find managing accounts and data across my phone, laptop, and shared school computers tricky, so I’m cautious about adopting tools that might complicate that further.
+Eunice: Got it, Jae. Mina, what about you? Have you tried generative AI tools, and what influenced your decision?
+Mina: yeah I have used gen ai. they are cool. i think all of my friends are using it so I just had to try it
+Eunice: Thanks for sharing, Mina. Sid, how about you? Have you tried generative AI, and what influenced your decision?
+Sid: I've used generative AI tools, mostly to test their limits and for some quick code snippets or troubleshooting tips. I’m skeptical about relying on them for anything critical since they can be inconsistent or outdated, b
+Eunice: Thanks everyone! It is helpful to hear from each of you.
+Eunice: Vivian, considering Jae's concerns about reliability and managing accounts, what do you think about the balance between efficiency and accuracy when using generative AI?
+Vivian: efficiency is huge for me so i see generative ai as a tool to get started fast even if its not perfect
+Vivian: i check accuracy by cross checking key info but dont wait around for perfect answers bc that slows me down
+Vivian: managing accounts can get annoying so i prefer tools that keep things simple and dont add layers of complexity
+Eunice: Vivian what do you think about Sid's cautious approach to using generative AI for critical tasks can you share your thoughts?
+Vivian: sids cautious vibe makes sense especially when critical stuff is on the line  better safe than sorry
+Vivian: but sometimes waiting too long can slow down workflow  i try to balance by testing new tools on less important tasks first
+Vivian: overall i think his approach is smart for anyone who cant afford errors but i lean more towards quick trial and error for less risky things
+Eunice: Jae what do you think about Mina's perspective on using generative AI just because friends do can you share your thoughts on it
+Jae: I understand the social aspect of Mina's perspective, and it’s natural to want to keep up with friends, especially when something feels popular.
+Jae: But I think for me, it’s important to consider how a tool fits into my workflow and security needs before jumping in, rather than just following the crowd.
+Eunice: Mina Sid shared some concerns about reliability when using generative AI tools what do you think Mina can you share your thoughts on Sid's idea?
+Mina: yeah sid is valid. but i just don't wanna be behind in the tech.
+Eunice: Thanks everyone for sharing your thoughts so openly. We heard a range of experiences with generative AI—from Vivian and Mina embracing it for efficiency and social reasons to Jae and Sid being more cautious about reliability and managing complexity. It’s clear many of you are balancing the excitement of new tools with sensible concerns about accuracy and workflow fit.
+Eunice: Have you ever used or heard about VPN?
+Mina: yse
+Vivian: Heard of it never used though
+Jae: Heard of it, never used
+Sid: Yeah, use VPN sometimes for work
+Eunice: Looks like 2 of us use VPNs and 2 have just heard of it but never used one!
+Eunice: Have you ever used or heard about password managers?
+Sid: Yeah I use one daily
+Vivian: yeah ive tried a couple
+Jae: Yes I use one sometimes
+Mina: always!
+Eunice: Looks like all 4 of us have used password managers at some point!
+Eunice: Have you ever used or heard about passkeys?
+Jae: Tried once, but found confusing
+Vivian: I only know it's about login
+Sid: Yeah, I’ve used passkeys before
+Mina: what is passkeys?
+Eunice: Passkeys are a new way to log into websites or apps without using passwords, often using your fingerprint or face instead. They're supposed to be more secure and easier to use.
+Eunice: So, have you ever used or heard about passkeys?
+Mina: ohh no!
+Eunice: Looks like 2 people have used or heard of passkeys and 2 have never heard of them!
+Eunice: For some Google accounts, users can switch their account login to "passkey".
+
+Have you seen or heard about passkey before?
+If you've used it, what made you decide to switch? If you haven't, what held you back?
+Eunice: Jae, what do you think?
+Jae: I've heard about passkeys and tried setting them up once, but I got confused with how it works across my devices.
+Jae: I feel like it's promising for security, but I worry about losing access if the process isn't straightforward on my laptop, phone, and shared computers.
+Eunice: Thanks for sharing, Jae. Mina, what are your thoughts on using passkeys?
+Mina: look I don't know what passkey is... I just heard about it just now
+Eunice: A passkey is a new way to sign into your Google account without a password, using your device to authenticate you instead. It's meant to be more secure and easier to use than traditional passwords.
+Eunice: So, what do you think about switching to passkeys for account login?
+Mina: uhh i wouldn't really do it??
+Eunice: Got it, Mina. Sid, what about you? Have you tried using passkeys or thought about switching?
+Sid: Yeah, I use passkeys regularly. Passwords are just a mess—too easy to phish or reuse, and the recovery process is a nightmare.
+Sid: Switching to passkeys cut down on all that hassle for me, plus it's way more secure. Took a bit to get used to, but it's worth it.
+Eunice: Thanks for sharing, Sid. Vivian, what do you think? Have you tried using passkeys or considered switching?
+Vivian: i have used passkeys on my phone and honestly it made logging in way easier and faster than typing passwords all the time
+Vivian: the fact that it works with face id and my device security feels way more convenient than juggling passwords
+Vivian: i did worry about switching at first but once i got past that tiny learning curve it really cut down on stress for me
+Eunice: Thanks you all for those answers!
+Eunice: Jae, Sid shared that using passkeys has really improved his security and convenience, what do you think about that?
+Jae: I see the benefits Sid mentioned, especially on the security side, but I’m still cautious about how passkeys work across multiple devices I use daily.
+Jae: I feel like until it’s clearly simple and reliable on phones, laptops, and shared computers, I’m hesitant to fully switch over.
+Eunice: Mina, Sid shared his positive experience with passkeys and mentioned how they reduce hassle and improve security, what do you think about giving them a try?
+Mina: sure
+Mina: why not!! haha
+Mina: i guess it will be easy if it is giving a good security
+Eunice: Jae Vivian mentioned that passkeys made logging in easier and more secure for her, what do you think, Jae?
+Jae: I think Vivian is right that passkeys can simplify logging in and be more secure, which is appealing.
+Jae: However, I’m still cautious because I haven’t seen clear guidance on how well they work across my multiple devices and shared computers at school.
+Eunice: Mina, considering Vivian finds passkeys convenient and secure, what do you think about trying it despite your initial reluctance Mina can you share your thoughts on Vivian's experience?
+Mina: nah I don't want to ew
+Eunice: Mina, are you still there? Would you respond to this question?
+Mina: abcdefgafhwkejhfkj hfdsjfhkajhfekhfkjfskdnf wehfjwehfkjhfksjhf  fhefhs aiwhka
+Mina: yeah I think vivian is cool she should try it. i don't want to I don't care =about my security
+Eunice: Thanks everyone for sharing your thoughts on passkeys. We heard a range of reactions from Sid and Vivian who found passkeys to be more secure and convenient, while Jae expressed caution about how well they work across multiple devices and shared computers. Mina was initially unsure and remains a bit hesitant despite understanding the benefits discussed. It’s clear that while passkeys show promise, there are still some concerns and questions to be addressed.
+Eunice: Thanks everyone, that wraps up our discussion for today!

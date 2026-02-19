@@ -472,18 +472,32 @@ Return format: {"isQuestion": true/false, "substantive": true/false}`;
 }
 
 /**
- * Generate a 2-bubble moderator answer: [answer to question, question reminder].
- * Answer is ≤2.5 sentences; reminder rephrases the big question in 1 short sentence.
+ * Generate a moderator answer to a question.
+ * - If alreadyAnswered contains a similar topic: returns 1 short string (≤8 words).
+ * - Otherwise: returns 2 strings [full answer, question reminder].
+ * alreadyAnswered is an array of { question, answer } objects from this session.
  */
-async function generateModeratorQuestionAnswer(questionText, roundQuestion) {
+async function generateModeratorQuestionAnswer(questionText, roundQuestion, alreadyAnswered = []) {
   const fallback = [
     "Great question! I'm happy to clarify.",
     String(roundQuestion ?? "").slice(0, 100) + " — what do you think?",
   ];
-  const sys = `You are ${MODERATOR_NAME}, a warm and natural discussion moderator. A participant has asked you a question instead of answering the discussion prompt. Respond with EXACTLY a JSON array of 2 strings:
-1. Answer the participant's question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
-2. A single short sentence that gently rephrases the discussion question as a reminder and asks them to share their thoughts (e.g. "So, have you ever tried passkeys yourself?" or "What's your take on [topic]?").
-Return ONLY valid JSON array of 2 strings. No markdown, no extra text.`;
+
+  const previousCtx = alreadyAnswered.length > 0
+    ? `\n\nPreviously answered questions this session:\n${alreadyAnswered
+        .map((a, i) => `${i + 1}. Q: "${a.question.slice(0, 120)}" → A: "${a.answer.slice(0, 120)}"`)
+        .join("\n")}`
+    : "";
+
+  const sys = `You are ${MODERATOR_NAME}, a warm and natural discussion moderator. A participant has asked a question.${previousCtx}
+
+If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONLY a very brief reminder of 8 words or fewer — a single casual sentence (e.g. "A passkey replaces passwords — no typing needed!" or "I covered that just above!"). Return a JSON array with exactly 1 string.
+
+Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 2 strings:
+1. Answer the question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
+2. A single short sentence that gently rephrases the discussion question as a reminder and asks them to share their thoughts.
+Return ONLY valid JSON array of 1 or 2 strings. No markdown, no extra text.`;
+
   const user = `Discussion question: "${String(roundQuestion ?? "").slice(0, 300)}"\nParticipant's question: "${String(questionText).trim().slice(0, 300)}"`;
   try {
     const completion = await openai.chat.completions.create({
@@ -500,6 +514,9 @@ Return ONLY valid JSON array of 2 strings. No markdown, no extra text.`;
       .replace(/\s*```$/i, "")
       .trim();
     const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length === 1 && parsed[0]) {
+      return [String(parsed[0]).trim()];
+    }
     if (Array.isArray(parsed) && parsed.length >= 2 && parsed[0] && parsed[1]) {
       return [String(parsed[0]).trim(), String(parsed[1]).trim()];
     }
@@ -678,6 +695,7 @@ function createSession(participantName) {
     },
     allRounds,
     bigQuestions,
+    answeredQuestions: [], // { question, answer } pairs the moderator has already answered
     currentRoundIndex: -1,
     currentRoundType: allRounds[0]?.type || "big_question",
     pollState: null,
@@ -867,6 +885,13 @@ io.on("connection", (socket) => {
 
       if (now < nextNudgeAt) return;
 
+      // Don't nudge while user is actively typing — reset the timer and wait
+      if (session.humanIsTyping) {
+        session.idleLastNudgeAt = null;
+        session.idleLastActivityAt = Date.now();
+        return;
+      }
+
       session.idleLastNudgeAt = now;
       session.idleNudgeCount = (session.idleNudgeCount || 0) + 1;
 
@@ -884,7 +909,15 @@ io.on("connection", (socket) => {
       }
 
       const nudgeMsg = `${session.humanDisplayName}, are you still there? Would you respond to this question?`;
-      await emitModeratorLine(nudgeMsg);
+      await emitModeratorLine(nudgeMsg, { cancelCheck: () => !!session?.humanIsTyping });
+      if (session?.humanIsTyping) {
+        // Nudge was cancelled mid-emission; undo the nudge count increment and reset timer
+        session.idleNudgeCount = Math.max(0, (session.idleNudgeCount || 0) - 1);
+        session.idleLastNudgeAt = null;
+        session.idleLastActivityAt = Date.now();
+        logLine("QUEUE", "idle nudge cancelled (user started typing)");
+        return;
+      }
       logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
     }, IDLE_CHECK_MS);
   }
@@ -1074,7 +1107,7 @@ io.on("connection", (socket) => {
     logLine("QUEUE", "bot asked a question, moderator answering");
     let answerBubbles;
     try {
-      answerBubbles = await generateModeratorQuestionAnswer(combined, roundQuestion);
+      answerBubbles = await generateModeratorQuestionAnswer(combined, roundQuestion, session.answeredQuestions || []);
     } catch (e) {
       console.error("generateModeratorQuestionAnswer (bot) error", e?.message || e);
       return;
@@ -1082,6 +1115,10 @@ io.on("connection", (socket) => {
     for (const bubble of answerBubbles) {
       if (!session) return;
       await emitModeratorLine(bubble);
+    }
+    if (session) {
+      session.answeredQuestions = session.answeredQuestions || [];
+      session.answeredQuestions.push({ question: combined, answer: answerBubbles[0] });
     }
   }
 
@@ -1667,6 +1704,7 @@ io.on("connection", (socket) => {
 
   socket.on("human_typing", ({ isTyping, hasDraft } = {}) => {
     if (isTyping !== undefined) logLine("TYPING", `human ${isTyping}`);
+    if (session && isTyping !== undefined) session.humanIsTyping = !!isTyping;
     if (isTyping && session?.waitingForElaborationAfterNonSubstantive) {
       clearElaborationPromptTimer(); // user typing again, cancel 5s countdown
     }
@@ -1804,10 +1842,14 @@ io.on("connection", (socket) => {
         logLine("QUEUE", "human_message: question for moderator detected, generating answer");
         let bubbles;
         try {
-          bubbles = await generateModeratorQuestionAnswer(text, roundQuestion);
+          bubbles = await generateModeratorQuestionAnswer(text, roundQuestion, session.answeredQuestions || []);
         } catch (e) {
           console.error("generateModeratorQuestionAnswer error", e?.message || e);
           bubbles = ["Happy to clarify!", `So — ${roundQuestion.slice(0, 80)}?`];
+        }
+        if (session) {
+          session.answeredQuestions = session.answeredQuestions || [];
+          session.answeredQuestions.push({ question: text, answer: bubbles[0] });
         }
         for (const bubble of bubbles) {
           if (!session) return;
