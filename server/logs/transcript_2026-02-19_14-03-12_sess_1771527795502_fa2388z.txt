@@ -1,2 +1,35 @@
 Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
 Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
+Jae: Hi I'm Jae. I teach math at high school
+Vivian: Hi I'm Vivian. I'm a psych undergrad at Emory.
+Eunice: Thanks for sharing, Vivian. Minil, how about you? Can you introduce yourself?
+Mina: hi I am Mina!
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Jae: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Technically, I’m pretty skeptical when new features drop, especially from big tech. Usually, I wait and see if it actually solves problems or just adds bloat.
+Sid: If it seems useful and secure, I’ll test it out quickly, but I don’t like being forced to adapt without a clear benefit.
+Eunice: Got it, Sid. Vivian, how about you? Do you jump on new features or hold back at first?
+Vivian: i usually try new features pretty fast if they seem like they'll save me time or annoying steps
+Vivian: i get impatient if theres no clear upside so i dont stick with stuff that feels clunky
+Vivian: but if it looks like just a gimmick i ignore it till ppl complain or hype it up
+Eunice: Makes sense, Vivian. Jae, how about you?
+Jae: I tend to be cautious with new features, especially when I use multiple devices throughout my day.
+Jae: I usually wait for clear instructions or reviews before trying anything since I value predictability and don’t want to risk losing access or messing up my setup.
+Eunice: Thanks for sharing, Jae. Mina, how about you? Do you jump right in with new features or take a wait-and-see approach?
+Mina: yeah I jump right away! it is cool innit
+Eunice: Really appreciate everyone's input.
+Eunice: Sid what do you think about Vivian’s approach to trying new features quickly if they seem beneficial can you share your thoughts on this strategy?
+Sid: Vivian’s approach makes sense in theory—trying useful features fast can save time if they actually deliver value.
+Sid: But I’d caution that new features can have hidden security or compatibility issues, so a bit of caution is smart, especially in complex setups.
+Eunice: Sid, Mina shared that she jumps right in enthusiastically when new features come out, what do you think about that approach?
+Sid: Jumping in with new features can be fun and helps you stay ahead, but it’s risky if you rely on that tool heavily for work or security.
+Sid: I’d rather test on a secondary account or device first to avoid surprises and potential data loss before going full throttle.
