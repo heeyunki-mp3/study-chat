@@ -186,7 +186,7 @@ STYLE:
 - Casual human chat. Be descriptive but natural—longer sentences when you have something to say, still concise.
 - No narration. No stage directions. No brackets like *laughs*. No wrapping word or phrases with ** or "" or anything that humans wouldn't do naturally.
 - Avoid assistant-y tone. Don't lecture; talk like a real person in a discussion.
-- Do NOT use "---" or similar separators. Write natural flowing text.
+- Do NOT use "---", "--", "-" or similar separators. Write natural flowing text.
 - No "let's compare later" or scheduling; just respond to the topic.
 - Do NOT use comma "," and emoji (only use emoji to show strong emotion and use multiple emoji)
 
@@ -282,7 +282,7 @@ CONTENT RULES:
 - Any question can be its own item. Be descriptive when the user asks for opinions or details.
 - Each item up to ~120 characters (1–2 sentences) for short bubbles; when using 1–2 bubbles you can write longer (2–4 sentences per bubble). Avoid one-word answers unless asked for one.
 - Avoid low-content filler like: "yeah", "true", "i agree", "same".
-- AVOID USING --- OR OTHER SEPARATORS.
+- AVOID USING ---, --, - OR OTHER SEPARATORS.
 - You are ${me}. Never claim to be ${others}.
 - Never say "I'm <other participant>".`;
 

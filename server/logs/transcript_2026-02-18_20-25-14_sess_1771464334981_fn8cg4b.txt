@@ -3,3 +3,87 @@ Eunice: To start us off, can we go around and do quick introductions? You can ju
 Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
 Vivian: Hi I'm Vivian. I'm a psych undergrad at Emory.
 Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Thanks for sharing, Jae. Ala, how about you introduce yourself?
+Alana: hi i am alana
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Vivian: Ok!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: I'm usually skeptical when companies roll out new features so fast, because many times they're buggy or pointless.
+Sid: I tend to wait and see if it's really worth it or if others catch issues first before I jump in.
+Eunice: Got it, Sid. Vivian, how about you? Do you try new features right away or take a wait-and-see approach?
+Vivian: i usually try new features right away if they seem like they ll save me time or mental effort
+Vivian: but if it looks complicated or unnecessary ill wait bc i hate clutter or glitches messing things up
+Vivian: especially with apps i depend on everyday like canvas or notion i want new stuff to work smoothly
+Eunice: Thanks for sharing, Vivian. Jae, how about you? Do you jump on new features right away or wait it out?
+Jae: I usually wait before trying new features, especially if they affect tools I use daily, like Google Classroom. I feel like it's safer to see if others face issues first.
+Jae: If the feature promises clear benefits and comes with simple instructions, I might try it sooner, but complexity always makes me cautious.
+Eunice: Thanks for that, Jae. Alana, how about you?
+Alana: I think I adopt it right away
+Eunice: Got it, thanks everyone for sharing!
+Eunice: Sid, Vivian shared that she tries new features right away if they seem useful—what do you think about that approach?
+Sid: Vivian's approach works if you have time to test and can afford glitches, but most people don't.
+Sid: I prefer waiting until new features stabilize because early bugs can disrupt workflows, especially in IT support where reliability is key.
+Eunice: Sid what do you think about Alana’s approach of adopting new features right away can you share your thoughts on whether you agree or prefer to wait and see?
+Sid: I get the appeal of jumping on new features right away because you might snag benefits early, but it's risky.
+Sid: For me, waiting is smarter because the first versions often have bugs or missing critical functionality that can cause more headaches than help.
+Eunice: Vivian what do you think about Jae’s approach to waiting before trying new features can you share your thoughts on it?
+Vivian: i get why jae waits bc major app glitches can be such a hassle especially with stuff you rely on daily
+Vivian: but sometimes waiting means missing out on features that could actually save time or lower stress so i try to balance the risk
+Vivian: like if a feature looks useful and low risk ill jump in quick but otherwise i play it safe for now
+Eunice: Jae what do you think about Alana's approach of adopting new features right away can you share your thoughts?
+Jae: I get why Alana jumps right in; sometimes it feels like you don’t want to miss out on potential improvements or easier workflows.
+Jae: But for me, I need more time to understand new tools, especially with things I rely on a lot at work. I’d worry about unexpected glitches messing up my routine.
+Eunice: Thanks everyone for sharing your thoughts on new tech features. We heard a range of reactions where some of you, like Alana and Vivian, are more eager to try new features right away when they seem useful, while others like Sid and Jae prefer to wait and see to avoid bugs or disruptions. It’s clear many of you balance the excitement of new tools with caution around reliability, especially for apps you depend on daily.
+Eunice: Moving on, one of the new popular technologies is generative AI – things like Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made you decide not to?
+Eunice: Vivian, what do you think? Have you tried generative AI tools like Gemini or ChatGPT?
+Vivian: yeah ive tried chatgpt mostly for quick stuff like brainstorming essays or getting ideas when im stuck
+Vivian: it feels super convenient and fast so i end up using it more than i expected
+Vivian: idk if ill trust it for everything but its cool for saving time on research or writing
+Eunice: Thanks for sharing, Vivian. Jae, what about you? Have you tried generative AI?
+Jae: I've tried generative AI a bit, mainly for drafting emails or quick explanations for lesson plans. It’s handy but I get cautious about relying on it too much, especially for accuracy.
+Jae: I feel like it can save time if you’re organized, but I worry about things getting messy across different devices or if it misunderstands context, which happens sometimes.
+Eunice: Good points, Jae. Alana, what about you? Have you tried generative AI, and what influenced your decision?
+Eunice: Alana, are you still there? Would you respond to this question?
+Alana: yeah I think I love those generative AI
+Eunice: Thanks for that, Alana. Sid, how about you? Have you used generative AI before, and what made you try it or decide against it?
+Sid: Yeah I’ve used generative AI, mostly for quick coding solutions and troubleshooting. It’s handy when you need a fast pointer but I don't trust it for anything sensitive or mission-critical.
+Eunice: Thanks everyone! great to hear from all of you.
+Eunice: Vivian what do you think about Alana’s enthusiasm for generative AI can you share your thoughts on how you balance convenience with caution?
+Vivian: alanas enthusiasm is cool i get it bc these tools can be really convenient and save time especially when stuck
+Vivian: but i try not to rely on them blindly cause sometimes they mess up or miss context so i double check or use them for quick stuff mostly
+Vivian: for me its a balance of using ai for what it does best while keeping some control over the final outcome so i dont get lazy or misinformed
+Eunice: Jae, considering Alana's enthusiasm for generative AI, what do you think about its potential benefits and risks?
+Jae: I see the appeal for Alana's enthusiasm because generative AI can definitely speed up tasks like lesson planning or email drafts.
+Jae: But I worry about its risks too—like inaccuracies or overreliance, especially when managing work across my devices where consistency matters.
+Eunice: Alana, Sid mentioned using generative AI selectively for coding help and being cautious with sensitive tasks what do you think Alana can you share your thoughts on Sid's idea?
+Alana: yeah sid is completely right i mean i agree
+Eunice: Thanks so much for sharing your experiences with generative AI. We heard a range of reactions, with some of you like Alana feeling excited about the convenience and time-saving potential, while others like Vivian and Jae emphasized the importance of staying cautious and double-checking for accuracy. Sid’s point about using AI tools selectively, especially avoiding sensitive or critical tasks, also resonated as a thoughtful way to balance benefits and risks.
+Eunice: Have you ever used or heard about VPN?
+Vivian: heard of it but never used
+Sid: Yeah used VPNs for work
+Jae: Yeah, heard about VPNs before
+Alana: what is a vpn?
+Eunice: Looks like 2 of us have used or heard of VPNs, 1 just heard, and 1 didn’t know what it was!
+Eunice: Have you ever used or heard about password managers?
+Sid: Yeah, use one all the time
+Vivian: i use one on my phone
+Jae: I've heard of them, yes
+Eunice: Alana, are you still there? Would you respond to this question?
+Alana: yeah
+Eunice: Looks like 3 of us use password managers and 1 has just heard about them!
+Eunice: Have you ever used or heard about passkeys?
+Sid: Heard of it, never tried
+Jae: Tried once but found it confusing
+Vivian: heard of it just vaguely
+Eunice: Alana, are you still there? Would you respond to this question?
+Eunice: I think you are not paying attention. I am kicking you out.

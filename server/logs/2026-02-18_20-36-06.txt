@@ -1,0 +1,9 @@
+2026-02-19 01:36:06.379 [SESSION_START] backend running on http://localhost:3001
+2026-02-19 01:36:06.380 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-19 01:36:29.061 [SESSION_START] id=sQ3apVNuvFfPMDa9AAAB bots=Sid,Vivian,Jae
+2026-02-19 01:36:29.062 [SESSION_START] participant_name set to "ala"
+2026-02-19 01:36:29.063 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-19 01:36:29.063 [TYPING] moderator true
+2026-02-19 01:36:33.266 [TYPING] moderator false
+2026-02-19 01:36:33.268 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-19 01:36:33.269 [TYPING] moderator true

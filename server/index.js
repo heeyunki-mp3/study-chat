@@ -1739,15 +1739,16 @@ io.on("connection", (socket) => {
     const inIntroPhase = session.waitingForHumanIntro || session.moderatorTypingIntroCue;
     const introCtx = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
     const ctx = session.lastPromptForHuman || (inIntroPhase ? introCtx : null);
-    const needSubstantiveCheck =
-      ctx &&
-      !session.humanGaveSubstantiveResponseThisTurn &&
-      session.currentRoundType !== "poll" &&
-      (inIntroPhase ||
-        session.callOnState?.waitingForHumanIdle ||
-        session.waitingForHumanDisagreementResponse ||
-        session.pendingAdvanceFromIdle);
-    if (needSubstantiveCheck) {
+    const isPollRound = session.currentRoundType === "poll";
+    const isWaitingForAnswer =
+      inIntroPhase ||
+      session.callOnState?.waitingForHumanIdle ||
+      session.waitingForHumanDisagreementResponse ||
+      session.pendingAdvanceFromIdle;
+    // Moderator-question check runs for ALL round types (including polls).
+    // Substantive check is skipped for polls (they only need a short answer).
+    const needResponseCheck = ctx && !session.humanGaveSubstantiveResponseThisTurn && isWaitingForAnswer;
+    if (needResponseCheck) {
       const roundQuestion = session.callOnState?.question || String(ctx.prompt || "");
       const { isQuestion: isModQuestion, substantive } = await classifyHumanMessage(text, ctx, roundQuestion);
 
@@ -1773,15 +1774,17 @@ io.on("connection", (socket) => {
         return;
       }
 
-      if (!substantive) {
-        session.waitingForElaborationAfterNonSubstantive = true;
-        logLine("QUEUE", "human_message: response not substantive, waiting for idle then 5s before elaborate");
-        return;
+      if (!isPollRound) {
+        if (!substantive) {
+          session.waitingForElaborationAfterNonSubstantive = true;
+          logLine("QUEUE", "human_message: response not substantive, waiting for idle then 5s before elaborate");
+          return;
+        }
+        session.substantialNudgeCount = 0; // reset: user gave a substantive response
+        session.waitingForElaborationAfterNonSubstantive = false;
+        session.humanGaveSubstantiveResponseThisTurn = true;
+        logLine("HUMAN", "human_message: response is substantive, advancing");
       }
-      session.substantialNudgeCount = 0; // reset: user gave a substantive response
-      session.waitingForElaborationAfterNonSubstantive = false;
-      session.humanGaveSubstantiveResponseThisTurn = true;
-      logLine("HUMAN", "human_message: response is substantive, advancing");
     }
 
     const repliedWhileModeratorTypingIntroCue = !!session.moderatorTypingIntroCue;
