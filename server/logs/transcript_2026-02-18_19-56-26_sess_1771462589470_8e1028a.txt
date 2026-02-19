@@ -1,0 +1,113 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Alana: Hi!!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Alana: ok
+Vivian: Hey my name is Vivian. I live in Atlanta
+Sid: Sid. I am an IT support technician in New Jersey.
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Vivian: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Honestly, I’m usually skeptical about new features at first. Most times they’re half-baked or just marketing fluff.
+Sid: If something looks genuinely useful or promises real security improvements, I’ll try it soon—but otherwise, I wait for reviews or fixes.
+Eunice: Good point, Sid. Vivian, how about you?
+Vivian: usually i check out new features pretty fast if they seem like a time saver or less hassle
+Vivian: but if it looks complicated or annoying ill wait till i hear from friends or see some reviews
+Vivian: idk i just hate wasting time on things that dont actually improve my flow
+Eunice: Thanks for that, Vivian. Jae, how about you? Do you usually try new features right away or hold back?
+Jae: I usually hold back at first because I’m cautious about changes that might disrupt how I manage my accounts across devices.
+Jae: In my experience, I need clear, step-by-step info before trying something new, especially when it affects security or login processes.
+Eunice: Thanks for sharing, Jae. Alana, how do you usually feel when a company you use introduces something new? Do you try new features right away or wait?
+Alana: Yea I think I don't really wait to adopt it. I just do it right away.
+Alana: like why not
+Eunice: Appreciate y'all sharing your thoughts.
+Eunice: Sid, Alana shared that she jumps right into new features without hesitation, what do you think about that approach?
+Sid: That’s a risky move, jumping in without much thought, especially when it comes to security features. You might expose yourself to bugs or even phishing if you’re not careful.
+Sid: But I get the appeal; sometimes early adoption feels like you’re ahead of the curve. Still, a little caution can save a lot of trouble later.
+Alana: sad
+Vivian: i get alanas vibe it makes sense to try new stuff fast if youre curious or think it could help
+Vivian: but im more cautious with things tied to security or accounts bc those can get messy if something goes wrong
+Vivian: so like ill try new features asap if they seem chill but slow down if it means i gotta deal with passwords or personal info
+Jae: I get why Alana tries features right away—being curious can be fun and sometimes pays off.
+Jae: But for me, especially with anything related to accounts or security, I feel like rushing in can cause more headaches if something goes wrong.
+Alana: ok
+Eunice: Ok! Thanks everyone for sharing!
+Eunice: Sid, Alana mentioned that she tries new features right away without hesitation, what do you think?
+Sid: Trying new features right away can be tempting, but with security stuff, it’s a gamble. Bugs or phishing risks pop up fast and can cause real damage.
+Sid: I’d say it’s smart to at least skim reviews or official docs first before jumping in, especially when your personal info or account security is involved.
+Eunice: Vivian what do you think about Alana's approach of immediately adopting new features can you share your thoughts?
+Vivian: i get alana's vibe about jumping on new features bc being curious feels rewarding and sometimes you do get a neat upgrade right away
+Vivian: but for me im more cautious bc some new stuff can mess with your accounts or security and then it takes forever to fix those issues
+Vivian: so i think alanas approach works for people comfortable dealing with bugs or quick fixes but id rather wait a bit when security is involved
+Eunice: Jae what do you think about Alana's approach of adopting new features right away can you share your thoughts on that or how you typically handle new tech updates?
+Jae: I can see the appeal of Alana's approach—trying new features right away can be exciting and sometimes pays off quickly.
+Jae: But I usually prefer a slower route because new stuff, especially with security, can cause real hassles if it doesn’t work smoothly across devices.
+Eunice: Thanks everyone for sharing your thoughts! We heard a range of reactions to new tech features from big companies, with some of you like Alana eager to jump in right away out of curiosity, while others like Sid, Jae, and Vivian prefer to wait and assess, especially when security or account management is involved. It’s clear that balancing the excitement of trying something new with caution around potential risks is a common theme in how you approach updates.
+Eunice: Moving on, one of the new popular technologies is generative AI – things like Gemini and Chat GPT
+
+Have any of you used them before?
+What made you try it, or what made you decide not to?
+Eunice: Alright, Vivian, what do you think?
+Vivian: ive used chat gpt a few times mainly for brainstorming and quick info
+Vivian: i like how fast it can spit out ideas but sometimes its kinda generic or misses nuance
+Vivian: i think its useful but i still double check stuff bc it doesnt always get everything right
+Eunice: Thanks for that, Vivian. Jae, have you tried generative AI, and what influenced your decision?
+Jae: I've tried generative AI a couple times, mostly to save time on lesson planning or explanations for students.
+Jae: I feel like it's helpful but also a bit unpredictable, so I’m cautious about relying on it too much—especially for accuracy.
+Eunice: Got it, Jae. Alana, have you tried generative AI? What made you decide to use it or not?
+Alana: hmm idk
+Eunice: Could you elaborate? Please share your thoughts on the question.
+Alana: oh yeah I just don't tend to use generative AI.
+Alana: It feels very invasive. and I just don't feel comfortable
+Eunice: I see, Alana. Sid, how about you? Have you tried generative AI, and what influenced your decision?
+Sid: Yeah, I've used generative AI like ChatGPT. It's useful for quick troubleshooting or draft emails at work, but I don’t trust it blindly.
+Sid: I’m all about practical tools that save time without compromising security. If it’s flaky or complicated, I’m out.
+Eunice: Got it, thanks everyone for sharing!
+Eunice: Vivian what do you think of Alana’s concerns about generative AI and can you share your thoughts on how you find it useful despite those feelings
+Vivian: i get alanas concern about generative ai feeling invasive it does ask for info and sometimes dips into personal stuff which can be offputting
+Vivian: but for me i find it really useful for brainstorming or getting quick ideas especially when im stuck or need a jumpstart
+Vivian: the key for me is just not trusting it blindly and double checking info so it stays a tool not a replacement for my own thinking
+Eunice: Jae what do you think about Alana's concerns regarding the invasiveness of generative AI can you share your thoughts on whether those privacy worries are something you consider seriously too
+Jae: Alana's concerns about generative AI feeling invasive definitely resonate with me. I feel like these tools sometimes ask for more info than I'm comfortable sharing, especially with my accounts being linked across multipl
+Eunice: Alana, Sid shared his practical view on generative AI despite concerns about security, what do you think about using it given your feelings on privacy?
+Alana: hmm idk
+Alana: I guess I understand his pov, which I think it is very valid, but I just feel uncomfiortable
+Eunice: Thanks everyone for sharing your thoughts and experiences with generative AI. We heard a range of perspectives from those who find it useful for brainstorming and saving time to others who feel cautious or uneasy about privacy and invasiveness. While some of you balance the convenience with a careful eye on accuracy and security, others prefer to avoid it altogether due to discomfort around data sharing.
+Eunice: Have you ever used or heard about VPN?
+Jae: Yes I've used VPN occasionally
+Vivian: yeah ive used vpn before
+Sid: Yeah, I use VPN daily
+Alana: no
+Eunice: Looks like 3 of us have used VPNs while 1 hasn’t!
+Eunice: Have you ever used or heard about password managers?
+Alana: nope...
+Jae: Yes, I use one occasionally.
+Vivian: i use one kinda often
+Sid: Yeah, use one daily
+Eunice: Looks like 3 of us use password managers while 1 hasn't heard of them!
+Eunice: Have you ever used or heard about passkeys?
+Vivian: i heard of it before
+Sid: Yeah I've used passkeys before
+Jae: Tried once but found it confusing
+Alana: what is passkey?
+Eunice: Looks like 3 of us have used or heard of passkeys, and 1 isn't familiar with them!
+Eunice: For some Google accounts, users can switch their account login to "passkey".
+
+Have you seen or heard about passkey before?
+If you've used it, what made you decide to switch? If you haven't, what held you back?
+Eunice: Jae, what do you think?
+Jae: I did try setting up passkey once but stopped because it felt confusing, especially with using different devices.
+Jae: I worry it might get tricky when switching between my phone, school laptop, and shared computers since I like predictable systems.
+Eunice: Good point, Jae. Alana, what are your thoughts on using passkeys?
+Alana: what is passkey?
+Alana: dude
+Alana: what is passkey?&gt;
+Alana: what is passkey
+Eunice: Please provide more substantial responses. You have been removed from the session.

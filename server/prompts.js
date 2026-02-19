@@ -225,6 +225,7 @@ export function buildUserPrompt({
   moderatorName = MODERATOR_NAME_DEFAULT,
   humanParticipantName = "You",
   maxBubbles = 3,
+  questionType = "big_question",
 }) {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
@@ -263,19 +264,14 @@ Answer this first, then you may react to newer messages in the transcript.
 `
         : "";
 
-  const prompt = `
-Chat so far:
-${transcript}
+  const formatBlock = questionType === "poll"
+    ? `Return EXACTLY 1 chat message as a JSON array with one string. The message must be 6 words or fewer — a very short phrase or single sentence (e.g. ["Yes I use one"] or ["Nope never heard of it"] or ["Heard of it never tried"]).
 
-Recent bot messages (avoid copying phrases):
-${recentBot || "(none)"}
-
-Recent question-like prompts already asked (DO NOT repeat/rephrase):
-${recentQs || "(none)"}
-${respondToBlock}
-${modeBlock}
-
-Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Use 1–${maxBubbles} bubbles depending on how much you have to say; one bubble is fine for short answers.
+HARD FORMAT RULES:
+- Output ONLY valid JSON. No markdown, no extra text.
+- Must be a JSON array with exactly 1 string.
+- 6 words maximum. No exceptions.`
+    : `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Use 1–${maxBubbles} bubbles depending on how much you have to say; one bubble is fine for short answers.
 
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
@@ -288,7 +284,21 @@ CONTENT RULES:
 - Avoid low-content filler like: "yeah", "true", "i agree", "same".
 - AVOID USING --- OR OTHER SEPARATORS.
 - You are ${me}. Never claim to be ${others}.
-- Never say "I'm <other participant>".
+- Never say "I'm <other participant>".`;
+
+  const prompt = `
+Chat so far:
+${transcript}
+
+Recent bot messages (avoid copying phrases):
+${recentBot || "(none)"}
+
+Recent question-like prompts already asked (DO NOT repeat/rephrase):
+${recentQs || "(none)"}
+${respondToBlock}
+${modeBlock}
+
+${formatBlock}
 `.trim();
 
   return prompt;

@@ -85,7 +85,7 @@ const IDLE_TYPING_MS = 10000; // Human idle: non-empty input, no typing this lon
 const NUDGE_MS = 20000;                     // Nudge after 20s of no typing (or 30s if has draft in input)
 const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge if user stopped typing for 30s (has draft)
 const MAX_NUDGES = 2;                       // After 2 nudges with no response, kick out
-const MAX_UNSUBSTANTIAL_IN_ROW = 4;         // After 4 unsubstantial messages in a row for that round, kick out
+const MAX_ELABORATION_NUDGES = 4;           // After Eunice has sent "Could you elaborate?" 4 times (without a substantive response), kick out
 const ELABORATION_WAIT_MS = 5000;          // After user goes idle, wait 5s before sending "elaborate"
 const MODERATOR_NAME = "Eunice";
 
@@ -136,14 +136,20 @@ const MODERATOR_SCRIPT = [
   {
     type: "big_question",
     messages: [
-      "Moving on, one of the new popular technology is generative AI such as Gemini and Chat GPT\n\nHave any of you used them before?\nWhat made you try it, or what made you decide not to?",
+      "Moving on, one of the new popular technologies is generative AI – things like Gemini and Chat GPT\n\nHave any of you used them before?\nWhat made you try it, or what made you decide not to?"     
     ],
   },
   {
-    type: "big_question",
-    messages: [
-      "Sometimes when companies introduce new features, they also change how accounts work behind the scenes.\nHave you noticed changes to how you access or manage your account over time?\nDo those changes usually feel helpful or annoying?",
-    ],
+    type: "poll",
+    messages: ["Have you ever used or heard about VPN?"],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about password managers?"],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about passkeys?"],
   },
   {
     type: "big_question",
@@ -202,7 +208,7 @@ function parseJsonArray(rawText, maxItems = 3) {
 // Bot response (one OpenAI request → 1–3 messages)
 // =====================
 async function getBotResponse(botName, context) {
-  const { moderatorQuestion, directive, previousAnswers, session } = context;
+  const { moderatorQuestion, directive, previousAnswers, session, roundType = "big_question" } = context;
   const humanDisplayName = session?.humanDisplayName || session?.participantName || "You";
   const cast = getCastByHandles([botName]);
   const persona = cast[0] || {};
@@ -232,7 +238,7 @@ async function getBotResponse(botName, context) {
     .map((a) => a.text)
     .join(" | ") || "(none)";
 
-  const maxBubbles = Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
+  const maxBubbles = roundType === "poll" ? 1 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
 
   const userPrompt = buildUserPrompt({
     transcript,
@@ -245,6 +251,7 @@ async function getBotResponse(botName, context) {
     moderatorName: MODERATOR_NAME,
     humanParticipantName: humanDisplayName,
     maxBubbles,
+    questionType: roundType,
   });
 
   const completion = await openai.chat.completions.create({
@@ -253,11 +260,10 @@ async function getBotResponse(botName, context) {
       { role: "system", content: sys },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: maxBubbles <= 2 ? 400 : 600,
+    max_tokens: roundType === "poll" ? 60 : maxBubbles <= 2 ? 400 : 600,
   });
 
-  const raw =
-    completion?.choices?.[0]?.message?.content ?? "";
+  const raw = completion?.choices?.[0]?.message?.content ?? "";
   return parseJsonArray(raw, maxBubbles);
 }
 
@@ -377,20 +383,23 @@ Output ONLY one sentence. No quotes, no JSON.`;
   return out;
 }
 
-/** Generate a short moderator summary of the round discussion (OpenAI). */
-async function generateRoundSummary(question, roundTranscript) {
-  const sys = `You are a discussion moderator wrapping up a conversation. In 2–3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it concise and natural. Output ONLY the summary, no labels or quotes. Thank them before you start the summary. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
+/** Generate a moderator summary of the round. Pass opts.roundType to control behavior per question type. */
+async function generateRoundSummary(question, roundTranscript, opts = {}) {
+  const { roundType = "big_question" } = opts;
+  const sys = roundType === "poll"
+    ? `You are a discussion moderator. Given a yes/no/heard-of poll question and each participant's short answer, write ONE casual sentence summarizing how many people have used it / heard of it vs haven't. Example: "Looks like 2 of us use VPNs and 2 don't!" or "Interesting — 3 out of 4 have heard of passkeys but only 1 has actually used one." Keep it under 20 words, warm and natural. Output ONLY the sentence, no quotes or extra text.`
+    : `You are a discussion moderator wrapping up a conversation. In 2–3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it concise and natural. Output ONLY the summary, no labels or quotes. Thank them before you start the summary. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
     messages: [
       { role: "system", content: sys },
-      { role: "user", content: `Question: ${question}\n\nDiscussion:\n${roundTranscript}` },
+      { role: "user", content: `Question: ${question}\n\n${roundTranscript}` },
     ],
-    max_tokens: 200,
+    max_tokens: roundType === "poll" ? 60 : 200,
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
-  return text || "Thanks everyone for sharing your views on that.";
+  return text || (roundType === "poll" ? "Thanks everyone for the quick answers!" : "Thanks everyone for sharing your views on that.");
 }
 
 /** Generic OpenAI boolean classification. Returns false on error. */
@@ -419,13 +428,80 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
   return classifyWithOpenAI(sys, user, "asksWhatPasskeyIs");
 }
 
-/** True if the participant's response substantively answers the prompt (not just "ok", "idk", etc.). */
-async function isResponseSubstantive(text, context) {
-  if (!text || !String(text).trim()) return false;
+/**
+ * Single call that classifies a participant's message two ways at once:
+ *   isQuestion  — true if the message is a question to the moderator asking for
+ *                 clarification/explanation rather than answering the prompt.
+ *   substantive — true if the message substantively answers the prompt.
+ * Returns { isQuestion: bool, substantive: bool }. Defaults to false on error.
+ */
+async function classifyHumanMessage(text, context, roundQuestion) {
+  if (!text || !String(text).trim()) return { isQuestion: false, substantive: false };
   const { type = "call_on", prompt = "" } = context || {};
-  const sys = `Classify if a participant's message substantively answers the prompt. Return ONLY valid JSON: {"substantive": true} or {"substantive": false}. True: shares relevant content—experiences, opinions, thoughts, meaningful intro. False: off-topic, filler ("ok","idk"), too vague.`;
-  const user = `Type: ${type}\nPrompt: "${String(prompt || "").slice(0, 400)}"\nMessage: "${String(text).trim().slice(0, 400)}"\nDoes this substantively respond?`;
-  return classifyWithOpenAI(sys, user, "substantive");
+  const sys = `You are a classifier. Given a participant's chat message, return ONLY valid JSON with exactly two boolean fields:
+- "isQuestion": true if the message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?", "I don't understand X"), rather than sharing an answer/opinion/experience. False for filler ("ok","idk","sad"), emotions, statements, or anything that tries to answer the prompt.
+- "substantive": true if the message substantively answers the prompt by sharing relevant content—experiences, opinions, or thoughts. False for filler, too vague, off-topic, or a question back to the moderator.
+Note: if isQuestion is true, substantive should almost always be false.
+Return format: {"isQuestion": true/false, "substantive": true/false}`;
+  const user = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"\nParticipant message: "${String(text).trim().slice(0, 400)}"`;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      max_tokens: 20,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "")
+      .trim()
+      .replace(/^```json?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+    const parsed = JSON.parse(raw || "{}");
+    return {
+      isQuestion: !!parsed.isQuestion,
+      substantive: !!parsed.substantive,
+    };
+  } catch (e) {
+    console.error("classifyHumanMessage error", e?.message || e);
+    return { isQuestion: false, substantive: false };
+  }
+}
+
+/**
+ * Generate a 2-bubble moderator answer: [answer to question, question reminder].
+ * Answer is ≤2.5 sentences; reminder rephrases the big question in 1 short sentence.
+ */
+async function generateModeratorQuestionAnswer(questionText, roundQuestion) {
+  const fallback = [
+    "Great question! I'm happy to clarify.",
+    String(roundQuestion ?? "").slice(0, 100) + " — what do you think?",
+  ];
+  const sys = `You are ${MODERATOR_NAME}, a warm and natural discussion moderator. A participant has asked you a question instead of answering the discussion prompt. Respond with EXACTLY a JSON array of 2 strings:
+1. Answer the participant's question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
+2. A single short sentence that gently rephrases the discussion question as a reminder and asks them to share their thoughts (e.g. "So, have you ever tried passkeys yourself?" or "What's your take on [topic]?").
+Return ONLY valid JSON array of 2 strings. No markdown, no extra text.`;
+  const user = `Discussion question: "${String(roundQuestion ?? "").slice(0, 300)}"\nParticipant's question: "${String(questionText).trim().slice(0, 300)}"`;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user },
+      ],
+      max_tokens: 160,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "")
+      .trim()
+      .replace(/^```json?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length >= 2 && parsed[0] && parsed[1]) {
+      return [String(parsed[0]).trim(), String(parsed[1]).trim()];
+    }
+  } catch (e) {
+    console.error("generateModeratorQuestionAnswer error", e?.message || e);
+  }
+  return fallback;
 }
 
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
@@ -568,8 +644,9 @@ function createSession(participantName) {
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
   const order = [...bots, participantName];
-  const bigQuestionSegments = MODERATOR_SCRIPT.filter((s) => s.type === "big_question");
-  const bigQuestions = bigQuestionSegments.map((s) => s.messages[0]);
+  const allRoundSegments = MODERATOR_SCRIPT.filter((s) => s.type === "big_question" || s.type === "poll");
+  const allRounds = allRoundSegments.map((s) => ({ type: s.type, question: s.messages[0] }));
+  const bigQuestions = allRounds.filter((r) => r.type === "big_question").map((r) => r.question);
 
   return {
     sessionId,
@@ -583,7 +660,7 @@ function createSession(participantName) {
     moderatorTypingIntroCue: false,
     userRepliedDuringIntroCue: false,
     callOnState: {
-      question: bigQuestions[0] || "",
+      question: allRounds[0]?.question || "",
       order,
       whoSpoke: [],
       currentIndex: 0,
@@ -594,9 +671,13 @@ function createSession(participantName) {
       disagreementQueue: [],
       disagreementIndex: 0,
     },
+    allRounds,
     bigQuestions,
+    currentRoundIndex: -1,
+    currentRoundType: allRounds[0]?.type || "big_question",
+    pollState: null,
     usedRoundAckIndices: [],
-    roundTranscript: [],  // Messages for current big-question round; reset each new question
+    roundTranscript: [],  // Messages for current round; reset each new question
   };
 }
 
@@ -724,7 +805,6 @@ io.on("connection", (socket) => {
     logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=human ${nameForLog}, waiting for human_idle`);
     co.waitingForHumanIdle = true;
     co.humanRepliedThisTurn = false;
-    session.consecutiveUnsubstantialCount = 0;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.lastPromptForHuman = { type: "call_on", prompt: co.question };
     startIdleNudgeTimer();
@@ -1109,6 +1189,10 @@ io.on("connection", (socket) => {
     co.disagreementIndex = 0;
     if (deduped.length === 0) {
       logLine("QUEUE", "no view misalignments detected");
+      // The disagreement phase is bot-driven — clear stale pending-advance flags so
+      // user typing during it doesn't falsely cancel the round summary / next round.
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
       runRoundSummary();
       return;
     }
@@ -1116,6 +1200,12 @@ io.on("connection", (socket) => {
       cancelAdvance(session, "advance cancelled (user typing), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
+    // The disagreement follow-up loop is bot-driven. Clear stale pending-advance flags
+    // so that any user typing during bot responses doesn't trigger a false cancellation
+    // of advanceToNextRound (which would leave the session stuck waiting for human_idle
+    // after the user has already gone idle).
+    session.pendingAdvanceFromIdle = false;
+    session.cancelAdvanceFromIdle = false;
     session.lastViewMisalignments = deduped.map((p) => ({ disagreedWith: p.disagreedWith, disagreedBy: p.disagreedBy, differenceSummary: p.differenceSummary }));
     for (const p of deduped) {
       logLine("QUEUE", `view misalignment: ${p.disagreedWith} ↔ ${p.disagreedBy} — ${p.differenceSummary}`);
@@ -1139,45 +1229,50 @@ io.on("connection", (socket) => {
     if (!session) return;
     await emitModeratorLine(summary);
     if (!session) return;
-    await advanceToNextQuestion();
+    await advanceToNextRound();
   }
 
-  async function advanceToNextQuestion() {
-    if (!session?.bigQuestions) return;
+  async function advanceToNextRound() {
+    if (!session?.allRounds) return;
     const co = session.callOnState;
     if (wasAdvanceCancelled(session)) {
-      cancelAdvance(session, "advanceToNextQuestion cancelled (user typing), waiting for human_idle again", "last");
+      cancelAdvance(session, "advanceToNextRound cancelled (user typing), waiting for human_idle again", "last");
       return;
     }
-    // Don't clear pendingAdvanceFromIdle or update state yet — emit next question first so human_typing can cancel during moderator typing
-    const nextScriptIndex = (session.scriptIndex ?? 2) + 1;
-    const bigQuestionIndex = nextScriptIndex - 2; // scriptIndex 2 -> first big_question
-    if (bigQuestionIndex >= session.bigQuestions.length) {
+    const nextRoundIndex = (session.currentRoundIndex ?? -1) + 1;
+    if (nextRoundIndex >= session.allRounds.length) {
       session.pendingAdvanceFromIdle = false;
-      logLine("QUEUE", "all questions done, wrapping up");
+      logLine("QUEUE", "all rounds done, wrapping up");
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today!");
       return;
     }
-    const nextQuestion = session.bigQuestions[bigQuestionIndex];
-    logLine("QUEUE", `advancing to question ${bigQuestionIndex + 1}/${session.bigQuestions.length}: "${clip(nextQuestion, 60)}"`);
+    const nextRound = session.allRounds[nextRoundIndex];
+    logLine("QUEUE", `advancing to round ${nextRoundIndex + 1}/${session.allRounds.length} [${nextRound.type}]: "${clip(nextRound.question, 60)}"`);
     session.roundTranscript = [];
-    await emitModeratorLine(nextQuestion);
+    await emitModeratorLine(nextRound.question);
     if (!session) return;
     if (wasAdvanceCancelled(session)) {
-      cancelAdvance(session, "advanceToNextQuestion cancelled (user typing during mod line), waiting for human_idle again", "last");
+      cancelAdvance(session, "advanceToNextRound cancelled (user typing during mod line), waiting for human_idle again", "last");
       return;
     }
-    session.scriptIndex = nextScriptIndex;
+    session.currentRoundIndex = nextRoundIndex;
+    session.currentRoundType = nextRound.type;
     session.pendingAdvanceFromIdle = false;
-    // Rotate call-on order by 1 so each question starts with a different person
+
+    if (nextRound.type === "poll") {
+      await runPollRound(nextRound.question);
+      return;
+    }
+
+    // big_question: rotate call-on order by 1, reset state, cue first speaker
     co.order = [...co.order.slice(1), co.order[0]];
-    resetCallOnState(co, nextQuestion);
+    resetCallOnState(co, nextRound.question);
 
     const firstSpeaker = co.order[0];
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
     let cue;
     try {
-      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextQuestion });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextRound.question });
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
@@ -1254,7 +1349,6 @@ io.on("connection", (socket) => {
       return;
     }
     session.waitingForHumanIntro = true;
-    session.consecutiveUnsubstantialCount = 0;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
     startIdleNudgeTimer();
@@ -1266,7 +1360,7 @@ io.on("connection", (socket) => {
     if (!session) return;
     const segment = MODERATOR_SCRIPT.find((s) => s.type === "study_goal");
     if (!segment?.messages?.length) {
-      startFirstBigQuestion();
+      startFirstRound();
       return;
     }
     for (const text of segment.messages) {
@@ -1280,26 +1374,36 @@ io.on("connection", (socket) => {
     await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS.min, STUDY_GOAL_ACK_DELAY_MS.max));
     emitMessage(bot, ack);
 
-    logLine("QUEUE", "study_goal ack done, starting first big_question");
-    startFirstBigQuestion();
+    logLine("QUEUE", "study_goal ack done, starting first round");
+    startFirstRound();
   }
 
-  /** Start first big_question: set question, emit moderator, then first speaker (human or bot). */
-  async function startFirstBigQuestion() {
+  /** Start first round (big_question or poll): set state, emit moderator question, then first speaker. */
+  async function startFirstRound() {
     if (!session) return;
-    session.scriptIndex = 2;
+    const firstRound = session.allRounds?.[0];
+    if (!firstRound) return;
+    session.currentRoundIndex = 0;
+    session.currentRoundType = firstRound.type;
     session.waitingForHumanIntro = false;
     session.roundTranscript = [];
+    logLine("QUEUE", `first round [${firstRound.type}]: "${clip(firstRound.question, 60)}"`);
+    await emitModeratorLine(firstRound.question);
+    if (!session) return;
+
+    if (firstRound.type === "poll") {
+      await runPollRound(firstRound.question);
+      return;
+    }
+
+    // big_question
     const co = session.callOnState;
-    resetCallOnState(co, session.bigQuestions[0]);
+    resetCallOnState(co, firstRound.question);
     const firstSpeaker = co.order[0];
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
-    logLine("QUEUE", `first big_question: "${clip(co.question, 60)}"`);
-    await emitModeratorLine(co.question);
-    if (!session) return;
     let cue;
     try {
-      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: co.question });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: firstRound.question });
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
@@ -1310,6 +1414,98 @@ io.on("connection", (socket) => {
       return;
     }
     runBotTurn(firstSpeaker, cue);
+  }
+
+  // =====================
+  // Poll round: all bots answer simultaneously, then human, then short summary
+  // =====================
+  async function runPollRound(question) {
+    if (!session) return;
+    session.pollState = {
+      question,
+      botsFinished: false,
+      humanFinished: false,
+      answers: {},
+    };
+
+    // All bots respond in parallel with 1–4 s random think delay + typing delay
+    const botPromises = session.bots.map((bot) => {
+      const thinkMs = randomBetween(1000, 4000);
+      return new Promise(async (resolve) => {
+        await delay(thinkMs);
+        if (!session) { resolve(); return; }
+        emitTyping(bot, true);
+        await delay(TYPING_DELAY_MS);
+        if (!session) { resolve(); return; }
+        emitTyping(bot, false);
+        let bubbles = [];
+        try {
+          bubbles = await getBotResponse(bot, {
+            moderatorQuestion: question,
+            directive: null,
+            previousAnswers: [],
+            session,
+            bots: session.bots,
+            roundType: "poll",
+          });
+          logLine("OPENAI_OK", `poll bot=${bot} ans="${clip(JSON.stringify(bubbles), 80)}"`);
+        } catch (e) {
+          logLine("OPENAI_ERR", `poll bot=${bot} ${e?.message || e}`);
+          bubbles = ["Not sure."];
+        }
+        if (!session) { resolve(); return; }
+        const answer = bubbles[0] || "Not sure.";
+        emitMessage(bot, answer);
+        if (session.pollState) session.pollState.answers[bot] = answer;
+        resolve();
+      });
+    });
+
+    // Set up human waiting state (same idle/nudge mechanism as intro/call-on)
+    const co = session.callOnState;
+    co.question = question;
+    co.waitingForHumanIdle = true;
+    co.humanRepliedThisTurn = false;
+    session.humanGaveSubstantiveResponseThisTurn = false;
+    session.lastPromptForHuman = { type: "poll", prompt: question };
+    startIdleNudgeTimer();
+
+    // Wait for all bots (they run concurrently with human's response)
+    await Promise.all(botPromises);
+    if (!session) return;
+
+    session.pollState.botsFinished = true;
+    logLine("QUEUE", `poll: all bots answered. humanFinished=${session.pollState.humanFinished}`);
+
+    // If human already went idle after replying, finish now; otherwise wait for human_idle event
+    if (session.pollState.humanFinished) {
+      await finishPollRound();
+    }
+  }
+
+  async function finishPollRound() {
+    if (!session?.pollState) return;
+    const { question, answers } = session.pollState;
+
+    // Include human's answer(s) in the summary
+    const humanDisplayName = session.humanDisplayName;
+    const humanMsgs = (session.roundTranscript || [])
+      .filter((m) => m.name === humanDisplayName)
+      .map((m) => m.text);
+    if (humanMsgs.length) answers[humanDisplayName] = humanMsgs.join(" ");
+
+    const transcriptStr = Object.entries(answers).map(([name, text]) => `${name}: ${text}`).join("\n");
+    let summary;
+    try {
+      summary = await generateRoundSummary(question, transcriptStr, { roundType: "poll" });
+    } catch (e) {
+      summary = "Thanks everyone for the quick answers!";
+    }
+    if (!session) return;
+    await emitModeratorLine(summary);
+    if (!session) return;
+    session.pollState = null;
+    await advanceToNextRound();
   }
 
   const MAX_DISAGREEMENT_FOLLOWUPS = 20;
@@ -1347,11 +1543,16 @@ io.on("connection", (socket) => {
     if (!session) return;
     await emitModeratorLine(followUpText);
     if (!session) return;
+    // If the moderator line was skipped because cancelAdvanceFromIdle was set (shouldn't
+    // happen after the fix in runDisagreementPhase, but guard here as a safety net).
+    if (session.cancelAdvanceFromIdle) {
+      session.pendingAdvanceFromIdle = false;
+      session.cancelAdvanceFromIdle = false;
+    }
 
     if (item.isHuman) {
       session.waitingForHumanDisagreementResponse = true;
       session.humanRepliedDisagreementTurn = false;
-      session.consecutiveUnsubstantialCount = 0;
       session.humanGaveSubstantiveResponseThisTurn = false;
       session.lastPromptForHuman = { type: "disagreement", prompt: followUpText };
       startIdleNudgeTimer();
@@ -1436,7 +1637,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("human_idle", async () => {
-    // Non-substantive response: wait for idle, then 5s before sending "elaborate"
+    // Non-substantive response: wait for idle, then 5s before sending "elaborate" (or kick if we've already nudged 4 times)
     if (session?.waitingForElaborationAfterNonSubstantive) {
       clearElaborationPromptTimer();
       session.elaborationPromptCancelled = false;
@@ -1445,6 +1646,13 @@ io.on("connection", (socket) => {
         session.elaborationPromptTimer = null;
         if (session.elaborationPromptCancelled) return;
         session.waitingForElaborationAfterNonSubstantive = false;
+        const nudgeCount = (session.substantialNudgeCount || 0) + 1;
+        if (nudgeCount >= MAX_ELABORATION_NUDGES) {
+          logLine("QUEUE", `elaboration nudge ${nudgeCount}/${MAX_ELABORATION_NUDGES}: kicking instead of nudging again`);
+          await kickForUnsubstantial(session);
+          return;
+        }
+        session.substantialNudgeCount = nudgeCount;
         await emitModeratorLine("Could you elaborate? Please share your thoughts on the question.", {
           cancelCheck: () => session?.elaborationPromptCancelled,
         });
@@ -1452,7 +1660,7 @@ io.on("connection", (socket) => {
           session.idleNudgeCount = 0;
           session.idleLastNudgeAt = null;
           session.idleLastActivityAt = Date.now();
-          logLine("QUEUE", "elaboration prompt sent after 5s idle, nudge counter reset");
+          logLine("QUEUE", `elaboration prompt sent after 5s idle (nudge ${session.substantialNudgeCount}/${MAX_ELABORATION_NUDGES}), idle nudge counter reset`);
         }
       }, ELABORATION_WAIT_MS);
       return;
@@ -1478,6 +1686,20 @@ io.on("connection", (socket) => {
     if (!co?.waitingForHumanIdle) return;
     // Moderator only moves on when human has sent at least 1 message AND is idle
     if (!co.humanRepliedThisTurn) return;
+    // Poll round: mark human done, then finish if bots are also done
+    if (session.currentRoundType === "poll") {
+      clearIdleNudgeTimer();
+      logLine("QUEUE", `human_idle after poll answer from ${session.humanDisplayName}`);
+      co.waitingForHumanIdle = false;
+      if (session.pollState) {
+        session.pollState.humanFinished = true;
+        if (session.pollState.botsFinished) {
+          await finishPollRound();
+        }
+        // else: wait; finishPollRound will be triggered after botPromises resolve
+      }
+      return;
+    }
     clearIdleNudgeTimer();
     logLine("QUEUE", `human_idle from ${session.humanDisplayName} (replied this turn), advancing`);
     co.waitingForHumanIdle = false;
@@ -1520,23 +1742,43 @@ io.on("connection", (socket) => {
     const needSubstantiveCheck =
       ctx &&
       !session.humanGaveSubstantiveResponseThisTurn &&
+      session.currentRoundType !== "poll" &&
       (inIntroPhase ||
         session.callOnState?.waitingForHumanIdle ||
         session.waitingForHumanDisagreementResponse ||
         session.pendingAdvanceFromIdle);
     if (needSubstantiveCheck) {
-      const substantive = await isResponseSubstantive(text, ctx);
-      if (!substantive) {
-        session.consecutiveUnsubstantialCount = (session.consecutiveUnsubstantialCount || 0) + 1;
-        if (session.consecutiveUnsubstantialCount >= MAX_UNSUBSTANTIAL_IN_ROW) {
-          await kickForUnsubstantial(session);
-          return;
+      const roundQuestion = session.callOnState?.question || String(ctx.prompt || "");
+      const { isQuestion: isModQuestion, substantive } = await classifyHumanMessage(text, ctx, roundQuestion);
+
+      if (isModQuestion) {
+        // Participant asked the moderator a question instead of answering the prompt.
+        // Have Eunice answer it (2 bubbles) and re-ask the question; keep waiting.
+        logLine("QUEUE", "human_message: question for moderator detected, generating answer");
+        let bubbles;
+        try {
+          bubbles = await generateModeratorQuestionAnswer(text, roundQuestion);
+        } catch (e) {
+          console.error("generateModeratorQuestionAnswer error", e?.message || e);
+          bubbles = ["Happy to clarify!", `So — ${roundQuestion.slice(0, 80)}?`];
         }
-        session.waitingForElaborationAfterNonSubstantive = true;
-        logLine("QUEUE", `human_message: response not substantive (${session.consecutiveUnsubstantialCount}/${MAX_UNSUBSTANTIAL_IN_ROW}), waiting for idle then 5s before elaborate`);
+        for (const bubble of bubbles) {
+          if (!session) return;
+          await emitModeratorLine(bubble);
+        }
+        if (!session) return;
+        // Refresh the idle nudge timer so user has full time to answer.
+        if (isWaitingForHuman(session)) startIdleNudgeTimer();
+        logLine("QUEUE", "human_message: moderator answered question, waiting for user to respond to the prompt");
         return;
       }
-      session.consecutiveUnsubstantialCount = 0;
+
+      if (!substantive) {
+        session.waitingForElaborationAfterNonSubstantive = true;
+        logLine("QUEUE", "human_message: response not substantive, waiting for idle then 5s before elaborate");
+        return;
+      }
+      session.substantialNudgeCount = 0; // reset: user gave a substantive response
       session.waitingForElaborationAfterNonSubstantive = false;
       session.humanGaveSubstantiveResponseThisTurn = true;
       logLine("HUMAN", "human_message: response is substantive, advancing");
