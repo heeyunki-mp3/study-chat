@@ -436,24 +436,26 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
  * Returns { isQuestion: bool, substantive: bool }. Defaults to false on error.
  */
 async function classifyHumanMessage(text, context, roundQuestion) {
-  if (!text || !String(text).trim()) return { isQuestion: false, substantive: false };
+  if (!text || !String(text).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
+
   const wordCount = String(text).trim().split(/\s+/).filter(Boolean).length;
   // Hard word-count rules for substantiality — no API needed for these boundaries.
   // We still call the API to get isQuestion (short messages can still be questions).
   const forcedSubstantive = wordCount > 15 ? true : wordCount <= 3 ? false : null;
 
   const { type = "call_on", prompt = "" } = context || {};
-  const sys = `You are a classifier. Given a participant's chat message, return ONLY valid JSON with exactly two boolean fields:
+  const sys = `You are a classifier. Given a participant's chat message, return ONLY valid JSON with exactly three boolean fields:
 - "isQuestion": true if the message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?", "I don't understand X"), rather than sharing an answer/opinion/experience. False for filler ("ok","idk","sad"), emotions, statements, or anything that tries to answer the prompt.
 - "substantive": true if the message substantively answers the prompt by sharing relevant content—experiences, opinions, or thoughts. False for filler, too vague, off-topic, or a question back to the moderator.
-Note: if isQuestion is true, substantive should almost always be false.
-Return format: {"isQuestion": true/false, "substantive": true/false}`;
+- "inappropriate": true if the message is clearly inappropriate — includes aggressive, hostile, or offensive language; sexual content; completely nonsensical gibberish (random characters/keyboard mashing); or content that is wildly and obviously off-topic with no connection to the discussion whatsoever. Normal short or vague answers are NOT inappropriate.
+Note: if isQuestion is true, substantive should almost always be false. If inappropriate is true, both other fields should be false.
+Return format: {"isQuestion": true/false, "substantive": true/false, "inappropriate": true/false}`;
   const user = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"\nParticipant message: "${String(text).trim().slice(0, 400)}"`;
   try {
     const completion = await openai.chat.completions.create({
       model: MODELS.default,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
-      max_tokens: 20,
+      max_tokens: 30,
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "")
       .trim()
@@ -464,10 +466,11 @@ Return format: {"isQuestion": true/false, "substantive": true/false}`;
     return {
       isQuestion: !!parsed.isQuestion,
       substantive: forcedSubstantive !== null ? forcedSubstantive : !!parsed.substantive,
+      inappropriate: !!parsed.inappropriate,
     };
   } catch (e) {
     console.error("classifyHumanMessage error", e?.message || e);
-    return { isQuestion: false, substantive: forcedSubstantive ?? false };
+    return { isQuestion: false, substantive: forcedSubstantive ?? false, inappropriate: false };
   }
 }
 
@@ -1821,21 +1824,37 @@ io.on("connection", (socket) => {
     // Validate response before advancing: treat non-substantive replies as if user never responded.
     // Once the user has given at least one substantive response this turn, skip further checks and just wait for idle to advance.
     const inIntroPhase = session.waitingForHumanIntro || session.moderatorTypingIntroCue;
-    const introCtx = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
-    const ctx = session.lastPromptForHuman || (inIntroPhase ? introCtx : null);
+    const ctx = session.lastPromptForHuman || (inIntroPhase ? { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." } : null);
     const isPollRound = session.currentRoundType === "poll";
-    const isWaitingForAnswer =
+    // Moderator-question check runs for ALL round types (including polls).
+    // Substantive check is skipped for polls (they only need a short answer).
+    const needResponseCheck = ctx && !session.humanGaveSubstantiveResponseThisTurn && (
       inIntroPhase ||
       session.callOnState?.waitingForHumanIdle ||
       session.waitingForHumanDisagreementResponse ||
-      session.pendingAdvanceFromIdle;
-    // Moderator-question check runs for ALL round types (including polls).
-    // Substantive check is skipped for polls (they only need a short answer).
-    const needResponseCheck = ctx && !session.humanGaveSubstantiveResponseThisTurn && isWaitingForAnswer;
-    if (needResponseCheck) {
-      const roundQuestion = session.callOnState?.question || String(ctx.prompt || "");
-      const { isQuestion: isModQuestion, substantive } = await classifyHumanMessage(text, ctx, roundQuestion);
+      session.pendingAdvanceFromIdle
+    );
 
+    const roundQuestion = session.callOnState?.question || String(ctx?.prompt || "");
+
+    // Always run full classification on every message.
+    // inappropriate is checked for all messages; isQuestion/substantive only used when prompted.
+    const { isQuestion: isModQuestion, substantive, inappropriate } = await classifyHumanMessage(
+      text, ctx || { type: "call_on", prompt: "" }, roundQuestion
+    );
+    logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive}`);
+
+    if (inappropriate) {
+      clearIdleNudgeTimer();
+      clearElaborationPromptTimer();
+      logLine("QUEUE", "human_message: inappropriate content detected, kicking user");
+      await new Promise((r) => setTimeout(r, 1000));
+      if (session) io.to(socket.id).emit("kicked", { reason: "inappropriate", message: "You have been removed by the moderator." });
+      session = null;
+      return;
+    }
+
+    if (needResponseCheck) {
       if (isModQuestion) {
         // Participant asked the moderator a question instead of answering the prompt.
         // Have Eunice answer it (2 bubbles) and re-ask the question; keep waiting.

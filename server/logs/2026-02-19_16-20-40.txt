@@ -1,0 +1,279 @@
+2026-02-19 21:20:40.428 [SESSION_START] backend running on http://localhost:3001
+2026-02-19 21:20:40.430 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-19 21:21:02.140 [SESSION_START] id=WzknziFQCRoe_WKpAAAB bots=Sid,Vivian,Jae
+2026-02-19 21:21:02.141 [SESSION_START] participant_name set to "ana"
+2026-02-19 21:21:02.141 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-19 21:21:02.142 [TYPING] moderator true
+2026-02-19 21:21:06.344 [TYPING] moderator false
+2026-02-19 21:21:06.346 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-19 21:21:06.347 [TYPING] moderator true
+2026-02-19 21:21:10.550 [TYPING] moderator false
+2026-02-19 21:21:10.551 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-19 21:21:10.551 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-19 21:21:12.644 [TYPING] bot=Sid true
+2026-02-19 21:21:13.678 [TYPING] bot=Vivian true
+2026-02-19 21:21:13.787 [TYPING] bot=Jae true
+2026-02-19 21:21:15.847 [TYPING] bot=Sid false
+2026-02-19 21:21:15.850 [MESSAGE] [Sid] "Sid. I am an IT support technician in New Jersey."
+2026-02-19 21:21:16.881 [TYPING] bot=Vivian false
+2026-02-19 21:21:16.883 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-19 21:21:16.991 [TYPING] bot=Jae false
+2026-02-19 21:21:16.994 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-19 21:21:17.041 [TYPING] human true
+2026-02-19 21:21:17.206 [TYPING] human true
+2026-02-19 21:21:17.243 [TYPING] human true
+2026-02-19 21:21:17.831 [TYPING] human true
+2026-02-19 21:21:17.886 [TYPING] moderator true
+2026-02-19 21:21:17.962 [TYPING] human true
+2026-02-19 21:21:18.147 [TYPING] human true
+2026-02-19 21:21:18.299 [TYPING] human true
+2026-02-19 21:21:18.497 [TYPING] human true
+2026-02-19 21:21:18.546 [TYPING] human true
+2026-02-19 21:21:18.683 [TYPING] human true
+2026-02-19 21:21:18.775 [TYPING] human true
+2026-02-19 21:21:18.849 [TYPING] human true
+2026-02-19 21:21:19.653 [TYPING] human false
+2026-02-19 21:21:19.768 [TYPING] human true
+2026-02-19 21:21:20.052 [TYPING] human true
+2026-02-19 21:21:20.108 [TYPING] human true
+2026-02-19 21:21:20.359 [TYPING] human true
+2026-02-19 21:21:20.546 [TYPING] human false
+2026-02-19 21:21:20.554 [HUMAN_INPUT] [Ana] "Hi I am Ana!"
+2026-02-19 21:21:20.555 [MESSAGE] [Ana] "Hi I am Ana!"
+2026-02-19 21:21:21.785 [HUMAN] human_message: response is substantive, advancing
+2026-02-19 21:21:21.785 [QUEUE] human_message during intro cue: cancelling cue, advancing to study_goal
+2026-02-19 21:21:21.786 [TYPING] moderator true
+2026-02-19 21:21:22.088 [TYPING] moderator false
+2026-02-19 21:21:22.090 [QUEUE] intro cue cancelled: user already sent intro, advancing to study_goal
+2026-02-19 21:21:25.989 [TYPING] moderator false
+2026-02-19 21:21:25.991 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-02-19 21:21:25.991 [TYPING] moderator true
+2026-02-19 21:21:30.194 [TYPING] moderator false
+2026-02-19 21:21:30.195 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-02-19 21:21:32.957 [MESSAGE] [Sid] "Ok!"
+2026-02-19 21:21:32.957 [QUEUE] study_goal ack done, starting first round
+2026-02-19 21:21:32.957 [QUEUE] first round [big_question]: "First question: Big tech companies like Google roll out new …"
+2026-02-19 21:21:32.958 [TYPING] moderator true
+2026-02-19 21:21:37.160 [TYPING] moderator false
+2026-02-19 21:21:37.162 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-02-19 21:21:37.406 [TYPING] human true
+2026-02-19 21:21:37.572 [TYPING] human true
+2026-02-19 21:21:37.660 [TYPING] human true
+2026-02-19 21:21:37.718 [TYPING] human true
+2026-02-19 21:21:37.778 [TYPING] human false
+2026-02-19 21:21:37.783 [HUMAN_INPUT] [Ana] "sure"
+2026-02-19 21:21:37.783 [MESSAGE] [Ana] "sure"
+2026-02-19 21:21:37.970 [TYPING] moderator true
+2026-02-19 21:21:42.173 [TYPING] moderator false
+2026-02-19 21:21:42.174 [MESSAGE] [Eunice] "Sid, what do you think?"
+2026-02-19 21:21:42.174 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-19 21:21:42.174 [TYPING] bot=Sid true
+2026-02-19 21:21:43.606 [OPENAI_OK] bot=Sid rtt=1432ms raw="["Usually, I wait a bit before trying new features. Sometimes they’re buggy or just unnecessary, so …"
+2026-02-19 21:21:43.606 [TYPING] bot=Sid false
+2026-02-19 21:21:44.609 [TYPING] bot=Sid true
+2026-02-19 21:21:47.812 [TYPING] bot=Sid false
+2026-02-19 21:21:47.813 [MESSAGE] [Sid] "Usually, I wait a bit before trying new features. Sometimes they’re buggy or just unnecessary, so no rush."
+2026-02-19 21:21:48.814 [TYPING] bot=Sid true
+2026-02-19 21:21:52.014 [TYPING] bot=Sid false
+2026-02-19 21:21:52.015 [MESSAGE] [Sid] "But if it looks like a genuine improvement or better security, I jump on it quickly enough. No point in lagging behind on protection."
+2026-02-19 21:21:53.753 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-02-19 21:21:53.754 [TYPING] moderator true
+2026-02-19 21:21:57.957 [TYPING] moderator false
+2026-02-19 21:21:57.959 [MESSAGE] [Eunice] "Good point, Sid. Vivian, how about you? Do you try new features right away or take your time with them?"
+2026-02-19 21:21:57.960 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-19 21:21:57.961 [TYPING] bot=Vivian true
+2026-02-19 21:21:59.890 [OPENAI_OK] bot=Vivian rtt=1930ms raw="["i usually try new features pretty quickly especially if they seem like theyll save me time or make…"
+2026-02-19 21:21:59.890 [TYPING] bot=Vivian false
+2026-02-19 21:22:00.892 [TYPING] bot=Vivian true
+2026-02-19 21:22:04.093 [TYPING] bot=Vivian false
+2026-02-19 21:22:04.095 [MESSAGE] [Vivian] "i usually try new features pretty quickly especially if they seem like theyll save me time or make life easier"
+2026-02-19 21:22:05.097 [TYPING] bot=Vivian true
+2026-02-19 21:22:08.299 [TYPING] bot=Vivian false
+2026-02-19 21:22:08.299 [MESSAGE] [Vivian] "ive got less patience for stuff that just feels like a gimmick or slows me down so i skip those"
+2026-02-19 21:22:09.300 [TYPING] bot=Vivian true
+2026-02-19 21:22:12.501 [TYPING] bot=Vivian false
+2026-02-19 21:22:12.501 [MESSAGE] [Vivian] "but if it improves how i log in or keeps things secure and simple im all over it almost immediately"
+2026-02-19 21:22:14.139 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-02-19 21:22:14.139 [TYPING] moderator true
+2026-02-19 21:22:18.342 [TYPING] moderator false
+2026-02-19 21:22:18.343 [MESSAGE] [Eunice] "Thanks for sharing, Vivian. Jae, how about you? Do you jump on new features right away or wait it out?"
+2026-02-19 21:22:18.343 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-02-19 21:22:18.343 [TYPING] bot=Jae true
+2026-02-19 21:22:19.471 [OPENAI_OK] bot=Jae rtt=1128ms raw="["I usually wait before trying new features, especially with tech I rely on daily. I like to see if …"
+2026-02-19 21:22:19.471 [TYPING] bot=Jae false
+2026-02-19 21:22:20.473 [TYPING] bot=Jae true
+2026-02-19 21:22:23.675 [TYPING] bot=Jae false
+2026-02-19 21:22:23.677 [MESSAGE] [Jae] "I usually wait before trying new features, especially with tech I rely on daily. I like to see if others find it stable first."
+2026-02-19 21:22:24.679 [TYPING] bot=Jae true
+2026-02-19 21:22:27.881 [TYPING] bot=Jae false
+2026-02-19 21:22:27.881 [MESSAGE] [Jae] "Logically, I prefer clear instructions and predictable results. If it feels confusing or risky, I hold off until I’m sure it works smoothly across my devices."
+2026-02-19 21:22:29.705 [TYPING] moderator true
+2026-02-19 21:22:33.907 [TYPING] moderator false
+2026-02-19 21:22:33.907 [MESSAGE] [Eunice] "Good point, Jae. Ana, how about you?"
+2026-02-19 21:22:33.908 [QUEUE] call-on who_spoke=[Sid, Vivian, Jae] next=human Ana, waiting for human_idle
+2026-02-19 21:22:35.461 [TYPING] human true
+2026-02-19 21:22:35.587 [TYPING] human true
+2026-02-19 21:22:35.615 [TYPING] human true
+2026-02-19 21:22:35.677 [TYPING] human true
+2026-02-19 21:22:35.799 [TYPING] human true
+2026-02-19 21:22:36.087 [TYPING] human true
+2026-02-19 21:22:36.183 [TYPING] human true
+2026-02-19 21:22:36.351 [TYPING] human true
+2026-02-19 21:22:36.470 [TYPING] human true
+2026-02-19 21:22:36.715 [TYPING] human true
+2026-02-19 21:22:36.853 [TYPING] human true
+2026-02-19 21:22:36.992 [TYPING] human true
+2026-02-19 21:22:37.108 [TYPING] human true
+2026-02-19 21:22:37.395 [TYPING] human true
+2026-02-19 21:22:37.510 [TYPING] human true
+2026-02-19 21:22:37.616 [TYPING] human true
+2026-02-19 21:22:37.689 [TYPING] human true
+2026-02-19 21:22:37.778 [TYPING] human true
+2026-02-19 21:22:37.933 [TYPING] human true
+2026-02-19 21:22:38.005 [TYPING] human true
+2026-02-19 21:22:38.109 [TYPING] human true
+2026-02-19 21:22:38.488 [TYPING] human true
+2026-02-19 21:22:38.557 [TYPING] human true
+2026-02-19 21:22:38.758 [TYPING] human true
+2026-02-19 21:22:38.858 [TYPING] human true
+2026-02-19 21:22:38.918 [TYPING] human true
+2026-02-19 21:22:38.978 [TYPING] human true
+2026-02-19 21:22:39.114 [TYPING] human true
+2026-02-19 21:22:39.173 [TYPING] human true
+2026-02-19 21:22:39.358 [TYPING] human true
+2026-02-19 21:22:39.428 [TYPING] human true
+2026-02-19 21:22:39.486 [TYPING] human true
+2026-02-19 21:22:39.623 [TYPING] human true
+2026-02-19 21:22:39.763 [TYPING] human true
+2026-02-19 21:22:39.789 [TYPING] human true
+2026-02-19 21:22:39.909 [TYPING] human true
+2026-02-19 21:22:40.094 [TYPING] human true
+2026-02-19 21:22:40.161 [TYPING] human true
+2026-02-19 21:22:40.301 [TYPING] human true
+2026-02-19 21:22:40.390 [TYPING] human true
+2026-02-19 21:22:40.464 [TYPING] human true
+2026-02-19 21:22:40.617 [TYPING] human true
+2026-02-19 21:22:40.689 [TYPING] human true
+2026-02-19 21:22:40.762 [TYPING] human true
+2026-02-19 21:22:40.821 [TYPING] human true
+2026-02-19 21:22:40.883 [TYPING] human true
+2026-02-19 21:22:41.026 [TYPING] human true
+2026-02-19 21:22:41.141 [TYPING] human true
+2026-02-19 21:22:41.228 [TYPING] human true
+2026-02-19 21:22:41.319 [TYPING] human true
+2026-02-19 21:22:41.425 [TYPING] human true
+2026-02-19 21:22:42.227 [TYPING] human false
+2026-02-19 21:22:42.362 [TYPING] human true
+2026-02-19 21:22:42.491 [TYPING] human true
+2026-02-19 21:22:42.576 [TYPING] human true
+2026-02-19 21:22:42.717 [TYPING] human true
+2026-02-19 21:22:42.801 [TYPING] human true
+2026-02-19 21:22:42.892 [TYPING] human true
+2026-02-19 21:22:42.996 [TYPING] human true
+2026-02-19 21:22:43.103 [TYPING] human true
+2026-02-19 21:22:43.664 [TYPING] human true
+2026-02-19 21:22:43.932 [TYPING] human true
+2026-02-19 21:22:44.172 [TYPING] human true
+2026-02-19 21:22:44.288 [TYPING] human true
+2026-02-19 21:22:44.365 [TYPING] human true
+2026-02-19 21:22:44.481 [TYPING] human true
+2026-02-19 21:22:44.572 [TYPING] human true
+2026-02-19 21:22:44.648 [TYPING] human true
+2026-02-19 21:22:44.973 [TYPING] human true
+2026-02-19 21:22:45.012 [TYPING] human true
+2026-02-19 21:22:45.583 [TYPING] human true
+2026-02-19 21:22:45.866 [TYPING] human true
+2026-02-19 21:22:45.988 [TYPING] human true
+2026-02-19 21:22:46.016 [TYPING] human true
+2026-02-19 21:22:46.103 [TYPING] human true
+2026-02-19 21:22:46.149 [TYPING] human true
+2026-02-19 21:22:46.268 [TYPING] human true
+2026-02-19 21:22:46.344 [TYPING] human true
+2026-02-19 21:22:46.433 [TYPING] human true
+2026-02-19 21:22:46.646 [TYPING] human true
+2026-02-19 21:22:46.794 [TYPING] human true
+2026-02-19 21:22:46.916 [TYPING] human true
+2026-02-19 21:22:46.956 [TYPING] human true
+2026-02-19 21:22:47.062 [TYPING] human true
+2026-02-19 21:22:47.204 [TYPING] human true
+2026-02-19 21:22:47.274 [TYPING] human true
+2026-02-19 21:22:47.364 [TYPING] human true
+2026-02-19 21:22:47.437 [TYPING] human true
+2026-02-19 21:22:47.499 [TYPING] human true
+2026-02-19 21:22:47.589 [TYPING] human true
+2026-02-19 21:22:47.679 [TYPING] human true
+2026-02-19 21:22:47.738 [TYPING] human true
+2026-02-19 21:22:47.859 [TYPING] human true
+2026-02-19 21:22:48.075 [TYPING] human true
+2026-02-19 21:22:48.191 [TYPING] human true
+2026-02-19 21:22:48.261 [TYPING] human true
+2026-02-19 21:22:48.398 [TYPING] human true
+2026-02-19 21:22:48.442 [TYPING] human true
+2026-02-19 21:22:48.532 [TYPING] human true
+2026-02-19 21:22:48.838 [TYPING] human true
+2026-02-19 21:22:49.052 [TYPING] human true
+2026-02-19 21:22:49.102 [TYPING] human true
+2026-02-19 21:22:49.179 [TYPING] human true
+2026-02-19 21:22:49.269 [TYPING] human true
+2026-02-19 21:22:49.327 [TYPING] human true
+2026-02-19 21:22:49.404 [TYPING] human true
+2026-02-19 21:22:49.478 [TYPING] human true
+2026-02-19 21:22:49.552 [TYPING] human true
+2026-02-19 21:22:49.612 [TYPING] human true
+2026-02-19 21:22:49.688 [TYPING] human true
+2026-02-19 21:22:49.747 [TYPING] human true
+2026-02-19 21:22:49.900 [TYPING] human false
+2026-02-19 21:22:49.910 [HUMAN_INPUT] [Ana] "yeah I think I don't really care about the security, but I really love the new stuff in the town"
+2026-02-19 21:22:49.910 [MESSAGE] [Ana] "yeah I think I don't really care about the security, but I really love the new stuff in the town"
+2026-02-19 21:22:50.677 [HUMAN] human_message: response is substantive, advancing
+2026-02-19 21:22:50.677 [QUEUE] human_message during call-on: Ana replied, waiting for idle to advance
+2026-02-19 21:22:53.900 [QUEUE] human_idle from Ana (replied this turn), advancing
+2026-02-19 21:22:53.901 [QUEUE] call-on round done, acknowledging then view-misalignment phase
+2026-02-19 21:22:53.901 [TYPING] moderator true
+2026-02-19 21:22:58.103 [TYPING] moderator false
+2026-02-19 21:22:58.104 [MESSAGE] [Eunice] "Thanks everyone! It is helpful to hear from each of you."
+2026-02-19 21:22:58.104 [QUEUE] view-misalignment phase started
+2026-02-19 21:22:58.104 [DISAGREEMENT CHECK] Moderator question: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Sid: Usually, I wait a bit before trying new features. Sometimes they’re buggy or just unnecessary, so no rush. But if it looks like a genuine improvement or better security, I jump on it quickly enough. No point in lagging behind on protection.
+Vivian: i usually try new features pretty quickly especially if they seem like theyll save me time or make life easier ive got less patience for stuff that just feels like a gimmick or slows me down so i skip those but if it improves how i log in or keeps things secure and simple im all over it almost immediately
+Jae: I usually wait before trying new features, especially with tech I rely on daily. I like to see if others find it stable first. Logically, I prefer clear instructions and predictable results. If it feels confusing or risky, I hold off until I’m sure it works smoothly across my devices.
+Ana: sure yeah I think I don't really care about the security, but I really love the new stuff in the town
+2026-02-19 21:23:01.613 [DISAGREEMENT CHECK RESULT] [
+  {
+    "disagreedWith": "Sid",
+    "disagreedBy": "Ana",
+    "differenceSummary": "Sid values new features especially for security improvements, while Ana states she doesn't care about security and just loves new stuff."
+  },
+  {
+    "disagreedWith": "Vivian",
+    "disagreedBy": "Ana",
+    "differenceSummary": "Vivian quickly tries new features that improve security or simplify life, whereas Ana is indifferent to security and more interested in novelty."
+  },
+  {
+    "disagreedWith": "Jae",
+    "disagreedBy": "Ana",
+    "differenceSummary": "Jae waits to try new features and cares about stability and predictability, while Ana is eager for new features regardless of these concerns."
+  }
+]
+2026-02-19 21:23:01.614 [QUEUE] view misalignment: Sid ↔ Ana — Sid values new features especially for security improvements, while Ana states she doesn't care about security and just loves new stuff.
+2026-02-19 21:23:01.615 [QUEUE] view misalignment: Vivian ↔ Ana — Vivian quickly tries new features that improve security or simplify life, whereas Ana is indifferent to security and more interested in novelty.
+2026-02-19 21:23:01.615 [QUEUE] view misalignment: Jae ↔ Ana — Jae waits to try new features and cares about stability and predictability, while Ana is eager for new features regardless of these concerns.
+2026-02-19 21:23:02.645 [TYPING] moderator true
+2026-02-19 21:23:06.848 [TYPING] moderator false
+2026-02-19 21:23:06.850 [MESSAGE] [Eunice] "Sid what do you think about Ana’s enthusiasm for new features even though she doesn’t prioritize security can you share your thoughts on that?"
+2026-02-19 21:23:06.851 [TYPING] bot=Sid true
+2026-02-19 21:23:08.042 [TYPING] bot=Sid false
+2026-02-19 21:23:09.044 [TYPING] bot=Sid true
+2026-02-19 21:23:12.247 [TYPING] bot=Sid false
+2026-02-19 21:23:12.248 [MESSAGE] [Sid] "It’s cool Ana’s excited about new stuff, but ignoring security is risky, especially with all the hacks these days."
+2026-02-19 21:23:13.250 [TYPING] bot=Sid true
+2026-02-19 21:23:16.451 [TYPING] bot=Sid false
+2026-02-19 21:23:16.452 [MESSAGE] [Sid] "New features can look fun but if they weaken security, it’s a bad trade-off. Prioritizing security keeps your data safe long-term."
