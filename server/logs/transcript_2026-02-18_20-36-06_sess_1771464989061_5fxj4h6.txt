@@ -4,3 +4,6 @@ Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
 Vivian: Hi I'm Vivian. I'm a psych undergrad at Emory.
 Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
 Eunice: Thanks for sharing, Jae. Ala, could you introduce yourself next?
+Eunice: Ala, are you still there? Would you respond to this question?
+Alan: yea i am alan
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
