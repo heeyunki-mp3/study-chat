@@ -22,20 +22,32 @@ export default function LoginChoice() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 640, margin: "60px auto", fontFamily: "system-ui" }}>
-      <h2>Compensation Login</h2>
-      <p>To receive compensation, please log into the study portal.</p>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui" }}>
+      <div style={{ maxWidth: 640, margin: "40px auto 0", padding: "0 24px", width: "100%" }}>
+        <h2>Compensation Login</h2>
+        <p>To receive compensation, please log into the study portal.</p>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
-        <button onClick={() => submit("passkey")} style={{ padding: "12px 16px" }}>
-          Use Passkey (recommended)
-        </button>
-        <button onClick={() => submit("password")} style={{ padding: "12px 16px" }}>
-          Use Password
-        </button>
+        <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
+          <button onClick={() => submit("passkey")} style={{ padding: "12px 16px" }}>
+            Use Passkey (recommended)
+          </button>
+          <button onClick={() => submit("password")} style={{ padding: "12px 16px" }}>
+            Use Password
+          </button>
+        </div>
+
+        <div style={{ marginTop: 16, color: "#666" }}>{status}</div>
+
+        <hr style={{ margin: "32px 0 16px", borderColor: "#e0e0e0" }} />
+        <p style={{ color: "#666", fontSize: 14 }}>Please also complete the study survey below:</p>
       </div>
 
-      <div style={{ marginTop: 16, color: "#666" }}>{status}</div>
+      <iframe
+        src="https://qualtricsxml5jbfgkjs.qualtrics.com/jfe/form/SV_1LBmGog10Hsu6r4"
+        style={{ flex: 1, border: "none", width: "100%", marginTop: 8 }}
+        title="Study Survey"
+        allow="fullscreen"
+      />
     </div>
   );
 }

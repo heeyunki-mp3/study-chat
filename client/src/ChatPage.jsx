@@ -1,4 +1,5 @@
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import "./ChatPage.css";
 import {
   MainContainer,
   MessageList,
@@ -202,7 +203,7 @@ export default function ChatPage() {
     socket.on("kicked", ({ message } = {}) => {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
-      navigate("/login", { replace: true });
+      navigate("/survey", { replace: true });
     });
 
     socket.connect();
@@ -288,7 +289,7 @@ export default function ChatPage() {
   function goLogin() {
     socket.emit("end");
     if (session?.sessionId) localStorage.setItem("sessionId", session.sessionId);
-    window.location.href = "/login";
+    window.location.href = "/survey";
   }
 
   const participantProfilePic = (() => {
@@ -305,88 +306,47 @@ export default function ChatPage() {
   if (participants.length && participants[0].isYou) participants[0].profilePic = participantProfilePic;
 
   return (
-    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
+    <div className="chat-page">
       {/* Left sidebar: participant profiles */}
-      <aside
-        style={{
-          width: 220,
-          flexShrink: 0,
-          borderRight: "1px solid #e0e0e0",
-          padding: "16px 12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          background: "#fafafa",
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 4 }}>Participants</div>
+      <aside className="chat-sidebar">
+        <div className="chat-sidebar-title">Participants</div>
         {session ? (
           participants.map((p) => (
             <div
               key={p.name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                borderRadius: 10,
-                background: p.color,
-                border: "1px solid rgba(0,0,0,0.08)",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
-              }}
+              className="chat-participant-card"
+              style={{ background: p.color }}
             >
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  flexShrink: 0,
-                  background: "rgba(255,255,255,0.6)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div className="chat-participant-avatar">
                 {p.profilePic ? (
-                  <img
-                    src={p.profilePic}
-                    alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+                  <img src={p.profilePic} alt="" />
                 ) : (
-                  <span style={{ fontSize: 18, color: "#444" }}>
+                  <span className="chat-participant-avatar-fallback">
                     {p.isModerator ? "🎙️" : (p.displayName || "?").charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{
-                      fontWeight: p.isModerator ? 600 : 500,
-                      fontSize: 14,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      color: p.isModerator ? "#1565c0" : "#1a1a1a",
-                    }}>
+              <div className="chat-participant-info">
+                <div className="chat-participant-name-row">
+                  <span className={`chat-participant-name${p.isModerator ? " chat-participant-name--moderator" : ""}`}>
                     {p.isYou ? `${p.displayName} (You)` : p.displayName}
                   </span>
                   {p.isModerator && (
-                    <span title="Moderator" style={{ flexShrink: 0 }} aria-hidden>🎙️</span>
+                    <span title="Moderator" className="chat-moderator-icon" aria-hidden>🎙️</span>
                   )}
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div style={{ color: "#999", fontSize: 14 }}>Connecting…</div>
+          <div className="chat-connecting">Connecting…</div>
         )}
       </aside>
 
+      <div className="chat-main-wrapper">
       {/* Main chat area: fixed 15cm width; text and input wrap inside, never push */}
-      <div style={{ width: "15cm", minWidth: "15cm", maxWidth: "15cm", flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", padding: 16 }}>
-        <div style={{ height: "75vh", flex: "1 1 0", minHeight: 0, minWidth: 0, width: "100%", overflow: "hidden" }}>
+      <div className="chat-main">
+        <div className="chat-messages-wrapper">
         <MainContainer>
           {/* Custom layout: list | fixed gap (typing) | input — so typing never covers last message */}
           <div className="cs-chat-container chat-layout-with-gap">
@@ -438,12 +398,12 @@ export default function ChatPage() {
         </MainContainer>
         </div>
 
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", flexShrink: 0 }}>
-          <div style={{ color: "#666" }}>Chat a bit, then proceed to login.</div>
-          <button onClick={goLogin} style={{ padding: "10px 14px" }}>
-            Proceed to Login
+        <div className="chat-footer">
+          <button onClick={goLogin} className="chat-exit-btn">
+            Exit to Survey
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

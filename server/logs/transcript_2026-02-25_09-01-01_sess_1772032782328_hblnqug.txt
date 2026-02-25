@@ -1,0 +1,28 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
+Vivian: Hey my name is Vivian. I live in Atlanta
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Thanks for sharing, Jae. A, could you introduce yourself next?
+Ara: hi i am ara
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Jae: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: I’m usually skeptical about new features right off the bat, especially from big companies. They often push stuff out before it’s polished or really needed.
+Sid: I like to wait, see how others react, and check if there are any security concerns before using something new. Jumping in too early just causes headaches most times.
+Eunice: Thanks for that, Sid. Vivian, how do you usually feel about trying new features when they're introduced?
+Vivian: honestly i kinda like trying new features fast especially if they help productivity or reduce hassle
+Vivian: i usually check if it fits into my current workflow then jump in if it looks legit
+Vivian: but if it seems like a pain or buggy i ignore till its proven useful or stable
+Eunice: Got it, Vivian. Jae, how about you? Do you dive into new features right away or wait it out?
+Jae: I tend to wait before trying new features, especially at work where stability matters a lot. I feel like sudden changes can mess up my routines or cause unexpected glitches.
+Jae: When I do try something new, I prefer clear step-by-step instructions and some time for others to confirm it actually works well across devices I use.
+Eunice: Thanks for sharing, Jae. Ara, how about you?
+Ara: <div class="sender-bubble-wrap" style="font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; font-size: 16px; white-space-collapse: collapse; background-color: rgb(255, 255, 255); --sender-color: #fff3e0;"><section aria-label="Jae: 10:21 AM" class="cs-message cs-message--incoming cs-message--single" data-cs-message="" style="margin-right: auto;"><div class="cs-message__content-wrapper"><div class="cs-message__content"><div class="cs-message__html-content">When I do try something new, I prefer clear step-by-step instructions and some time for others to confirm it actually works well across devices I use.</div></div></div></section></div><div class="sender-bubble-wrap moderator-bubble" style="font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; font-size: 16px; white-space-collapse: collapse; background-color: rgb(255, 255, 255); --sender-color: #bbdefb;"><section aria-label="Eunice (mod): 10:21 AM" class="cs-message cs-message--incoming cs-message--single" data-cs-message="" style="margin-right: auto;"><div class="cs-message__content-wrapper"><div class="cs-message__header"></div></div></section></div>

@@ -1,0 +1,162 @@
+.chat-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.chat-main-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chat-sidebar {
+  width: 220px;
+  flex-shrink: 1;
+  min-width: 60px;
+  border-right: 1px solid #e0e0e0;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fafafa;
+  overflow-y: auto;
+}
+
+.chat-sidebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.chat-participant-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.chat-participant-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-participant-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-participant-avatar-fallback {
+  font-size: 18px;
+  color: #444;
+}
+
+.chat-participant-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-participant-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-participant-name {
+  font-weight: 500;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #1a1a1a;
+}
+
+.chat-participant-name--moderator {
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.chat-moderator-icon {
+  flex-shrink: 0;
+}
+
+.chat-connecting {
+  color: #999;
+  font-size: 14px;
+}
+
+.chat-main {
+  width: 15cm;
+  flex-shrink: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.chat-messages-wrapper {
+  height: 75vh;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.chat-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.chat-exit-btn {
+  padding: 10px 14px;
+}
+
+/* Small screens: collapse sidebar to icon-only */
+@media (max-width: 700px) {
+  .chat-sidebar {
+    width: auto;
+    min-width: auto;
+    padding: 12px 8px;
+    align-items: center;
+  }
+
+  .chat-sidebar-title {
+    display: none;
+  }
+
+  .chat-participant-card {
+    padding: 6px;
+    gap: 0;
+    justify-content: center;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+  }
+
+  .chat-participant-info {
+    display: none;
+  }
+}
