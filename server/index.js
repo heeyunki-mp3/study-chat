@@ -429,28 +429,35 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
 }
 
 /**
- * Single call that classifies a participant's message two ways at once:
- *   isQuestion  — true if the message is a question to the moderator asking for
- *                 clarification/explanation rather than answering the prompt.
- *   substantive — true if the message substantively answers the prompt.
- * Returns { isQuestion: bool, substantive: bool }. Defaults to false on error.
+ * Single API call that classifies a participant's message three ways:
+ *   isQuestion   — based on the latest message only.
+ *   inappropriate — based on the latest message only.
+ *   substantive  — based on ALL messages sent this round (combinedText).
+ *
+ * @param {string} latestText    – the newest message the user just sent.
+ * @param {string} combinedText  – all messages the user sent this round, joined.
+ * @param {object} context       – { type, prompt } describing the current prompt.
+ * @param {string} roundQuestion – the discussion question for this round.
  */
-async function classifyHumanMessage(text, context, roundQuestion) {
-  if (!text || !String(text).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
+async function classifyHumanMessage(latestText, combinedText, context, roundQuestion) {
+  if (!latestText || !String(latestText).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
+  const combined = combinedText || latestText;
 
-  const wordCount = String(text).trim().split(/\s+/).filter(Boolean).length;
-  // Hard word-count rules for substantiality — no API needed for these boundaries.
-  // We still call the API to get isQuestion (short messages can still be questions).
-  const forcedSubstantive = wordCount > 15 ? true : wordCount <= 3 ? false : null;
+  const combinedWordCount = String(combined).trim().split(/\s+/).filter(Boolean).length;
+  const forcedSubstantive = combinedWordCount > 15 ? true : combinedWordCount <= 2 ? false : null;
 
   const { type = "call_on", prompt = "" } = context || {};
-  const sys = `You are a classifier. Given a participant's chat message, return ONLY valid JSON with exactly three boolean fields:
-- "isQuestion": true if the message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?", "I don't understand X"), rather than sharing an answer/opinion/experience. False for filler ("ok","idk","sad"), emotions, statements, or anything that tries to answer the prompt.
-- "substantive": true if the message substantively answers the prompt by sharing relevant content—experiences, opinions, or thoughts. False for filler, too vague, off-topic, or a question back to the moderator.
-- "inappropriate": true if the message is clearly inappropriate — includes aggressive, hostile, or offensive language; sexual content; completely nonsensical gibberish (random characters/keyboard mashing); or content that is wildly and obviously off-topic with no connection to the discussion whatsoever. Normal short or vague answers are NOT inappropriate.
+  const sys = `You are a classifier. You will receive TWO inputs:
+1. "Latest message" — the participant's most recent chat message. Use this ONLY for isQuestion and inappropriate.
+2. "All messages this round" — every message the participant has sent so far this round, concatenated. Use this ONLY for substantive.
+
+Return ONLY valid JSON with exactly three boolean fields:
+- "isQuestion": true if the LATEST MESSAGE is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?", "I don't understand X"), rather than sharing an answer/opinion/experience. False for filler ("ok","idk","sad"), emotions, statements, or anything that tries to answer the prompt.
+- "substantive": true if ALL MESSAGES THIS ROUND, taken together, substantively answer the prompt by sharing relevant content—experiences, opinions, or thoughts. False if the combined text is still just filler, too vague, off-topic, or only questions back to the moderator.
+- "inappropriate": true if the LATEST MESSAGE is clearly inappropriate — includes aggressive, hostile, or offensive language; sexual content; completely nonsensical gibberish (random characters/keyboard mashing); or content that is wildly and obviously off-topic with no connection to the discussion whatsoever. Normal short or vague answers are NOT inappropriate.
 Note: if isQuestion is true, substantive should almost always be false. If inappropriate is true, both other fields should be false.
 Return format: {"isQuestion": true/false, "substantive": true/false, "inappropriate": true/false}`;
-  const user = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"\nParticipant message: "${String(text).trim().slice(0, 400)}"`;
+  const user = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"\nLatest message: "${String(latestText).trim().slice(0, 400)}"\nAll messages this round: "${String(combined).trim().slice(0, 800)}"`;
   try {
     const completion = await openai.chat.completions.create({
       model: MODELS.default,
@@ -832,6 +839,7 @@ io.on("connection", (socket) => {
     co.waitingForHumanIdle = true;
     co.humanRepliedThisTurn = false;
     session.humanGaveSubstantiveResponseThisTurn = false;
+    session.humanMessagesThisRound = [];
     session.lastPromptForHuman = { type: "call_on", prompt: co.question };
     startIdleNudgeTimer();
   }
@@ -1434,6 +1442,7 @@ io.on("connection", (socket) => {
     }
     session.waitingForHumanIntro = true;
     session.humanGaveSubstantiveResponseThisTurn = false;
+    session.humanMessagesThisRound = [];
     session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
     startIdleNudgeTimer();
     logLine("QUEUE", `waiting for human intro from ${session.humanDisplayName}`);
@@ -1551,6 +1560,7 @@ io.on("connection", (socket) => {
     co.waitingForHumanIdle = true;
     co.humanRepliedThisTurn = false;
     session.humanGaveSubstantiveResponseThisTurn = false;
+    session.humanMessagesThisRound = [];
     session.lastPromptForHuman = { type: "poll", prompt: question };
     startIdleNudgeTimer();
 
@@ -1638,6 +1648,7 @@ io.on("connection", (socket) => {
       session.waitingForHumanDisagreementResponse = true;
       session.humanRepliedDisagreementTurn = false;
       session.humanGaveSubstantiveResponseThisTurn = false;
+      session.humanMessagesThisRound = [];
       session.lastPromptForHuman = { type: "disagreement", prompt: followUpText };
       startIdleNudgeTimer();
       logLine("QUEUE", `view-misalignment follow-up: waiting for human ${session.humanDisplayName} to respond (${item.differenceSummary})`);
@@ -1837,12 +1848,15 @@ io.on("connection", (socket) => {
 
     const roundQuestion = session.callOnState?.question || String(ctx?.prompt || "");
 
-    // Always run full classification on every message.
-    // inappropriate is checked for all messages; isQuestion/substantive only used when prompted.
+    if (!session.humanMessagesThisRound) session.humanMessagesThisRound = [];
+    session.humanMessagesThisRound.push(String(text).trim());
+    const combinedText = session.humanMessagesThisRound.join(" ");
+
+    // Single API call: isQuestion/inappropriate use latest message only; substantive uses combined text.
     const { isQuestion: isModQuestion, substantive, inappropriate } = await classifyHumanMessage(
-      text, ctx || { type: "call_on", prompt: "" }, roundQuestion
+      text, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
     );
-    logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive}`);
+    logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive} (combined: "${combinedText.slice(0, 120)}")`);
 
     if (inappropriate) {
       clearIdleNudgeTimer();

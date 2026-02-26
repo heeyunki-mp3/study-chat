@@ -141,7 +141,7 @@ export default function NamePage() {
       }}
     >
       <h1 style={{ marginBottom: 8, fontSize: "1.5rem" }}>Welcome</h1>
-      <p style={{ color: "#666", marginBottom: 24 }}>Please enter your name and take a profile photo to join the discussion.</p>
+      <p style={{ color: "#666", marginBottom: 24, textAlign: "center" }}>Please enter your name and take a profile photo to join the discussion.</p>
 
       {/* Profile photo capture */}
       <div

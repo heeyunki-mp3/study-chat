@@ -1,0 +1,66 @@
+2026-02-26 00:08:42.264 [SESSION_START] backend running on http://localhost:3001
+2026-02-26 00:08:42.270 [SESSION_START] CLI bots for this run: Sid, Vivian, Jae
+2026-02-26 00:09:08.092 [SESSION_START] id=q6ymsno9IwHYvUNBAAAB bots=Sid,Vivian,Jae
+2026-02-26 00:09:08.092 [SESSION_START] participant_name set to "Ana"
+2026-02-26 00:09:08.093 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-26 00:09:08.093 [TYPING] moderator true
+2026-02-26 00:09:12.295 [TYPING] moderator false
+2026-02-26 00:09:12.300 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-26 00:09:12.300 [TYPING] moderator true
+2026-02-26 00:09:16.503 [TYPING] moderator false
+2026-02-26 00:09:16.505 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-26 00:09:16.507 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-26 00:09:19.330 [TYPING] bot=Sid true
+2026-02-26 00:09:20.123 [TYPING] bot=Vivian true
+2026-02-26 00:09:20.317 [TYPING] bot=Jae true
+2026-02-26 00:09:22.533 [TYPING] bot=Sid false
+2026-02-26 00:09:22.537 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-02-26 00:09:23.326 [TYPING] bot=Vivian false
+2026-02-26 00:09:23.329 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-26 00:09:23.521 [TYPING] bot=Jae false
+2026-02-26 00:09:23.524 [MESSAGE] [Jae] "Hi I'm Jae. I teach math at high school"
+2026-02-26 00:09:25.274 [TYPING] moderator true
+2026-02-26 00:09:26.525 [DISCONNECT] id=q6ymsno9IwHYvUNBAAAB
+2026-02-26 00:10:09.224 [SESSION_START] id=qjNErngot-M8b35EAAAD bots=Sid,Vivian,Jae
+2026-02-26 00:10:09.225 [SESSION_START] participant_name set to "eag"
+2026-02-26 00:10:09.225 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-26 00:10:09.225 [TYPING] moderator true
+2026-02-26 00:10:13.427 [TYPING] moderator false
+2026-02-26 00:10:13.430 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-26 00:10:13.430 [TYPING] moderator true
+2026-02-26 00:10:17.634 [TYPING] moderator false
+2026-02-26 00:10:17.636 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-26 00:10:17.636 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-26 00:10:19.851 [TYPING] bot=Sid true
+2026-02-26 00:10:20.366 [TYPING] bot=Vivian true
+2026-02-26 00:10:22.412 [TYPING] bot=Jae true
+2026-02-26 00:10:23.054 [TYPING] bot=Sid false
+2026-02-26 00:10:23.055 [MESSAGE] [Sid] "Hello I'm Sid. I am in IT support. Nice to meet you all"
+2026-02-26 00:10:23.566 [TYPING] bot=Vivian false
+2026-02-26 00:10:23.568 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-26 00:10:25.615 [TYPING] bot=Jae false
+2026-02-26 00:10:25.617 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-02-26 00:10:27.505 [TYPING] moderator true
+2026-02-26 00:10:31.711 [TYPING] moderator false
+2026-02-26 00:10:31.713 [MESSAGE] [Eunice] "Thanks for sharing, Jae. Eag, how about you? Tell us a bit about yourself."
+2026-02-26 00:10:31.715 [QUEUE] waiting for human intro from Eag
+2026-02-26 00:10:47.148 [DISCONNECT] id=qjNErngot-M8b35EAAAD
+2026-02-26 00:16:54.958 [SESSION_START] id=ESs2HIUR0TCrT-DfAAAF bots=Sid,Vivian,Jae
+2026-02-26 00:16:54.959 [SESSION_START] participant_name set to "ara"
+2026-02-26 00:16:54.959 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-02-26 00:16:54.959 [TYPING] moderator true
+2026-02-26 00:16:59.161 [TYPING] moderator false
+2026-02-26 00:16:59.163 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-02-26 00:16:59.163 [TYPING] moderator true
+2026-02-26 00:17:03.365 [TYPING] moderator false
+2026-02-26 00:17:03.367 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-02-26 00:17:03.368 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-02-26 00:17:05.832 [TYPING] bot=Sid true
+2026-02-26 00:17:07.209 [TYPING] bot=Vivian true
+2026-02-26 00:17:08.310 [TYPING] bot=Jae true
+2026-02-26 00:17:09.035 [TYPING] bot=Sid false
+2026-02-26 00:17:09.036 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-02-26 00:17:10.412 [TYPING] bot=Vivian false
+2026-02-26 00:17:10.416 [MESSAGE] [Vivian] "Hi I'm Vivian. I'm a psych undergrad at Emory."
+2026-02-26 00:17:11.512 [TYPING] bot=Jae false
+2026-02-26 00:17:11.513 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."

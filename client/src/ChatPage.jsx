@@ -92,7 +92,7 @@ function getParticipants(session, participantName) {
       isYou: false,
       isModerator: true,
       color: PARTICIPANT_PALETTE[1],
-      profilePic: null,
+      profilePic: `${SERVER_BASE}/profile_pictures/${moderatorName}.png`,
     });
     paletteIndex = 2;
   }
@@ -103,7 +103,7 @@ function getParticipants(session, participantName) {
       isYou: false,
       isModerator: false,
       color: PARTICIPANT_PALETTE[(paletteIndex + i) % PARTICIPANT_PALETTE.length],
-      profilePic: `${SERVER_BASE}/profile_pictures/profile_${(i % 9) + 1}.jpg`,
+      profilePic: `${SERVER_BASE}/profile_pictures/${bot}.png`,
     });
   });
   return list;

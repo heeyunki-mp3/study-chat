@@ -106,6 +106,12 @@ button:focus-visible {
   box-sizing: border-box !important;
 }
 
+/* Only message content is selectable; header (name, time) is not */
+.sender-bubble-wrap .cs-message__header {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Moderator: blue name */
 .sender-bubble-wrap.moderator-bubble .cs-message__sender-name {
   color: #1565c0 !important;
