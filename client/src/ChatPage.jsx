@@ -69,6 +69,51 @@ function getColorForSender(sender, session, myName, introducedName = null) {
   return PARTICIPANT_PALETTE[Math.abs(h) % PARTICIPANT_PALETTE.length];
 }
 
+// Darken a hex color by a factor (0 = black, 1 = unchanged)
+function darkenHex(hex, factor) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return "#" + [r, g, b].map(c =>
+    Math.max(0, Math.round(c * factor)).toString(16).padStart(2, "0")
+  ).join("");
+}
+
+// Render message text with @Name mentions styled as colored chips.
+// Returns plain string if no mentions found, or an array of React elements.
+function renderWithMentions(text, session, myName, introducedName) {
+  if (!text || !session) return text;
+  const names = getOrderedParticipantNames(session, myName);
+  if (!names.length) return text;
+  const escaped = names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`@(${escaped.join("|")})(?!\\w)`, "gi");
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    const matchedName = match[1];
+    const canonical = names.find(n => n.toLowerCase() === matchedName.toLowerCase()) || matchedName;
+    const bubbleColor = getColorForSender(canonical, session, myName, introducedName);
+    const darkColor = darkenHex(bubbleColor, 0.45);
+    parts.push(
+      <span key={match.index} style={{
+        fontWeight: 700,
+        color: darkColor,
+        backgroundColor: bubbleColor + "80",
+        borderRadius: 4,
+        padding: "1px 4px",
+      }}>
+        @{canonical}
+      </span>
+    );
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex === 0) return text;
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+}
+
 // Build participant list for sidebar: You, Moderator, Bots (with profile pic + color, no repeat)
 function getParticipants(session, participantName) {
   const list = [];
@@ -135,6 +180,27 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [introducedName, setIntroducedName] = useState(null);
   const introducedNameRef = useRef(null);
+
+  // Notification sounds
+  const tabFocusedRef = useRef(document.hasFocus());
+  const sndFocusRef = useRef(new Audio("/new_message_on_focus.mp3"));
+  const sndOutRef = useRef(new Audio("/new_message_outoffocus.mp3"));
+
+  useEffect(() => {
+    const onFocus = () => { tabFocusedRef.current = true; };
+    const onBlur = () => { tabFocusedRef.current = false; };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") tabFocusedRef.current = false;
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
 
   // Debounce: stop-typing after 800ms; then idle = session.idleEmptyMs (empty) or session.idleTypingMs (has text)
   const typingTimeoutRef = useRef(null);
@@ -208,6 +274,12 @@ export default function ChatPage() {
           ts: m?.ts,
         },
       ]);
+      // Play notification sound for incoming messages
+      if (!isOutgoing) {
+        const snd = tabFocusedRef.current ? sndFocusRef.current : sndOutRef.current;
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
     });
 
     socket.on("typing", ({ who, isTyping }) => {
@@ -371,6 +443,9 @@ export default function ChatPage() {
               <MessageList typingIndicator={null}>
                 {messages.map((m, i) => {
                   const isModerator = session?.moderatorName && m.sender === session.moderatorName;
+                  const msgText = typeof m.message === "string" ? m.message : String(m.message ?? "").slice(0, 2000);
+                  const rendered = renderWithMentions(msgText, session, participantName, introducedName);
+                  const hasMentions = Array.isArray(rendered);
                   return (
                     <div
                       key={i}
@@ -379,7 +454,7 @@ export default function ChatPage() {
                     >
                         <Message
                           model={{
-                            message: typeof m.message === "string" ? m.message : String(m.message ?? "").slice(0, 2000),
+                            message: hasMentions ? " " : msgText,
                             sentTime: fmtTime(m.ts),
                             sender: isModerator ? `${m.sender}${MODERATOR_LABEL}` : m.sender,
                             direction: m.direction,
@@ -387,6 +462,9 @@ export default function ChatPage() {
                           }}
                         >
                           <Message.Header sender={isModerator ? `${m.sender}${MODERATOR_LABEL}` : m.sender} sentTime={fmtTime(m.ts)} />
+                          {hasMentions && (
+                            <Message.CustomContent>{rendered}</Message.CustomContent>
+                          )}
                         </Message>
                     </div>
                   );

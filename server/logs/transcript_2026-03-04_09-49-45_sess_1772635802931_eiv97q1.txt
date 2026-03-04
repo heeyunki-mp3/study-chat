@@ -1,0 +1,32 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
+Vivian: Hello everyone! I'm Vivian. I'm a student at Emory studying psychology
+Jae: Hi I'm Jae. I teach math at high school
+Eunice: Ara, are you still there? Would you respond to this question?
+Ara: hi! I am Ara :)
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Jae: Ok!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think? How do you usually feel when a company you use introduces something new?
+Sid: Honestly, I’m usually skeptical when big companies roll out new features. Most of the time it feels like fluff or they break something that was working fine.
+Sid: I don’t jump on trying new stuff right away unless it’s something that actually improves security or usability. Otherwise, I wait and see if it sticks around or if people complain about it first.
+Eunice: Thanks for sharing, Sid. Vivian, how about you? Do you try new features right away or wait like Sid?
+Vivian: i usually try new features pretty fast bc im curious and hate missing out on better stuff
+Vivian: but if it seems clunky or too complicated i bail quick since no time for frustration
+Vivian: usually just want stuff that actually makes life easier or faster not flashy extras
+Eunice: Good point, Vivian. Jae, how about you? Do you try new features right away or wait to see if they’re useful?
+Jae: I usually wait before trying new features because I prefer stability and don’t want to risk breaking something in my workflow.
+Jae: I feel like if it’s genuinely useful and easy to understand, I’ll give it a shot after seeing some reviews or feedback from others.
+Eunice: Thanks for that, Jae. Ara, how about you?
+Ara: I think I try to get the new stuff right away!
+Eunice: Thanks everyone! It is helpful to hear from each of you.
+Eunice: Sid what do you think about Vivian's approach to trying new features quickly can you share your thoughts?
+Sid: Vivian's curiosity is commendable, but rushing into new features can backfire if they’re buggy or break workflows.
+Sid: Smart move to bail quickly if it's clunky, though. For me, it’s about balancing curiosity with patience and stability.

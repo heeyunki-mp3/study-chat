@@ -1,0 +1,29 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Vivian: Hey my name is Vivian. I live in Atlanta
+Sid: Hello I'm Sid. I am in IT support. Nice to meet you all
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Nice to meet you, @Jae! @Ara, your turn to introduce yourself.
+Ara: Hi! I am ara! nice to meet you all!
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Sid: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: @Sid, what do you think? How do you feel when big tech rolls out new features?
+Sid: I usually hold back on new features until I see they’re stable or actually useful. Big tech often pushes stuff that’s unpolished first, so I wait to avoid headaches.
+Sid: If it's something to improve security or user experience, then I’ll test it sooner, but I’m wary of updates that just mess with workflows or add bloat.
+Eunice: Makes sense to be cautious about workflow changes. @Vivian, do you jump on new features quickly or wait a bit?
+Vivian: i usually try new features pretty quickly especially if they seem like theyll save time or make things easier
+Vivian: like if its about login or security stuff ill enable it right away bc forgetting passwords is the worst
+Vivian: but if its some random cosmetic change or slows down my workflow ill hold off or ignore it totally
+Eunice: Makes sense, @Vivian. @Jae, do you jump on new features or wait it out?
+Jae: I usually wait a bit before trying new features, especially from big companies. In my experience, they tend to have bugs or compatibility issues at first, which is frustrating when I'm juggling multiple devices.
+Jae: If it's something that clearly improves security or simplifies an often annoying task, then I might give it a try sooner, but I like to see some clear instructions or feedback before fully committing.
+Eunice: Makes sense to want clear instructions first. @Ara, how about you? Do you dive into new features or hold back a bit?
+Ara: I try to dive in asap. I just love new stuff and I always need to be the first one to do anything!
+Eunice: Thanks for sharing, everyone!

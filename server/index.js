@@ -83,7 +83,7 @@ function logLine(tag, message) {
 
 // --- Human idle detection ---
 const IDLE_EMPTY_MS = 4000;                   // Human stopped typing with empty input → considered idle after this
-const IDLE_TYPING_MS = 10000;                 // Human stopped typing with non-empty input → considered idle after this
+const IDLE_TYPING_MS = 4000;                 // Human stopped typing with non-empty input → considered idle after this
 const IDLE_CHECK_MS = 2000;                   // How often the server polls to check if human is idle
 
 // --- Nudge (remind inactive human) ---
@@ -97,11 +97,11 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 
 // --- Bot message timing ---
 const THINKING_DELAY_MS = 1000;               // Pause before showing "typing…" indicator
-const TYPING_DELAY_MS = 3200;                 // How long "typing…" shows before the message appears
-const STUDY_GOAL_ACK_DELAY_MS = { min: 2000, max: 3000 }; // Random delay before bots acknowledge the study goal
+const TYPING_SPEED = { min: 0.7, max: 1.3 };  // Bot typing speed range (words/sec)
+const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
+const STUDY_GOAL_ACK_DELAY_MS = 1500;         // Delay before bot acknowledges the study goal
 const INTRO_STAGGER_BASE_MS = 1000;           // Minimum stagger before a bot sends its intro
-const POLL_THINK_MIN_MS = 1000;               // Minimum random "think" delay before bot answers a poll question
-const POLL_THINK_MAX_MS = 4000;               // Maximum random "think" delay before bot answers a poll question
+const POLL_THINK_MS = { min: 1000, max: 4000 }; // Random "think" delay before bot answers a poll question
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -292,7 +292,6 @@ async function detectDisagreements(moderatorQuestion, answersByPerson) {
   const transcript = lines.join("\n");
   logLine("DISAGREEMENT CHECK", transcript);
 
-
   const sys = `You analyze discussion transcripts.
 
 Your task is to identify VIEW MISALIGNMENT (stance divergence), not interpersonal disagreement.
@@ -376,10 +375,21 @@ function parseDisagreementJson(raw) {
 // Generate follow-up prompt for disagreed-with person (view-misalignment wording)
 // =====================
 async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagreedByText, moderatorQuestion, differenceSummary) {
-  const fallback = `${disagreedBy} had a different view—${disagreedWith}, what do you think?`;
-  const sys = `You generate one short human moderator-style sentence. You must ask ${disagreedWith} (and only ${disagreedWith}) to respond. The sentence must be directed AT ${disagreedWith}—do NOT address ${disagreedBy} as the person being asked (${disagreedBy} already gave their view). End with or clearly name ${disagreedWith}, e.g. "... what do you think, ${disagreedWith} or ... ${disagreedWith}, can you share your thoughts on ${disagreedBy}'s idea?" You may tell them that it is idea from ${disagreedBy}. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting."
-Context: The moderator had asked: "${moderatorQuestion}". View misalignment: ${(differenceSummary || "").slice(0, 200)}. ${disagreedBy} said: "${(disagreedByText || "").slice(0, 200)}".
-Output ONLY one sentence. No quotes, no JSON.`;
+  const fallback = `It sounds like there are a couple different takes here — @${disagreedWith}, what are your thoughts?`;
+  const sys = `You are a casual, neutral human discussion moderator. You've noticed participants have different views on a topic. Write 1-2 short sentences that:
+
+1. Briefly and neutrally observe the difference WITHOUT directly pitting people against each other (e.g. "It sounds like we're hearing a couple different approaches..." or "Interesting — seems like people feel differently about this...")
+2. Then naturally invite ${disagreedWith} to share more (e.g. "...@${disagreedWith}, what are your thoughts?" or "...curious what you think, @${disagreedWith}")
+
+IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Jae, @Mina). Every single name mention must have the @ prefix.
+- Do NOT say "what do you think about @[Name]'s approach/view/idea?" — that's too confrontational
+- Do NOT frame it as a direct disagreement or conflict
+- Keep it neutral, warm, and organic — like you're genuinely curious, not forcing a debate
+- You MUST include @${disagreedWith}'s name (with @ prefix)
+- Sound like a real person, not a formal moderator
+
+Context: The discussion question was: "${moderatorQuestion}". ${disagreedBy} said: "${(disagreedByText || "").slice(0, 200)}". The difference: ${(differenceSummary || "").slice(0, 200)}.
+Output ONLY the message text. No quotes, no JSON, no separators.`;
 
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
@@ -401,7 +411,7 @@ async function generateRoundSummary(question, roundTranscript, opts = {}) {
   const { roundType = "big_question" } = opts;
   const sys = roundType === "poll"
     ? `You are a discussion moderator. Given a yes/no/heard-of poll question and each participant's short answer, write ONE casual sentence summarizing how many people have used it / heard of it vs haven't. Example: "Looks like 2 of us use VPNs and 2 don't!" or "Cool! 3 out of 4 have heard of passkeys but only 1 has actually used one." Keep it under 20 words, warm and natural. Output ONLY the sentence, no quotes or extra text.`
-    : `You are a discussion moderator wrapping up a conversation. In less than 3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it very concise and natural. Output ONLY the summary, no labels or quotes. It must be less than 3 sentences. It should be as concise as possible. Keep it very natural and human. Thank them before you start the summary. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
+    : `You are a casual human discussion moderator wrapping up a round. Write 1-2 short sentences that briefly capture what people said. Sound like a real person — warm but concise. If people had different takes, note it naturally (e.g. "Sounds like some of you are more cautious while others jump right in"). Do NOT list everyone's individual views. Keep it under 30 words. Output ONLY the text, no quotes or formatting.`;
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
     messages: [
@@ -415,8 +425,12 @@ async function generateRoundSummary(question, roundTranscript, opts = {}) {
   return text || (roundType === "poll" ? "Thanks everyone for the quick answers!" : "Thanks everyone for sharing your views on that.");
 }
 
-/** Generic OpenAI boolean classification. Returns false on error. */
-async function classifyWithOpenAI(sys, user, key) {
+/** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
+async function isAskingWhatPasskeyIs(text, roundQuestion) {
+  if (!text || !String(text).trim()) return false;
+  const trimmed = String(text).trim();
+  const sys = `You classify whether a chat message indicates the participant does NOT know what passkey is and is asking for an explanation. Return ONLY valid JSON: {"asksWhatPasskeyIs": true} or {"asksWhatPasskeyIs": false}. True when: asks what passkey is, expresses confusion, requests explanation. False when: already knows, sharing opinion.`;
+  const user = `Round: ${String(roundQuestion ?? "").slice(0, 150)}\nMessage: "${trimmed.slice(0, 300)}"\nDoes this indicate they don't know passkey and want explanation?`;
   try {
     const completion = await openai.chat.completions.create({
       model: MODELS.default,
@@ -425,34 +439,18 @@ async function classifyWithOpenAI(sys, user, key) {
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const parsed = JSON.parse(raw || "{}");
-    return !!parsed[key];
+    return !!parsed.asksWhatPasskeyIs;
   } catch (e) {
-    console.error(`classifyWithOpenAI(${key}) error`, e?.message || e);
+    console.error("isAskingWhatPasskeyIs error", e?.message || e);
     return false;
   }
 }
 
-/** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
-async function isAskingWhatPasskeyIs(text, roundQuestion) {
-  if (!text || !String(text).trim()) return false;
-  const trimmed = String(text).trim();
-  const sys = `You classify whether a chat message indicates the participant does NOT know what passkey is and is asking for an explanation. Return ONLY valid JSON: {"asksWhatPasskeyIs": true} or {"asksWhatPasskeyIs": false}. True when: asks what passkey is, expresses confusion, requests explanation. False when: already knows, sharing opinion.`;
-  const user = `Round: ${String(roundQuestion ?? "").slice(0, 150)}\nMessage: "${trimmed.slice(0, 300)}"\nDoes this indicate they don't know passkey and want explanation?`;
-  return classifyWithOpenAI(sys, user, "asksWhatPasskeyIs");
-}
-
 /**
- * Single API call that classifies a participant's message three ways:
- *   isQuestion   — based on the latest message only.
- *   inappropriate — based on the latest message only.
- *   substantive  — based on ALL messages sent this round (combinedText).
- *
- * @param {string} latestText    – the newest message the user just sent.
- * @param {string} combinedText  – all messages the user sent this round, joined.
- * @param {string} burstText     – consecutive user messages since the last moderator response (for isQuestion).
- * @param {string} combinedText  – all messages the user sent this round, joined (for substantive & inappropriate).
- * @param {object} context       – { type, prompt } describing the current prompt.
- * @param {string} roundQuestion – the discussion question for this round.
+ * Two parallel API calls to classify a participant's message:
+ *   isQuestion   — based on burst text only (messages since last moderator response).
+ *   substantive  — based on combined round text.
+ *   inappropriate — based on combined round text.
  */
 async function classifyHumanMessage(burstText, combinedText, context, roundQuestion) {
   if (!burstText || !String(burstText).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
@@ -576,38 +574,43 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
   const participantAskedWhatPasskeyIs =
     roundIsAboutPasskey && latestMessage && (await isAskingWhatPasskeyIs(latestMessage.text, roundQuestion ?? bigQuestion));
 
-  const sys = `You are a discussion moderator. Generate ONE short message that:
-1. Briefly acknowledges the latest message (one short phrase, then cue the next person)
-2. Then cues the next person to speak (e.g. "[Name], what do you think?" or "How about you, [Name]?")
+  const sys = `You are a real human discussion moderator in a casual group chat. Generate ONE short message (1-2 sentences max).
 
-ACKNOWLEDGMENT VARIETY: Vary your acknowledgment phrases. Use different ones throughout the conversation. Examples:
-- "Thanks for sharing, [Name]."
-- "That's interesting, [Name]."
-- "I see, [Name]."
-- "Got it, [Name]."
-- "Right, [Name]."
-- "Makes sense, [Name]."
-- "Thanks, [Name]."
-- "Good point, [Name]." (use sparingly, not every time)
-- "Interesting perspective, [Name]."
-- "Thanks for that, [Name]."
-- "[Name], that's helpful."
-- "Appreciate that, [Name]."
+Your message should:
+1. Briefly react to what was just said (keep it very short and natural — not every response needs "thanks for sharing")
+2. Smoothly pass to the next person
 
-Keep it natural and conversational. Output ONLY the message text—no JSON, no quotes, no extra formatting. Do NOT use "---" or similar separators.
-When you are in the middle of a round, do NOT ask a new or different question—only acknowledge and cue the next person to respond to the same question for this round.`;
+Sound like a real person texting, not a formal moderator. Vary your style — sometimes just a quick reaction + name, sometimes a brief observation.
+
+IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Jae, @Mina). Every single name mention must have the @ prefix.
+
+Good examples:
+- "Gotcha. @${nextName}, how about you?"
+- "That makes sense! @${nextName}, what's your take?"
+- "Interesting — @${nextName}, same question for you"
+- "Right right. @${nextName}?"
+- "Oh nice. @${nextName}, what about you?"
+- "Haha fair enough. @${nextName}, your turn!"
+
+BAD examples (too stiff/formal — avoid these):
+- "Thanks for sharing, @[Name]. @[Name], what do you think?"
+- "That's a great point, @[Name]. How about you, @[Name]?"
+- "I appreciate your perspective, @[Name]."
+
+Output ONLY the message text — no JSON, no quotes, no formatting, no separators like ---.
+When in the middle of a round, do NOT ask a new question — only react and cue the next person for the same question.`;
 
   let userPrompt;
   if (participantAskedWhatPasskeyIs) {
-    userPrompt = `A participant just asked what passkey is. First give ONE short sentence explaining passkey (e.g. it's a way to sign in with your face, fingerprint, or device instead of a password). Then briefly acknowledge and cue the next person: ${nextName}. Output one flowing message: explanation + ack + cue.`;
+    userPrompt = `A participant just asked what passkey is. First give ONE short sentence explaining passkey (e.g. it's a way to sign in with your face, fingerprint, or device instead of a password). Then briefly acknowledge and cue the next person: @${nextName}. Output one flowing message: explanation + ack + cue. Remember to prefix the name with @.`;
   } else if (isIntro) {
-    userPrompt = `The latest message: ${latestStr}. Next person to cue: ${nextName}. Write a brief ack and then ask ${nextName} to introduce themselves.`;
+    userPrompt = `The latest message: ${latestStr}. Next person to cue: @${nextName}. Write a brief ack and then ask @${nextName} to introduce themselves. Remember to prefix the name with @.`;
   } else if (isFirstInRound && bigQuestion) {
-    userPrompt = `We're starting a new question: "${String(bigQuestion).slice(0, 300)}". No one has answered this question yet. Cue ${nextName} to answer first (brief transition only, e.g. "[Name], what do you think?"). Do NOT thank or acknowledge anyone as having just responded—no one has responded to this question yet.`;
+    userPrompt = `We're starting a new question: "${String(bigQuestion).slice(0, 300)}". No one has answered this question yet. Cue @${nextName} to answer first (brief transition only, e.g. "@[Name], what do you think?"). Do NOT thank or acknowledge anyone as having just responded—no one has responded to this question yet. Remember to prefix the name with @.`;
   } else if (roundQuestion) {
-    userPrompt = `The current question for this round is: "${String(roundQuestion).slice(0, 300)}". Latest message to acknowledge: ${latestStr}. Next person to cue: ${nextName}. Brief ack, then cue them to respond to this same question. Do NOT introduce a new or different question.`;
+    userPrompt = `The current question for this round is: "${String(roundQuestion).slice(0, 300)}". Latest message to acknowledge: ${latestStr}. Next person to cue: @${nextName}. Brief ack, then cue them to respond to this same question. Do NOT introduce a new or different question. Remember to prefix the name with @.`;
   } else {
-    userPrompt = `Latest message to acknowledge: ${latestStr}. Next person to cue: ${nextName}. Brief ack, then cue them.`;
+    userPrompt = `Latest message to acknowledge: ${latestStr}. Next person to cue: @${nextName}. Brief ack, then cue them. Remember to prefix the name with @.`;
   }
 
   try {
@@ -620,11 +623,11 @@ When you are in the middle of a round, do NOT ask a new or different question—
       max_tokens: 100,
     });
     const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
-    if (text) return text.replace(/---/g, "").trim() || `How about you, ${nextName}?`;
+    if (text) return text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
   } catch (e) {
     console.error("generateModeratorCue error", e?.message || e);
   }
-  return `How about you, ${nextName}?`;
+  return `How about you, @${nextName}?`;
 }
 
 /** Last non-moderator message from session (for ack context). */
@@ -703,9 +706,9 @@ function createSession(participantName) {
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
   const order = [...bots, participantName];
-  const allRoundSegments = MODERATOR_SCRIPT.filter((s) => s.type === "big_question" || s.type === "poll");
-  const allRounds = allRoundSegments.map((s) => ({ type: s.type, question: s.messages[0] }));
-  const bigQuestions = allRounds.filter((r) => r.type === "big_question").map((r) => r.question);
+  const allRounds = MODERATOR_SCRIPT
+    .filter((s) => s.type === "big_question" || s.type === "poll")
+    .map((s) => ({ type: s.type, question: s.messages[0] }));
 
   return {
     sessionId,
@@ -714,7 +717,6 @@ function createSession(participantName) {
     participantName,
     humanDisplayName: capitalizeFirst(participantName),
     messages: [],
-    scriptIndex: 0,
     waitingForHumanIntro: false,
     moderatorTypingIntroCue: false,
     userRepliedDuringIntroCue: false,
@@ -731,7 +733,6 @@ function createSession(participantName) {
       disagreementIndex: 0,
     },
     allRounds,
-    bigQuestions,
     answeredQuestions: [], // { question, answer } pairs the moderator has already answered
     currentRoundIndex: -1,
     currentRoundType: allRounds[0]?.type || "big_question",
@@ -934,10 +935,7 @@ io.on("connection", (socket) => {
 
       if (session.idleNudgeCount >= MAX_NUDGES) {
         clearIdleNudgeTimer();
-        const kickMsg = "I think you are not paying attention. I am kicking you out.";
-        const m = addMessage(session, MODERATOR_NAME, kickMsg);
-        logLine("MESSAGE", `[${MODERATOR_NAME}] "${kickMsg}"`);
-        io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
+        emitMessage(MODERATOR_NAME, "I think you are not paying attention. I am kicking you out.");
         logLine("QUEUE", "idle kick: closing session after 2 nudges");
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
@@ -960,13 +958,11 @@ io.on("connection", (socket) => {
   }
 
   /** Kick user for 4 unsubstantial messages in a row. Must be called inside human_message handler. */
-  async function kickForUnsubstantial(sess) {
+  async function kickForUnsubstantial() {
     clearIdleNudgeTimer();
     clearElaborationPromptTimer();
     const kickMsg = "Please provide more substantial responses. You have been removed from the session.";
-    const m = addMessage(sess, MODERATOR_NAME, kickMsg);
-    logLine("MESSAGE", `[${MODERATOR_NAME}] "${kickMsg}"`);
-    io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
+    emitMessage(MODERATOR_NAME, kickMsg);
     logLine("QUEUE", "unsubstantial kick: closing session after 4 unsubstantial in a row");
     await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
     io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
@@ -981,6 +977,15 @@ io.on("connection", (socket) => {
     return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
   }
 
+  /** Typing delay based on message length. Uses fixed speed for moderator, random range for bots. Min 800ms. */
+  function typingDelayMs(text, { moderator = false } = {}) {
+    const words = String(text ?? "").trim().split(/\s+/).filter(Boolean).length || 1;
+    const speed = moderator
+      ? MODERATOR_TYPING_SPEED
+      : TYPING_SPEED.min + Math.random() * (TYPING_SPEED.max - TYPING_SPEED.min);
+    return Math.max(800, Math.round((words / speed) * 1000));
+  }
+
   /** Emit a bot's message bubbles with typing indicators; uses timeoutRef so disconnect can clear pending delay. */
   async function emitBotBubblesWithTyping(botName, bubbles, timeoutRef) {
     if (!Array.isArray(bubbles)) return;
@@ -992,7 +997,7 @@ io.on("connection", (socket) => {
       });
       if (!session) return;
       emitTyping(botName, true);
-      await delay(TYPING_DELAY_MS);
+      await delay(typingDelayMs(bubbles[i]));
       if (!session) return;
       emitTyping(botName, false);
       emitMessage(botName, bubbles[i]);
@@ -1039,7 +1044,7 @@ io.on("connection", (socket) => {
       emitTyping(MODERATOR_NAME, false);
       return;
     }
-    await delay(TYPING_DELAY_MS);
+    await delay(typingDelayMs(text, { moderator: true }));
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
       emitTyping(MODERATOR_NAME, false);
@@ -1325,7 +1330,6 @@ io.on("connection", (socket) => {
     // after the user has already gone idle).
     session.pendingAdvanceFromIdle = false;
     session.cancelAdvanceFromIdle = false;
-    session.lastViewMisalignments = deduped.map((p) => ({ disagreedWith: p.disagreedWith, disagreedBy: p.disagreedBy, differenceSummary: p.differenceSummary }));
     for (const p of deduped) {
       logLine("QUEUE", `view misalignment: ${p.disagreedWith} ↔ ${p.disagreedBy} — ${p.differenceSummary}`);
     }
@@ -1425,14 +1429,14 @@ io.on("connection", (socket) => {
       const staggerMs = randomBetween(INTRO_STAGGER_BASE_MS, maxSec * 1000);
       return new Promise((resolve) => {
         setTimeout(async () => {
-          await delay(THINKING_DELAY_MS);
-          emitTyping(bot, true);
-          await delay(TYPING_DELAY_MS);
-          emitTyping(bot, false);
           const options = BOT_INTROS[bot];
           const intro = options?.length
             ? options[Math.floor(Math.random() * options.length)]
             : `Hi, I'm ${bot}.`;
+          await delay(THINKING_DELAY_MS);
+          emitTyping(bot, true);
+          await delay(typingDelayMs(intro));
+          emitTyping(bot, false);
           emitMessage(bot, intro);
           resolve();
         }, staggerMs);
@@ -1459,7 +1463,7 @@ io.on("connection", (socket) => {
       return;
     }
     session.moderatorTypingIntroCue = true;
-    await emitModeratorLine(cue, { skipIfUserReplied: true });
+    await emitModeratorLine(cue, { skipIfUserReplied: true, cancelCheck: () => !!session?.humanIsTyping });
     if (!session) return;
     session.moderatorTypingIntroCue = false;
     if (session.userRepliedDuringIntroCue) {
@@ -1479,6 +1483,9 @@ io.on("connection", (socket) => {
   /** Study goal: moderator messages, then 1 ack (one random bot). */
   async function runStudyGoal() {
     if (!session) return;
+    // Clear stale advance-cancel flags from intro phase so emitModeratorLine won't skip
+    session.pendingAdvanceFromIdle = false;
+    session.cancelAdvanceFromIdle = false;
     const segment = MODERATOR_SCRIPT.find((s) => s.type === "study_goal");
     if (!segment?.messages?.length) {
       startFirstRound();
@@ -1492,7 +1499,7 @@ io.on("connection", (socket) => {
     const botIndex = Math.floor(Math.random() * bots.length);
     const bot = bots[botIndex];
     const ack = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
-    await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS.min, STUDY_GOAL_ACK_DELAY_MS.max));
+    await delay(STUDY_GOAL_ACK_DELAY_MS);
     emitMessage(bot, ack);
 
     logLine("QUEUE", "study_goal ack done, starting first round");
@@ -1551,12 +1558,12 @@ io.on("connection", (socket) => {
 
     // All bots respond in parallel with 1–4 s random think delay + typing delay
     const botPromises = session.bots.map((bot) => {
-      const thinkMs = randomBetween(POLL_THINK_MIN_MS, POLL_THINK_MAX_MS);
+      const thinkMs = randomBetween(POLL_THINK_MS.min, POLL_THINK_MS.max);
       return new Promise(async (resolve) => {
         await delay(thinkMs);
         if (!session) { resolve(); return; }
         emitTyping(bot, true);
-        await delay(TYPING_DELAY_MS);
+        await delay(typingDelayMs("yes I have heard of it"));
         if (!session) { resolve(); return; }
         emitTyping(bot, false);
         let bubbles = [];
@@ -1775,7 +1782,7 @@ io.on("connection", (socket) => {
         const nudgeCount = (session.substantialNudgeCount || 0) + 1;
         if (nudgeCount >= MAX_ELABORATION_NUDGES) {
           logLine("QUEUE", `elaboration nudge ${nudgeCount}/${MAX_ELABORATION_NUDGES}: kicking instead of nudging again`);
-          await kickForUnsubstantial(session);
+          await kickForUnsubstantial();
           return;
         }
         session.substantialNudgeCount = nudgeCount;
@@ -1792,6 +1799,8 @@ io.on("connection", (socket) => {
       return;
     }
     if (session?.waitingForHumanIntro) {
+      // Only advance if user actually sent a message; otherwise let the nudge timer handle it
+      if (!hasHumanRepliedAfterIntroPrompt(session)) return;
       clearIdleNudgeTimer();
       logLine("QUEUE", `human_idle after intro from ${session.humanDisplayName}`);
       session.waitingForHumanIntro = false;
@@ -1851,8 +1860,7 @@ io.on("connection", (socket) => {
     if (session.waitingForHumanIntro || session.moderatorTypingIntroCue) {
       const introduced = extractIntroducedName(text);
       if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
-        session.introducedName = capitalizeFirst(introduced.trim());
-        session.humanDisplayName = session.introducedName;
+        session.humanDisplayName = capitalizeFirst(introduced.trim());
         logLine("QUEUE", `intro: using introduced name "${session.humanDisplayName}" (NamePage had "${session.participantName}")`);
         io.to(socket.id).emit("introduced_name", { name: session.humanDisplayName });
       }
@@ -1883,7 +1891,6 @@ io.on("connection", (socket) => {
     const combinedText = session.humanMessagesThisRound.join(" ");
     const burstText = session.humanMessagesBurst.join(" ");
 
-    // Single API call: isQuestion uses latest burst only; substantive/inappropriate use full round text.
     const { isQuestion: isModQuestion, substantive, inappropriate } = await classifyHumanMessage(
       burstText, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
     );
