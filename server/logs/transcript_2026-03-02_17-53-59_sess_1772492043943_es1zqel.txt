@@ -1,0 +1,71 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hello I'm Sid. I am in IT support. Nice to meet you all
+Jae: Hi I'm Jae. I teach math at high school
+Vivian: Hello everyone! I'm Vivian. I'm a student at Emory studying psychology
+Eunice: Thanks for sharing, Vivian. Ara, could you introduce yourself next?
+Aran: Hi I am Aran!
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Vivian: Got it!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: I usually wait and see if the new feature actually works well and isn’t just a gimmick or messes things up.
+Sid: Jumping in too quick can mean dealing with bugs or awkward interfaces. I prefer to upgrade once it's proven and stable.
+Eunice: Makes sense, Sid. Vivian, how about you?
+Vivian: i usually jump on new features pretty fast especially if they sound useful or will save me time
+Vivian: but if it seems complicated or buggy i might wait till other people test it first or till there are updates bc i hate wasting time on glitches
+Vivian: if it makes stuff easier on my phone im all for it though
+Eunice: Thanks for that, Vivian. Jae, how about you?
+Jae: I usually approach new features cautiously, especially if they affect my work tools. I prefer to understand the benefits and any risks before trying them out.
+Jae: In my experience, jumping into new features too quickly can cause disruptions, so I often wait for clear instructions or feedback from others first.
+Eunice: Thanks for that, Jae. Aran, how about you?
+Aran: yeah I tend to adopt it right away!
+Eunice: Got it, thanks for sharing!
+Eunice: Sid what do you think about Vivian’s approach to trying new features quickly especially if they seem useful can you share your thoughts on this strategy?
+Sid: Vivian's eagerness to try useful new features makes sense, especially if it genuinely saves time or adds value.
+Sid: But I'd still caution to keep an eye out for any hidden bugs or privacy concerns that often slip through early versions.
+Eunice: Thanks everyone for sharing your thoughts. We heard a range of reactions about new tech features—some of you, like Vivian and Aran, are eager to try things right away if they seem helpful, while others like Sid and Jae prefer to wait and make sure the updates are stable and beneficial before jumping in. It was great to see the balance between excitement and caution in your approaches.
+Eunice: Have you ever used or heard about VPN?
+Sid: Yes I use one occasionally
+Aran: nop
+Jae: Yes, I've heard of VPNs
+Vivian: Heard of it but never used
+Eunice: Looks like 2 of us know VPNs well, 2 have heard of them, and 1 hasn't!
+Eunice: Have you ever used or heard about password managers?
+Vivian: Yeah ive used one before
+Sid: Yeah, I use one regularly
+Jae: Yes, I use a password manager.
+Eunice: Aran, are you still there? Would you respond to this question?
+Aran: yea!
+Aran: I still use password manager
+Eunice: Looks like all 4 of us use password managers regularly!
+Eunice: Have you ever used or heard about passkeys?
+Aran: what is passkeys
+Jae: I tried setting one up once
+Vivian: What is a passkey exactly
+Sid: Yes, I use passkeys regularly
+Eunice: Passkeys are a secure way to log in without passwords, using your device's biometrics or PIN. They replace passwords with something safer and easier to use.
+Eunice: So, what do you think about the idea of using passkeys instead of passwords?
+Eunice: Aran, are you still there? Would you respond to this question?
+Aran: yes!
+Eunice: Looks like 2 of us use passkeys, 1 has heard about them, and 1 isn’t sure what they are!
+Eunice: For some Google accounts, users can switch their account login to "passkey".
+
+Have you seen or heard about passkey before?
+If you've used it, what made you decide to switch? If you haven't, what held you back?
+Eunice: Vivian, what do you think?
+Vivian: i had heard about passkey but never really looked into it bc it sounded kinda techy and complicated
+Vivian: all i know is that its supposed to be a way to log in without passwords which sounds nice bc passwords are such a headache
+Vivian: id be curious to try it if it makes logging in faster and less annoying
+Eunice: A passkey is a secure way to sign in using your face, fingerprint, or device instead of a traditional password. Thanks for asking! Jae, what do you think?
+Jae: I've tried setting it up but found the process a bit confusing, especially worrying about using it on multiple devices like my phone and shared laptops at school.
+Jae: I like the idea of not needing passwords, but I'm cautious because I don't want to risk losing access if the system doesn't work smoothly across all my devices.
+Eunice: Thanks for sharing your concern, Jae. Aran, what do you think about using passkeys?
+Eunice: Aran, are you still there? Would you respond to this question?
+Eunice: I think you are not paying attention. I am kicking you out.

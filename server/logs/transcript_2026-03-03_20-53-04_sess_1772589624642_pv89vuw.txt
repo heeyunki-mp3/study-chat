@@ -1,0 +1,87 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Vivian: Hi I'm Vivian. I'm a psych undergrad at Emory.
+Sid: Sid. I am an IT support technician in New Jersey.
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Ara: Hi I am ara
+Eunice: Thanks for sharing, Jae. Ara, how about you introduce yourself next?
+Eunice: Could you elaborate? Please share your thoughts on the question.
+Ara: I am Ara
+Ara: Hi :)
+Ara: I am Ara
+Eunice: Could you elaborate? Please share your thoughts on the question.
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Sid: Ok!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Usually I wait a bit to see if the new feature actually works well or causes issues. Sometimes it's just useless fluff. Trying it right away only makes sense if it fixes a real problem I have.
+Eunice: Makes sense, Sid. Vivian, how about you? Do you jump on new features quickly or hold back like Sid?
+Vivian: i usually try new features quickly bc i wanna see if they actually make life easier
+Vivian: but if its obvious its just gimmicky or clunky then i drop it fast
+Vivian: for me its efficiency over novelty so if it slows me down no thanks
+Eunice: Thanks for sharing, Vivian. Jae, how about you? Do you dive into new features immediately or hold back until you're sure they're worth it?
+Jae: I usually hold back and watch how the new feature performs for a while before trying it. I feel like jumping in too early can be risky, especially if it disrupts workflows.
+Jae: Logically, I prefer waiting until there's clear benefit or positive feedback, since I rely on stability for my daily teaching tasks.
+Eunice: Good point, Jae. Ara, how about you?
+Ara: yeah I tend to adapt it right away! why not. they are cool. i love new stuff
+Eunice: Ok! Thanks everyone for sharing!
+Eunice: Sid, Vivian mentioned she tries new features quickly to see if they make life easier, so what do you think about her approach?
+Sid: Vivian's approach makes sense if you want to be on the cutting edge and find efficiency gains early. But new features often come with bugs or hidden pitfalls that aren't obvious at first.
+Sid: I prefer waiting a bit to avoid compatibility and security headaches. Jumping in too fast can make things worse, especially if it's not well tested.
+Eunice: Thanks everyone for sharing your thoughts! We heard a range of reactions to new tech features, with some of you like Vivian and Ara eager to try things out quickly to see if they improve efficiency, while others like Sid and Jae prefer to wait and ensure the feature is reliable before diving in. It’s clear that finding the right balance between embracing innovation and maintaining stability is a key theme here.
+Eunice: Have you ever used or heard about VPN?
+Jae: Yeah I’ve heard of VPN
+Sid: Yes I use VPN sometimes
+Vivian: Heard of it but never used
+Ara: what is a vpn?
+Eunice: A VPN is a service that encrypts your internet and hides your IP address, making your online activities more private and secure.
+Eunice: VPNs help protect your privacy online—what's your experience with them?
+Ara: i never used it
+Eunice: Looks like 2 of us have used VPNs, 2 have only heard of it or never used it!
+Eunice: Have you ever used or heard about password managers?
+Jae: Yeah I use one daily
+Vivian: i use one often
+Sid: Yeah I use a few
+Ara: no
+Eunice: Looks like 3 of us use password managers regularly, and 1 hasn't used one yet!
+Eunice: Have you ever used or heard about passkeys?
+Vivian: Heard of it never tried
+Jae: I’ve heard of it before
+Sid: Yeah, I use passkeys daily
+Ara: yeah
+Eunice: Looks like 3 of us have heard of passkeys and 1 uses them daily!
+Eunice: For some Google accounts, users can switch their account login to "passkey".
+
+Have you seen or heard about passkey before?
+If you've used it, what made you decide to switch? If you haven't, what held you back?
+Eunice: Vivian, what do you think?
+Vivian: i have heard a bit about passkeys but never got around to using one
+Vivian: seems like theyre supposed to be faster and more secure than passwords which is cool
+Vivian: i mostly stick to passwords bc im kinda lazy to set up new things but i wanna try passkeys if it really makes login easier
+Eunice: Thanks for sharing, Vivian. Jae, what do you think about using passkeys?
+Jae: I've tried to set it up once but got confused by how it worked across my different devices, especially since I use a school laptop too.
+Jae: I feel like the idea of passkeys is good for security but I'm worried about losing access if it's not simple and clear what to do when switching devices.
+Eunice: Good point, Jae. Ara, what are your thoughts on passkeys?
+Ara: what is passkeys
+Eunice: Passkeys replace passwords with a secure tap or biometrics for easier logins.
+Eunice: Let's talk about what passkeys are and your experience or thoughts on switching.
+Ara: uhh idk I wouldn't really change?
+Eunice: Could you elaborate? Please share your thoughts on the question.
+Ara: like i don't really know what passkeys is
+Ara: so might as well stick with what i have rn
+Eunice: Thanks for sharing, Ara. Sid, how about you? Have you used passkeys or decided against them?
+Sid: Yeah I've been using passkeys for a while now. Honestly, passwords are just a disaster waiting to happen, so switching was a no-brainer for me.
+Sid: Passkeys cut out the phishing risk and credential reuse issues, plus they're way less of a hassle than managing dozens of passwords. Once you get past the initial setup, it's way smoother.
+Eunice: Really appreciate everyone's input.
+Eunice: Vivian what do you think about Sid's enthusiasm for passkeys can you share your thoughts?
+Vivian: Sid makes a good point about how passkeys can cut down on phishing and password stress which is a big win
+Vivian: I get the appeal of smoother logins bc managing tons of passwords feels like a chore especially when im juggling school and social stuff
+Vivian: But im still a bit hesitant bc setting up new tech can be a pain and i worry about what happens if i switch devices or lose my phone
+Eunice: Thanks everyone for sharing your thoughts and experiences with passkeys. We heard that some of you see great security and convenience benefits, like Sid and Vivian, while others like Jae and Ara feel hesitant due to concerns about setup complexity and device switching. It’s clear there’s excitement about the potential but also a need for clearer guidance and ease of use when making the switch.
+Eunice: Thanks everyone, that wraps up our discussion for today!

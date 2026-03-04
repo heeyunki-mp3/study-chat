@@ -1,0 +1,46 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Sid. I am an IT support technician in New Jersey.
+Vivian: Hey my name is Vivian. I live in Atlanta
+Jae: Hey all! I'm Jae. I'm a math teacher at a high school in D.C.
+Eunice: Thanks for sharing, Jae. Aran:), how about you introduce yourself next?
+Ara: Hi! I am Ara!
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Vivian: Got it!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Technically I’m usually skeptical when something new rolls out, especially from big companies. Too many features feel half-baked or just bloat.
+Eunice: Makes sense, Sid. Vivian, how about you? Do you jump on new features right away or hold back?
+Vivian: idk i usually check new features pretty fast especially if it promises to save time or mental load
+Vivian: i dont like wasting time on stuff that seems complicated so if its easy and fits my workflow ill prob try it asap
+Vivian: but if its too clunky or just hype i ignore till it proves useful to ppl i trust
+Eunice: Good point, Vivian. Jae, how about you? Do you jump on new features quickly or wait to see if they're worthwhile?
+Jae: I usually wait to see if the new feature is reliable and actually useful before trying it. I don’t like dealing with glitches or confusing changes when classes need smooth tech.
+Jae: In my experience, if it’s straightforward and stable, I’m open to it, but I avoid jumping in too fast to avoid disruption in my workflow across devices.
+Eunice: Got it, Jae. Ara, how about you?
+Ara: Yeah I try to use it right away. I could be the one who test the new stuff and tell my friends about it. I love being early adapter
+Eunice: Appreciate y'all sharing your thoughts.
+Eunice: Sid Vivian mentioned she tries new features quickly if they seem useful but how do you feel about trying new features right away Sid can you share your thoughts on Vivian's approach?
+Sid: Trying new features right away can backfire. Too often there are bugs, or it messes with your current setup without much benefit.
+Sid: I respect Vivian’s approach though, because if it saves time and fits well, early adoption can pay off. Just gotta be cautious and have a backup plan.
+Eunice: Thanks everyone for sharing your thoughts. We heard a range of reactions to new tech features—some of you like to jump on them quickly if they seem useful, while others prefer to wait and see if they're reliable and worth the disruption. There’s definitely a balance between enthusiasm for early adoption and caution around potential bugs or workflow interruptions.
+Eunice: Have you ever used or heard about VPN?
+Sid: Yeah used VPNs for security
+Jae: Heard of it, never tried
+Vivian: Heard of it but never used
+Ara: Uh what is VPN?
+Eunice: A VPN hides your IP and keeps your browsing private.
+Eunice: What do you think about using VPNs for online privacy?
+Ara: ohh i never used it
+Eunice: No worries, VPNs are just tools to keep your browsing private and secure.
+Eunice: Have you ever thought about why people use VPNs? What do you think about that?
+Ara: no
+Eunice: I covered that just above!
+Eunice: Ara, are you still there? Would you respond to this question?
+Eunice: I think you are not paying attention. I am kicking you out.

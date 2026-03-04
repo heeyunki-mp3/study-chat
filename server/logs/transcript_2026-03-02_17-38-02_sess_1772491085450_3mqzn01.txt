@@ -1,0 +1,39 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Jae: Hi I'm Jae. I teach math at high school
+Sid: Sid. I am an IT support technician in New Jersey.
+Vivian: Hi I'm Vivian. I'm a psych undergrad at Emory.
+Eunice: Thanks for sharing, Vivian. Ara, could you introduce yourself next?
+Eunice: Ara, are you still there? Would you respond to this question?
+Aran: yeah! I am Aran! nice to meet you guys
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Vivian: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: I’m usually skeptical at first, especially if it’s security-related. New features often come with bugs or hidden issues.
+Sid: I don’t jump on everything right away. I wait for some feedback or a clear use case before I enable them.
+Eunice: Thanks for sharing, Sid. Vivian, how about you? Do you try new features immediately or wait it out?
+Vivian: i usually try new features pretty fast especially if they seem like they save time or make stuff easier
+Vivian: sometimes i wait if it looks complicated or if i hear about bugs but mostly im all about convenience
+Vivian: like if my phone updates with something cool ill enable it asap so i dont have to think twice about extra steps later
+Eunice: Thanks for sharing, Vivian. Jae, how about you?
+Jae: I usually feel cautious when new features come out, especially if they affect my work accounts. I prefer waiting to see if it’s really stable before trying it.
+Eunice: Thanks for sharing, Jae. Aran, how do you usually feel when a company you use introduces something new? Do you try new features right away or wait?
+Aran: Yea! I tend to adopt it right away! I love new stuff
+Eunice: Thanks you all for those answers!
+Eunice: Sid, what do you think about Vivian’s approach of trying new features quickly for convenience?
+Sid: Vivian’s approach works if you accept the risks, but convenience often hides security issues. Immediate adoption can backfire if a feature isn’t fully vetted.
+Sid: I prefer a middle ground: testing new features when they’re proven stable enough, especially for anything accessing important data or accounts. Rushing in means you might deal with headaches later.
+Eunice: Thanks everyone for sharing your thoughts. We heard a range of reactions to new tech features with some of you like Vivian and Aran enjoying early adoption for convenience and excitement, while others like Sid and Jae prefer to stay cautious and wait until features are stable and secure. It’s clear there’s a balance to strike between embracing innovation quickly and ensuring reliability and safety.
+Eunice: Have you ever used or heard about VPN?
+Vivian: Yeah ive used vpn before
+Sid: Yes, I use VPNs regularly
+Jae: Yes, I have used a VPN
+Eunice: Aran, are you still there? Would you respond to this question?
+Eunice: I think you are not paying attention. I am kicking you out.

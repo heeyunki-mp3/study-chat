@@ -78,15 +78,37 @@ function logLine(tag, message) {
 }
 
 // =====================
-// Constants
+// Constants – All timing / delay values in one place
 // =====================
-const IDLE_EMPTY_MS = 4000;   // Human idle: empty input, no typing this long
-const IDLE_TYPING_MS = 10000; // Human idle: non-empty input, no typing this long
-const NUDGE_MS = 20000;                     // Nudge after 20s of no typing (or 30s if has draft in input)
-const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge if user stopped typing for 30s (has draft)
-const MAX_NUDGES = 2;                       // After 2 nudges with no response, kick out
-const MAX_ELABORATION_NUDGES = 4;           // After Eunice has sent "Could you elaborate?" 4 times (without a substantive response), kick out
-const ELABORATION_WAIT_MS = 5000;          // After user goes idle, wait 5s before sending "elaborate"
+
+// --- Human idle detection ---
+const IDLE_EMPTY_MS = 4000;                   // Human stopped typing with empty input → considered idle after this
+const IDLE_TYPING_MS = 10000;                 // Human stopped typing with non-empty input → considered idle after this
+const IDLE_CHECK_MS = 2000;                   // How often the server polls to check if human is idle
+
+// --- Nudge (remind inactive human) ---
+const NUDGE_MS = 20000;                       // Nudge after this long with no typing (empty input)
+const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge after this long with no typing (has draft in input)
+const MAX_NUDGES = 2;                         // Kick user after this many unanswered nudges
+
+// --- Elaboration ("Could you elaborate?") ---
+const MAX_ELABORATION_NUDGES = 4;             // Kick user after this many elaboration prompts with no substantive response
+const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes idle before asking to elaborate
+
+// --- Bot message timing ---
+const THINKING_DELAY_MS = 1000;               // Pause before showing "typing…" indicator
+const TYPING_DELAY_MS = 3200;                 // How long "typing…" shows before the message appears
+const STUDY_GOAL_ACK_DELAY_MS = { min: 2000, max: 3000 }; // Random delay before bots acknowledge the study goal
+const INTRO_STAGGER_BASE_MS = 1000;           // Minimum stagger before a bot sends its intro
+const POLL_THINK_MIN_MS = 1000;               // Minimum random "think" delay before bot answers a poll question
+const POLL_THINK_MAX_MS = 4000;               // Maximum random "think" delay before bot answers a poll question
+
+// --- Disagreement follow-ups ---
+const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
+
+// --- Kick delays ---
+const KICK_DISPLAY_MS = 1500;                 // How long the kick message is visible before emitting the kick event
+const INAPPROPRIATE_KICK_DELAY_MS = 1000;     // Delay before kicking for inappropriate content
 const MODERATOR_NAME = "Eunice";
 
 /** Try to extract a name from intro text (e.g. "I'm heeyun", "My name is Alice"). Returns null if none found. */
@@ -134,12 +156,6 @@ const MODERATOR_SCRIPT = [
     ],
   },
   {
-    type: "big_question",
-    messages: [
-      "Moving on, one of the new popular technologies is generative AI – things like Gemini and Chat GPT\n\nHave any of you used them before?\nWhat made you try it, or what made you decide not to?"     
-    ],
-  },
-  {
     type: "poll",
     messages: ["Have you ever used or heard about VPN?"],
   },
@@ -160,9 +176,6 @@ const MODERATOR_SCRIPT = [
 ];
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
-const STUDY_GOAL_ACK_DELAY_MS = { min: 2000, max: 3000 };
-const THINKING_DELAY_MS = 1000;  // before showing typing indicator
-const TYPING_DELAY_MS = 3200;    // how long typing shows before message
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 let MODELS = { default: "gpt-4o-mini" };
@@ -436,44 +449,57 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
  *
  * @param {string} latestText    – the newest message the user just sent.
  * @param {string} combinedText  – all messages the user sent this round, joined.
+ * @param {string} burstText     – consecutive user messages since the last moderator response (for isQuestion).
+ * @param {string} combinedText  – all messages the user sent this round, joined (for substantive & inappropriate).
  * @param {object} context       – { type, prompt } describing the current prompt.
  * @param {string} roundQuestion – the discussion question for this round.
  */
-async function classifyHumanMessage(latestText, combinedText, context, roundQuestion) {
-  if (!latestText || !String(latestText).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
-  const combined = combinedText || latestText;
+async function classifyHumanMessage(burstText, combinedText, context, roundQuestion) {
+  if (!burstText || !String(burstText).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
+  const combined = combinedText || burstText;
 
   const combinedWordCount = String(combined).trim().split(/\s+/).filter(Boolean).length;
   const forcedSubstantive = combinedWordCount > 15 ? true : combinedWordCount <= 2 ? false : null;
 
   const { type = "call_on", prompt = "" } = context || {};
-  const sys = `You are a classifier. You will receive TWO inputs:
-1. "Latest message" — the participant's most recent chat message. Use this ONLY for isQuestion and inappropriate.
-2. "All messages this round" — every message the participant has sent so far this round, concatenated. Use this ONLY for substantive.
+  const qContext = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"`;
 
-Return ONLY valid JSON with exactly three boolean fields:
-- "isQuestion": true if the LATEST MESSAGE is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?", "I don't understand X"), rather than sharing an answer/opinion/experience. False for filler ("ok","idk","sad"), emotions, statements, or anything that tries to answer the prompt.
-- "substantive": true if ALL MESSAGES THIS ROUND, taken together, substantively answer the prompt by sharing relevant content—experiences, opinions, or thoughts. False if the combined text is still just filler, too vague, off-topic, or only questions back to the moderator.
-- "inappropriate": true if the LATEST MESSAGE is clearly inappropriate — includes aggressive, hostile, or offensive language; sexual content; completely nonsensical gibberish (random characters/keyboard mashing); or content that is wildly and obviously off-topic with no connection to the discussion whatsoever. Normal short or vague answers are NOT inappropriate.
-Note: if isQuestion is true, substantive should almost always be false. If inappropriate is true, both other fields should be false.
-Return format: {"isQuestion": true/false, "substantive": true/false, "inappropriate": true/false}`;
-  const user = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"\nLatest message: "${String(latestText).trim().slice(0, 400)}"\nAll messages this round: "${String(combined).trim().slice(0, 800)}"`;
+  // Two parallel calls: burst-only for isQuestion, combined-only for substantive/inappropriate
+  const questionCall = openai.chat.completions.create({
+    model: MODELS.default,
+    messages: [
+      { role: "system", content: `You are a classifier. Return ONLY valid JSON with one boolean field:
+- "isQuestion": True if the participant's message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?"). False for filler ("ok","idk","nope","not sure"), emotions, statements, opinions, or anything that tries to answer the prompt.
+Return format: {"isQuestion": true/false}` },
+      { role: "user", content: `${qContext}\nMessage: "${String(burstText).trim().slice(0, 400)}"` },
+    ],
+    max_tokens: 20,
+  });
+
+  const substCall = openai.chat.completions.create({
+    model: MODELS.default,
+    messages: [
+      { role: "system", content: `You are a classifier. Return ONLY valid JSON with two boolean fields:
+- "substantive": True if the messages substantively answer the prompt with relevant content—experiences, opinions, or thoughts. False if still just filler, too vague, off-topic, or only questions.
+- "inappropriate": True if the messages are clearly inappropriate — aggressive, hostile, offensive, sexual, nonsensical gibberish, or wildly off-topic. Normal short or vague answers are NOT inappropriate.
+Return format: {"substantive": true/false, "inappropriate": true/false}` },
+      { role: "user", content: `${qContext}\nMessages: "${String(combined).trim().slice(0, 800)}"` },
+    ],
+    max_tokens: 20,
+  });
+
   try {
-    const completion = await openai.chat.completions.create({
-      model: MODELS.default,
-      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
-      max_tokens: 30,
-    });
-    const raw = (completion?.choices?.[0]?.message?.content ?? "")
-      .trim()
-      .replace(/^```json?\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
-    const parsed = JSON.parse(raw || "{}");
+    const [qRes, sRes] = await Promise.all([questionCall, substCall]);
+    const parse = (r) => {
+      const raw = (r?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+      return JSON.parse(raw || "{}");
+    };
+    const qParsed = parse(qRes);
+    const sParsed = parse(sRes);
     return {
-      isQuestion: !!parsed.isQuestion,
-      substantive: forcedSubstantive !== null ? forcedSubstantive : !!parsed.substantive,
-      inappropriate: !!parsed.inappropriate,
+      isQuestion: !!qParsed.isQuestion,
+      substantive: forcedSubstantive !== null ? forcedSubstantive : !!sParsed.substantive,
+      inappropriate: !!sParsed.inappropriate,
     };
   } catch (e) {
     console.error("classifyHumanMessage error", e?.message || e);
@@ -840,6 +866,7 @@ io.on("connection", (socket) => {
     co.humanRepliedThisTurn = false;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.humanMessagesThisRound = [];
+    session.humanMessagesBurst = [];
     session.lastPromptForHuman = { type: "call_on", prompt: co.question };
     startIdleNudgeTimer();
   }
@@ -853,8 +880,6 @@ io.on("connection", (socket) => {
       session.waitingForHumanDisagreementResponse
     );
   }
-
-  const IDLE_CHECK_MS = 2000;
 
   function clearIdleNudgeTimer() {
     if (session?.idleNudgeIntervalId) {
@@ -913,7 +938,7 @@ io.on("connection", (socket) => {
         logLine("MESSAGE", `[${MODERATOR_NAME}] "${kickMsg}"`);
         io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
         logLine("QUEUE", "idle kick: closing session after 2 nudges");
-        await new Promise((r) => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
         session = null;
         return;
@@ -942,7 +967,7 @@ io.on("connection", (socket) => {
     logLine("MESSAGE", `[${MODERATOR_NAME}] "${kickMsg}"`);
     io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
     logLine("QUEUE", "unsubstantial kick: closing session after 4 unsubstantial in a row");
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
     io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
     session = null;
   }
@@ -1107,6 +1132,7 @@ io.on("connection", (socket) => {
     let isQuestion = false;
     try {
       ({ isQuestion } = await classifyHumanMessage(
+        combined,
         combined,
         { type: "call_on", prompt: roundQuestion },
         roundQuestion
@@ -1395,7 +1421,7 @@ io.on("connection", (socket) => {
     logLine("QUEUE", "intro: bots start staggered timers from 'To start us off', type in parallel");
     const botPromises = session.bots.map((bot, i) => {
       const maxSec = 2 + i;
-      const staggerMs = randomBetween(1000, maxSec * 1000);
+      const staggerMs = randomBetween(INTRO_STAGGER_BASE_MS, maxSec * 1000);
       return new Promise((resolve) => {
         setTimeout(async () => {
           await delay(THINKING_DELAY_MS);
@@ -1443,6 +1469,7 @@ io.on("connection", (socket) => {
     session.waitingForHumanIntro = true;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.humanMessagesThisRound = [];
+    session.humanMessagesBurst = [];
     session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
     startIdleNudgeTimer();
     logLine("QUEUE", `waiting for human intro from ${session.humanDisplayName}`);
@@ -1523,7 +1550,7 @@ io.on("connection", (socket) => {
 
     // All bots respond in parallel with 1–4 s random think delay + typing delay
     const botPromises = session.bots.map((bot) => {
-      const thinkMs = randomBetween(1000, 4000);
+      const thinkMs = randomBetween(POLL_THINK_MIN_MS, POLL_THINK_MAX_MS);
       return new Promise(async (resolve) => {
         await delay(thinkMs);
         if (!session) { resolve(); return; }
@@ -1561,6 +1588,7 @@ io.on("connection", (socket) => {
     co.humanRepliedThisTurn = false;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.humanMessagesThisRound = [];
+    session.humanMessagesBurst = [];
     session.lastPromptForHuman = { type: "poll", prompt: question };
     startIdleNudgeTimer();
 
@@ -1601,8 +1629,6 @@ io.on("connection", (socket) => {
     session.pollState = null;
     await advanceToNextRound();
   }
-
-  const MAX_DISAGREEMENT_FOLLOWUPS = 20;
 
   async function runNextDisagreementFollowUp() {
     if (!session?.callOnState) return;
@@ -1649,6 +1675,7 @@ io.on("connection", (socket) => {
       session.humanRepliedDisagreementTurn = false;
       session.humanGaveSubstantiveResponseThisTurn = false;
       session.humanMessagesThisRound = [];
+      session.humanMessagesBurst = [];
       session.lastPromptForHuman = { type: "disagreement", prompt: followUpText };
       startIdleNudgeTimer();
       logLine("QUEUE", `view-misalignment follow-up: waiting for human ${session.humanDisplayName} to respond (${item.differenceSummary})`);
@@ -1849,20 +1876,23 @@ io.on("connection", (socket) => {
     const roundQuestion = session.callOnState?.question || String(ctx?.prompt || "");
 
     if (!session.humanMessagesThisRound) session.humanMessagesThisRound = [];
+    if (!session.humanMessagesBurst) session.humanMessagesBurst = [];
     session.humanMessagesThisRound.push(String(text).trim());
+    session.humanMessagesBurst.push(String(text).trim());
     const combinedText = session.humanMessagesThisRound.join(" ");
+    const burstText = session.humanMessagesBurst.join(" ");
 
-    // Single API call: isQuestion/inappropriate use latest message only; substantive uses combined text.
+    // Single API call: isQuestion uses latest burst only; substantive/inappropriate use full round text.
     const { isQuestion: isModQuestion, substantive, inappropriate } = await classifyHumanMessage(
-      text, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
+      burstText, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
     );
-    logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive} (combined: "${combinedText.slice(0, 120)}")`);
+    logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive} (burst: "${burstText.slice(0, 120)}") (combined: "${combinedText.slice(0, 120)}")`);
 
     if (inappropriate) {
       clearIdleNudgeTimer();
       clearElaborationPromptTimer();
       logLine("QUEUE", "human_message: inappropriate content detected, kicking user");
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, INAPPROPRIATE_KICK_DELAY_MS));
       if (session) io.to(socket.id).emit("kicked", { reason: "inappropriate", message: "You have been removed by the moderator." });
       session = null;
       return;
@@ -1889,13 +1919,16 @@ io.on("connection", (socket) => {
           await emitModeratorLine(bubble);
         }
         if (!session) return;
+        // Reset the burst so the old question doesn't leak into future isQuestion classification
+        // (humanMessagesThisRound is kept intact for substantive/inappropriate checks)
+        session.humanMessagesBurst = [];
         // Refresh the idle nudge timer so user has full time to answer.
         if (isWaitingForHuman(session)) startIdleNudgeTimer();
         logLine("QUEUE", "human_message: moderator answered question, waiting for user to respond to the prompt");
         return;
       }
 
-      if (!isPollRound) {
+      if (!isPollRound && !inIntroPhase) {
         if (!substantive) {
           session.waitingForElaborationAfterNonSubstantive = true;
           logLine("QUEUE", "human_message: response not substantive, waiting for idle then 5s before elaborate");

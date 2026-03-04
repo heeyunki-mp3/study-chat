@@ -87,12 +87,23 @@ export function pickRandomCast(k = 4) {
 
 export function getCastByHandles(handles) {
   if (!Array.isArray(handles) || handles.length === 0) return [];
-  const pool = uniqByHandle(PERSONAS);
-  const byHandle = new Map(pool.map((p) => [safeStr(p.handle).toLowerCase(), p]));
+  // Build lookup by id (exact, e.g. "mina_pro") and by handle (e.g. "Mina").
+  // id takes priority so variant personas can be selected; handle is the fallback
+  // so plain names like "Sid" still work (picks the first match).
+  const byId = new Map();
+  const byHandle = new Map();
+  for (const p of PERSONAS) {
+    const id = safeStr(p.id).toLowerCase();
+    const h = safeStr(p.handle).toLowerCase();
+    if (id) byId.set(id, p);
+    if (h && !byHandle.has(h)) byHandle.set(h, p);
+  }
   const cast = [];
   for (const name of handles) {
-    const h = safeStr(name).toLowerCase();
-    if (h && byHandle.has(h)) cast.push(byHandle.get(h));
+    const key = safeStr(name).toLowerCase();
+    if (!key) continue;
+    const persona = byId.get(key) || byHandle.get(key);
+    if (persona) cast.push(persona);
   }
   return cast;
 }

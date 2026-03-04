@@ -10,6 +10,25 @@ export default function WaitingPage() {
   const [status, setStatus] = useState("joining");
   const navigate = useNavigate();
 
+  // Guard: must come from welcome page, and not already past this step
+  useEffect(() => {
+    if (!sessionStorage.getItem("participantName") || sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {
+      navigate("/", { replace: true });
+      return;
+    }
+  }, [navigate]);
+
+  // If user presses back, send them to "/" (new session) instead of previous page
+  useEffect(() => {
+    window.history.replaceState(null, "", "/waiting");
+    window.history.pushState(null, "", "/waiting");
+    const onBack = () => {
+      navigate("/", { replace: true });
+    };
+    window.addEventListener("popstate", onBack);
+    return () => window.removeEventListener("popstate", onBack);
+  }, [navigate]);
+
   useEffect(() => {
     let navId = null;
     const totalWait = MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS);
@@ -18,7 +37,10 @@ export default function WaitingPage() {
     const toRedirect = setTimeout(() => {
       setStatus("redirecting");
       setCount(TOTAL_PARTICIPANTS);
-      navId = setTimeout(() => navigate("/chat", { replace: true }), 800);
+      navId = setTimeout(() => {
+        sessionStorage.setItem("passedWaiting", "1");
+        navigate("/chat", { replace: true });
+      }, 800);
     }, totalWait);
     return () => {
       clearTimeout(to4);

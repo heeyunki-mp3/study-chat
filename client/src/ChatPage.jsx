@@ -141,8 +141,19 @@ export default function ChatPage() {
   const idleTimeoutRef = useRef(null);
   const inputRef = useRef("");
 
+  // If user presses back, send them to "/" (new session) instead of previous page
   useEffect(() => {
-    if (!participantName) {
+    window.history.replaceState(null, "", "/chat");
+    window.history.pushState(null, "", "/chat");
+    const onBack = () => {
+      navigate("/", { replace: true });
+    };
+    window.addEventListener("popstate", onBack);
+    return () => window.removeEventListener("popstate", onBack);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!participantName || !sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {
       navigate("/", { replace: true });
       return;
     }
@@ -153,7 +164,10 @@ export default function ChatPage() {
     });
     socket.on("connect_error", (err) => console.log("connect_error", err));
 
-    socket.on("session", (s) => setSession(s));
+    socket.on("session", (s) => {
+      setSession(s);
+      if (s?.sessionId) sessionStorage.setItem("studySessionId", s.sessionId);
+    });
 
     socket.on("seed", (seedMsgs) => {
       setMessages((prev) => [
@@ -203,6 +217,7 @@ export default function ChatPage() {
     socket.on("kicked", ({ message } = {}) => {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
+      sessionStorage.setItem("chatCompleted", sessionStorage.getItem("studySessionId") || "1");
       navigate("/survey", { replace: true });
     });
 
@@ -288,8 +303,10 @@ export default function ChatPage() {
 
   function goLogin() {
     socket.emit("end");
-    if (session?.sessionId) localStorage.setItem("sessionId", session.sessionId);
-    window.location.href = "/survey";
+    const sid = session?.sessionId || sessionStorage.getItem("studySessionId") || "";
+    if (sid) localStorage.setItem("sessionId", sid);
+    sessionStorage.setItem("chatCompleted", sid || "1");
+    navigate("/survey", { replace: true });
   }
 
   const participantProfilePic = (() => {

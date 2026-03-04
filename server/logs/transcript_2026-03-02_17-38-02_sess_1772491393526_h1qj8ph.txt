@@ -1,0 +1,59 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
+Vivian: Hi I'm Vivian. I'm a psych undergrad at Emory.
+Jae: Hi I'm Jae. I teach math at high school
+Eunice: Thanks for sharing, Jae. Ara, how about you introduce yourself?
+Ara: Hi! nice to meet you. I am ara
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Jae: Got it!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: Sid, what do you think?
+Sid: Technically, I’m cautious with new features, especially from big companies. I wait to see if there are any security issues or if the feature actually improves things.
+Sid: I don't jump on every new thing. It’s usually a good idea to let others test them out first, then evaluate if it’s worth adopting from a practical standpoint.
+Eunice: Thanks for that, Sid. Vivian, how do you usually feel when a company you use introduces something new? Do you try new features right away or wait?
+Vivian: i usually try new features pretty quickly especially if they promise to save time or reduce hassle
+Vivian: like if its something that makes logging in easier ill usually jump on it fast cause i want less mental load
+Vivian: but if it seems complicated or risky i might hold back till i hear what other ppl think
+Eunice: Got it, Vivian. Jae, how about you?
+Jae: I feel like new features can be a double-edged sword. I'm usually cautious and like to read about how it actually works first before trying it out.
+Jae: In my experience, some features make life easier but others just add confusion, especially when I use several devices and shared laptops at school.
+Eunice: Thanks for that, Jae. Ara, how do you usually feel when big tech companies introduce new features?
+Ara: yeah! I think I love new features! I try them out right away
+Eunice: Thanks everyone! great to hear from all of you.
+Eunice: Sid, Vivian shared that she tries new features quickly if they seem beneficial, but what do you think about her approach?
+Sid: Vivian's approach makes sense if the feature is low risk and genuinely saves time, but it can backfire without understanding security implications.
+Sid: Jumping too fast might expose you to privacy issues or bugs that haven't been caught yet, so some cautious testing or reading is always wise.
+Eunice: Thank you all for sharing your thoughts. We heard a range of reactions to new tech features, from eager early adopters who appreciate time-saving tools to more cautious users who prioritize security and practicality. Some of you balance excitement with careful evaluation, while others jump in quickly or prefer to wait and see how things unfold.
+Eunice: Have you ever used or heard about VPN?
+Sid: Used VPN for work before
+Jae: Yes, I’ve heard about VPN
+Vivian: Heard of it never really used
+Ara: Yeah
+Eunice: Looks like 1 has used a VPN, 3 have heard of it, and none are completely new to it!
+Eunice: Have you ever used or heard about password managers?
+Vivian: Heard of them never used
+Sid: Yes, use one daily
+Jae: Yes, I use a password manager
+Ara: nope
+Eunice: Looks like 2 of us use password managers, 1 has heard of them, and 1 hasn't heard of them at all!
+Eunice: Have you ever used or heard about passkeys?
+Sid: Yes, I use passkeys daily
+Vivian: I only know its about login
+Jae: I've heard of passkeys before
+Ara: what is passkey
+Eunice: A passkey replaces passwords — no typing needed!
+Eunice: What do you think about passkeys?
+Ara: uhh i dont know
+Eunice: No worries! Passkeys are a new way to log in without passwords, making things easier and safer.
+Eunice: Have you heard about or used passkeys before? What do you think about them?
+Ara: oh nope...
+Eunice: Passkeys are a new way to log in without passwords, making things easier and safer.
+Eunice: Have you ever used or heard about passkeys? What do you think about them?
+Eunice: Ara, are you still there? Would you respond to this question?

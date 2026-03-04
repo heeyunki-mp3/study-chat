@@ -125,6 +125,10 @@ export default function NamePage() {
       setError("Could not save name.");
       return;
     }
+    // Clear flow flags from any previous session
+    sessionStorage.removeItem("passedWaiting");
+    sessionStorage.removeItem("chatCompleted");
+    sessionStorage.removeItem("studySessionId");
     navigate("/waiting", { replace: true });
   }
 
