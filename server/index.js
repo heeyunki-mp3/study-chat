@@ -400,8 +400,8 @@ Output ONLY one sentence. No quotes, no JSON.`;
 async function generateRoundSummary(question, roundTranscript, opts = {}) {
   const { roundType = "big_question" } = opts;
   const sys = roundType === "poll"
-    ? `You are a discussion moderator. Given a yes/no/heard-of poll question and each participant's short answer, write ONE casual sentence summarizing how many people have used it / heard of it vs haven't. Example: "Looks like 2 of us use VPNs and 2 don't!" or "Interesting — 3 out of 4 have heard of passkeys but only 1 has actually used one." Keep it under 20 words, warm and natural. Output ONLY the sentence, no quotes or extra text.`
-    : `You are a discussion moderator wrapping up a conversation. In 2–3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it concise and natural. Output ONLY the summary, no labels or quotes. Thank them before you start the summary. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
+    ? `You are a discussion moderator. Given a yes/no/heard-of poll question and each participant's short answer, write ONE casual sentence summarizing how many people have used it / heard of it vs haven't. Example: "Looks like 2 of us use VPNs and 2 don't!" or "Cool! 3 out of 4 have heard of passkeys but only 1 has actually used one." Keep it under 20 words, warm and natural. Output ONLY the sentence, no quotes or extra text.`
+    : `You are a discussion moderator wrapping up a conversation. In less than 3 short sentences, naturally summarize what was shared. Highlight the main themes and briefly note where participants had different perspectives. Speak in a warm, conversational moderator voice (e.g., "We heard a range of reactions...", "Some of you felt..., while others..."). Keep it very concise and natural. Output ONLY the summary, no labels or quotes. It must be less than 3 sentences. It should be as concise as possible. Keep it very natural and human. Thank them before you start the summary. Do not use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
   const completion = await openai.chat.completions.create({
     model: MODELS.default,
     messages: [
@@ -525,14 +525,15 @@ async function generateModeratorQuestionAnswer(questionText, roundQuestion, alre
         .join("\n")}`
     : "";
 
-  const sys = `You are ${MODERATOR_NAME}, a warm and natural discussion moderator. A participant has asked a question.${previousCtx}
+  const sys = `You are ${MODERATOR_NAME}, a warm and natural HUMAN discussion moderator. A participant has asked a question.${previousCtx}
 
-If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONLY a very brief reminder of 8 words or fewer — a single casual sentence (e.g. "A passkey replaces passwords — no typing needed!" or "I covered that just above!"). Return a JSON array with exactly 1 string.
+If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONLY a very brief reminder of 8 words or fewer — a single casual sentence. Return a JSON array with exactly 1 string.
 
 Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 2 strings:
 1. Answer the question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
 2. A single short sentence that gently rephrases the discussion question as a reminder and asks them to share their thoughts.
-Return ONLY valid JSON array of 1 or 2 strings. No markdown, no extra text.`;
+Return ONLY valid JSON array of 1 or 2 strings. No markdown, no extra text. 
+Text should be very natrual and conversational and very human-like. Do NOT use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
 
   const user = `Discussion question: "${String(roundQuestion ?? "").slice(0, 300)}"\nParticipant's question: "${String(questionText).trim().slice(0, 300)}"`;
   try {
@@ -1778,7 +1779,7 @@ io.on("connection", (socket) => {
           return;
         }
         session.substantialNudgeCount = nudgeCount;
-        await emitModeratorLine("Could you elaborate? Please share your thoughts on the question.", {
+        await emitModeratorLine("Could you elaborate please?", {
           cancelCheck: () => session?.elaborationPromptCancelled,
         });
         if (!session?.elaborationPromptCancelled) {
