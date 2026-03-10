@@ -1,0 +1,168 @@
+2026-03-10 21:43:04.351 [SESSION_START] backend running on http://localhost:3001
+2026-03-10 21:43:04.352 [SESSION_START] CLI bots for this run: sid_pro, vivian_pro, jae_anti
+2026-03-10 21:43:05.369 [SESSION_START] id=5CruWZbSCbBsCuewAAAB bots=Sid,Vivian,Jae
+2026-03-10 21:43:05.370 [SESSION_START] participant_name set to "Ara"
+2026-03-10 21:43:05.370 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-03-10 21:43:05.371 [TYPING] moderator true
+2026-03-10 21:43:09.315 [DISCONNECT] id=5CruWZbSCbBsCuewAAAB
+2026-03-10 21:43:09.599 [SESSION_START] id=DoeQRs_zSXBRc_lCAAAD bots=Sid,Vivian,Jae
+2026-03-10 21:43:09.599 [SESSION_START] participant_name set to "Ara"
+2026-03-10 21:43:09.600 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-03-10 21:43:09.600 [TYPING] moderator true
+2026-03-10 21:43:14.602 [TYPING] moderator false
+2026-03-10 21:43:14.604 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-03-10 21:43:14.605 [WAIT] Eunice start waiting for 4.4s
+2026-03-10 21:43:18.991 [WAIT] Eunice done waiting
+2026-03-10 21:43:18.992 [TYPING] moderator true
+2026-03-10 21:43:26.995 [TYPING] moderator false
+2026-03-10 21:43:26.996 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-03-10 21:43:27.003 [QUEUE] intro: bots start staggered timers from 'To start us off', type in parallel
+2026-03-10 21:43:28.860 [WAIT] Sid start waiting for 4.9s
+2026-03-10 21:43:29.277 [WAIT] Vivian start waiting for 4.5s
+2026-03-10 21:43:30.902 [WAIT] Jae start waiting for 4.9s
+2026-03-10 21:43:33.716 [WAIT] Sid done waiting
+2026-03-10 21:43:33.716 [TYPING] bot=Sid true
+2026-03-10 21:43:33.783 [WAIT] Vivian done waiting
+2026-03-10 21:43:33.784 [TYPING] bot=Vivian true
+2026-03-10 21:43:35.765 [WAIT] Jae done waiting
+2026-03-10 21:43:35.766 [TYPING] bot=Jae true
+2026-03-10 21:43:44.354 [TYPING] bot=Vivian false
+2026-03-10 21:43:44.356 [MESSAGE] [Vivian] "Hello everyone! I'm Vivian. I'm a student at Emory studying psychology"
+2026-03-10 21:43:45.399 [TYPING] bot=Sid false
+2026-03-10 21:43:45.400 [MESSAGE] [Sid] "Sid. I am an IT support technician in New Jersey."
+2026-03-10 21:43:48.440 [TYPING] bot=Jae false
+2026-03-10 21:43:48.442 [MESSAGE] [Jae] "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
+2026-03-10 21:43:50.285 [WAIT] Eunice start waiting for 4.6s
+2026-03-10 21:43:51.506 [TYPING] human true
+2026-03-10 21:43:51.605 [TYPING] human true
+2026-03-10 21:43:51.611 [TYPING] human true
+2026-03-10 21:43:51.812 [TYPING] human true
+2026-03-10 21:43:51.835 [TYPING] human true
+2026-03-10 21:43:52.089 [TYPING] human true
+2026-03-10 21:43:52.185 [TYPING] human true
+2026-03-10 21:43:52.326 [TYPING] human true
+2026-03-10 21:43:52.834 [TYPING] human true
+2026-03-10 21:43:52.998 [TYPING] human true
+2026-03-10 21:43:53.360 [TYPING] human true
+2026-03-10 21:43:53.601 [TYPING] human true
+2026-03-10 21:43:53.944 [TYPING] human true
+2026-03-10 21:43:54.019 [TYPING] human true
+2026-03-10 21:43:54.227 [TYPING] human true
+2026-03-10 21:43:54.299 [TYPING] human true
+2026-03-10 21:43:54.389 [TYPING] human true
+2026-03-10 21:43:54.882 [WAIT] Eunice done waiting
+2026-03-10 21:43:54.884 [QUEUE] waiting for human intro from Ara
+2026-03-10 21:43:55.049 [TYPING] human true
+2026-03-10 21:43:55.169 [TYPING] human true
+2026-03-10 21:43:55.242 [TYPING] human true
+2026-03-10 21:43:55.670 [TYPING] human true
+2026-03-10 21:43:55.984 [TYPING] human true
+2026-03-10 21:43:56.346 [TYPING] human true
+2026-03-10 21:43:56.538 [TYPING] human true
+2026-03-10 21:43:56.624 [TYPING] human true
+2026-03-10 21:43:56.645 [TYPING] human true
+2026-03-10 21:43:56.682 [TYPING] human true
+2026-03-10 21:43:56.820 [TYPING] human true
+2026-03-10 21:43:56.922 [TYPING] human true
+2026-03-10 21:43:57.027 [TYPING] human true
+2026-03-10 21:43:57.133 [TYPING] human true
+2026-03-10 21:43:57.222 [TYPING] human true
+2026-03-10 21:43:57.310 [TYPING] human true
+2026-03-10 21:43:57.432 [TYPING] human true
+2026-03-10 21:43:57.509 [TYPING] human true
+2026-03-10 21:43:57.612 [TYPING] human true
+2026-03-10 21:43:57.752 [TYPING] human true
+2026-03-10 21:43:57.808 [TYPING] human true
+2026-03-10 21:43:57.882 [TYPING] human true
+2026-03-10 21:43:58.004 [TYPING] human true
+2026-03-10 21:43:58.034 [TYPING] human true
+2026-03-10 21:43:58.183 [TYPING] human true
+2026-03-10 21:43:58.290 [TYPING] human true
+2026-03-10 21:43:58.502 [TYPING] human true
+2026-03-10 21:43:58.649 [TYPING] human false
+2026-03-10 21:43:58.656 [HUMAN_INPUT] [Ara] "hi! I am Aran! nice to meet you all!"
+2026-03-10 21:43:58.659 [QUEUE] intro: using introduced name "Aran" (NamePage had "Ara")
+2026-03-10 21:43:58.662 [MESSAGE] [Aran] "hi! I am Aran! nice to meet you all!"
+2026-03-10 21:44:00.641 [HUMAN] classify: inappropriate=false isQuestion=false substantive=false (burst: "hi! I am Aran! nice to meet you all!") (combined: "hi! I am Aran! nice to meet you all!")
+2026-03-10 21:44:00.641 [QUEUE] human_message after intro: advancing to study_goal
+2026-03-10 21:44:00.642 [WAIT] Eunice start waiting for 3.9s
+2026-03-10 21:44:04.542 [WAIT] Eunice done waiting
+2026-03-10 21:44:04.543 [TYPING] moderator true
+2026-03-10 21:44:17.213 [TYPING] moderator false
+2026-03-10 21:44:17.216 [MESSAGE] [Eunice] "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, a…"
+2026-03-10 21:44:17.216 [WAIT] Eunice start waiting for 4.5s
+2026-03-10 21:44:21.694 [WAIT] Eunice done waiting
+2026-03-10 21:44:21.695 [TYPING] moderator true
+2026-03-10 21:44:31.365 [TYPING] moderator false
+2026-03-10 21:44:31.366 [MESSAGE] [Eunice] "We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology"
+2026-03-10 21:44:32.868 [MESSAGE] [Jae] "Ok!"
+2026-03-10 21:44:32.868 [QUEUE] study_goal ack done, starting first round
+2026-03-10 21:44:32.868 [QUEUE] first round [big_question]: "First question: Big tech companies like Google roll out new …"
+2026-03-10 21:44:32.868 [WAIT] Eunice start waiting for 4.4s
+2026-03-10 21:44:37.238 [WAIT] Eunice done waiting
+2026-03-10 21:44:37.239 [TYPING] moderator true
+2026-03-10 21:44:51.573 [TYPING] moderator false
+2026-03-10 21:44:51.574 [MESSAGE] [Eunice] "First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do …"
+2026-03-10 21:44:52.901 [WAIT] Eunice start waiting for 3.4s
+2026-03-10 21:44:56.309 [WAIT] Eunice done waiting
+2026-03-10 21:44:56.310 [TYPING] moderator true
+2026-03-10 21:45:00.978 [TYPING] moderator false
+2026-03-10 21:45:00.980 [MESSAGE] [Eunice] "@Sid, what do you think about trying out new features right away or waiting?"
+2026-03-10 21:45:00.981 [WAIT] Sid start waiting for 3.3s
+2026-03-10 21:45:04.299 [WAIT] Sid done waiting
+2026-03-10 21:45:04.300 [OPENAI_REQ] bot=Sid question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-03-10 21:45:04.300 [TYPING] bot=Sid true
+2026-03-10 21:45:07.063 [OPENAI_OK] bot=Sid rtt=2763ms raw="["I usually wait before trying new features, especially from big companies. Been burned too many tim…"
+2026-03-10 21:45:07.064 [TYPING] bot=Sid false
+2026-03-10 21:45:07.064 [WAIT] Sid start waiting for 0.0s
+2026-03-10 21:45:07.090 [WAIT] Sid done waiting
+2026-03-10 21:45:07.090 [TYPING] bot=Sid true
+2026-03-10 21:45:28.811 [TYPING] bot=Sid false
+2026-03-10 21:45:28.812 [MESSAGE] [Sid] "I usually wait before trying new features, especially from big companies. Been burned too many times by buggy releases or weird changes."
+2026-03-10 21:45:28.813 [WAIT] Sid start waiting for 4.2s
+2026-03-10 21:45:33.033 [WAIT] Sid done waiting
+2026-03-10 21:45:33.033 [TYPING] bot=Sid true
+2026-03-10 21:45:54.125 [TYPING] bot=Sid false
+2026-03-10 21:45:54.127 [MESSAGE] [Sid] "If it's a security update or something that sounds genuinely useful, I might try it sooner, but otherwise patience wins for me."
+2026-03-10 21:45:56.156 [QUEUE] call-on who_spoke=[Sid] next=Vivian
+2026-03-10 21:45:56.157 [WAIT] Eunice start waiting for 4.8s
+2026-03-10 21:46:00.939 [WAIT] Eunice done waiting
+2026-03-10 21:46:00.939 [TYPING] moderator true
+2026-03-10 21:46:07.607 [TYPING] moderator false
+2026-03-10 21:46:07.610 [MESSAGE] [Eunice] "Makes sense to prioritize security updates. @Vivian, do you dive into new features right away or hang back a bit?"
+2026-03-10 21:46:07.611 [WAIT] Vivian start waiting for 3.2s
+2026-03-10 21:46:10.806 [WAIT] Vivian done waiting
+2026-03-10 21:46:10.806 [OPENAI_REQ] bot=Vivian question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-03-10 21:46:10.806 [TYPING] bot=Vivian true
+2026-03-10 21:46:15.366 [OPENAI_OK] bot=Vivian rtt=4560ms raw="["i usually jump on new features pretty quickly especially if theyre on my phone or mac bc im all ab…"
+2026-03-10 21:46:15.367 [TYPING] bot=Vivian false
+2026-03-10 21:46:15.368 [WAIT] Vivian start waiting for 0.4s
+2026-03-10 21:46:15.793 [WAIT] Vivian done waiting
+2026-03-10 21:46:15.793 [TYPING] bot=Vivian true
+2026-03-10 21:46:36.782 [TYPING] bot=Vivian false
+2026-03-10 21:46:36.783 [MESSAGE] [Vivian] "i usually jump on new features pretty quickly especially if theyre on my phone or mac bc im all about saving time or making things smoother"
+2026-03-10 21:46:39.730 [QUEUE] call-on who_spoke=[Sid, Vivian] next=Jae
+2026-03-10 21:46:39.731 [WAIT] Eunice start waiting for 3.3s
+2026-03-10 21:46:43.017 [WAIT] Eunice done waiting
+2026-03-10 21:46:43.018 [TYPING] moderator true
+2026-03-10 21:46:49.687 [TYPING] moderator false
+2026-03-10 21:46:49.689 [MESSAGE] [Eunice] "Makes sense to jump on time-savers fast. @Jae, do you dive into new features right away or wait it out?"
+2026-03-10 21:46:49.690 [WAIT] Jae start waiting for 4.4s
+2026-03-10 21:46:54.085 [WAIT] Jae done waiting
+2026-03-10 21:46:54.086 [OPENAI_REQ] bot=Jae question="First question: Big tech companies like Google roll out new features pretty ofte…"
+2026-03-10 21:46:54.086 [TYPING] bot=Jae true
+2026-03-10 21:46:55.343 [OPENAI_OK] bot=Jae rtt=1257ms raw="["I usually wait before trying new features. I feel like it’s safer to see if there are any bugs or …"
+2026-03-10 21:46:55.343 [TYPING] bot=Jae false
+2026-03-10 21:46:55.344 [WAIT] Jae start waiting for 0.7s
+2026-03-10 21:46:56.046 [WAIT] Jae done waiting
+2026-03-10 21:46:56.047 [TYPING] bot=Jae true
+2026-03-10 21:47:19.142 [TYPING] bot=Jae false
+2026-03-10 21:47:19.148 [MESSAGE] [Jae] "I usually wait before trying new features. I feel like it’s safer to see if there are any bugs or compatibility issues first, especially since I use multiple de…"
+2026-03-10 21:47:19.149 [WAIT] Jae start waiting for 3.7s
+2026-03-10 21:47:22.882 [WAIT] Jae done waiting
+2026-03-10 21:47:22.883 [TYPING] bot=Jae true

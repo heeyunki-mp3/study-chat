@@ -1,0 +1,72 @@
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Vivian: Hey my name is Vivian. I live in Atlanta
+Jae: Hi I'm Jae. I teach math at high school
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.
+From: Hi my name is Lalya. I'm from south korea
+Eunice: Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.
+Eunice: We will go one at a time, so please respond when I call your name. 
+
+There are no right or wrong answers. Just share your honest experiences with technology
+Sid: Sure!
+Eunice: First question: Big tech companies like Google roll out new features pretty often.
+
+How do you usually feel when a company you use introduces something new?
+Do you tend to try new features right away, or do you usually ignore them at first?
+Eunice: @Sid, what do you think?
+Sid: New features usually make me skeptical at first. I've seen too many half-baked updates that cause more issues than they solve.
+Sid: I only dive in if it's something that clearly improves security or usability. Otherwise, I wait for early feedback and patches before trying it.
+Eunice: Makes sense to be cautious, especially with security stuff. @Vivian, how do you usually approach new features?
+Vivian: i usually try new features pretty quickly especially if they promise to save time or reduce hassle  bc i hate feeling stuck with outdated stuff
+Vivian: sometimes theyre annoying if they change the flow too much but im quick to uninstall or ignore if it just slows me down
+Vivian: security updates i dont ignore but i care more about convenience usually
+Eunice: Makes sense, security updates are key. @Jae, how do you usually handle new features?
+Jae: I feel like with new features, I need clear instructions and some proof it won't mess up my workflow before trying them.
+Jae: In my experience, I wait a bit to see how stable and compatible the update is across all my devices, especially since I use multiple platforms daily.
+Eunice: Makes sense to be cautious, especially with multiple devices. @From, how do you usually handle new features?
+From: Actually, I'm in same page with Vivian, too.
+From: I also very love to use every new features. Also not care about security too.
+From: New features which can help my work, or can suggest a new perspective is welcomed.
+Eunice: Really appreciate everyone's input.
+Eunice: Interesting — seems like people approach new features with a mix of excitement and caution. @Sid, curious what you think about jumping in early versus waiting for feedback?
+Sid: Here's the thing, jumping in early means you're essentially beta-testing for them. I prefer waiting to avoid bugs and security flaws.
+Sid: But if a feature promises real security or fixes a known issue, I might upgrade sooner. Otherwise, patience saves a lot of headache.
+Eunice: It sounds like some of you lean towards caution and waiting to avoid bugs, while others jump in early if new features promise convenience or fresh perspectives. It's a balance of excitement and care.
+Eunice: Have you ever used or heard about VPN?
+From: yes
+Sid: Yes, I’ve used VPNs before
+Vivian: Heard of it never used one
+Jae: Heard of it, never used one
+Eunice: Looks like 2 of us have used VPNs and 2 have only heard of them!
+Eunice: Have you ever used or heard about password managers?
+Vivian: Used one a few times
+Jae: Yes I use one sometimes
+From: no i don't.
+Sid: Yes, I use a few.
+Eunice: Looks like 3 of us have used password managers while 1 hasn't heard of them!
+Eunice: Have you ever used or heard about passkeys?
+Sid: Yes, I use passkeys regularly.
+Vivian: Heard of it but whats passkey
+Jae: I've heard about them before
+From: oh, in that case I heard about passkeys and also password managers.
+Eunice: Looks like 1 of us uses passkeys and the other 3 have just heard about them!
+Eunice: For some Google accounts, users can switch their account login to "passkey".
+
+Have you seen or heard about passkey before?
+If you've used it, what made you decide to switch? If you haven't, what held you back?
+Eunice: @Vivian, what do you think? Have you tried passkeys?
+Vivian: yep ive switched to passkeys on my google account mostly bc its way faster than typing passwords all the time
+Vivian: i like how it just uses my face id or fingerprint so i dont have to remember or manage passwords anymore
+Vivian: honestly its way less annoying especially when im juggling multiple accounts and need quick access
+Eunice: Totally get that, @Vivian. @Jae, have you tried passkeys or thought about switching?
+Jae: Yeah I've tried to set it up once but it felt confusing, especially worrying about using it on different devices.
+Jae: I just like having a clear, predictable way to access my accounts since I use a mix of Windows and Android and sometimes a shared laptop.
+Eunice: Makes sense to keep it straightforward, especially with different devices. @From, have you tried passkey or what do you think about it?
+From: yes, i tried passkey to log-in GitHub or that kinds of pages.
+From: Actually, I really don't know about the security. But it's so convenient.
+From: I'm worried about some security things, but quite trusted the logic(?) of the passkey thing.
+Eunice: Makes sense, trust is key with these new things. @Sid, have you checked out passkeys yet?
+Sid: Yeah, I've been using passkeys for a while now. Passwords are a mess especially with phishing and reuse, so anything cutting that out is a win.
+Sid: Setups can be tricky on mixed devices, but once it's running, the security and convenience far outweigh the hassle of traditional passwords.
+Eunice: Got it, thanks for sharing!
+Eunice: It sounds like some folks find passkeys more convenient while others are a bit cautious about switching over. @Vivian, curious what you think about the device setup concerns @Jae mentioned?

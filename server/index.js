@@ -96,12 +96,13 @@ const MAX_ELABORATION_NUDGES = 4;             // Kick user after this many elabo
 const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes idle before asking to elaborate
 
 // --- Bot message timing ---
-const THINKING_DELAY_MS = 1000;               // Pause before showing "typing…" indicator
+const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
 const TYPING_SPEED = { min: 0.7, max: 1.3 };  // Bot typing speed range (words/sec)
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
+const MODERATOR_THINK_DELAY_MS = { min: 1000, max: 3000 };       // Moderator think delay before typing
+const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 const STUDY_GOAL_ACK_DELAY_MS = 1500;         // Delay before bot acknowledges the study goal
 const INTRO_STAGGER_BASE_MS = 1000;           // Minimum stagger before a bot sends its intro
-const POLL_THINK_MS = { min: 1000, max: 4000 }; // Random "think" delay before bot answers a poll question
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -992,9 +993,15 @@ io.on("connection", (socket) => {
     for (let i = 0; i < bubbles.length; i++) {
       if (!session) return;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // First bubble: short pause (already waited before API call); subsequent: short consecutive delay
+      const waitMs = i === 0
+        ? randomBetween(0, 2000)
+        : randomBetween(MODERATOR_CONSECUTIVE_DELAY_MS.min, MODERATOR_CONSECUTIVE_DELAY_MS.max);
+      logLine("WAIT", `${botName} start waiting for ${(waitMs / 1000).toFixed(1)}s`);
       await new Promise((r) => {
-        timeoutRef.current = setTimeout(r, THINKING_DELAY_MS);
+        timeoutRef.current = setTimeout(r, waitMs);
       });
+      logLine("WAIT", `${botName} done waiting`);
       if (!session) return;
       emitTyping(botName, true);
       await delay(typingDelayMs(bubbles[i]));
@@ -1035,15 +1042,21 @@ io.on("connection", (socket) => {
   }
 
   async function emitModeratorLine(text, opts = {}) {
-    const { skipIfUserReplied: skipIfUserRepliedDuringCue, cancelCheck } = opts;
+    const { skipIfUserReplied: skipIfUserRepliedDuringCue, cancelCheck, skipThinkDelay, consecutive } = opts;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
-    emitTyping(MODERATOR_NAME, true);
-    await delay(THINKING_DELAY_MS);
-    if (session?.cancelAdvanceFromIdle || cancelCheck?.()) {
-      emitTyping(MODERATOR_NAME, false);
-      return;
+    // Think delay (no typing indicator yet)
+    if (!skipThinkDelay) {
+      const range = consecutive ? MODERATOR_CONSECUTIVE_DELAY_MS : MODERATOR_THINK_DELAY_MS;
+      const modWaitMs = randomBetween(range.min, range.max);
+      logLine("WAIT", `${MODERATOR_NAME} start waiting for ${(modWaitMs / 1000).toFixed(1)}s`);
+      await delay(modWaitMs);
+      logLine("WAIT", `${MODERATOR_NAME} done waiting`);
+      if (!session) return;
+      if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
     }
+    // Now show typing indicator + type delay
+    emitTyping(MODERATOR_NAME, true);
     await delay(typingDelayMs(text, { moderator: true }));
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
@@ -1155,9 +1168,9 @@ io.on("connection", (socket) => {
       console.error("generateModeratorQuestionAnswer (bot) error", e?.message || e);
       return;
     }
-    for (const bubble of answerBubbles) {
+    for (let i = 0; i < answerBubbles.length; i++) {
       if (!session) return;
-      await emitModeratorLine(bubble);
+      await emitModeratorLine(answerBubbles[i], { consecutive: i > 0 });
     }
     if (session) {
       session.answeredQuestions = session.answeredQuestions || [];
@@ -1187,6 +1200,11 @@ io.on("connection", (socket) => {
       bots: session.bots,
     };
 
+    const callOnWaitMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
+    logLine("WAIT", `${botName} start waiting for ${(callOnWaitMs / 1000).toFixed(1)}s`);
+    await delay(callOnWaitMs);
+    logLine("WAIT", `${botName} done waiting`);
+    if (!session) return;
     const openaiStart = Date.now();
     logLine("OPENAI_REQ", `bot=${botName} question="${clip(co.question, 80)}"`);
     emitTyping(botName, true);
@@ -1413,8 +1431,8 @@ io.on("connection", (socket) => {
     if (!session) return;
     const introSegment = MODERATOR_SCRIPT.find((s) => s.type === "intro");
     const introMessages = introSegment?.messages || [];
-    for (const text of introMessages) {
-      await emitModeratorLine(text);
+    for (let i = 0; i < introMessages.length; i++) {
+      await emitModeratorLine(introMessages[i], { skipThinkDelay: i === 0, consecutive: i > 0 });
       if (!session) return;
     }
     await runIntroRound();
@@ -1433,7 +1451,10 @@ io.on("connection", (socket) => {
           const intro = options?.length
             ? options[Math.floor(Math.random() * options.length)]
             : `Hi, I'm ${bot}.`;
-          await delay(THINKING_DELAY_MS);
+          const introWaitMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
+          logLine("WAIT", `${bot} start waiting for ${(introWaitMs / 1000).toFixed(1)}s`);
+          await delay(introWaitMs);
+          logLine("WAIT", `${bot} done waiting`);
           emitTyping(bot, true);
           await delay(typingDelayMs(intro));
           emitTyping(bot, false);
@@ -1491,8 +1512,8 @@ io.on("connection", (socket) => {
       startFirstRound();
       return;
     }
-    for (const text of segment.messages) {
-      await emitModeratorLine(text);
+    for (let i = 0; i < segment.messages.length; i++) {
+      await emitModeratorLine(segment.messages[i], { consecutive: i > 0 });
       if (!session) return;
     }
     const bots = [...session.bots];
@@ -1556,11 +1577,13 @@ io.on("connection", (socket) => {
       answers: {},
     };
 
-    // All bots respond in parallel with 1–4 s random think delay + typing delay
+    // All bots respond in parallel with 3–5 s random think delay + typing delay
     const botPromises = session.bots.map((bot) => {
-      const thinkMs = randomBetween(POLL_THINK_MS.min, POLL_THINK_MS.max);
+      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
       return new Promise(async (resolve) => {
+        logLine("WAIT", `${bot} start waiting for ${(thinkMs / 1000).toFixed(1)}s`);
         await delay(thinkMs);
+        logLine("WAIT", `${bot} done waiting`);
         if (!session) { resolve(); return; }
         emitTyping(bot, true);
         await delay(typingDelayMs("yes I have heard of it"));
@@ -1703,6 +1726,11 @@ io.on("connection", (socket) => {
     };
 
     const botName = item.disagreedWith;
+    const disagreeWaitMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
+    logLine("WAIT", `${botName} start waiting for ${(disagreeWaitMs / 1000).toFixed(1)}s`);
+    await delay(disagreeWaitMs);
+    logLine("WAIT", `${botName} done waiting`);
+    if (!session) return;
     emitTyping(botName, true);
     let bubbles = [];
     try {
@@ -1922,9 +1950,9 @@ io.on("connection", (socket) => {
           session.answeredQuestions = session.answeredQuestions || [];
           session.answeredQuestions.push({ question: text, answer: bubbles[0] });
         }
-        for (const bubble of bubbles) {
+        for (let i = 0; i < bubbles.length; i++) {
           if (!session) return;
-          await emitModeratorLine(bubble);
+          await emitModeratorLine(bubbles[i], { consecutive: i > 0 });
         }
         if (!session) return;
         // Reset the burst so the old question doesn't leak into future isQuestion classification
