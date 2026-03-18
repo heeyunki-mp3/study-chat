@@ -1390,7 +1390,15 @@ io.on("connection", (socket) => {
     const nextRound = session.allRounds[nextRoundIndex];
     logLine("QUEUE", `advancing to round ${nextRoundIndex + 1}/${session.allRounds.length} [${nextRound.type}]: "${clip(nextRound.question, 60)}"`);
     session.roundTranscript = [];
-    await emitModeratorLine(nextRound.question);
+
+    if (nextRound.type === "poll" && !session.pollIntroSent) {
+      session.pollIntroSent = true;
+      await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly — yes, no, or a short comment like \"I've only heard of it.\"");
+      if (!session) return;
+      await emitModeratorLine(nextRound.question, { consecutive: true });
+    } else {
+      await emitModeratorLine(nextRound.question);
+    }
     if (!session) return;
     if (wasAdvanceCancelled(session)) {
       cancelAdvance(session, "advanceToNextRound cancelled (user typing during mod line), waiting for human_idle again", "last");
@@ -1537,7 +1545,14 @@ io.on("connection", (socket) => {
     session.waitingForHumanIntro = false;
     session.roundTranscript = [];
     logLine("QUEUE", `first round [${firstRound.type}]: "${clip(firstRound.question, 60)}"`);
-    await emitModeratorLine(firstRound.question);
+    if (firstRound.type === "poll" && !session.pollIntroSent) {
+      session.pollIntroSent = true;
+      await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly:yes, no, or a short comment like \"I've only heard of it.\"");
+      if (!session) return;
+      await emitModeratorLine(firstRound.question, { consecutive: true });
+    } else {
+      await emitModeratorLine(firstRound.question);
+    }
     if (!session) return;
 
     if (firstRound.type === "poll") {
