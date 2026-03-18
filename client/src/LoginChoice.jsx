@@ -8,7 +8,7 @@ export default function LoginChoice() {
     const sessionId = localStorage.getItem("sessionId");
     const hesitationMs = Date.now() - start;
 
-    await fetch("http://localhost:3001/api/login_choice", {
+    await fetch("/api/login_choice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId, choice, hesitationMs }),

@@ -12,7 +12,7 @@ import { io } from "socket.io-client";
 
 const PARTICIPANT_NAME_KEY = "participantName";
 const PARTICIPANT_PROFILE_KEY = "participantProfilePicture";
-const SERVER_BASE = "http://127.0.0.1:3001";
+const SERVER_BASE = import.meta.env.DEV ? "http://127.0.0.1:3001" : "";
 
 function fmtTime(ts) {
   try {
@@ -166,10 +166,11 @@ export default function ChatPage() {
 
   const socket = useMemo(
     () =>
-      io("http://127.0.0.1:3001", {
+      io(SERVER_BASE || undefined, {
         autoConnect: false,
-        transports: ["polling"],
-        withCredentials: true,
+        path: "/socket.io",
+        transports: ["websocket", "polling"],
+        ...(import.meta.env.DEV && { withCredentials: true }),
       }),
     []
   );
