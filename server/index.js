@@ -221,7 +221,8 @@ let dbPool = null;
         q4_passkeys_heard TEXT,
         q5_passkey_switch TEXT,
         auth_choice ENUM('password', 'passkey') DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
     `);
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
@@ -1468,18 +1469,25 @@ io.on("connection", (socket) => {
     }
   }
 
-  async function saveSessionToDatabase() {
-    if (!session || !dbPool) return;
+  async function saveSessionToDatabase(sess) {
+    sess = sess || session;
+    if (!sess || !dbPool) return;
     saveCurrentRoundResponses();
-    const r = session.humanResponsesByRound;
+    const r = sess.humanResponsesByRound;
     try {
       await dbPool.execute(
         `INSERT INTO participant_responses
          (session_id, participant_id, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
+           q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
+           q3_password_managers = COALESCE(VALUES(q3_password_managers), q3_password_managers),
+           q4_passkeys_heard = COALESCE(VALUES(q4_passkeys_heard), q4_passkeys_heard),
+           q5_passkey_switch = COALESCE(VALUES(q5_passkey_switch), q5_passkey_switch)`,
         [
-          session.sessionId,
-          session.participantName,
+          sess.sessionId,
+          sess.participantName,
           r[0] || null,
           r[1] || null,
           r[2] || null,
@@ -1487,7 +1495,7 @@ io.on("connection", (socket) => {
           r[4] || null,
         ]
       );
-      logLine("DB", `saved participant ${session.participantName} responses to database`);
+      logLine("DB", `saved participant ${sess.participantName} responses to database`);
     } catch (e) {
       logLine("DB_ERROR", `failed to save responses: ${e?.message}`);
     }
@@ -1501,6 +1509,7 @@ io.on("connection", (socket) => {
       return;
     }
     saveCurrentRoundResponses();
+    await saveSessionToDatabase();
     const nextRoundIndex = (session.currentRoundIndex ?? -1) + 1;
     if (nextRoundIndex >= session.allRounds.length) {
       session.pendingAdvanceFromIdle = false;
@@ -2162,11 +2171,13 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     clearIdleNudgeTimer();
     clearElaborationPromptTimer();
     if (session) {
       logLine("DISCONNECT", `id=${socket.id}`);
+      saveCurrentRoundResponses();
+      await saveSessionToDatabase(session);
     }
     session = null;
     if (botTypingTimeoutRef.current) clearTimeout(botTypingTimeoutRef.current);
