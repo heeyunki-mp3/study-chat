@@ -51,16 +51,15 @@ function getOrderedParticipantNames(session, myName) {
   return names;
 }
 
-function isSelf(sender, myName, introducedName) {
+function isSelf(sender, myName) {
   const s = String(sender || "").toLowerCase();
   if (myName && s === String(myName).toLowerCase()) return true;
-  if (introducedName && s === String(introducedName).toLowerCase()) return true;
   return false;
 }
 
-function getColorForSender(sender, session, myName, introducedName = null) {
+function getColorForSender(sender, session, myName) {
   if (!sender) return PARTICIPANT_PALETTE[0];
-  if (isSelf(sender, myName, introducedName)) return PARTICIPANT_PALETTE[0];
+  if (isSelf(sender, myName)) return PARTICIPANT_PALETTE[0];
   const ordered = getOrderedParticipantNames(session, myName);
   const i = ordered.indexOf(sender);
   if (i >= 0) return PARTICIPANT_PALETTE[i % PARTICIPANT_PALETTE.length];
@@ -81,7 +80,7 @@ function darkenHex(hex, factor) {
 
 // Render message text with @Name mentions styled as colored chips.
 // Returns plain string if no mentions found, or an array of React elements.
-function renderWithMentions(text, session, myName, introducedName) {
+function renderWithMentions(text, session, myName) {
   if (!text || !session) return text;
   const names = getOrderedParticipantNames(session, myName);
   if (!names.length) return text;
@@ -94,7 +93,7 @@ function renderWithMentions(text, session, myName, introducedName) {
     if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
     const matchedName = match[1];
     const canonical = names.find(n => n.toLowerCase() === matchedName.toLowerCase()) || matchedName;
-    const bubbleColor = getColorForSender(canonical, session, myName, introducedName);
+    const bubbleColor = getColorForSender(canonical, session, myName);
     const darkColor = darkenHex(bubbleColor, 0.45);
     parts.push(
       <span key={match.index} style={{
@@ -179,9 +178,6 @@ export default function ChatPage() {
   const [typing, setTyping] = useState({});
   const [session, setSession] = useState(null);
   const [input, setInput] = useState("");
-  const [introducedName, setIntroducedName] = useState(null);
-  const introducedNameRef = useRef(null);
-
   // Notification sounds
   const tabFocusedRef = useRef(document.hasFocus());
   const sndFocusRef = useRef(new Audio("/new_message_on_focus.mp3"));
@@ -248,24 +244,10 @@ export default function ChatPage() {
       ]);
     });
 
-    socket.on("introduced_name", ({ name } = {}) => {
-      if (name) {
-        introducedNameRef.current = name;
-        setIntroducedName(name);
-        // Retroactively rename any already-stored messages that belong to the user
-        // so the full chat history shows the introduced name consistently.
-        setMessages((prev) =>
-          prev.map((m) =>
-            isSelf(m.sender, participantName, name) ? { ...m, sender: name } : m
-          )
-        );
-      }
-    });
-
     socket.on("message", (m) => {
       const text = typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000);
       const sender = m?.name ?? "";
-      const isOutgoing = isSelf(sender, participantName, introducedNameRef.current);
+      const isOutgoing = isSelf(sender, participantName);
       setMessages((prev) => [
         ...prev,
         {
@@ -397,8 +379,7 @@ export default function ChatPage() {
     }
   })();
 
-  // Use the introduced name for the sidebar if the user gave one during intro.
-  const myDisplayName = introducedName || participantName;
+  const myDisplayName = participantName;
   const participants = session ? getParticipants(session, myDisplayName) : [];
   if (participants.length && participants[0].isYou) participants[0].profilePic = participantProfilePic;
 
@@ -452,13 +433,13 @@ export default function ChatPage() {
                 {messages.map((m, i) => {
                   const isModerator = session?.moderatorName && m.sender === session.moderatorName;
                   const msgText = typeof m.message === "string" ? m.message : String(m.message ?? "").slice(0, 2000);
-                  const rendered = renderWithMentions(msgText, session, participantName, introducedName);
+                  const rendered = renderWithMentions(msgText, session, participantName);
                   const hasMentions = Array.isArray(rendered);
                   return (
                     <div
                       key={i}
                       className={`sender-bubble-wrap${isModerator ? " moderator-bubble" : ""}`}
-                      style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName, introducedName) }}
+                      style={{ ["--sender-color"]: getColorForSender(m.sender, session, participantName) }}
                     >
                         <Message
                           model={{

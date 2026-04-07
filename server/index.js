@@ -113,22 +113,6 @@ const KICK_DISPLAY_MS = 1500;                 // How long the kick message is vi
 const INAPPROPRIATE_KICK_DELAY_MS = 1000;     // Delay before kicking for inappropriate content
 const MODERATOR_NAME = "Eunice";
 
-/** Try to extract a name from intro text (e.g. "I'm heeyun", "My name is Alice"). Returns null if none found. */
-function extractIntroducedName(text) {
-  if (!text || typeof text !== "string") return null;
-  const s = text.trim();
-  const patterns = [
-    /\b(?:I'?m|I am)\s+([A-Za-z][A-Za-z'-]*)/i,
-    /\b(?:my name is|call me|name'?s)\s+([A-Za-z][A-Za-z'-]*)/i,
-    /\b(?:this is|it'?s)\s+([A-Za-z][A-Za-z'-]*)/i,
-  ];
-  for (const re of patterns) {
-    const m = s.match(re);
-    if (m && m[1]) return m[1].trim();
-  }
-  return null;
-}
-
 /** Capitalize first character of a name. */
 function capitalizeFirst(s) {
   if (!s || typeof s !== "string") return s ?? "";
@@ -1465,7 +1449,7 @@ io.on("connection", (socket) => {
     const msgs = session.humanMessagesThisRound || [];
     if (msgs.length > 0) {
       session.humanResponsesByRound[ri] = JSON.stringify(msgs);
-      logLine("DB", `saved human responses for round ${ri}: ${msgs.length} message(s)`);
+      logLine("DB", `[${session.sessionId}] saved human responses for round ${ri}: ${msgs.length} message(s)`);
     }
   }
 
@@ -1495,9 +1479,9 @@ io.on("connection", (socket) => {
           r[4] || null,
         ]
       );
-      logLine("DB", `saved participant ${sess.participantName} responses to database`);
+      logLine("DB", `[${sess.sessionId}] saved participant ${sess.participantName} responses to database`);
     } catch (e) {
-      logLine("DB_ERROR", `failed to save responses: ${e?.message}`);
+      logLine("DB_ERROR", `[${sess.sessionId}] failed to save responses: ${e?.message}`);
     }
   }
 
@@ -2031,15 +2015,7 @@ io.on("connection", (socket) => {
     }
     logLine("HUMAN_INPUT", `[${session.humanDisplayName}] "${clip(text, 160)}"`);
 
-    // If intro, extract introduced name before emitting so message/transcript use it
-    if (session.waitingForHumanIntro || session.moderatorTypingIntroCue) {
-      const introduced = extractIntroducedName(text);
-      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
-        session.humanDisplayName = capitalizeFirst(introduced.trim());
-        logLine("QUEUE", `intro: using introduced name "${session.humanDisplayName}" (NamePage had "${session.participantName}")`);
-        io.to(socket.id).emit("introduced_name", { name: session.humanDisplayName });
-      }
-    }
+    // Keep the original name from NamePage — do not update humanDisplayName from intro text
 
     emitMessage(session.humanDisplayName, text); // show immediately; validate below
 
