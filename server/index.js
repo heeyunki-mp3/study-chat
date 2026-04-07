@@ -16,7 +16,6 @@ import { fileURLToPath } from "url";
 import OpenAI from "openai";
 // mysql2 loaded lazily — see DB section below
 import {
-  pickRandomCast,
   getCastByHandles,
   systemPrompt,
   buildUserPrompt,
@@ -205,6 +204,7 @@ let dbPool = null;
         q4_passkeys_heard TEXT,
         q5_passkey_switch TEXT,
         auth_choice ENUM('password', 'passkey') DEFAULT NULL,
+        assigned_group ENUM('pro', 'anti', 'half') DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -738,16 +738,34 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // =====================
 // Session state (one per socket/room)
 // =====================
+// Group rotation: pro → anti → half → pro → ...
+const GROUP_ROTATION = ["pro", "anti", "half"];
+const GROUP_BOTS = {
+  pro:  ["sid_pro", "mina_pro", "vivian_pro"],
+  anti: ["sid_anti", "mina_anti", "vivian_anti"],
+  half: ["sid_pro", "mina_pro", "vivian_anti"],
+};
+let groupRotationIndex = 0;
+
 function createSession(participantName) {
-  const cast =
-    CLI_BOT_NAMES.length > 0
-      ? getCastByHandles(CLI_BOT_NAMES)
-      : pickRandomCast(3);
+  let assignedGroup = null;
+  let cast;
+  if (CLI_BOT_NAMES.length > 0) {
+    cast = getCastByHandles(CLI_BOT_NAMES);
+  } else {
+    assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
+    groupRotationIndex++;
+    cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
+    logLine("GROUP", `assigned group: ${assignedGroup} → bots: ${GROUP_BOTS[assignedGroup].join(", ")}`);
+  }
   const bots = cast.map((p) => p.handle);
   if (CLI_BOT_NAMES.length > 0 && bots.length === 0) {
     console.warn("CLI bot names matched no personas; falling back to random cast.");
-    const fallback = pickRandomCast(3);
-    fallback.forEach((p) => bots.push(p.handle));
+    assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
+    groupRotationIndex++;
+    cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
+    cast.forEach((p) => bots.push(p.handle));
+    logLine("GROUP", `fallback assigned group: ${assignedGroup} → bots: ${bots.join(", ")}`);
   } else if (CLI_BOT_NAMES.length > 0 && bots.length < CLI_BOT_NAMES.length) {
     console.warn(`Only ${bots.length} of ${CLI_BOT_NAMES.length} CLI names matched: ${bots.join(", ")}`);
   }
@@ -760,6 +778,7 @@ function createSession(participantName) {
 
   return {
     sessionId,
+    assignedGroup,
     moderatorName: MODERATOR_NAME,
     bots,
     participantName,
@@ -1461,8 +1480,8 @@ io.on("connection", (socket) => {
     try {
       await dbPool.execute(
         `INSERT INTO participant_responses
-         (session_id, participant_id, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
+         (session_id, participant_id, assigned_group, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
            q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
@@ -1472,6 +1491,7 @@ io.on("connection", (socket) => {
         [
           sess.sessionId,
           sess.participantName,
+          sess.assignedGroup || null,
           r[0] || null,
           r[1] || null,
           r[2] || null,
