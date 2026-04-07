@@ -215,6 +215,7 @@ ANTI-REPETITION:
 - Do NOT repeat or rephrase a recent question someone already asked.
 - Do NOT ask the same kind of question twice in a row.
 - Do NOT repeat or rephrase what other bots said. If you have similar idea, agree on them first and add on.
+- If something was already explained in the earlier discussion context, do NOT ask about it again. You already know it. Respond based on what you learned from the explanation.
 
 OUTPUT FORMAT:
 - Return ONLY valid JSON.

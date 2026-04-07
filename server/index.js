@@ -281,6 +281,24 @@ async function getBotResponse(botName, context) {
     humanDisplayName
   );
 
+  // Build prior context: include moderator explanations from earlier rounds
+  // so bots remember what was already explained (e.g. passkey definition).
+  const priorContextLines = [];
+  if (session?.messages) {
+    const currentRoundMsgs = new Set(previousAnswers.map(a => `${a.name}:${a.text}`));
+    for (const m of session.messages) {
+      const key = `${m.name}:${m.text}`;
+      if (currentRoundMsgs.has(key)) break; // stop when we hit current round
+      // Include moderator messages (explanations) and bot's own previous answers
+      if (m.name === MODERATOR_NAME || m.name === botName) {
+        priorContextLines.push(`${m.name}: ${m.text}`);
+      }
+    }
+  }
+  const priorContext = priorContextLines.length > 0
+    ? `--- Earlier discussion context ---\n${priorContextLines.join("\n")}\n--- Current round ---\n`
+    : "";
+
   const transcriptLines = [];
   transcriptLines.push(`${MODERATOR_NAME}: ${moderatorQuestion}`);
   for (const a of previousAnswers) {
@@ -289,7 +307,7 @@ async function getBotResponse(botName, context) {
   if (directive) {
     transcriptLines.push(`${MODERATOR_NAME}: ${directive}`);
   }
-  const transcript = transcriptLines.join("\n");
+  const transcript = priorContext + transcriptLines.join("\n");
 
   const recentBot = previousAnswers
     .filter((a) => a.name !== botName)
