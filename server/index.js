@@ -194,8 +194,10 @@ try {
 // =====================
 let dbPool = null;
 (async () => {
+  console.log("[DB] attempting mysql2 import...");
   try {
     const mysql = await import("mysql2/promise");
+    console.log("[DB] mysql2 loaded, creating pool...");
     dbPool = mysql.createPool({
       host: process.env.DB_HOST || "localhost",
       port: Number(process.env.DB_PORT) || 3306,
@@ -219,8 +221,10 @@ let dbPool = null;
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log("[DB] participant_responses table ready");
     logLine("DB", "participant_responses table ready");
   } catch (e) {
+    console.error("[DB_ERROR]", e?.message || e);
     logLine("DB_ERROR", `Database init failed, continuing without DB: ${e?.message}`);
     dbPool = null;
   }
