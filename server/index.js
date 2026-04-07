@@ -205,6 +205,7 @@ let dbPool = null;
         q5_passkey_switch TEXT,
         auth_choice ENUM('password', 'passkey') DEFAULT NULL,
         assigned_group ENUM('pro', 'anti', 'half') DEFAULT NULL,
+        bots_config VARCHAR(255) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -217,6 +218,10 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD UNIQUE INDEX IF NOT EXISTS uq_session_participant (session_id, participant_id)
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS bots_config VARCHAR(255) DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -767,6 +772,7 @@ function createSession(participantName) {
     cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
     logLine("GROUP", `assigned group: ${assignedGroup} → bots: ${GROUP_BOTS[assignedGroup].join(", ")}`);
   }
+  const botIds = cast.map((p) => p.id);
   const bots = cast.map((p) => p.handle);
   if (CLI_BOT_NAMES.length > 0 && bots.length === 0) {
     console.warn("CLI bot names matched no personas; falling back to random cast.");
@@ -789,6 +795,7 @@ function createSession(participantName) {
     sessionId,
     assignedGroup,
     moderatorName: MODERATOR_NAME,
+    botIds,
     bots,
     participantName,
     humanDisplayName: capitalizeFirst(participantName),
@@ -1037,6 +1044,8 @@ io.on("connection", (socket) => {
         logLine("QUEUE", "idle kick: closing session after 2 nudges");
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
+        saveCurrentRoundResponses();
+        await saveSessionToDatabase(session);
         session = null;
         return;
       }
@@ -1064,6 +1073,8 @@ io.on("connection", (socket) => {
     logLine("QUEUE", "unsubstantial kick: closing session after 4 unsubstantial in a row");
     await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
     io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
+    saveCurrentRoundResponses();
+    await saveSessionToDatabase(session);
     session = null;
   }
 
@@ -1489,8 +1500,8 @@ io.on("connection", (socket) => {
     try {
       await dbPool.execute(
         `INSERT INTO participant_responses
-         (session_id, participant_id, assigned_group, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         (session_id, participant_id, assigned_group, bots_config, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
            q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
@@ -1501,6 +1512,7 @@ io.on("connection", (socket) => {
           sess.sessionId,
           sess.participantName,
           sess.assignedGroup || null,
+          sess.botIds ? sess.botIds.join(",") : null,
           r[0] || null,
           r[1] || null,
           r[2] || null,
@@ -1914,7 +1926,7 @@ io.on("connection", (socket) => {
   socket.on("participant_name", async (data) => {
     const name = (data?.name || "").trim() || "Participant";
     session = createSession(name);
-    logLine("SESSION_START", `id=${socket.id} bots=${session.bots.join(",")}`);
+    logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     await saveSessionToDatabase();
     socket.emit("session", {
@@ -2069,6 +2081,8 @@ io.on("connection", (socket) => {
     if (!session.humanMessagesBurst) session.humanMessagesBurst = [];
     session.humanMessagesThisRound.push(String(text).trim());
     session.humanMessagesBurst.push(String(text).trim());
+    saveCurrentRoundResponses();
+    await saveSessionToDatabase();
     const combinedText = session.humanMessagesThisRound.join(" ");
     const burstText = session.humanMessagesBurst.join(" ");
 
@@ -2083,6 +2097,10 @@ io.on("connection", (socket) => {
       logLine("QUEUE", "human_message: inappropriate content detected, kicking user");
       await new Promise((r) => setTimeout(r, INAPPROPRIATE_KICK_DELAY_MS));
       if (session) io.to(socket.id).emit("kicked", { reason: "inappropriate", message: "You have been removed by the moderator." });
+      if (session) {
+        saveCurrentRoundResponses();
+        await saveSessionToDatabase(session);
+      }
       session = null;
       return;
     }
