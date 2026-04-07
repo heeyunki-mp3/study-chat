@@ -15,7 +15,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import OpenAI from "openai";
 
-import mysql from "mysql2/promise";
+// mysql2 loaded lazily — see initDatabase() below
 import {
   pickRandomCast,
   getCastByHandles,
@@ -194,35 +194,39 @@ try {
 // MySQL Database
 // =====================
 let dbPool = null;
-try {
-  dbPool = mysql.createPool({
-    host: process.env.DB_HOST || "localhost",
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || "focusgroupcc",
-    password: process.env.DB_PW || "",
-    database: process.env.DB_NAME || "focusgroupcc_",
-    waitForConnections: true,
-    connectionLimit: 5,
-  });
+(async () => {
+  try {
+    const mysql = await import("mysql2/promise");
+    dbPool = mysql.createPool({
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER || "focusgroupcc",
+      password: process.env.DB_PW || "",
+      database: process.env.DB_NAME || "focusgroupcc_",
+      waitForConnections: true,
+      connectionLimit: 5,
+    });
 
-  dbPool.execute(`
-    CREATE TABLE IF NOT EXISTS participant_responses (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      session_id VARCHAR(100) NOT NULL,
-      participant_id VARCHAR(100) NOT NULL,
-      q1_new_features TEXT,
-      q2_vpn TEXT,
-      q3_password_managers TEXT,
-      q4_passkeys_heard TEXT,
-      q5_passkey_switch TEXT,
-      auth_choice ENUM('password', 'passkey') DEFAULT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `).then(() => logLine("DB", "participant_responses table ready"))
-    .catch((e) => logLine("DB_ERROR", `Failed to init database: ${e?.message}`));
-} catch (e) {
-  console.warn("DB pool creation failed, continuing without database:", e?.message);
-}
+    await dbPool.execute(`
+      CREATE TABLE IF NOT EXISTS participant_responses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        session_id VARCHAR(100) NOT NULL,
+        participant_id VARCHAR(100) NOT NULL,
+        q1_new_features TEXT,
+        q2_vpn TEXT,
+        q3_password_managers TEXT,
+        q4_passkeys_heard TEXT,
+        q5_passkey_switch TEXT,
+        auth_choice ENUM('password', 'passkey') DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    logLine("DB", "participant_responses table ready");
+  } catch (e) {
+    console.warn("Database init failed, continuing without DB:", e?.message);
+    dbPool = null;
+  }
+})();
 
 // =====================
 // Helpers
