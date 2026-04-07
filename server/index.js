@@ -1882,11 +1882,12 @@ io.on("connection", (socket) => {
     await runNextDisagreementFollowUp();
   }
 
-  socket.on("participant_name", (data) => {
+  socket.on("participant_name", async (data) => {
     const name = (data?.name || "").trim() || "Participant";
     session = createSession(name);
     logLine("SESSION_START", `id=${socket.id} bots=${session.bots.join(",")}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
+    await saveSessionToDatabase();
     socket.emit("session", {
       sessionId: session.sessionId,
       moderatorName: session.moderatorName,
