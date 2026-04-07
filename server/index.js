@@ -14,7 +14,13 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import OpenAI from "openai";
-import mysql from "mysql2/promise";
+
+let mysql = null;
+try {
+  mysql = await import("mysql2/promise");
+} catch (e) {
+  console.warn("mysql2 not available, database features disabled:", e?.message);
+}
 import {
   pickRandomCast,
   getCastByHandles,
@@ -192,19 +198,21 @@ try {
 // =====================
 // MySQL Database
 // =====================
-const dbPool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || "focusgroupcc",
-  password: process.env.DB_PW || "",
-  database: process.env.DB_NAME || "focusgroupcc_",
-  waitForConnections: true,
-  connectionLimit: 5,
-});
+let dbPool = null;
 
-async function initDatabase() {
+if (mysql) {
   try {
-    await dbPool.execute(`
+    dbPool = mysql.createPool({
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER || "focusgroupcc",
+      password: process.env.DB_PW || "",
+      database: process.env.DB_NAME || "focusgroupcc_",
+      waitForConnections: true,
+      connectionLimit: 5,
+    });
+
+    dbPool.execute(`
       CREATE TABLE IF NOT EXISTS participant_responses (
         id INT AUTO_INCREMENT PRIMARY KEY,
         session_id VARCHAR(100) NOT NULL,
@@ -217,13 +225,14 @@ async function initDatabase() {
         auth_choice ENUM('password', 'passkey') DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `);
-    logLine("DB", "participant_responses table ready");
+    `).then(() => logLine("DB", "participant_responses table ready"))
+      .catch((e) => logLine("DB_ERROR", `Failed to init database: ${e?.message}`));
   } catch (e) {
-    logLine("DB_ERROR", `Failed to init database: ${e?.message}`);
+    console.warn("DB pool creation failed:", e?.message);
   }
+} else {
+  console.warn("Database disabled (mysql2 not loaded)");
 }
-initDatabase();
 
 // =====================
 // Helpers
@@ -877,6 +886,7 @@ app.post("/api/auth_choice", async (req, res) => {
   if (!sessionId || !participantId || !["password", "passkey"].includes(choice)) {
     return res.status(400).json({ error: "Invalid request" });
   }
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
   try {
     await dbPool.execute(
       `UPDATE participant_responses SET auth_choice = ? WHERE session_id = ? AND participant_id = ?`,
@@ -1448,7 +1458,7 @@ io.on("connection", (socket) => {
 
   /** Persist all responses to MySQL. */
   async function saveSessionToDatabase() {
-    if (!session) return;
+    if (!session || !dbPool) return;
     saveCurrentRoundResponses();
     const r = session.humanResponsesByRound;
     try {
@@ -2129,7 +2139,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("auth_choice", async ({ choice }) => {
-    if (!session) return;
+    if (!session || !dbPool) return;
     const valid = ["password", "passkey"];
     if (!valid.includes(choice)) return;
     try {
