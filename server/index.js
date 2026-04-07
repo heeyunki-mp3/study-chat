@@ -14,8 +14,6 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import OpenAI from "openai";
-
-// mysql2 loaded lazily — see initDatabase() below
 import {
   pickRandomCast,
   getCastByHandles,
@@ -189,44 +187,6 @@ try {
 } catch (e) {
   console.warn("Using default gpt-4o-mini (models.json not found or invalid)");
 }
-
-// =====================
-// MySQL Database
-// =====================
-let dbPool = null;
-(async () => {
-  try {
-    const mysql = await import("mysql2/promise");
-    dbPool = mysql.createPool({
-      host: process.env.DB_HOST || "localhost",
-      port: Number(process.env.DB_PORT) || 3306,
-      user: process.env.DB_USER || "focusgroupcc",
-      password: process.env.DB_PW || "",
-      database: process.env.DB_NAME || "focusgroupcc_",
-      waitForConnections: true,
-      connectionLimit: 5,
-    });
-
-    await dbPool.execute(`
-      CREATE TABLE IF NOT EXISTS participant_responses (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        session_id VARCHAR(100) NOT NULL,
-        participant_id VARCHAR(100) NOT NULL,
-        q1_new_features TEXT,
-        q2_vpn TEXT,
-        q3_password_managers TEXT,
-        q4_passkeys_heard TEXT,
-        q5_passkey_switch TEXT,
-        auth_choice ENUM('password', 'passkey') DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    logLine("DB", "participant_responses table ready");
-  } catch (e) {
-    console.warn("Database init failed, continuing without DB:", e?.message);
-    dbPool = null;
-  }
-})();
 
 // =====================
 // Helpers
@@ -780,7 +740,6 @@ function createSession(participantName) {
     pollState: null,
     usedRoundAckIndices: [],
     roundTranscript: [],  // Messages for current round; reset each new question
-    humanResponsesByRound: {},  // { roundIndex: ["msg1", "msg2", ...] }
   };
 }
 
@@ -850,50 +809,26 @@ const BOT_INTROS = {
   Sid: [
     "Hello I'm Sid. I am in IT support. Nice to meet you all",
     "Hey, I'm Sid. I am an IT support technician in New Jersey.",
+    "Sid. I am an IT support technician in New Jersey.",
   ],
 };
 
 // =====================
 // App & Socket
 // =====================
+const app = express();
+app.use(cors());
+// Serve profile pictures so client can load participant avatars (profile_1.jpg … profile_9.jpg)
+const profilePicturesDir = path.join(__dirname, "..", "profile_pictures");
+app.use("/profile_pictures", express.static(profilePicturesDir));
+const httpServer = createServer(app);
+// CORS: withCredentials requires explicit origins (no "*")
 const CORS_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
-  "https://focusgroup.cc.gatech.edu",
-  "https://www.focusgroup.cc.gatech.edu",
 ];
-const app = express();
-app.use(cors({
-  origin: CORS_ORIGINS,
-  credentials: true,
-}));
-// Serve profile pictures so client can load participant avatars (profile_1.jpg … profile_9.jpg)
-const profilePicturesDir = path.join(__dirname, "..", "profile_pictures");
-app.use("/profile_pictures", express.static(profilePicturesDir));
-app.use(express.json());
-app.get("/api/health", (req, res) => res.json({ ok: true }));
-
-app.post("/api/auth_choice", async (req, res) => {
-  const { sessionId, participantId, choice, hesitationMs } = req.body || {};
-  if (!sessionId || !participantId || !["password", "passkey"].includes(choice)) {
-    return res.status(400).json({ error: "Invalid request" });
-  }
-  if (!dbPool) return res.status(503).json({ error: "Database not available" });
-  try {
-    await dbPool.execute(
-      `UPDATE participant_responses SET auth_choice = ? WHERE session_id = ? AND participant_id = ?`,
-      [choice, sessionId, participantId]
-    );
-    logLine("DB", `REST auth_choice=${choice} hesitation=${hesitationMs}ms for ${participantId}`);
-    res.json({ ok: true });
-  } catch (e) {
-    logLine("DB_ERROR", `REST auth_choice failed: ${e?.message}`);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: CORS_ORIGINS,
@@ -1438,44 +1373,6 @@ io.on("connection", (socket) => {
     await advanceToNextRound();
   }
 
-  /** Save current round's human messages into humanResponsesByRound. */
-  function saveCurrentRoundResponses() {
-    if (!session) return;
-    const ri = session.currentRoundIndex;
-    if (ri == null || ri < 0) return;
-    const msgs = session.humanMessagesThisRound || [];
-    if (msgs.length > 0) {
-      session.humanResponsesByRound[ri] = JSON.stringify(msgs);
-      logLine("DB", `saved human responses for round ${ri}: ${msgs.length} message(s)`);
-    }
-  }
-
-  /** Persist all responses to MySQL. */
-  async function saveSessionToDatabase() {
-    if (!session || !dbPool) return;
-    saveCurrentRoundResponses();
-    const r = session.humanResponsesByRound;
-    try {
-      await dbPool.execute(
-        `INSERT INTO participant_responses
-         (session_id, participant_id, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          session.sessionId,
-          session.participantName,
-          r[0] || null,
-          r[1] || null,
-          r[2] || null,
-          r[3] || null,
-          r[4] || null,
-        ]
-      );
-      logLine("DB", `saved participant ${session.participantName} responses to database`);
-    } catch (e) {
-      logLine("DB_ERROR", `failed to save responses: ${e?.message}`);
-    }
-  }
-
   async function advanceToNextRound() {
     if (!session?.allRounds) return;
     const co = session.callOnState;
@@ -1483,15 +1380,11 @@ io.on("connection", (socket) => {
       cancelAdvance(session, "advanceToNextRound cancelled (user typing), waiting for human_idle again", "last");
       return;
     }
-    // Save the current round's human responses before advancing
-    saveCurrentRoundResponses();
     const nextRoundIndex = (session.currentRoundIndex ?? -1) + 1;
     if (nextRoundIndex >= session.allRounds.length) {
       session.pendingAdvanceFromIdle = false;
       logLine("QUEUE", "all rounds done, wrapping up");
-      await saveSessionToDatabase();
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today!");
-      if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName });
       return;
     }
     const nextRound = session.allRounds[nextRoundIndex];
@@ -2129,21 +2022,6 @@ io.on("connection", (socket) => {
       session.cancelAdvanceFromIdle = true;
       if (session.callOnState) session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", "human_message during scheduled advance: cancelling, waiting for human_idle again");
-    }
-  });
-
-  socket.on("auth_choice", async ({ choice }) => {
-    if (!session || !dbPool) return;
-    const valid = ["password", "passkey"];
-    if (!valid.includes(choice)) return;
-    try {
-      await dbPool.execute(
-        `UPDATE participant_responses SET auth_choice = ? WHERE session_id = ? AND participant_id = ?`,
-        [choice, session.sessionId, session.participantName]
-      );
-      logLine("DB", `saved auth_choice=${choice} for ${session.participantName}`);
-    } catch (e) {
-      logLine("DB_ERROR", `failed to save auth_choice: ${e?.message}`);
     }
   });
 
