@@ -194,10 +194,12 @@ try {
 // =====================
 let dbPool = null;
 (async () => {
-  console.log("[DB] attempting mysql2 import...");
+  logLine("DB", "=== DATABASE INIT START ===");
+  logLine("DB", `DB_HOST=${process.env.DB_HOST || "(not set)"} DB_PORT=${process.env.DB_PORT || "(not set)"} DB_USER=${process.env.DB_USER || "(not set)"} DB_NAME=${process.env.DB_NAME || "(not set)"} DB_PW=${process.env.DB_PW ? "(set)" : "(NOT SET)"}`);
   try {
+    logLine("DB", "importing mysql2/promise...");
     const mysql = await import("mysql2/promise");
-    console.log("[DB] mysql2 loaded, creating pool...");
+    logLine("DB", "mysql2 imported successfully, creating connection pool...");
     dbPool = mysql.createPool({
       host: process.env.DB_HOST || "localhost",
       port: Number(process.env.DB_PORT) || 3306,
@@ -207,6 +209,7 @@ let dbPool = null;
       waitForConnections: true,
       connectionLimit: 5,
     });
+    logLine("DB", "pool created, executing CREATE TABLE...");
     await dbPool.execute(`
       CREATE TABLE IF NOT EXISTS participant_responses (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -221,11 +224,10 @@ let dbPool = null;
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log("[DB] participant_responses table ready");
-    logLine("DB", "participant_responses table ready");
+    logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
-    console.error("[DB_ERROR]", e?.message || e);
-    logLine("DB_ERROR", `Database init failed, continuing without DB: ${e?.message}`);
+    logLine("DB_ERROR", `=== DATABASE INIT FAILED: ${e?.message} ===`);
+    logLine("DB_ERROR", `Full error: ${JSON.stringify(e, Object.getOwnPropertyNames(e || {}))}`);
     dbPool = null;
   }
 })();
