@@ -221,7 +221,7 @@ let dbPool = null;
     `);
     logLine("DB", "participant_responses table ready");
   } catch (e) {
-    console.warn("Database init failed, continuing without DB:", e?.message);
+    logLine("DB_ERROR", `Database init failed, continuing without DB: ${e?.message}`);
     dbPool = null;
   }
 })();
