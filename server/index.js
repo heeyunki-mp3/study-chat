@@ -209,6 +209,15 @@ let dbPool = null;
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
     `);
+    // Ensure columns/keys exist for tables created before these were added
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS assigned_group ENUM('pro', 'anti', 'half') DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD UNIQUE INDEX IF NOT EXISTS uq_session_participant (session_id, participant_id)
+    `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
     logLine("DB_ERROR", `=== DATABASE INIT FAILED: ${e?.message} ===`);
