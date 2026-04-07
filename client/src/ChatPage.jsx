@@ -294,6 +294,13 @@ export default function ChatPage() {
       navigate("/survey", { replace: true });
     });
 
+    socket.on("study_complete", ({ sessionId, participantId } = {}) => {
+      if (sessionId) localStorage.setItem("sessionId", sessionId);
+      if (participantId) localStorage.setItem("participantId", participantId);
+      sessionStorage.setItem("chatCompleted", sessionId || "1");
+      setTimeout(() => navigate("/login-choice", { replace: true }), 3000);
+    });
+
     socket.connect();
 
     return () => {
@@ -379,7 +386,7 @@ export default function ChatPage() {
     const sid = session?.sessionId || sessionStorage.getItem("studySessionId") || "";
     if (sid) localStorage.setItem("sessionId", sid);
     sessionStorage.setItem("chatCompleted", sid || "1");
-    navigate("/survey", { replace: true });
+    navigate("/login-choice", { replace: true });
   }
 
   const participantProfilePic = (() => {
