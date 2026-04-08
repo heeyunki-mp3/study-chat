@@ -755,9 +755,9 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Group rotation: pro → anti → half → pro → ...
 const GROUP_ROTATION = ["pro", "anti", "half"];
 const GROUP_BOTS = {
-  pro:  ["sid_pro", "mina_pro", "vivian_pro"],
-  anti: ["sid_anti", "mina_anti", "vivian_anti"],
-  half: ["sid_pro", "mina_pro", "vivian_anti"],
+  pro:  ["sid_pro", "mina_pro", "derek_pro"],
+  anti: ["sid_anti", "mina_anti", "derek_anti"],
+  half: ["sid_pro", "mina_pro", "derek_anti"],
 };
 let groupRotationIndex = 0;
 
