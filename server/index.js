@@ -267,7 +267,8 @@ function parseJsonArray(rawText, maxItems = 3) {
 async function getBotResponse(botName, context) {
   const { moderatorQuestion, directive, previousAnswers, session, roundType = "big_question" } = context;
   const humanDisplayName = session?.humanDisplayName || session?.participantName || "You";
-  const cast = getCastByHandles([botName]);
+  const botId = session?.botIdMap?.[botName] || botName;
+  const cast = getCastByHandles([botId]);
   const persona = cast[0] || {};
   const bots = context.bots || [botName];
   const others = bots.filter((n) => n !== botName).join(", ") || "others";
@@ -774,6 +775,8 @@ function createSession(participantName) {
   }
   const botIds = cast.map((p) => p.id);
   const bots = cast.map((p) => p.handle);
+  const botIdMap = {};
+  cast.forEach((p) => { botIdMap[p.handle] = p.id; });
   if (CLI_BOT_NAMES.length > 0 && bots.length === 0) {
     console.warn("CLI bot names matched no personas; falling back to random cast.");
     assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
@@ -796,6 +799,7 @@ function createSession(participantName) {
     assignedGroup,
     moderatorName: MODERATOR_NAME,
     botIds,
+    botIdMap,
     bots,
     participantName,
     humanDisplayName: capitalizeFirst(participantName),
