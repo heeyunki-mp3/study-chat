@@ -1784,6 +1784,7 @@ io.on("connection", (socket) => {
         const answer = bubbles[0] || "Not sure.";
         emitMessage(bot, answer);
         if (session.pollState) session.pollState.answers[bot] = answer;
+        await checkAndAnswerBotQuestion(bubbles, question);
         resolve();
       });
     });
