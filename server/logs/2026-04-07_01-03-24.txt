@@ -1,2 +1,0 @@
-2026-04-07 05:03:24.064 [SESSION_START] backend running on http://localhost:3001
-2026-04-07 05:03:24.067 [DB_ERROR] Failed to init database: 

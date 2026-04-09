@@ -57,7 +57,7 @@ function clip(s, maxLen = 120) {
 /** Append one line to the session transcript file (same pattern as log file). */
 function appendTranscriptLine(session, name, text) {
   if (!session?.sessionId) return;
-  const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.sessionId}.txt`);
+  const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.assignedGroup || "cli"}_${session.sessionId}.txt`);
   const line = `${name}: ${String(text ?? "").trim()}\n`;
   try {
     fs.appendFileSync(transcriptPath, line, "utf8");
@@ -1933,6 +1933,21 @@ io.on("connection", (socket) => {
     session = createSession(name);
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
+    // Write transcript header with group info
+    const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.assignedGroup || "cli"}_${session.sessionId}.txt`);
+    try {
+      fs.writeFileSync(transcriptPath, [
+        `Session: ${session.sessionId}`,
+        `Participant: ${session.participantName}`,
+        `Group: ${session.assignedGroup || "cli"}`,
+        `Bots: ${session.botIds.join(", ")}`,
+        `Date: ${new Date().toISOString()}`,
+        `---`,
+        ``
+      ].join("\n"), "utf8");
+    } catch (e) {
+      console.error("Transcript header write failed", e?.message);
+    }
     await saveSessionToDatabase();
     socket.emit("session", {
       sessionId: session.sessionId,
