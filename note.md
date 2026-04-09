@@ -27,6 +27,12 @@ Migrated from localhost to Georgia Tech Plesk server. Six issues found and fixed
 - Server changes: git push → git pull on server → Plesk **Restart App**
 - `.env` must be maintained manually on server
 
+### Moderator double-asking fix — 2026-04-09
+
+Eunice was answering a bot's question and then re-asking the discussion question, causing double questions. Root cause: `generateModeratorQuestionAnswer()` returned 2 bubbles (answer + question reminder), then `advanceCallOn()` also generated a cue with the question.
+
+Fix: Changed the prompt and parser so the moderator only returns the answer (1 bubble), never re-asks. The `advanceCallOn()` cue is the only place the next question should come from.
+
 ## 3. Ideas & Backlog
 
 - (nothing yet)

@@ -57,7 +57,7 @@ function clip(s, maxLen = 120) {
 /** Append one line to the session transcript file (same pattern as log file). */
 function appendTranscriptLine(session, name, text) {
   if (!session?.sessionId) return;
-  const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}.txt`);
+  const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
   const line = `${name}: ${String(text ?? "").trim()}\n`;
   try {
     fs.appendFileSync(transcriptPath, line, "utf8");
@@ -575,10 +575,7 @@ Return format: {"substantive": true/false, "inappropriate": true/false}` },
  * alreadyAnswered is an array of { question, answer } objects from this session.
  */
 async function generateModeratorQuestionAnswer(questionText, roundQuestion, alreadyAnswered = []) {
-  const fallback = [
-    "Great question! I'm happy to clarify.",
-    String(roundQuestion ?? "").slice(0, 100) + " — what do you think?",
-  ];
+  const fallback = ["Great question! I'm happy to clarify."];
 
   const previousCtx = alreadyAnswered.length > 0
     ? `\n\nPreviously answered questions this session:\n${alreadyAnswered
@@ -590,11 +587,11 @@ async function generateModeratorQuestionAnswer(questionText, roundQuestion, alre
 
 If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONLY a very brief reminder of 8 words or fewer — a single casual sentence. Return a JSON array with exactly 1 string.
 
-Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 2 strings:
+Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 1 string:
 1. Answer the question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
-2. A single short sentence that gently rephrases the discussion question as a reminder and asks them to share their thoughts.
-Return ONLY valid JSON array of 1 or 2 strings. No markdown, no extra text. 
-Text should be very natrual and conversational and very human-like. Do NOT use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
+Do NOT re-ask or rephrase the discussion question. Do NOT ask the participant anything. Just answer and stop.
+Return ONLY valid JSON array of exactly 1 string. No markdown, no extra text.
+Text should be very natural and conversational and very human-like. Do NOT use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
 
   const user = `Discussion question: "${String(roundQuestion ?? "").slice(0, 300)}"\nParticipant's question: "${String(questionText).trim().slice(0, 300)}"`;
   try {
@@ -612,11 +609,8 @@ Text should be very natrual and conversational and very human-like. Do NOT use a
       .replace(/\s*```$/i, "")
       .trim();
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length === 1 && parsed[0]) {
+    if (Array.isArray(parsed) && parsed.length >= 1 && parsed[0]) {
       return [String(parsed[0]).trim()];
-    }
-    if (Array.isArray(parsed) && parsed.length >= 2 && parsed[0] && parsed[1]) {
-      return [String(parsed[0]).trim(), String(parsed[1]).trim()];
     }
   } catch (e) {
     console.error("generateModeratorQuestionAnswer error", e?.message || e);
@@ -1938,7 +1932,7 @@ io.on("connection", (socket) => {
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     // Write transcript header with group info
-    const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}.txt`);
+    const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
     try {
       const groupLabel = (session.assignedGroup || "cli").toUpperCase();
       const timestamp = new Date().toISOString();
@@ -2141,7 +2135,7 @@ io.on("connection", (socket) => {
           bubbles = await generateModeratorQuestionAnswer(text, roundQuestion, session.answeredQuestions || []);
         } catch (e) {
           console.error("generateModeratorQuestionAnswer error", e?.message || e);
-          bubbles = ["Happy to clarify!", `So — ${roundQuestion.slice(0, 80)}?`];
+          bubbles = ["Happy to clarify!"];
         }
         if (session) {
           session.answeredQuestions = session.answeredQuestions || [];
