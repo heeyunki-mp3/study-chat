@@ -5,7 +5,7 @@
  * After first round: detect view misalignments (disagreedWith/disagreedBy/differenceSummary), then prompt each "person to ask" to respond (one OpenAI call per).
  */
 
-import dotenv from "dotenv";
+import "dotenv/config";
 import express from "express";
 import fs from "fs";
 import { createServer } from "http";
@@ -13,10 +13,6 @@ import { Server } from "socket.io";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-
-const __dotenv_dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dotenv_dirname, ".env") });
-
 import OpenAI from "openai";
 // mysql2 loaded lazily — see DB section below
 import {
@@ -166,10 +162,7 @@ const MODERATOR_SCRIPT = [
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error("WARNING: OPENAI_API_KEY not found in environment. Checked .env at:", path.join(__dotenv_dirname, ".env"));
-}
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "missing" });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 let MODELS = { default: "gpt-4o-mini" };
 try {
   const raw = fs.readFileSync(path.join(__dirname, "models.json"), "utf8");
@@ -2237,7 +2230,7 @@ io.on("connection", (socket) => {
 });
 
 // SPA fallback: serve index.html for any non-API, non-static route
-app.get("*", (req, res) => {
+app.get("/{*path}", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "client", "dist", "index.html"));
 });
 
