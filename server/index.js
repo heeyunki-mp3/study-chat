@@ -57,7 +57,7 @@ function clip(s, maxLen = 120) {
 /** Append one line to the session transcript file (same pattern as log file). */
 function appendTranscriptLine(session, name, text) {
   if (!session?.sessionId) return;
-  const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.assignedGroup || "cli"}_${session.sessionId}.txt`);
+  const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}.txt`);
   const line = `${name}: ${String(text ?? "").trim()}\n`;
   try {
     fs.appendFileSync(transcriptPath, line, "utf8");
@@ -908,10 +908,9 @@ app.use(cors());
 // Serve profile pictures so client can load participant avatars (profile_1.jpg … profile_9.jpg)
 const profilePicturesDir = path.join(__dirname, "..", "profile_pictures");
 app.use("/profile_pictures", express.static(profilePicturesDir));
-app.use(express.json());
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-app.post("/api/auth_choice", async (req, res) => {
+app.post("/api/auth_choice", express.json(), async (req, res) => {
   const { sessionId, participantId, choice, hesitationMs } = req.body || {};
   if (!sessionId || !participantId || !["password", "passkey"].includes(choice)) {
     return res.status(400).json({ error: "Invalid request" });
@@ -1934,14 +1933,16 @@ io.on("connection", (socket) => {
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     // Write transcript header with group info
-    const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.assignedGroup || "cli"}_${session.sessionId}.txt`);
+    const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}.txt`);
     try {
+      const groupLabel = (session.assignedGroup || "cli").toUpperCase();
+      const timestamp = new Date().toISOString();
       fs.writeFileSync(transcriptPath, [
-        `Session: ${session.sessionId}`,
-        `Participant: ${session.participantName}`,
-        `Group: ${session.assignedGroup || "cli"}`,
-        `Bots: ${session.botIds.join(", ")}`,
-        `Date: ${new Date().toISOString()}`,
+        `=== GROUP: ${groupLabel} ===`,
+        `Timestamp: ${timestamp}`,
+        `Participant: ${session.humanDisplayName || session.participantName}`,
+        `Bots: ${session.bots.join(", ")}`,
+        `Date: ${runStamp}`,
         `---`,
         ``
       ].join("\n"), "utf8");
