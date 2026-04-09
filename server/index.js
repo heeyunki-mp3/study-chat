@@ -903,8 +903,20 @@ const BOT_INTROS = {
 // =====================
 // App & Socket
 // =====================
+// CORS: withCredentials requires explicit origins (no "*")
+const CORS_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
+  "https://focusgroup.cc.gatech.edu",
+  "https://www.focusgroup.cc.gatech.edu",
+];
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: CORS_ORIGINS,
+  credentials: true,
+}));
 // Serve profile pictures so client can load participant avatars (profile_1.jpg … profile_9.jpg)
 const profilePicturesDir = path.join(__dirname, "..", "profile_pictures");
 app.use("/profile_pictures", express.static(profilePicturesDir));
@@ -929,13 +941,6 @@ app.post("/api/auth_choice", express.json(), async (req, res) => {
   }
 });
 const httpServer = createServer(app);
-// CORS: withCredentials requires explicit origins (no "*")
-const CORS_ORIGINS = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3001",
-  "http://127.0.0.1:3001",
-];
 const io = new Server(httpServer, {
   cors: {
     origin: CORS_ORIGINS,
