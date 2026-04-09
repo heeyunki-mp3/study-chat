@@ -168,7 +168,7 @@ export default function ChatPage() {
       io(SERVER_BASE || undefined, {
         autoConnect: false,
         path: "/socket.io",
-        transports: ["websocket", "polling"],
+        transports: ["polling"],
         ...(import.meta.env.DEV && { withCredentials: true }),
       }),
     []

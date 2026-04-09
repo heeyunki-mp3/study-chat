@@ -2229,6 +2229,11 @@ io.on("connection", (socket) => {
   });
 });
 
+// SPA fallback: serve index.html for any non-API, non-static route
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "dist", "index.html"));
+});
+
 httpServer.listen(PORT, () => {
   logLine("SESSION_START", `backend running on http://localhost:${PORT}`);
   if (CLI_BOT_NAMES.length > 0) {
