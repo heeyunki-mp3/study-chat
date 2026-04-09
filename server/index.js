@@ -948,6 +948,10 @@ const PORT = process.env.PORT || 3001;
 // =====================
 // Socket: per-connection state and helpers
 // =====================
+// Session store: keeps sessions alive across reconnects
+const activeSessions = new Map(); // sessionId → session object
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 min timeout for abandoned sessions
+
 io.on("connection", (socket) => {
   let session = null;
   const botTypingTimeoutRef = { current: null };
@@ -1949,6 +1953,7 @@ io.on("connection", (socket) => {
       console.error("Transcript header write failed", e?.message);
     }
     await saveSessionToDatabase();
+    activeSessions.set(session.sessionId, session);
     socket.emit("session", {
       sessionId: session.sessionId,
       moderatorName: session.moderatorName,
@@ -1962,6 +1967,33 @@ io.on("connection", (socket) => {
     );
     logLine("QUEUE", "intro: seed sent, playing moderator intro then bot intros");
     setImmediate(() => runIntroWithTyping());
+  });
+
+  // Rejoin an existing session after reconnect
+  socket.on("rejoin", (data) => {
+    const sid = data?.sessionId;
+    if (!sid || !activeSessions.has(sid)) {
+      socket.emit("rejoin_failed");
+      return;
+    }
+    session = activeSessions.get(sid);
+    logLine("REJOIN", `id=${socket.id} sessionId=${sid} participant=${session.humanDisplayName || session.participantName}`);
+    // Re-send session info and full message history
+    socket.emit("session", {
+      sessionId: session.sessionId,
+      moderatorName: session.moderatorName,
+      bots: session.bots,
+      idleEmptyMs: IDLE_EMPTY_MS,
+      idleTypingMs: IDLE_TYPING_MS,
+    });
+    socket.emit(
+      "seed",
+      session.messages.map((m) => ({ name: m.name, text: m.text, ts: m.ts }))
+    );
+    // Restart idle timer if it's the human's turn
+    if (session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse) {
+      startIdleNudgeTimer();
+    }
   });
 
   function clearElaborationPromptTimer() {
@@ -2219,11 +2251,20 @@ io.on("connection", (socket) => {
     clearIdleNudgeTimer();
     clearElaborationPromptTimer();
     if (session) {
-      logLine("DISCONNECT", `id=${socket.id}`);
+      logLine("DISCONNECT", `id=${socket.id} sessionId=${session.sessionId} (session preserved for rejoin)`);
       saveCurrentRoundResponses();
       await saveSessionToDatabase(session);
+      // Schedule cleanup after TTL — if no rejoin, remove session
+      const sid = session.sessionId;
+      setTimeout(() => {
+        if (activeSessions.has(sid)) {
+          activeSessions.delete(sid);
+          logLine("SESSION_EXPIRED", `sessionId=${sid} removed after TTL`);
+        }
+      }, SESSION_TTL_MS);
     }
-    session = null;
+    // Don't null session — keep reference so rejoin can restore it
+    session = null; // detach from this socket, but activeSessions keeps it
     if (botTypingTimeoutRef.current) clearTimeout(botTypingTimeoutRef.current);
     botTypingTimeoutRef.current = null;
   });

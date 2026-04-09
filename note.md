@@ -33,6 +33,27 @@ Eunice was answering a bot's question and then re-asking the discussion question
 
 Fix: Changed the prompt and parser so the moderator only returns the answer (1 bubble), never re-asks. The `advanceCallOn()` cue is the only place the next question should come from.
 
+**Transcript example showing the problem:**
+```
+[Eunice] Have you seen or heard about passkey before?
+         If you've used it, what made you decide to switch? If you haven't, what held you back?
+[Eunice] @Mina, what do you think?
+[Mina]   I've seen the option pop up on my iPhone when logging into apps, but honestly, I'm not sure what all it does exactly.
+         If it makes logging in faster and easier, I might try switching, but I'd need to know it won't mess with my usual FaceID stuff.
+[Eunice] Passkeys use your device and biometric data for login instead of passwords making it faster and secure.  <-- PROBLEM: answers again
+         Sounds like you've noticed passkeys on your iPhone and want to know if it keeps FaceID convenience right? What do you think about giving it a try?  <-- PROBLEM: re-asks
+[Eunice] Makes sense to want it seamless with your current setup. @Derek, have you tried passkeys or thought about switching?  <-- advanceCallOn cue (this is correct)
+```
+The moderator was emitting 3 messages instead of 1. After fix, only the `advanceCallOn` cue to the next person should appear.
+
+### Session lost on reconnect — 2026-04-09
+
+When socket.io connection dropped (400 error, network blip), the server set `session = null` on disconnect and the client sent `participant_name` again on reconnect, creating a brand new session. All chat history was lost.
+
+Fix:
+- **Server**: Added `activeSessions` Map that stores sessions by sessionId. On disconnect, session stays in the map for 30 min (TTL). Added `rejoin` event that restores the session from the map.
+- **Client**: On connect, checks `sessionStorage` for existing sessionId. If found, emits `rejoin` instead of `participant_name`. If rejoin fails (session expired), falls back to new session. Seed now replaces messages instead of appending (prevents duplicates on rejoin).
+
 ## 3. Ideas & Backlog
 
 - (nothing yet)
