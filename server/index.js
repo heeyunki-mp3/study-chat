@@ -119,7 +119,7 @@ function capitalizeFirst(s) {
   return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
 }
 
-const MODERATOR_SCRIPT = [
+const MODERATOR_SCRIPT_DEFAULT = [
   {
     type: "intro",
     messages: [
@@ -159,6 +159,47 @@ const MODERATOR_SCRIPT = [
     ],
   },
 ];
+
+const MODERATOR_SCRIPT_CONTROL = [
+  {
+    type: "intro",
+    messages: [
+      "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!",
+      "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.",
+    ],
+  },
+  {
+    type: "study_goal",
+    messages: [
+      "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
+      "We will go one at a time, so please respond when I call your name. \n\nThere are no right or wrong answers. Just share your honest experiences with technology",
+    ],
+  },
+  {
+    type: "big_question",
+    messages: [
+      "First question: Big tech companies like Google roll out new features pretty often.\n\nHow do you usually feel when a company you use introduces something new?\nDo you tend to try new features right away, or do you usually ignore them at first?",
+    ],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about satellite phone communication?"],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about generative AI?"],
+  },
+  {
+    type: "big_question",
+    messages: [
+      "Have you ever used generative AI like ChatGPT, Gemini, or Copilot?\n\nIf so, which one do you use and why did you choose it? When and in what context do you use it?\nIf you haven't tried it, what has held you back?",
+    ],
+  },
+];
+
+function getModeratorScript(group) {
+  return group === "control" ? MODERATOR_SCRIPT_CONTROL : MODERATOR_SCRIPT_DEFAULT;
+}
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
 
@@ -748,11 +789,12 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Session state (one per socket/room)
 // =====================
 // Group rotation: pro → anti → half → pro → ...
-const GROUP_ROTATION = ["pro", "anti", "half"];
+const GROUP_ROTATION = ["pro", "anti", "half", "control"];
 const GROUP_BOTS = {
-  pro:  ["sid_pro", "mina_pro", "derek_pro"],
-  anti: ["sid_anti", "mina_anti", "derek_anti"],
-  half: ["sid_pro", "mina_pro", "derek_anti"],
+  pro:     ["sid_pro", "mina_pro", "derek_pro"],
+  anti:    ["sid_anti", "mina_anti", "derek_anti"],
+  half:    ["sid_pro", "mina_pro", "derek_anti"],
+  control: ["sid_control", "mina_control", "derek_control"],
 };
 let groupRotationIndex = 0;
 
@@ -784,7 +826,8 @@ function createSession(participantName) {
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
   const order = [...bots, participantName];
-  const allRounds = MODERATOR_SCRIPT
+  const script = getModeratorScript(assignedGroup);
+  const allRounds = script
     .filter((s) => s.type === "big_question" || s.type === "poll")
     .map((s) => ({ type: s.type, question: s.messages[0] }));
 
@@ -1600,7 +1643,7 @@ io.on("connection", (socket) => {
   // --- Flow: intro → study goal → big questions (call-on + disagreement) ---
   async function runIntroWithTyping() {
     if (!session) return;
-    const introSegment = MODERATOR_SCRIPT.find((s) => s.type === "intro");
+    const introSegment = getModeratorScript(session.assignedGroup).find((s) => s.type === "intro");
     const introMessages = introSegment?.messages || [];
     for (let i = 0; i < introMessages.length; i++) {
       await emitModeratorLine(introMessages[i], { skipThinkDelay: i === 0, consecutive: i > 0 });
@@ -1678,7 +1721,7 @@ io.on("connection", (socket) => {
     // Clear stale advance-cancel flags from intro phase so emitModeratorLine won't skip
     session.pendingAdvanceFromIdle = false;
     session.cancelAdvanceFromIdle = false;
-    const segment = MODERATOR_SCRIPT.find((s) => s.type === "study_goal");
+    const segment = getModeratorScript(session.assignedGroup).find((s) => s.type === "study_goal");
     if (!segment?.messages?.length) {
       startFirstRound();
       return;

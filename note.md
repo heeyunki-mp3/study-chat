@@ -54,6 +54,16 @@ Fix:
 - **Server**: Added `activeSessions` Map that stores sessions by sessionId. On disconnect, session stays in the map for 30 min (TTL). Added `rejoin` event that restores the session from the map.
 - **Client**: On connect, checks `sessionStorage` for existing sessionId. If found, emits `rejoin` instead of `participant_name`. If rejoin fails (session expired), falls back to new session. Seed now replaces messages instead of appending (prevents duplicates on rejoin).
 
+### Control group added — 2026-04-13
+
+Added a 4th group type: `control`. Differences from pro/anti/half:
+- **Moderator script**: Same intro + first big question. Polls changed to "satellite phone communication" and "generative AI" (no passkey poll). Final big question asks about generative AI usage instead of passkeys.
+- **Bots**: `sid_control`, `mina_control`, `derek_control` — copied word-for-word from pro versions.
+- **Rotation**: `["pro", "anti", "half", "control"]` — control is now in the round-robin.
+- **Implementation**: `MODERATOR_SCRIPT` replaced with `getModeratorScript(group)` which returns `MODERATOR_SCRIPT_CONTROL` for control group, `MODERATOR_SCRIPT_DEFAULT` otherwise.
+
+Files changed: `server/index.js`, `server/personas.json`
+
 ## 3. Ideas & Backlog
 
 - (nothing yet)
