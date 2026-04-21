@@ -66,4 +66,5 @@ Files changed: `server/index.js`, `server/personas.json`
 
 ## 3. Ideas & Backlog
 
-- (nothing yet)
+- **Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)
+- **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer)

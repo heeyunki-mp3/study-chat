@@ -378,6 +378,7 @@ async function getBotResponse(botName, context) {
       { role: "user", content: userPrompt },
     ],
     max_tokens: roundType === "poll" ? 60 : maxBubbles <= 2 ? 400 : 600,
+    temperature: 0.7,
   });
 
   const raw = completion?.choices?.[0]?.message?.content ?? "";
@@ -443,6 +444,7 @@ Output ONLY valid JSON. No extra text.`;
       { role: "user", content: transcript },
     ],
     max_tokens: 800,
+    temperature: 0,
   });
 
   const raw = completion?.choices?.[0]?.message?.content ?? "[]";
@@ -502,6 +504,7 @@ Output ONLY the message text. No quotes, no JSON, no separators.`;
       { role: "user", content: "Generate the follow-up sentence." },
     ],
     max_tokens: 120,
+    temperature: 0.7,
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
@@ -523,6 +526,7 @@ async function generateRoundSummary(question, roundTranscript, opts = {}) {
       { role: "user", content: `Question: ${question}\n\n${roundTranscript}` },
     ],
     max_tokens: roundType === "poll" ? 60 : 200,
+    temperature: 0.7,
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
@@ -540,6 +544,7 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
       model: MODELS.default,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 20,
+      temperature: 0,
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const parsed = JSON.parse(raw || "{}");
@@ -570,12 +575,14 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const questionCall = openai.chat.completions.create({
     model: MODELS.default,
     messages: [
-      { role: "system", content: `You are a classifier. Return ONLY valid JSON with one boolean field:
-- "isQuestion": True if the participant's message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?"). False for filler ("ok","idk","nope","not sure"), emotions, statements, opinions, or anything that tries to answer the prompt.
+      { role: "system", content: `You are a strict classifier. Return ONLY valid JSON with one boolean field:
+- "isQuestion": True ONLY if the participant's message contains an explicit, direct question directed at the moderator asking for clarification or explanation. The message must contain a clear question form (e.g. "what is X?", "can you explain X?", "how does X work?").
+  False for: filler ("ok","idk","nope","not sure"), emotions, statements, opinions, expressions of uncertainty or confusion ("I'm not sure what X is", "I don't really know about X", "never heard of X"), or anything that tries to answer the prompt. Uncertainty or lack of knowledge is NOT a question — they must be explicitly asking.
 Return format: {"isQuestion": true/false}` },
       { role: "user", content: `${qContext}\nMessage: "${String(burstText).trim().slice(0, 400)}"` },
     ],
     max_tokens: 20,
+    temperature: 0,
   });
 
   const substCall = openai.chat.completions.create({
@@ -588,6 +595,7 @@ Return format: {"substantive": true/false, "inappropriate": true/false}` },
       { role: "user", content: `${qContext}\nMessages: "${String(combined).trim().slice(0, 800)}"` },
     ],
     max_tokens: 20,
+    temperature: 0,
   });
 
   try {
@@ -630,6 +638,7 @@ If the participant's question is asking about a topic you already answered above
 
 Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 1 string:
 1. Answer the question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
+IMPORTANT: Stay completely neutral and factual. Do NOT promote, hype, or express enthusiasm about any technology. Do NOT use phrases like "it's very easy", "it's the future", "it's amazing", "next generation", etc. Just explain what it is plainly.
 Do NOT re-ask or rephrase the discussion question. Do NOT ask the participant anything. Just answer and stop.
 Return ONLY valid JSON array of exactly 1 string. No markdown, no extra text.
 Text should be very natural and conversational and very human-like. Do NOT use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
@@ -643,6 +652,7 @@ Text should be very natural and conversational and very human-like. Do NOT use a
         { role: "user", content: user },
       ],
       max_tokens: 160,
+      temperature: 0.7,
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "")
       .trim()
@@ -719,6 +729,7 @@ When in the middle of a round, do NOT ask a new question — only react and cue 
         { role: "user", content: userPrompt },
       ],
       max_tokens: 100,
+      temperature: 0.7,
     });
     const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
     if (text) return text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
