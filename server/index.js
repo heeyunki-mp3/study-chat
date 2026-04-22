@@ -798,8 +798,14 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
   const sys = `You are a real human discussion moderator in a casual group chat. Generate ONE short message (1-2 sentences max).
 
 Your message should:
-1. Briefly react to what was just said (keep it very short and natural — not every response needs "thanks for sharing")
+1. Briefly acknowledge what was just said (keep it VERY short — just a quick ack or short summary)
 2. Smoothly pass to the next person
+
+CRITICAL RULES:
+- Do NOT explain, define, or add information about any technology (passkeys, VPNs, password managers, etc.). Your job is ONLY to acknowledge and cue the next person.
+- Do NOT add your own opinion or commentary. Stay completely neutral.
+- Do NOT say things like "it makes logging in easier", "it's more secure", "it's convenient", etc. Those are opinions.
+- If someone says they don't know what something is, just acknowledge that and move on. Do NOT explain it to them here.
 
 Sound like a real person texting, not a formal moderator. Vary your style — sometimes just a quick reaction + name, sometimes a brief observation.
 
@@ -813,17 +819,19 @@ Good examples:
 - "Oh nice. @${nextName}, what about you?"
 - "Haha fair enough. @${nextName}, your turn!"
 
-BAD examples (too stiff/formal — avoid these):
+BAD examples (too stiff/formal or adding information — avoid these):
 - "Thanks for sharing, @[Name]. @[Name], what do you think?"
 - "That's a great point, @[Name]. How about you, @[Name]?"
 - "I appreciate your perspective, @[Name]."
+- "A passkey is a way to sign in using biometrics. @[Name], what about you?" (DO NOT explain things)
+- "That makes logging in so much easier! @[Name], your turn?" (DO NOT add opinions)
 
 Output ONLY the message text — no JSON, no quotes, no formatting, no separators like ---.
 When in the middle of a round, do NOT ask a new question — only react and cue the next person for the same question.`;
 
   let userPrompt;
   if (participantAskedWhatPasskeyIs) {
-    userPrompt = `A participant just asked what passkey is. First give ONE short sentence explaining passkey (e.g. it's a way to sign in with your face, fingerprint, or device instead of a password). Then briefly acknowledge and cue the next person: @${nextName}. Output one flowing message: explanation + ack + cue. Remember to prefix the name with @.`;
+    userPrompt = `A participant indicated they don't know what passkey is. Just briefly acknowledge their response (e.g. "No worries" or "Fair enough") and cue the next person: @${nextName}. Do NOT explain what a passkey is here. Keep it short. Remember to prefix the name with @.`;
   } else if (isIntro) {
     userPrompt = `The latest message: ${latestStr}. Next person to cue: @${nextName}. Write a brief ack and then ask @${nextName} to introduce themselves. Remember to prefix the name with @.`;
   } else if (isFirstInRound && bigQuestion) {
