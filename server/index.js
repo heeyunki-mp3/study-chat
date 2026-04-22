@@ -23,7 +23,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Bot names from CLI: npm start -- Jae Mina Derek (optional; if empty, spawn random cast)
+// Bot names from CLI: npm start -- Anthony Mina Sid (optional; if empty, spawn random cast)
 const CLI_BOT_NAMES = process.argv
   .slice(2)
   .map((s) => String(s).trim())
@@ -439,7 +439,7 @@ For every pair of participants whose views differ meaningfully, output an object
   "differenceSummary": "Brief explanation of how their views differ"
 }
 
-Output a separate object for each pair whose views differ. If multiple participants share a similar stance that contrasts with another participant, include each such pair (e.g. if both Sid and Jae contrast with Vivian, output both Sid–Vivian and Jae–Vivian).
+Output a separate object for each pair whose views differ. If multiple participants share a similar stance that contrasts with another participant, include each such pair (e.g. if both Sid and Anthony contrast with Vivian, output both Sid–Vivian and Anthony–Vivian).
 
 Use EXACT names as they appear in the transcript.
 
@@ -497,7 +497,7 @@ async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagree
 1. Briefly and neutrally observe the difference WITHOUT directly pitting people against each other (e.g. "It sounds like we're hearing a couple different approaches..." or "Interesting — seems like people feel differently about this...")
 2. Then naturally invite ${disagreedWith} to share more (e.g. "...@${disagreedWith}, what are your thoughts?" or "...curious what you think, @${disagreedWith}")
 
-IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Jae, @Mina). Every single name mention must have the @ prefix.
+IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Anthony, @Mina). Every single name mention must have the @ prefix.
 - Do NOT say "what do you think about @[Name]'s approach/view/idea?" — that's too confrontational
 - Do NOT frame it as a direct disagreement or conflict
 - Keep it neutral, warm, and organic — like you're genuinely curious, not forcing a debate
@@ -771,7 +771,7 @@ Your message should:
 
 Sound like a real person texting, not a formal moderator. Vary your style — sometimes just a quick reaction + name, sometimes a brief observation.
 
-IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Jae, @Mina). Every single name mention must have the @ prefix.
+IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Anthony, @Mina). Every single name mention must have the @ prefix.
 
 Good examples:
 - "Gotcha. @${nextName}, how about you?"
@@ -883,10 +883,10 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Group rotation: pro → anti → half → pro → ...
 const GROUP_ROTATION = ["pro", "anti", "half", "control"];
 const GROUP_BOTS = {
-  pro:     ["sid_pro", "mina_pro", "jae_pro"],
-  anti:    ["sid_anti", "mina_anti", "jae_anti"],
-  half:    ["sid_pro", "mina_pro", "jae_anti"],
-  control: ["sid_control", "mina_control", "jae_control"],
+  pro:     ["sid_pro", "mina_pro", "anthony_pro"],
+  anti:    ["sid_anti", "mina_anti", "anthony_anti"],
+  half:    ["sid_pro", "mina_pro", "anthony_anti"],
+  control: ["sid_control", "mina_control", "anthony_control"],
 };
 let groupRotationIndex = 0;
 
@@ -998,19 +998,15 @@ function pickRoundAckText(session) {
 // Bot intro messages (one chosen at random per bot)
 // =====================
 const BOT_INTROS = {
-  Jae: [
-    "Hi I'm Jae. I teach math at high school",
-    "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
-  ],
   Mina: [
     "Hi, I'm Mina. I work in retail in LA. Nice to meet you all",
     "Hiii my name is Mina! I work in retail in LA",
     "Hi yall! I'm Mina. First time doing this kind of thing!",
   ],
-  Derek: [
-    "Hi, I'm Derek. I'm a case worker in Tacoma.",
-    "Hey, I'm Derek. I work in social services. Good to see you all.",
-    "I am Derek. I'm in Tacoma.",
+  Anthony: [
+    "Hi, I'm Anthony. I teach high school math in Arlington.",
+    "Hey, I'm Anthony. I'm a math teacher. Nice to meet everyone.",
+    "I am Anthony. I teach math in Virginia.",
   ],
   Vivian: [
     "Hi I'm Vivian. I'm a psych undergrad at Emory.",
