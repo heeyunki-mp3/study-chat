@@ -201,7 +201,7 @@ const MODERATOR_SCRIPT_CONTROL = [
   },
   {
     type: "poll",
-    messages: ["Have you ever used or heard about passkeys?"],
+    messages: ["Have you ever used or heard about generative AI?"],
   },
   {
     type: "big_question",
