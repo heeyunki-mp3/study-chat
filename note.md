@@ -110,6 +110,33 @@ Fix: Rewrote the LLM prompt in `generateNudgeMessage()` to be much more forceful
 
 Also fixed the idle kick: moderator chat message says "No worries @user, looks like you got pulled away..." but the browser alert shows "You have been removed from the session." (previously both showed the same long message).
 
+### Race condition: classify vs human_idle deadlock — 2026-04-22
+
+Sessions were getting stuck on round 4 and timing out. Root cause: race condition between async `classifyHumanMessage` and `human_idle` event.
+
+Sequence:
+1. `human_message` arrives → starts async `classifyHumanMessage` (~1s)
+2. While classify is running, `human_idle` fires → sets `pendingAdvanceFromIdle = true`, starts `advanceCallOn`
+3. Classify completes → `human_message` handler resumes, sees `pendingAdvanceFromIdle = true`, sets `cancelAdvanceFromIdle = true`
+4. Running `advanceCallOn` sees cancel flag → rolls back, waits for another `human_idle`
+5. But `human_idle` already fired → **deadlock** (session stuck forever)
+
+Fix: Snapshot `pendingAdvanceFromIdle` **before** the async classify call. Only cancel the advance if it was already pending before classify started. If `human_idle` started the advance *during* classify, the advance is legitimate (the message was already received) and should not be cancelled.
+
+### Bot language style not obeyed — 2026-04-22
+
+Bots were ignoring Language Realism rules (lowercase, no apostrophes, etc.). Two issues:
+
+1. **`persona_prompt` buried in middle of system prompt**: The persona-specific language rules were sandwiched between IDENTITY and STYLE sections. Moved `persona_prompt` to the very end of the system prompt with header "HIGHEST PRIORITY — OVERRIDE ALL ABOVE" so the model gives it final weight.
+2. **Missing Language Realism on variants**: `mina_anti`, all `sid_*` variants, and default personas had no Language Realism section. Added appropriate rules to all active personas.
+
+### Derek → Anthony rename — 2026-04-22
+
+Replaced Derek with Anthony as the deployed bot. Derek personas kept in `personas.json` but not spawned.
+- `jae_*` IDs renamed to `anthony_*` in personas.json
+- Group assignments updated in index.js
+- Intro lines updated for Anthony (math teacher in Arlington)
+
 ### Removed intro cue from moderator — 2026-04-22 (`78954a2`)
 
 After all bots introduce themselves, Eunice used to generate a cue like "Nice to meet you, @Anthony! @dfa, your turn to introduce yourself." via `generateModeratorCue` with `isIntro: true`. This was an unnecessary extra step — the human should just introduce themselves without being prompted. Removed the cue generation and `emitModeratorLine` call; now it goes straight to `waitingForHumanIntro = true` and the nudge timer.

@@ -2285,6 +2285,11 @@ io.on("connection", (socket) => {
 
     emitMessage(session.humanDisplayName, text); // show immediately; validate below
 
+    // Snapshot advance state BEFORE the async classify call.
+    // If human_idle fires during classify and starts an advance, we must NOT cancel it —
+    // the user's message was already received and the idle-triggered advance is correct.
+    const advanceWasPendingBeforeClassify = !!session.pendingAdvanceFromIdle;
+
     // Validate response before advancing: treat non-substantive replies as if user never responded.
     // Once the user has given at least one substantive response this turn, skip further checks and just wait for idle to advance.
     const inIntroPhase = session.waitingForHumanIntro || session.moderatorTypingIntroCue;
@@ -2407,8 +2412,12 @@ io.on("connection", (socket) => {
       session.humanRepliedDisagreementTurn = true;
       logLine("QUEUE", `human_message: replied to view-misalignment follow-up, waiting for idle to advance`);
     }
-    // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle
-    if (session.pendingAdvanceFromIdle) {
+    // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle.
+    // BUT: only cancel if the advance was already pending BEFORE our async classify call.
+    // If human_idle started the advance while classify was running, that advance is legitimate
+    // (the message was already received) — cancelling it causes a deadlock where the server
+    // waits for another human_idle that will never come.
+    if (session.pendingAdvanceFromIdle && advanceWasPendingBeforeClassify) {
       session.cancelAdvanceFromIdle = true;
       if (session.callOnState) session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", "human_message during scheduled advance: cancelling, waiting for human_idle again");
