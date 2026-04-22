@@ -2272,6 +2272,7 @@ io.on("connection", (socket) => {
     if (!text || !session) return;
     if (session.waitingForElaborationAfterNonSubstantive) {
       clearElaborationPromptTimer(); // user sent another message, cancel elaboration timer
+      session.waitingForElaborationAfterNonSubstantive = false; // clear the flag so human_idle doesn't restart the elaboration cycle
     }
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();

@@ -17,7 +17,7 @@ const ANSWERS = [
   { match: /VPN/i,                                                     text: "Yes" },
   { match: /password manager/i,                                        text: "Yes" },
   { match: /generative AI|ChatGPT|Gemini|Copilot/i,                    text: "I use chat gpt everyday for my work. it makes be much of my work easier and streamlined" },
-  { match: /heard about passkey|switch.*passkey|login.*passkey|used it|what made you|held you back/i, text: "I use it whenever it is available. I love how it simplifies log in process and I don't even need to remember password anymore." },
+  { match: /account login to|switch.*passkey|login.*passkey|used it|what made you|held you back/i, text: "I use it whenever it is available. I love how it simplifies log in process and I don't even need to remember password anymore." },
   { match: /passkey/i,                                                 text: "Yes" },
   { match: /elaborate/i,                                               text: null }, // will use lastAnswer
 ];
