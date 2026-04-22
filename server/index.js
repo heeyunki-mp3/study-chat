@@ -714,15 +714,30 @@ Text should be very natural and conversational and very human-like. Do NOT use a
 /**
  * Generate a nudge message for an idle human participant.
  * nudgeNumber: 1 = gentle reminder to answer, 2 = "are you still there?" style.
+ * context: { phase, question, transcript } — what the user is supposed to be doing right now.
  */
-async function generateNudgeMessage(humanName, nudgeNumber) {
+async function generateNudgeMessage(humanName, nudgeNumber, context = {}) {
+  const { phase = "question", question = "", transcript = "" } = context;
+
+  const phaseDesc = phase === "intro"
+    ? "The group is doing introductions. The participant needs to introduce themselves (share their name and a bit about themselves)."
+    : phase === "poll"
+      ? `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`
+      : `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
+
   const style = nudgeNumber === 1
-    ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Just warmly invite them to answer. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
-    : `Check if @${humanName} is still around and ask them to share their thoughts. Include a notion of "still there?" or "still with us?". Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+    ? `Gently ask @${humanName} to respond. Do NOT ask if they are still there. Just warmly invite them to participate. Example for intro: "Hey @${humanName}, would you like to introduce yourself?" Example for question: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
+    : `Check if @${humanName} is still around and ask them to respond. Include a notion of "still there?" or "still with us?". Example: "Hey @${humanName}, still around? We'd love to hear from you."`;
 
   const sys = `You are a warm, casual human discussion moderator named ${MODERATOR_NAME}. Generate a single nudge message for an idle participant.
+
+Context:
+${phaseDesc}
+${transcript ? `\nRecent chat:\n${transcript}` : ""}
+
 Rules:
 - MUST include @${humanName} somewhere in the message.
+- Your nudge must be relevant to what the participant is supposed to be doing (introducing themselves, answering a poll, or sharing thoughts on the discussion question). Do NOT ask about something unrelated.
 - Exactly 1 sentence. Never more than 2 sentences.
 - Sound like a real person, NOT an AI assistant. No exclamation-heavy or overly enthusiastic language.
 - Be concise and natural.
@@ -745,6 +760,11 @@ Return ONLY the message text. No quotes, no JSON, no formatting.`;
     console.error("generateNudgeMessage error", e?.message || e);
   }
   // Fallbacks
+  if (phase === "intro") {
+    return nudgeNumber === 1
+      ? `Hey @${humanName}, would you like to introduce yourself?`
+      : `Hey @${humanName}, still with us? We'd love to hear a quick intro from you.`;
+  }
   return nudgeNumber === 1
     ? `Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready.`
     : `Hey @${humanName}, still around? Your thoughts on this would be great.`;
@@ -1188,7 +1208,21 @@ io.on("connection", (socket) => {
         return;
       }
 
-      const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount);
+      // Build context for the nudge based on current phase
+      const nudgeContext = {};
+      if (session.waitingForHumanIntro) {
+        nudgeContext.phase = "intro";
+      } else if (session.currentRoundType === "poll") {
+        nudgeContext.phase = "poll";
+        nudgeContext.question = session.callOnState?.question || "";
+      } else {
+        nudgeContext.phase = "question";
+        nudgeContext.question = session.callOnState?.question || "";
+      }
+      // Include recent transcript for context
+      const recentMsgs = (session.roundTranscript || session.messages || []).slice(-8);
+      nudgeContext.transcript = recentMsgs.map((m) => `${m.name}: ${m.text}`).join("\n").slice(0, 600);
+      const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount, nudgeContext);
       await emitModeratorLine(nudgeMsg, { cancelCheck: () => !!session?.humanIsTyping });
       if (session?.humanIsTyping) {
         // Nudge was cancelled mid-emission; undo the nudge count increment and reset timer
