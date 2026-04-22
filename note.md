@@ -2,7 +2,8 @@
 
 ## 1. Todo List
 
-- (nothing yet)
+- ~~**Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)~~ **Done** — Mina's texting style updated across all 4 variants (default, pro, anti, control): all lowercase, only `.` punctuation (never at end of last sentence), `??` and `!!` for questions/exclamations, no apostrophes/commas/quotes/dashes.
+- **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer)
 
 ## 2. Issue
 
@@ -64,7 +65,41 @@ Added a 4th group type: `control`. Differences from pro/anti/half:
 
 Files changed: `server/index.js`, `server/personas.json`
 
+### Stricter question answering + neutral Eunice — 2026-04-15
+
+Eunice was answering when Mina just said "I'm not sure what passkey is" (uncertainty, not a question). Also Eunice was hyping passkeys ("it's very easy! next generation!").
+
+Fix:
+- **Classifier prompt** (`classifyHumanMessage`): Tightened to require an explicit direct question form. Expressions of uncertainty/confusion ("I'm not sure what X is", "never heard of X") are now explicitly listed as NOT questions.
+- **Moderator answer prompt** (`generateModeratorQuestionAnswer`): Added instruction to stay completely neutral and factual — no promoting, hyping, or enthusiasm about any technology.
+
+### Temperature added to API calls — 2026-04-15
+
+All 9 OpenAI API calls had no temperature set (using OpenAI default of 1.0). Added explicit temperature:
+- `temperature: 0.7` for generative calls (bot responses, moderator cues, follow-ups, summaries, question answers) — consistent but not robotic
+- `temperature: 0` for classifier/utility calls (question detection, substantive check, disagreement detection) — deterministic
+
+### Idle nudge/kick rework — 2026-04-21
+
+Changed from 1 nudge + kick to 2 nudges + kick:
+- **Nudge 1**: Gentle reminder generated via OpenAI (temperature 0). Must include `@user`, gently asks to share thoughts. Fallback: "Hey @user, would love to hear your thoughts on this one whenever you're ready."
+- **Nudge 2**: "Still there?" style generated via OpenAI (temperature 0). Must include `@user`. Fallback: "Hey @user, still around? Your thoughts on this would be great."
+- **Kick (nudge 3)**: Fixed text: "No worries @user, looks like you got pulled away. We'll wrap things up on your end so the group can keep going. Thanks for signing up!"
+- `MAX_NUDGES` changed from 2 to 3.
+- Added `generateNudgeMessage()` function.
+
+### Introduced name vs display name — 2026-04-22
+
+Users enter a name on the welcome page ("Anthony") but may introduce themselves differently in chat ("Tony"). Now tracking both:
+- `session.humanDisplayName` = welcome page name (used for `@` mentions)
+- `session.introducedName` = name extracted from intro message via OpenAI (used for non-`@` references by bots)
+- `getHumanReferenceName(session)` helper returns introduced name if available, else display name
+- `extractIntroducedName()` uses OpenAI (temperature 0) to parse names from intro text
+- Bot prompts and transcripts use introduced name; moderator `@` cues use display name
+- Disagreement `resolve()` also recognizes the introduced name
+
+This feature existed before (commit `c439662`) using regex but was removed. Restored with OpenAI-based extraction instead of regex.
+
 ## 3. Ideas & Backlog
 
-- **Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)
-- **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer)
+- (moved to Todo List above)

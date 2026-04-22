@@ -89,7 +89,7 @@ const IDLE_CHECK_MS = 2000;                   // How often the server polls to c
 // --- Nudge (remind inactive human) ---
 const NUDGE_MS = 20000;                       // Nudge after this long with no typing (empty input)
 const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge after this long with no typing (has draft in input)
-const MAX_NUDGES = 2;                         // Kick user after this many unanswered nudges
+const MAX_NUDGES = 3;                         // Kick user after this many unanswered nudges (nudge 1 & 2 are reminders, nudge 3 kicks)
 
 // --- Elaboration ("Could you elaborate?") ---
 const MAX_ELABORATION_NUDGES = 4;             // Kick user after this many elaboration prompts with no substantive response
@@ -117,6 +117,16 @@ function capitalizeFirst(s) {
   if (!s || typeof s !== "string") return s ?? "";
   const t = s.trim();
   return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
+}
+
+/**
+ * Name to use when referring to the human WITHOUT @ (introduced name if available, else display name).
+ * For @ mentions, always use session.humanDisplayName.
+ */
+function getHumanReferenceName(session) {
+  if (!session?.participantName) return "You";
+  const base = session.introducedName ?? session.participantName;
+  return capitalizeFirst(base);
 }
 
 const MODERATOR_SCRIPT_DEFAULT = [
@@ -307,7 +317,7 @@ function parseJsonArray(rawText, maxItems = 3) {
 // =====================
 async function getBotResponse(botName, context) {
   const { moderatorQuestion, directive, previousAnswers, session, roundType = "big_question" } = context;
-  const humanDisplayName = session?.humanDisplayName || session?.participantName || "You";
+  const humanRefName = getHumanReferenceName(session);
   const botId = session?.botIdMap?.[botName] || botName;
   const cast = getCastByHandles([botId]);
   const persona = cast[0] || {};
@@ -319,7 +329,7 @@ async function getBotResponse(botName, context) {
     others,
     persona,
     MODERATOR_NAME,
-    humanDisplayName
+    humanRefName
   );
 
   // Build prior context: include moderator explanations from earlier rounds
@@ -366,7 +376,7 @@ async function getBotResponse(botName, context) {
     otherName: others,
     respondTo: directive ? { type: "directive", text: directive } : null,
     moderatorName: MODERATOR_NAME,
-    humanParticipantName: humanDisplayName,
+    humanParticipantName: humanRefName,
     maxBubbles,
     questionType: roundType,
   });
@@ -533,6 +543,38 @@ async function generateRoundSummary(question, roundTranscript, opts = {}) {
   return text || (roundType === "poll" ? "Thanks everyone for the quick answers!" : "Thanks everyone for sharing your views on that.");
 }
 
+/**
+ * Extract the name the human introduced themselves as from their intro message(s).
+ * Returns the introduced name or null if none found.
+ */
+async function extractIntroducedName(introMessages, displayName) {
+  const text = Array.isArray(introMessages) ? introMessages.join(" ") : String(introMessages || "");
+  if (!text.trim()) return null;
+  const sys = `You extract the name a person introduced themselves as from their message. Return ONLY valid JSON: {"name": "..."} with the name they gave, or {"name": null} if they did not mention a name.
+Examples:
+- "hello everyone, my name is tony" → {"name": "Tony"}
+- "hey im tony, nice to meet yall" → {"name": "Tony"}
+- "hi I go by T" → {"name": "T"}
+- "hey everyone! excited to be here" → {"name": null}
+- "my name is Tony Park and I work in tech" → {"name": "Tony"}
+Return ONLY the first name they introduced themselves as, capitalized. If they didn't say a name, return null.`;
+  const user = `Their display name is "${displayName}". Their message: "${text.trim().slice(0, 400)}"`;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      max_tokens: 30,
+      temperature: 0,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = JSON.parse(raw || "{}");
+    if (parsed.name && typeof parsed.name === "string") return parsed.name.trim();
+  } catch (e) {
+    console.error("extractIntroducedName error", e?.message || e);
+  }
+  return null;
+}
+
 /** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
 async function isAskingWhatPasskeyIs(text, roundQuestion) {
   if (!text || !String(text).trim()) return false;
@@ -669,6 +711,45 @@ Text should be very natural and conversational and very human-like. Do NOT use a
   return fallback;
 }
 
+/**
+ * Generate a nudge message for an idle human participant.
+ * nudgeNumber: 1 = gentle reminder to answer, 2 = "are you still there?" style.
+ */
+async function generateNudgeMessage(humanName, nudgeNumber) {
+  const style = nudgeNumber === 1
+    ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Just warmly invite them to answer. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
+    : `Check if @${humanName} is still around and ask them to share their thoughts. Include a notion of "still there?" or "still with us?". Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+
+  const sys = `You are a warm, casual human discussion moderator named ${MODERATOR_NAME}. Generate a single nudge message for an idle participant.
+Rules:
+- MUST include @${humanName} somewhere in the message.
+- Exactly 1 sentence. Never more than 2 sentences.
+- Sound like a real person, NOT an AI assistant. No exclamation-heavy or overly enthusiastic language.
+- Be concise and natural.
+- ${style}
+Return ONLY the message text. No quotes, no JSON, no formatting.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: "Generate the nudge message." },
+      ],
+      max_tokens: 60,
+      temperature: 0,
+    });
+    const text = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^["']|["']$/g, "");
+    if (text && text.includes(`@${humanName}`)) return text;
+  } catch (e) {
+    console.error("generateNudgeMessage error", e?.message || e);
+  }
+  // Fallbacks
+  return nudgeNumber === 1
+    ? `Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready.`
+    : `Hey @${humanName}, still around? Your thoughts on this would be great.`;
+}
+
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
 async function generateModeratorCue(latestMessage, nextName, opts = {}) {
   const { isFirstInRound = false, isIntro = false, bigQuestion, roundQuestion } = opts;
@@ -802,10 +883,10 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Group rotation: pro → anti → half → pro → ...
 const GROUP_ROTATION = ["pro", "anti", "half", "control"];
 const GROUP_BOTS = {
-  pro:     ["sid_pro", "mina_pro", "derek_pro"],
-  anti:    ["sid_anti", "mina_anti", "derek_anti"],
-  half:    ["sid_pro", "mina_pro", "derek_anti"],
-  control: ["sid_control", "mina_control", "derek_control"],
+  pro:     ["sid_pro", "mina_pro", "jae_pro"],
+  anti:    ["sid_anti", "mina_anti", "jae_anti"],
+  half:    ["sid_pro", "mina_pro", "jae_anti"],
+  control: ["sid_control", "mina_control", "jae_control"],
 };
 let groupRotationIndex = 0;
 
@@ -1100,17 +1181,18 @@ io.on("connection", (socket) => {
 
       if (session.idleNudgeCount >= MAX_NUDGES) {
         clearIdleNudgeTimer();
-        emitMessage(MODERATOR_NAME, "I think you are not paying attention. I am kicking you out.");
-        logLine("QUEUE", "idle kick: closing session after 2 nudges");
+        const kickMsg = `No worries @${session.humanDisplayName}, looks like you got pulled away. We'll wrap things up on your end so the group can keep going. Thanks for signing up!`;
+        emitMessage(MODERATOR_NAME, kickMsg);
+        logLine("QUEUE", "idle kick: closing session after unanswered nudges");
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
-        io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
+        io.to(socket.id).emit("kicked", { reason: "idle", message: kickMsg });
         saveCurrentRoundResponses();
         await saveSessionToDatabase(session);
         session = null;
         return;
       }
 
-      const nudgeMsg = `${session.humanDisplayName}, are you still there? Would you respond to this question?`;
+      const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount);
       await emitModeratorLine(nudgeMsg, { cancelCheck: () => !!session?.humanIsTyping });
       if (session?.humanIsTyping) {
         // Nudge was cancelled mid-emission; undo the nudge count increment and reset timer
@@ -1350,11 +1432,14 @@ io.on("connection", (socket) => {
     if (!session?.callOnState) return;
     const co = session.callOnState;
     const humanDisplayName = session.humanDisplayName;
+    const humanRefName = getHumanReferenceName(session);
     const previousAnswers = co.whoSpoke.map((name) => {
       const msgName = name === session.participantName ? humanDisplayName : name;
       const msgs = session.messages.filter((m) => m.name === msgName);
       const text = msgs.map((m) => m.text).join(" ");
-      return { name: msgName, text };
+      // Use introduced name in transcript so bots see a consistent name
+      const displayAs = msgName === humanDisplayName ? humanRefName : msgName;
+      return { name: displayAs, text };
     });
 
     const directive =
@@ -1447,12 +1532,14 @@ io.on("connection", (socket) => {
     const botNames = session.bots;
     const participantName = session.participantName;
     const toPrompt = [];
+    const humanIntroName = session.introducedName || "";
     const resolve = (name) => {
       const n = String(name ?? "").trim().toLowerCase();
       const bot = botNames.find((b) => b.toLowerCase() === n);
       if (bot) return bot;
       if (participantName && participantName.toLowerCase() === n) return participantName;
       if (humanDisplayName && humanDisplayName.toLowerCase() === n) return participantName;
+      if (humanIntroName && humanIntroName.toLowerCase() === n) return participantName;
       return null;
     };
 
@@ -1947,9 +2034,10 @@ io.on("connection", (socket) => {
     }
 
     const humanDisp = session.humanDisplayName;
+    const humanRef = getHumanReferenceName(session);
     const previousAnswers = session.messages
       .filter((m) => co.order.includes(m.name) || m.name === humanDisp)
-      .map((m) => ({ name: m.name, text: m.text }));
+      .map((m) => ({ name: m.name === humanDisp ? humanRef : m.name, text: m.text }));
     const context = {
       moderatorQuestion: co.question,
       directive: followUpText,
@@ -2109,6 +2197,15 @@ io.on("connection", (socket) => {
       // Only advance if user actually sent a message; otherwise let the nudge timer handle it
       if (!hasHumanRepliedAfterIntroPrompt(session)) return;
       clearIdleNudgeTimer();
+      // Extract introduced name from all intro messages if not already done
+      if (!session.introducedName) {
+        const introText = (session.humanMessagesThisRound || []).join(" ");
+        const introduced = await extractIntroducedName(introText, session.humanDisplayName);
+        if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+          session.introducedName = introduced.trim();
+          logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+        }
+      }
       logLine("QUEUE", `human_idle after intro from ${session.humanDisplayName}`);
       session.waitingForHumanIntro = false;
       await runStudyGoal();
@@ -2260,11 +2357,21 @@ io.on("connection", (socket) => {
       session.moderatorTypingIntroCue = false;
     }
     if (repliedWhileModeratorTypingIntroCue) {
+      const introduced = await extractIntroducedName(text, session.humanDisplayName);
+      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+        session.introducedName = introduced.trim();
+        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      }
       logLine("QUEUE", "human_message during intro cue: cancelling cue, advancing to study_goal");
       await runStudyGoal();
       return;
     }
     if (session.waitingForHumanIntro) {
+      const introduced = await extractIntroducedName(text, session.humanDisplayName);
+      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+        session.introducedName = introduced.trim();
+        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      }
       session.waitingForHumanIntro = false;
       logLine("QUEUE", `human_message after intro: advancing to study_goal`);
       await runStudyGoal();
