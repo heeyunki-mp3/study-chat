@@ -100,6 +100,14 @@ Users enter a name on the welcome page ("Anthony") but may introduce themselves 
 
 This feature existed before (commit `c439662`) using regex but was removed. Restored with OpenAI-based extraction instead of regex.
 
+### Nudge messages ignored intro context — 2026-04-22
+
+During intro phase, nudge messages said generic "hear what you think about this" instead of asking the user to introduce themselves. The `waitingForHumanIntro` flag was correctly set and the context was passed to `generateNudgeMessage()`, but the LLM was ignoring the intro context and returning generic question-phase text.
+
+Fix: For intro phase, skip the LLM entirely and use hardcoded intro-specific nudge messages directly:
+- Nudge 1: "Hey @user, would you like to introduce yourself?"
+- Nudge 2: "Hey @user, still with us? We'd love to hear a quick intro from you."
+
 ## 3. Ideas & Backlog
 
 - (moved to Todo List above)

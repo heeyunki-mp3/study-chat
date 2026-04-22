@@ -722,8 +722,8 @@ async function generateNudgeMessage(humanName, nudgeNumber, context = {}) {
   const phaseDesc = phase === "intro"
     ? "The group is doing introductions. The participant needs to introduce themselves (share their name and a bit about themselves)."
     : phase === "poll"
-      ? `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`
-      : `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
+    ? `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`
+    : `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
 
   const style = nudgeNumber === 1
     ? `Gently ask @${humanName} to respond. Do NOT ask if they are still there. Just warmly invite them to participate. Example for intro: "Hey @${humanName}, would you like to introduce yourself?" Example for question: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
