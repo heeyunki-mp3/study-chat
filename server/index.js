@@ -23,7 +23,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Bot names from CLI: npm start -- Jae Mina Derek (optional; if empty, spawn random cast)
+// Bot names from CLI: npm start -- Anthony Mina Sid (optional; if empty, spawn random cast)
 const CLI_BOT_NAMES = process.argv
   .slice(2)
   .map((s) => String(s).trim())
@@ -57,7 +57,7 @@ function clip(s, maxLen = 120) {
 /** Append one line to the session transcript file (same pattern as log file). */
 function appendTranscriptLine(session, name, text) {
   if (!session?.sessionId) return;
-  const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.assignedGroup || "cli"}_${session.sessionId}.txt`);
+  const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
   const line = `${name}: ${String(text ?? "").trim()}\n`;
   try {
     fs.appendFileSync(transcriptPath, line, "utf8");
@@ -89,7 +89,7 @@ const IDLE_CHECK_MS = 2000;                   // How often the server polls to c
 // --- Nudge (remind inactive human) ---
 const NUDGE_MS = 20000;                       // Nudge after this long with no typing (empty input)
 const NUDGE_AFTER_TYPING_WITH_DRAFT_MS = 30000; // Nudge after this long with no typing (has draft in input)
-const MAX_NUDGES = 2;                         // Kick user after this many unanswered nudges
+const MAX_NUDGES = 3;                         // Kick user after this many unanswered nudges (nudge 1 & 2 are reminders, nudge 3 kicks)
 
 // --- Elaboration ("Could you elaborate?") ---
 const MAX_ELABORATION_NUDGES = 4;             // Kick user after this many elaboration prompts with no substantive response
@@ -119,7 +119,17 @@ function capitalizeFirst(s) {
   return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
 }
 
-const MODERATOR_SCRIPT = [
+/**
+ * Name to use when referring to the human WITHOUT @ (introduced name if available, else display name).
+ * For @ mentions, always use session.humanDisplayName.
+ */
+function getHumanReferenceName(session) {
+  if (!session?.participantName) return "You";
+  const base = session.introducedName ?? session.participantName;
+  return capitalizeFirst(base);
+}
+
+const MODERATOR_SCRIPT_DEFAULT = [
   {
     type: "intro",
     messages: [
@@ -159,6 +169,51 @@ const MODERATOR_SCRIPT = [
     ],
   },
 ];
+
+const MODERATOR_SCRIPT_CONTROL = [
+  {
+    type: "intro",
+    messages: [
+      "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!",
+      "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.",
+    ],
+  },
+  {
+    type: "study_goal",
+    messages: [
+      "Before we dive in, just a quick note about the goal of this study. We are interested in how people experience new features introduced by large tech companies, and how they decide whether to adopt them or not.",
+      "We will go one at a time, so please respond when I call your name. \n\nThere are no right or wrong answers. Just share your honest experiences with technology",
+    ],
+  },
+  {
+    type: "big_question",
+    messages: [
+      "First question: Big tech companies like Google roll out new features pretty often.\n\nHow do you usually feel when a company you use introduces something new?\nDo you tend to try new features right away, or do you usually ignore them at first?",
+    ],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about VPN?"],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about password managers?"],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about passkeys?"],
+  },
+  {
+    type: "big_question",
+    messages: [
+      "For some Google accounts, users can switch their account login to \"passkey\".\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
+    ],
+  },
+];
+
+function getModeratorScript(group) {
+  return group === "control" ? MODERATOR_SCRIPT_CONTROL : MODERATOR_SCRIPT_DEFAULT;
+}
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
 
@@ -266,7 +321,7 @@ function parseJsonArray(rawText, maxItems = 3) {
 // =====================
 async function getBotResponse(botName, context) {
   const { moderatorQuestion, directive, previousAnswers, session, roundType = "big_question" } = context;
-  const humanDisplayName = session?.humanDisplayName || session?.participantName || "You";
+  const humanRefName = getHumanReferenceName(session);
   const botId = session?.botIdMap?.[botName] || botName;
   const cast = getCastByHandles([botId]);
   const persona = cast[0] || {};
@@ -278,7 +333,7 @@ async function getBotResponse(botName, context) {
     others,
     persona,
     MODERATOR_NAME,
-    humanDisplayName
+    humanRefName
   );
 
   // Build prior context: include moderator explanations from earlier rounds
@@ -325,7 +380,7 @@ async function getBotResponse(botName, context) {
     otherName: others,
     respondTo: directive ? { type: "directive", text: directive } : null,
     moderatorName: MODERATOR_NAME,
-    humanParticipantName: humanDisplayName,
+    humanParticipantName: humanRefName,
     maxBubbles,
     questionType: roundType,
   });
@@ -337,6 +392,7 @@ async function getBotResponse(botName, context) {
       { role: "user", content: userPrompt },
     ],
     max_tokens: roundType === "poll" ? 60 : maxBubbles <= 2 ? 400 : 600,
+    temperature: 0.7,
   });
 
   const raw = completion?.choices?.[0]?.message?.content ?? "";
@@ -387,7 +443,7 @@ For every pair of participants whose views differ meaningfully, output an object
   "differenceSummary": "Brief explanation of how their views differ"
 }
 
-Output a separate object for each pair whose views differ. If multiple participants share a similar stance that contrasts with another participant, include each such pair (e.g. if both Sid and Jae contrast with Vivian, output both Sid–Vivian and Jae–Vivian).
+Output a separate object for each pair whose views differ. If multiple participants share a similar stance that contrasts with another participant, include each such pair (e.g. if both Sid and Anthony contrast with Vivian, output both Sid–Vivian and Anthony–Vivian).
 
 Use EXACT names as they appear in the transcript.
 
@@ -402,6 +458,7 @@ Output ONLY valid JSON. No extra text.`;
       { role: "user", content: transcript },
     ],
     max_tokens: 800,
+    temperature: 0,
   });
 
   const raw = completion?.choices?.[0]?.message?.content ?? "[]";
@@ -444,7 +501,7 @@ async function generateDisagreementFollowUp(disagreedWith, disagreedBy, disagree
 1. Briefly and neutrally observe the difference WITHOUT directly pitting people against each other (e.g. "It sounds like we're hearing a couple different approaches..." or "Interesting — seems like people feel differently about this...")
 2. Then naturally invite ${disagreedWith} to share more (e.g. "...@${disagreedWith}, what are your thoughts?" or "...curious what you think, @${disagreedWith}")
 
-IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Jae, @Mina). Every single name mention must have the @ prefix.
+IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Anthony, @Mina). Every single name mention must have the @ prefix.
 - Do NOT say "what do you think about @[Name]'s approach/view/idea?" — that's too confrontational
 - Do NOT frame it as a direct disagreement or conflict
 - Keep it neutral, warm, and organic — like you're genuinely curious, not forcing a debate
@@ -461,6 +518,7 @@ Output ONLY the message text. No quotes, no JSON, no separators.`;
       { role: "user", content: "Generate the follow-up sentence." },
     ],
     max_tokens: 120,
+    temperature: 0.7,
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
@@ -482,10 +540,43 @@ async function generateRoundSummary(question, roundTranscript, opts = {}) {
       { role: "user", content: `Question: ${question}\n\n${roundTranscript}` },
     ],
     max_tokens: roundType === "poll" ? 60 : 200,
+    temperature: 0.7,
   });
 
   const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
   return text || (roundType === "poll" ? "Thanks everyone for the quick answers!" : "Thanks everyone for sharing your views on that.");
+}
+
+/**
+ * Extract the name the human introduced themselves as from their intro message(s).
+ * Returns the introduced name or null if none found.
+ */
+async function extractIntroducedName(introMessages, displayName) {
+  const text = Array.isArray(introMessages) ? introMessages.join(" ") : String(introMessages || "");
+  if (!text.trim()) return null;
+  const sys = `You extract the name a person introduced themselves as from their message. Return ONLY valid JSON: {"name": "..."} with the name they gave, or {"name": null} if they did not mention a name.
+Examples:
+- "hello everyone, my name is tony" → {"name": "Tony"}
+- "hey im tony, nice to meet yall" → {"name": "Tony"}
+- "hi I go by T" → {"name": "T"}
+- "hey everyone! excited to be here" → {"name": null}
+- "my name is Tony Park and I work in tech" → {"name": "Tony"}
+Return ONLY the first name they introduced themselves as, capitalized. If they didn't say a name, return null.`;
+  const user = `Their display name is "${displayName}". Their message: "${text.trim().slice(0, 400)}"`;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      max_tokens: 30,
+      temperature: 0,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = JSON.parse(raw || "{}");
+    if (parsed.name && typeof parsed.name === "string") return parsed.name.trim();
+  } catch (e) {
+    console.error("extractIntroducedName error", e?.message || e);
+  }
+  return null;
 }
 
 /** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
@@ -499,6 +590,7 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
       model: MODELS.default,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 20,
+      temperature: 0,
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
     const parsed = JSON.parse(raw || "{}");
@@ -529,12 +621,14 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const questionCall = openai.chat.completions.create({
     model: MODELS.default,
     messages: [
-      { role: "system", content: `You are a classifier. Return ONLY valid JSON with one boolean field:
-- "isQuestion": True if the participant's message is primarily a question directed at the moderator asking for clarification or explanation (e.g. "what is X?", "can you explain?"). False for filler ("ok","idk","nope","not sure"), emotions, statements, opinions, or anything that tries to answer the prompt.
+      { role: "system", content: `You are a strict classifier. Return ONLY valid JSON with one boolean field:
+- "isQuestion": True ONLY if the participant's message contains an explicit, direct question directed at the moderator asking for clarification or explanation. The message must contain a clear question form (e.g. "what is X?", "can you explain X?", "how does X work?").
+  False for: filler ("ok","idk","nope","not sure"), emotions, statements, opinions, expressions of uncertainty or confusion ("I'm not sure what X is", "I don't really know about X", "never heard of X"), or anything that tries to answer the prompt. Uncertainty or lack of knowledge is NOT a question — they must be explicitly asking.
 Return format: {"isQuestion": true/false}` },
       { role: "user", content: `${qContext}\nMessage: "${String(burstText).trim().slice(0, 400)}"` },
     ],
     max_tokens: 20,
+    temperature: 0,
   });
 
   const substCall = openai.chat.completions.create({
@@ -547,6 +641,7 @@ Return format: {"substantive": true/false, "inappropriate": true/false}` },
       { role: "user", content: `${qContext}\nMessages: "${String(combined).trim().slice(0, 800)}"` },
     ],
     max_tokens: 20,
+    temperature: 0,
   });
 
   try {
@@ -575,10 +670,7 @@ Return format: {"substantive": true/false, "inappropriate": true/false}` },
  * alreadyAnswered is an array of { question, answer } objects from this session.
  */
 async function generateModeratorQuestionAnswer(questionText, roundQuestion, alreadyAnswered = []) {
-  const fallback = [
-    "Great question! I'm happy to clarify.",
-    String(roundQuestion ?? "").slice(0, 100) + " — what do you think?",
-  ];
+  const fallback = ["Great question! I'm happy to clarify."];
 
   const previousCtx = alreadyAnswered.length > 0
     ? `\n\nPreviously answered questions this session:\n${alreadyAnswered
@@ -590,11 +682,12 @@ async function generateModeratorQuestionAnswer(questionText, roundQuestion, alre
 
 If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONLY a very brief reminder of 8 words or fewer — a single casual sentence. Return a JSON array with exactly 1 string.
 
-Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 2 strings:
+Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 1 string:
 1. Answer the question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
-2. A single short sentence that gently rephrases the discussion question as a reminder and asks them to share their thoughts.
-Return ONLY valid JSON array of 1 or 2 strings. No markdown, no extra text. 
-Text should be very natrual and conversational and very human-like. Do NOT use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
+IMPORTANT: Stay completely neutral and factual. Do NOT promote, hype, or express enthusiasm about any technology. Do NOT use phrases like "it's very easy", "it's the future", "it's amazing", "next generation", etc. Just explain what it is plainly.
+Do NOT re-ask or rephrase the discussion question. Do NOT ask the participant anything. Just answer and stop.
+Return ONLY valid JSON array of exactly 1 string. No markdown, no extra text.
+Text should be very natural and conversational and very human-like. Do NOT use any separators like ---, --, -, ;, :, or similar or any markdown or formatting.`;
 
   const user = `Discussion question: "${String(roundQuestion ?? "").slice(0, 300)}"\nParticipant's question: "${String(questionText).trim().slice(0, 300)}"`;
   try {
@@ -605,6 +698,7 @@ Text should be very natrual and conversational and very human-like. Do NOT use a
         { role: "user", content: user },
       ],
       max_tokens: 160,
+      temperature: 0.7,
     });
     const raw = (completion?.choices?.[0]?.message?.content ?? "")
       .trim()
@@ -612,16 +706,80 @@ Text should be very natrual and conversational and very human-like. Do NOT use a
       .replace(/\s*```$/i, "")
       .trim();
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length === 1 && parsed[0]) {
+    if (Array.isArray(parsed) && parsed.length >= 1 && parsed[0]) {
       return [String(parsed[0]).trim()];
-    }
-    if (Array.isArray(parsed) && parsed.length >= 2 && parsed[0] && parsed[1]) {
-      return [String(parsed[0]).trim(), String(parsed[1]).trim()];
     }
   } catch (e) {
     console.error("generateModeratorQuestionAnswer error", e?.message || e);
   }
   return fallback;
+}
+
+/**
+ * Generate a nudge message for an idle human participant.
+ * nudgeNumber: 1 = gentle reminder to answer, 2 = "are you still there?" style.
+ * context: { phase, question, transcript } — what the user is supposed to be doing right now.
+ */
+async function generateNudgeMessage(humanName, nudgeNumber, context = {}) {
+  const { phase = "question", question = "", transcript = "" } = context;
+
+  let phaseDesc, style;
+  if (phase === "intro") {
+    phaseDesc = "We are in the INTRODUCTION phase. The participant has NOT introduced themselves yet. You MUST ask them to introduce themselves. Do NOT ask what they think. Do NOT reference any question or discussion topic.";
+    style = nudgeNumber === 1
+      ? `Gently ask @${humanName} to introduce themselves. Example: "Hey @${humanName}, would you like to introduce yourself?"`
+      : `Check if @${humanName} is still around and ask them to introduce themselves. Example: "Hey @${humanName}, still with us? We'd love to hear a quick intro from you."`;
+  } else if (phase === "poll") {
+    phaseDesc = `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`;
+    style = nudgeNumber === 1
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+  } else {
+    phaseDesc = `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
+    style = nudgeNumber === 1
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+  }
+
+  const sys = `You are a warm, casual human discussion moderator named ${MODERATOR_NAME}. Generate a single nudge message for an idle participant.
+
+Phase: ${phase.toUpperCase()}
+${phaseDesc}
+${transcript ? `\nRecent chat:\n${transcript}` : ""}
+
+Rules:
+- MUST include @${humanName} somewhere in the message.
+- Your nudge MUST match the current phase. ${phase === "intro" ? 'Since we are in the INTRODUCTION phase, you MUST ask them to introduce themselves. NEVER say "what you think about this" or reference any discussion topic.' : ""}
+- Exactly 1 sentence. Never more than 2 sentences.
+- Sound like a real person, NOT an AI assistant. No exclamation-heavy or overly enthusiastic language.
+- Be concise and natural.
+- ${style}
+Return ONLY the message text. No quotes, no JSON, no formatting.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: "Generate the nudge message." },
+      ],
+      max_tokens: 60,
+      temperature: 0,
+    });
+    const text = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^["']|["']$/g, "");
+    if (text && text.includes(`@${humanName}`)) return text;
+  } catch (e) {
+    console.error("generateNudgeMessage error", e?.message || e);
+  }
+  // Fallbacks
+  if (phase === "intro") {
+    return nudgeNumber === 1
+      ? `Hey @${humanName}, would you like to introduce yourself?`
+      : `Hey @${humanName}, still with us? We'd love to hear a quick intro from you.`;
+  }
+  return nudgeNumber === 1
+    ? `Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready.`
+    : `Hey @${humanName}, still around? Your thoughts on this would be great.`;
 }
 
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
@@ -645,7 +803,7 @@ Your message should:
 
 Sound like a real person texting, not a formal moderator. Vary your style — sometimes just a quick reaction + name, sometimes a brief observation.
 
-IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Jae, @Mina). Every single name mention must have the @ prefix.
+IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Anthony, @Mina). Every single name mention must have the @ prefix.
 
 Good examples:
 - "Gotcha. @${nextName}, how about you?"
@@ -684,6 +842,7 @@ When in the middle of a round, do NOT ask a new question — only react and cue 
         { role: "user", content: userPrompt },
       ],
       max_tokens: 100,
+      temperature: 0.7,
     });
     const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
     if (text) return text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
@@ -754,11 +913,12 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Session state (one per socket/room)
 // =====================
 // Group rotation: pro → anti → half → pro → ...
-const GROUP_ROTATION = ["pro", "anti", "half"];
+const GROUP_ROTATION = ["pro", "anti", "half", "control"];
 const GROUP_BOTS = {
-  pro:  ["sid_pro", "mina_pro", "derek_pro"],
-  anti: ["sid_anti", "mina_anti", "derek_anti"],
-  half: ["sid_pro", "mina_pro", "derek_anti"],
+  pro:     ["sid_pro", "mina_pro", "anthony_pro"],
+  anti:    ["sid_anti", "mina_anti", "anthony_anti"],
+  half:    ["sid_pro", "mina_pro", "anthony_anti"],
+  control: ["sid_control", "mina_control", "anthony_control"],
 };
 let groupRotationIndex = 0;
 
@@ -790,7 +950,8 @@ function createSession(participantName) {
   const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
   const order = [...bots, participantName];
-  const allRounds = MODERATOR_SCRIPT
+  const script = getModeratorScript(assignedGroup);
+  const allRounds = script
     .filter((s) => s.type === "big_question" || s.type === "poll")
     .map((s) => ({ type: s.type, question: s.messages[0] }));
 
@@ -869,19 +1030,15 @@ function pickRoundAckText(session) {
 // Bot intro messages (one chosen at random per bot)
 // =====================
 const BOT_INTROS = {
-  Jae: [
-    "Hi I'm Jae. I teach math at high school",
-    "Hey all! I'm Jae. I'm a math teacher at a high school in D.C."
-  ],
   Mina: [
     "Hi, I'm Mina. I work in retail in LA. Nice to meet you all",
     "Hiii my name is Mina! I work in retail in LA",
     "Hi yall! I'm Mina. First time doing this kind of thing!",
   ],
-  Derek: [
-    "Hi, I'm Derek. I'm a case worker in Tacoma.",
-    "Hey, I'm Derek. I work in social services. Good to see you all.",
-    "I am Derek. I'm in Tacoma.",
+  Anthony: [
+    "Hi, I'm Anthony. I teach high school math in Arlington.",
+    "Hey, I'm Anthony. I'm a math teacher. Nice to meet everyone.",
+    "I am Anthony. I teach math in Virginia.",
   ],
   Vivian: [
     "Hi I'm Vivian. I'm a psych undergrad at Emory.",
@@ -903,15 +1060,26 @@ const BOT_INTROS = {
 // =====================
 // App & Socket
 // =====================
+// CORS: withCredentials requires explicit origins (no "*")
+const CORS_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
+  "https://focusgroup.cc.gatech.edu",
+  "https://www.focusgroup.cc.gatech.edu",
+];
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: CORS_ORIGINS,
+  credentials: true,
+}));
 // Serve profile pictures so client can load participant avatars (profile_1.jpg … profile_9.jpg)
 const profilePicturesDir = path.join(__dirname, "..", "profile_pictures");
 app.use("/profile_pictures", express.static(profilePicturesDir));
-app.use(express.json());
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-app.post("/api/auth_choice", async (req, res) => {
+app.post("/api/auth_choice", express.json(), async (req, res) => {
   const { sessionId, participantId, choice, hesitationMs } = req.body || {};
   if (!sessionId || !participantId || !["password", "passkey"].includes(choice)) {
     return res.status(400).json({ error: "Invalid request" });
@@ -930,13 +1098,6 @@ app.post("/api/auth_choice", async (req, res) => {
   }
 });
 const httpServer = createServer(app);
-// CORS: withCredentials requires explicit origins (no "*")
-const CORS_ORIGINS = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3001",
-  "http://127.0.0.1:3001",
-];
 const io = new Server(httpServer, {
   cors: {
     origin: CORS_ORIGINS,
@@ -950,6 +1111,10 @@ const PORT = process.env.PORT || 3001;
 // =====================
 // Socket: per-connection state and helpers
 // =====================
+// Session store: keeps sessions alive across reconnects
+const activeSessions = new Map(); // sessionId → session object
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 min timeout for abandoned sessions
+
 io.on("connection", (socket) => {
   let session = null;
   const botTypingTimeoutRef = { current: null };
@@ -1044,8 +1209,9 @@ io.on("connection", (socket) => {
 
       if (session.idleNudgeCount >= MAX_NUDGES) {
         clearIdleNudgeTimer();
-        emitMessage(MODERATOR_NAME, "I think you are not paying attention. I am kicking you out.");
-        logLine("QUEUE", "idle kick: closing session after 2 nudges");
+        const kickMsg = `No worries @${session.humanDisplayName}, looks like you got pulled away. We'll wrap things up on your end so the group can keep going. Thanks for signing up!`;
+        emitMessage(MODERATOR_NAME, kickMsg);
+        logLine("QUEUE", "idle kick: closing session after unanswered nudges");
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
         saveCurrentRoundResponses();
@@ -1054,7 +1220,21 @@ io.on("connection", (socket) => {
         return;
       }
 
-      const nudgeMsg = `${session.humanDisplayName}, are you still there? Would you respond to this question?`;
+      // Build context for the nudge based on current phase
+      const nudgeContext = {};
+      if (session.waitingForHumanIntro) {
+        nudgeContext.phase = "intro";
+      } else if (session.currentRoundType === "poll") {
+        nudgeContext.phase = "poll";
+        nudgeContext.question = session.callOnState?.question || "";
+      } else {
+        nudgeContext.phase = "question";
+        nudgeContext.question = session.callOnState?.question || "";
+      }
+      // Include recent transcript for context
+      const recentMsgs = (session.roundTranscript || session.messages || []).slice(-8);
+      nudgeContext.transcript = recentMsgs.map((m) => `${m.name}: ${m.text}`).join("\n").slice(0, 600);
+      const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount, nudgeContext);
       await emitModeratorLine(nudgeMsg, { cancelCheck: () => !!session?.humanIsTyping });
       if (session?.humanIsTyping) {
         // Nudge was cancelled mid-emission; undo the nudge count increment and reset timer
@@ -1294,11 +1474,14 @@ io.on("connection", (socket) => {
     if (!session?.callOnState) return;
     const co = session.callOnState;
     const humanDisplayName = session.humanDisplayName;
+    const humanRefName = getHumanReferenceName(session);
     const previousAnswers = co.whoSpoke.map((name) => {
       const msgName = name === session.participantName ? humanDisplayName : name;
       const msgs = session.messages.filter((m) => m.name === msgName);
       const text = msgs.map((m) => m.text).join(" ");
-      return { name: msgName, text };
+      // Use introduced name in transcript so bots see a consistent name
+      const displayAs = msgName === humanDisplayName ? humanRefName : msgName;
+      return { name: displayAs, text };
     });
 
     const directive =
@@ -1391,12 +1574,14 @@ io.on("connection", (socket) => {
     const botNames = session.bots;
     const participantName = session.participantName;
     const toPrompt = [];
+    const humanIntroName = session.introducedName || "";
     const resolve = (name) => {
       const n = String(name ?? "").trim().toLowerCase();
       const bot = botNames.find((b) => b.toLowerCase() === n);
       if (bot) return bot;
       if (participantName && participantName.toLowerCase() === n) return participantName;
       if (humanDisplayName && humanDisplayName.toLowerCase() === n) return participantName;
+      if (humanIntroName && humanIntroName.toLowerCase() === n) return participantName;
       return null;
     };
 
@@ -1598,7 +1783,7 @@ io.on("connection", (socket) => {
   // --- Flow: intro → study goal → big questions (call-on + disagreement) ---
   async function runIntroWithTyping() {
     if (!session) return;
-    const introSegment = MODERATOR_SCRIPT.find((s) => s.type === "intro");
+    const introSegment = getModeratorScript(session.assignedGroup).find((s) => s.type === "intro");
     const introMessages = introSegment?.messages || [];
     for (let i = 0; i < introMessages.length; i++) {
       await emitModeratorLine(introMessages[i], { skipThinkDelay: i === 0, consecutive: i > 0 });
@@ -1639,28 +1824,7 @@ io.on("connection", (socket) => {
       await runStudyGoal();
       return;
     }
-    const latest = getLastParticipantMessage(session);
-    let cue;
-    try {
-      cue = await generateModeratorCue(latest, session.humanDisplayName, { isIntro: true });
-    } catch (e) {
-      cue = `How about you, ${session.humanDisplayName}?`;
-    }
-    if (!session) return;
-    if (hasHumanRepliedAfterIntroPrompt(session)) {
-      logLine("QUEUE", "intro: human already introduced while cue was being generated, advancing to study_goal");
-      await runStudyGoal();
-      return;
-    }
-    session.moderatorTypingIntroCue = true;
-    await emitModeratorLine(cue, { skipIfUserReplied: true, cancelCheck: () => !!session?.humanIsTyping });
-    if (!session) return;
-    session.moderatorTypingIntroCue = false;
-    if (session.userRepliedDuringIntroCue) {
-      session.userRepliedDuringIntroCue = false;
-      logLine("QUEUE", "intro cue cancelled: user already sent intro, advancing to study_goal");
-      return;
-    }
+    // No moderator cue — just wait for the human to introduce themselves
     session.waitingForHumanIntro = true;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.humanMessagesThisRound = [];
@@ -1676,7 +1840,7 @@ io.on("connection", (socket) => {
     // Clear stale advance-cancel flags from intro phase so emitModeratorLine won't skip
     session.pendingAdvanceFromIdle = false;
     session.cancelAdvanceFromIdle = false;
-    const segment = MODERATOR_SCRIPT.find((s) => s.type === "study_goal");
+    const segment = getModeratorScript(session.assignedGroup).find((s) => s.type === "study_goal");
     if (!segment?.messages?.length) {
       startFirstRound();
       return;
@@ -1891,9 +2055,10 @@ io.on("connection", (socket) => {
     }
 
     const humanDisp = session.humanDisplayName;
+    const humanRef = getHumanReferenceName(session);
     const previousAnswers = session.messages
       .filter((m) => co.order.includes(m.name) || m.name === humanDisp)
-      .map((m) => ({ name: m.name, text: m.text }));
+      .map((m) => ({ name: m.name === humanDisp ? humanRef : m.name, text: m.text }));
     const context = {
       moderatorQuestion: co.question,
       directive: followUpText,
@@ -1934,14 +2099,16 @@ io.on("connection", (socket) => {
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     // Write transcript header with group info
-    const transcriptPath = path.join(LOG_DIR, `transcript_${runStamp}_${session.assignedGroup || "cli"}_${session.sessionId}.txt`);
+    const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
     try {
+      const groupLabel = (session.assignedGroup || "cli").toUpperCase();
+      const timestamp = new Date().toISOString();
       fs.writeFileSync(transcriptPath, [
-        `Session: ${session.sessionId}`,
-        `Participant: ${session.participantName}`,
-        `Group: ${session.assignedGroup || "cli"}`,
-        `Bots: ${session.botIds.join(", ")}`,
-        `Date: ${new Date().toISOString()}`,
+        `=== GROUP: ${groupLabel} ===`,
+        `Timestamp: ${timestamp}`,
+        `Participant: ${session.humanDisplayName || session.participantName}`,
+        `Bots: ${session.bots.join(", ")}`,
+        `Date: ${runStamp}`,
         `---`,
         ``
       ].join("\n"), "utf8");
@@ -1949,6 +2116,7 @@ io.on("connection", (socket) => {
       console.error("Transcript header write failed", e?.message);
     }
     await saveSessionToDatabase();
+    activeSessions.set(session.sessionId, session);
     socket.emit("session", {
       sessionId: session.sessionId,
       moderatorName: session.moderatorName,
@@ -1962,6 +2130,33 @@ io.on("connection", (socket) => {
     );
     logLine("QUEUE", "intro: seed sent, playing moderator intro then bot intros");
     setImmediate(() => runIntroWithTyping());
+  });
+
+  // Rejoin an existing session after reconnect
+  socket.on("rejoin", (data) => {
+    const sid = data?.sessionId;
+    if (!sid || !activeSessions.has(sid)) {
+      socket.emit("rejoin_failed");
+      return;
+    }
+    session = activeSessions.get(sid);
+    logLine("REJOIN", `id=${socket.id} sessionId=${sid} participant=${session.humanDisplayName || session.participantName}`);
+    // Re-send session info and full message history
+    socket.emit("session", {
+      sessionId: session.sessionId,
+      moderatorName: session.moderatorName,
+      bots: session.bots,
+      idleEmptyMs: IDLE_EMPTY_MS,
+      idleTypingMs: IDLE_TYPING_MS,
+    });
+    socket.emit(
+      "seed",
+      session.messages.map((m) => ({ name: m.name, text: m.text, ts: m.ts }))
+    );
+    // Restart idle timer if it's the human's turn
+    if (session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse) {
+      startIdleNudgeTimer();
+    }
   });
 
   function clearElaborationPromptTimer() {
@@ -2023,6 +2218,15 @@ io.on("connection", (socket) => {
       // Only advance if user actually sent a message; otherwise let the nudge timer handle it
       if (!hasHumanRepliedAfterIntroPrompt(session)) return;
       clearIdleNudgeTimer();
+      // Extract introduced name from all intro messages if not already done
+      if (!session.introducedName) {
+        const introText = (session.humanMessagesThisRound || []).join(" ");
+        const introduced = await extractIntroducedName(introText, session.humanDisplayName);
+        if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+          session.introducedName = introduced.trim();
+          logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+        }
+      }
       logLine("QUEUE", `human_idle after intro from ${session.humanDisplayName}`);
       session.waitingForHumanIntro = false;
       await runStudyGoal();
@@ -2068,6 +2272,7 @@ io.on("connection", (socket) => {
     if (!text || !session) return;
     if (session.waitingForElaborationAfterNonSubstantive) {
       clearElaborationPromptTimer(); // user sent another message, cancel elaboration timer
+      session.waitingForElaborationAfterNonSubstantive = false; // clear the flag so human_idle doesn't restart the elaboration cycle
     }
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();
@@ -2080,6 +2285,11 @@ io.on("connection", (socket) => {
     // Keep the original name from NamePage — do not update humanDisplayName from intro text
 
     emitMessage(session.humanDisplayName, text); // show immediately; validate below
+
+    // Snapshot advance state BEFORE the async classify call.
+    // If human_idle fires during classify and starts an advance, we must NOT cancel it —
+    // the user's message was already received and the idle-triggered advance is correct.
+    const advanceWasPendingBeforeClassify = !!session.pendingAdvanceFromIdle;
 
     // Validate response before advancing: treat non-substantive replies as if user never responded.
     // Once the user has given at least one substantive response this turn, skip further checks and just wait for idle to advance.
@@ -2135,7 +2345,7 @@ io.on("connection", (socket) => {
           bubbles = await generateModeratorQuestionAnswer(text, roundQuestion, session.answeredQuestions || []);
         } catch (e) {
           console.error("generateModeratorQuestionAnswer error", e?.message || e);
-          bubbles = ["Happy to clarify!", `So — ${roundQuestion.slice(0, 80)}?`];
+          bubbles = ["Happy to clarify!"];
         }
         if (session) {
           session.answeredQuestions = session.answeredQuestions || [];
@@ -2174,11 +2384,21 @@ io.on("connection", (socket) => {
       session.moderatorTypingIntroCue = false;
     }
     if (repliedWhileModeratorTypingIntroCue) {
+      const introduced = await extractIntroducedName(text, session.humanDisplayName);
+      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+        session.introducedName = introduced.trim();
+        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      }
       logLine("QUEUE", "human_message during intro cue: cancelling cue, advancing to study_goal");
       await runStudyGoal();
       return;
     }
     if (session.waitingForHumanIntro) {
+      const introduced = await extractIntroducedName(text, session.humanDisplayName);
+      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+        session.introducedName = introduced.trim();
+        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      }
       session.waitingForHumanIntro = false;
       logLine("QUEUE", `human_message after intro: advancing to study_goal`);
       await runStudyGoal();
@@ -2193,8 +2413,12 @@ io.on("connection", (socket) => {
       session.humanRepliedDisagreementTurn = true;
       logLine("QUEUE", `human_message: replied to view-misalignment follow-up, waiting for idle to advance`);
     }
-    // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle
-    if (session.pendingAdvanceFromIdle) {
+    // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle.
+    // BUT: only cancel if the advance was already pending BEFORE our async classify call.
+    // If human_idle started the advance while classify was running, that advance is legitimate
+    // (the message was already received) — cancelling it causes a deadlock where the server
+    // waits for another human_idle that will never come.
+    if (session.pendingAdvanceFromIdle && advanceWasPendingBeforeClassify) {
       session.cancelAdvanceFromIdle = true;
       if (session.callOnState) session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", "human_message during scheduled advance: cancelling, waiting for human_idle again");
@@ -2219,11 +2443,20 @@ io.on("connection", (socket) => {
     clearIdleNudgeTimer();
     clearElaborationPromptTimer();
     if (session) {
-      logLine("DISCONNECT", `id=${socket.id}`);
+      logLine("DISCONNECT", `id=${socket.id} sessionId=${session.sessionId} (session preserved for rejoin)`);
       saveCurrentRoundResponses();
       await saveSessionToDatabase(session);
+      // Schedule cleanup after TTL — if no rejoin, remove session
+      const sid = session.sessionId;
+      setTimeout(() => {
+        if (activeSessions.has(sid)) {
+          activeSessions.delete(sid);
+          logLine("SESSION_EXPIRED", `sessionId=${sid} removed after TTL`);
+        }
+      }, SESSION_TTL_MS);
     }
-    session = null;
+    // Don't null session — keep reference so rejoin can restore it
+    session = null; // detach from this socket, but activeSessions keeps it
     if (botTypingTimeoutRef.current) clearTimeout(botTypingTimeoutRef.current);
     botTypingTimeoutRef.current = null;
   });

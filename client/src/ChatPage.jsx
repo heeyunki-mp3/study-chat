@@ -223,9 +223,21 @@ export default function ChatPage() {
 
     socket.on("connect", () => {
       console.log("connected", socket.id);
-      socket.emit("participant_name", { name: participantName });
+      const existingSessionId = sessionStorage.getItem("studySessionId");
+      if (existingSessionId) {
+        console.log("attempting rejoin", existingSessionId);
+        socket.emit("rejoin", { sessionId: existingSessionId });
+      } else {
+        socket.emit("participant_name", { name: participantName });
+      }
     });
     socket.on("connect_error", (err) => console.log("connect_error", err));
+
+    socket.on("rejoin_failed", () => {
+      console.log("rejoin failed, starting new session");
+      sessionStorage.removeItem("studySessionId");
+      socket.emit("participant_name", { name: participantName });
+    });
 
     socket.on("session", (s) => {
       setSession(s);
@@ -233,15 +245,13 @@ export default function ChatPage() {
     });
 
     socket.on("seed", (seedMsgs) => {
-      setMessages((prev) => [
-        ...prev,
-        ...(Array.isArray(seedMsgs) ? seedMsgs : []).map((m) => ({
-          sender: m?.name ?? "",
-          message: typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000),
-          direction: "incoming",
-          ts: m?.ts,
-        })),
-      ]);
+      // On rejoin, replace messages instead of appending
+      setMessages((Array.isArray(seedMsgs) ? seedMsgs : []).map((m) => ({
+        sender: m?.name ?? "",
+        message: typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000),
+        direction: "incoming",
+        ts: m?.ts,
+      })));
     });
 
     socket.on("message", (m) => {

@@ -1,0 +1,7 @@
+{
+  "name": "study-chat-test",
+  "type": "module",
+  "dependencies": {
+    "socket.io-client": "^4.7.0"
+  }
+}
