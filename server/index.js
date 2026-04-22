@@ -2286,6 +2286,15 @@ io.on("connection", (socket) => {
 
     emitMessage(session.humanDisplayName, text); // show immediately; validate below
 
+    // Mark that the human replied IMMEDIATELY — before the async classify call.
+    // This ensures human_idle can advance even if it fires during classify.
+    if (session.callOnState?.waitingForHumanIdle) {
+      session.callOnState.humanRepliedThisTurn = true;
+    }
+    if (session.waitingForHumanDisagreementResponse) {
+      session.humanRepliedDisagreementTurn = true;
+    }
+
     // Snapshot advance state BEFORE the async classify call.
     // If human_idle fires during classify and starts an advance, we must NOT cancel it —
     // the user's message was already received and the idle-triggered advance is correct.
@@ -2404,13 +2413,11 @@ io.on("connection", (socket) => {
       await runStudyGoal();
       return;
     }
-    // When it's the human's turn: mark that they replied; do NOT advance yet—wait for human_idle
+    // Log that the human replied (flags already set before classify)
     if (session.callOnState?.waitingForHumanIdle) {
-      session.callOnState.humanRepliedThisTurn = true;
       logLine("QUEUE", `human_message during call-on: ${session.humanDisplayName} replied, waiting for idle to advance`);
     }
     if (session.waitingForHumanDisagreementResponse) {
-      session.humanRepliedDisagreementTurn = true;
       logLine("QUEUE", `human_message: replied to view-misalignment follow-up, waiting for idle to advance`);
     }
     // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle.

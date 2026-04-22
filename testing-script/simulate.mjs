@@ -12,14 +12,14 @@ const NUM_SESSIONS = parseInt(process.argv[2] || "1", 10);
 
 // Predefined answers keyed by pattern-matching on the moderator's message
 const ANSWERS = [
-  { match: /introduce|intro/i,                                         text: "Hi! My name is Hailey. Nice to meet you all!" },
-  { match: /new features|roll out|introduces something/i,              text: "I tend to adopt new technology right away. I am always very excited to try new stuff." },
+  { match: /new features|roll out|introduces something new/i,           text: "I tend to adopt new technology right away. I am always very excited to try new stuff." },
+  { match: /introduce yourself|introductions|intro/i,                  text: "Hi! My name is Hailey. Nice to meet you all!" },
   { match: /VPN/i,                                                     text: "Yes" },
   { match: /password manager/i,                                        text: "Yes" },
   { match: /generative AI|ChatGPT|Gemini|Copilot/i,                    text: "I use chat gpt everyday for my work. it makes be much of my work easier and streamlined" },
-  { match: /account login to|switch.*passkey|login.*passkey|used it|what made you|held you back/i, text: "I use it whenever it is available. I love how it simplifies log in process and I don't even need to remember password anymore." },
+  { match: /@Hailey.passkey|account login to|switch.*passkey|login.*passkey|used it|what made you|held you back/i, text: "I use it whenever it is available. I love how it simplifies log in process and I don't even need to remember password anymore." },
   { match: /passkey/i,                                                 text: "Yes" },
-  { match: /elaborate/i,                                               text: null }, // will use lastAnswer
+  { match: /elaborate/i,                                               text: "I use it whenever it is available. I love how it simplifies log in process and I don't even need to remember password anymore." }, // will use lastAnswer
 ];
 
 // Fallback if no match
@@ -106,12 +106,14 @@ function runSession(sessionNum) {
       }
 
       // Respond if we're mentioned or it's a general intro prompt we haven't answered
+      const isNudge = /would love to hear|still around|still with us|whenever you're ready/i.test(text);
       const shouldRespond = mentionsMe || (isGeneralPrompt && !responded.has("intro"));
 
       if (shouldRespond && !waitingToRespond) {
         const key = currentQuestion || text;
-        if (responded.has(key)) return;
-        responded.add(key);
+        // Don't dedup nudges — they always need a response
+        if (!isNudge && responded.has(key)) return;
+        if (!isNudge) responded.add(key);
         if (isGeneralPrompt) responded.add("intro");
 
         waitingToRespond = true;
@@ -132,21 +134,21 @@ function runSession(sessionNum) {
       log(sessionNum, "KICKED", `reason=${reason} message="${message}"`);
       done = true;
       socket.disconnect();
-      resolve({ sessionNum, result: "kicked", reason });
+      resolve({ sessionNum, result: "kicked", reason, durationMs: Date.now() - sessionStartTime });
     });
 
     socket.on("study_complete", ({ sessionId, participantId } = {}) => {
       log(sessionNum, "COMPLETE", `Study complete! sessionId=${sessionId} participantId=${participantId}`);
       done = true;
       socket.disconnect();
-      resolve({ sessionNum, result: "complete", sessionId });
+      resolve({ sessionNum, result: "complete", sessionId, durationMs: Date.now() - sessionStartTime });
     });
 
     socket.on("disconnect", (reason) => {
       log(sessionNum, "DISCONNECT", reason);
       if (!done) {
         done = true;
-        resolve({ sessionNum, result: "disconnected", reason });
+        resolve({ sessionNum, result: "disconnected", reason, durationMs: Date.now() - sessionStartTime });
       }
     });
 
@@ -154,15 +156,17 @@ function runSession(sessionNum) {
       log(sessionNum, "ERROR", err.message);
     });
 
-    // Timeout: if study takes more than 15 minutes, bail
+    const sessionStartTime = Date.now();
+
+    // Timeout: if study takes more than 20 minutes, bail
     setTimeout(() => {
       if (!done) {
-        log(sessionNum, "TIMEOUT", "15 min timeout reached, disconnecting");
+        log(sessionNum, "TIMEOUT", "20 min timeout reached, disconnecting");
         done = true;
         socket.disconnect();
-        resolve({ sessionNum, result: "timeout" });
+        resolve({ sessionNum, result: "timeout", durationMs: Date.now() - sessionStartTime });
       }
-    }, 15 * 60 * 1000);
+    }, 20 * 60 * 1000);
 
     socket.connect();
   });
@@ -180,6 +184,7 @@ const results = await Promise.all(sessions);
 
 console.log("\n=== Results ===");
 for (const r of results) {
-  console.log(`  Session ${r.sessionNum}: ${r.result}${r.reason ? ` (${r.reason})` : ""}`);
+  const mins = (r.durationMs / 60000).toFixed(1);
+  console.log(`  Session ${r.sessionNum}: ${r.result}${r.reason ? ` (${r.reason})` : ""} — ${mins} min`);
 }
 process.exit(0);

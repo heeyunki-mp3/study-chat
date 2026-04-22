@@ -112,16 +112,30 @@ Also fixed the idle kick: moderator chat message says "No worries @user, looks l
 
 ### Race condition: classify vs human_idle deadlock — 2026-04-22
 
-Sessions were getting stuck on round 4 and timing out. Root cause: race condition between async `classifyHumanMessage` and `human_idle` event.
+Sessions were getting stuck on round 4 and timing out. Root cause: race condition between async `classifyHumanMessage` (~1s) and `human_idle` socket event.
 
-Sequence:
-1. `human_message` arrives → starts async `classifyHumanMessage` (~1s)
-2. While classify is running, `human_idle` fires → sets `pendingAdvanceFromIdle = true`, starts `advanceCallOn`
-3. Classify completes → `human_message` handler resumes, sees `pendingAdvanceFromIdle = true`, sets `cancelAdvanceFromIdle = true`
-4. Running `advanceCallOn` sees cancel flag → rolls back, waits for another `human_idle`
-5. But `human_idle` already fired → **deadlock** (session stuck forever)
+**Normal (expected) flow:**
+1. `human_message` → classify starts (~1s)
+2. classify finishes → marks substantive, sets `humanRepliedThisTurn`
+3. `human_idle` → sees replied, starts `advanceCallOn`
+4. `advanceCallOn` completes → moves to next speaker
 
-Fix: Snapshot `pendingAdvanceFromIdle` **before** the async classify call. Only cancel the advance if it was already pending before classify started. If `human_idle` started the advance *during* classify, the advance is legitimate (the message was already received) and should not be cancelled.
+**Race condition (what actually happens when messages/idle fire rapidly):**
+1. `human_message` → `await classifyHumanMessage()` starts (~1s)
+2. While classify is running, `human_idle` fires → `humanReplied` was already set at step 1, so `advanceCallOn` starts (sets `pendingAdvanceFromIdle = true`)
+3. Classify finishes → `human_message` handler **resumes after the await**, sees `pendingAdvanceFromIdle = true`, sets `cancelAdvanceFromIdle = true`
+4. Running `advanceCallOn` checks cancel flag → rolls back, waits for another `human_idle`
+5. **DEADLOCK** — `human_idle` already fired at step 2 and will never fire again
+
+The core issue: `human_message` is an async handler with an `await` in the middle. Other socket events (`human_idle`) can interleave during the await. When the handler resumes, it wrongly thinks "user sent a new message during an advance" — but the advance was triggered by the *same* message's idle, not a new message.
+
+**Fix:** Snapshot `pendingAdvanceFromIdle` **before** the `await classifyHumanMessage()`. Only cancel if the advance was already pending before classify started. If `human_idle` started the advance *during* classify, that's the legitimate advance for this message — don't cancel it.
+
+### Elaboration prompt firing after substantive response — 2026-04-22
+
+Related race condition. User sends "Yes" (not substantive) → `waitingForElaborationAfterNonSubstantive = true`, returns early. Then user sends a long substantive message → `clearElaborationPromptTimer()` cancels the timer but **does NOT clear `waitingForElaborationAfterNonSubstantive`**. Then `human_idle` fires while classify is running → sees flag still true → starts a **new** 5s elaboration timer → "Could you elaborate please?" even though the user already gave a substantive response.
+
+**Fix:** Clear `waitingForElaborationAfterNonSubstantive = false` immediately when the user sends a new message (at the top of `human_message` handler), not just when classify finishes.
 
 ### Bot language style not obeyed — 2026-04-22
 
