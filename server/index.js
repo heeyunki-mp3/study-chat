@@ -719,25 +719,33 @@ Text should be very natural and conversational and very human-like. Do NOT use a
 async function generateNudgeMessage(humanName, nudgeNumber, context = {}) {
   const { phase = "question", question = "", transcript = "" } = context;
 
-  const phaseDesc = phase === "intro"
-    ? "The group is doing introductions. The participant needs to introduce themselves (share their name and a bit about themselves)."
-    : phase === "poll"
-    ? `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`
-    : `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
-
-  const style = nudgeNumber === 1
-    ? `Gently ask @${humanName} to respond. Do NOT ask if they are still there. Just warmly invite them to participate. Example for intro: "Hey @${humanName}, would you like to introduce yourself?" Example for question: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
-    : `Check if @${humanName} is still around and ask them to respond. Include a notion of "still there?" or "still with us?". Example: "Hey @${humanName}, still around? We'd love to hear from you."`;
+  let phaseDesc, style;
+  if (phase === "intro") {
+    phaseDesc = "We are in the INTRODUCTION phase. The participant has NOT introduced themselves yet. You MUST ask them to introduce themselves. Do NOT ask what they think. Do NOT reference any question or discussion topic.";
+    style = nudgeNumber === 1
+      ? `Gently ask @${humanName} to introduce themselves. Example: "Hey @${humanName}, would you like to introduce yourself?"`
+      : `Check if @${humanName} is still around and ask them to introduce themselves. Example: "Hey @${humanName}, still with us? We'd love to hear a quick intro from you."`;
+  } else if (phase === "poll") {
+    phaseDesc = `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`;
+    style = nudgeNumber === 1
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+  } else {
+    phaseDesc = `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
+    style = nudgeNumber === 1
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+  }
 
   const sys = `You are a warm, casual human discussion moderator named ${MODERATOR_NAME}. Generate a single nudge message for an idle participant.
 
-Context:
+Phase: ${phase.toUpperCase()}
 ${phaseDesc}
 ${transcript ? `\nRecent chat:\n${transcript}` : ""}
 
 Rules:
 - MUST include @${humanName} somewhere in the message.
-- Your nudge must be relevant to what the participant is supposed to be doing (introducing themselves, answering a poll, or sharing thoughts on the discussion question). Do NOT ask about something unrelated.
+- Your nudge MUST match the current phase. ${phase === "intro" ? 'Since we are in the INTRODUCTION phase, you MUST ask them to introduce themselves. NEVER say "what you think about this" or reference any discussion topic.' : ""}
 - Exactly 1 sentence. Never more than 2 sentences.
 - Sound like a real person, NOT an AI assistant. No exclamation-heavy or overly enthusiastic language.
 - Be concise and natural.
@@ -1201,7 +1209,7 @@ io.on("connection", (socket) => {
         emitMessage(MODERATOR_NAME, kickMsg);
         logLine("QUEUE", "idle kick: closing session after unanswered nudges");
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
-        io.to(socket.id).emit("kicked", { reason: "idle", message: kickMsg });
+        io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
         saveCurrentRoundResponses();
         await saveSessionToDatabase(session);
         session = null;

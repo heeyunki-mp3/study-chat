@@ -4,6 +4,8 @@
 
 - ~~**Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)~~ **Done** — Mina's texting style updated across all 4 variants (default, pro, anti, control): all lowercase, only `.` punctuation (never at end of last sentence), `??` and `!!` for questions/exclamations, no apostrophes/commas/quotes/dashes.
 - **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer)
+- **Fix routing**: Correct the flow — where users start, where they go after chat ends, etc. (maybe separate branch)
+- **Prolific integration**: Learn how to hook from Prolific into our app and back; need a way to track participant identity throughout the routing
 
 ## 2. Issue
 
@@ -104,9 +106,9 @@ This feature existed before (commit `c439662`) using regex but was removed. Rest
 
 During intro phase, nudge messages said generic "hear what you think about this" instead of asking the user to introduce themselves. The `waitingForHumanIntro` flag was correctly set and the context was passed to `generateNudgeMessage()`, but the LLM was ignoring the intro context and returning generic question-phase text.
 
-Fix: For intro phase, skip the LLM entirely and use hardcoded intro-specific nudge messages directly:
-- Nudge 1: "Hey @user, would you like to introduce yourself?"
-- Nudge 2: "Hey @user, still with us? We'd love to hear a quick intro from you."
+Fix: The LLM prompt and context were already correct (phase detection, `phaseDesc`, examples all present). The issue was the LLM ignoring the intro context. Kept LLM generation for all phases (intro, poll, question) with intro-specific fallbacks if LLM fails:
+- Fallback nudge 1: "Hey @user, would you like to introduce yourself?"
+- Fallback nudge 2: "Hey @user, still with us? We'd love to hear a quick intro from you."
 
 ## 3. Ideas & Backlog
 
