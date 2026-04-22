@@ -106,9 +106,13 @@ This feature existed before (commit `c439662`) using regex but was removed. Rest
 
 During intro phase, nudge messages said generic "hear what you think about this" instead of asking the user to introduce themselves. The `waitingForHumanIntro` flag was correctly set and the context was passed to `generateNudgeMessage()`, but the LLM was ignoring the intro context and returning generic question-phase text.
 
-Fix: The LLM prompt and context were already correct (phase detection, `phaseDesc`, examples all present). The issue was the LLM ignoring the intro context. Kept LLM generation for all phases (intro, poll, question) with intro-specific fallbacks if LLM fails:
-- Fallback nudge 1: "Hey @user, would you like to introduce yourself?"
-- Fallback nudge 2: "Hey @user, still with us? We'd love to hear a quick intro from you."
+Fix: Rewrote the LLM prompt in `generateNudgeMessage()` to be much more forceful about the current phase. For intro phase, the prompt now says "INTRODUCTION phase" in caps, explicitly forbids "what you think about this", and only provides intro-style examples. Phase-specific `phaseDesc` and `style` are built with an if/else block instead of ternaries for clarity.
+
+Also fixed the idle kick: moderator chat message says "No worries @user, looks like you got pulled away..." but the browser alert shows "You have been removed from the session." (previously both showed the same long message).
+
+### Removed intro cue from moderator — 2026-04-22
+
+After all bots introduce themselves, Eunice used to generate a cue like "Nice to meet you, @Anthony! @dfa, your turn to introduce yourself." via `generateModeratorCue` with `isIntro: true`. This was an unnecessary extra step — the human should just introduce themselves without being prompted. Removed the cue generation and `emitModeratorLine` call; now it goes straight to `waitingForHumanIntro = true` and the nudge timer.
 
 ## 3. Ideas & Backlog
 

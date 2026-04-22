@@ -1820,28 +1820,7 @@ io.on("connection", (socket) => {
       await runStudyGoal();
       return;
     }
-    const latest = getLastParticipantMessage(session);
-    let cue;
-    try {
-      cue = await generateModeratorCue(latest, session.humanDisplayName, { isIntro: true });
-    } catch (e) {
-      cue = `How about you, ${session.humanDisplayName}?`;
-    }
-    if (!session) return;
-    if (hasHumanRepliedAfterIntroPrompt(session)) {
-      logLine("QUEUE", "intro: human already introduced while cue was being generated, advancing to study_goal");
-      await runStudyGoal();
-      return;
-    }
-    session.moderatorTypingIntroCue = true;
-    await emitModeratorLine(cue, { skipIfUserReplied: true, cancelCheck: () => !!session?.humanIsTyping });
-    if (!session) return;
-    session.moderatorTypingIntroCue = false;
-    if (session.userRepliedDuringIntroCue) {
-      session.userRepliedDuringIntroCue = false;
-      logLine("QUEUE", "intro cue cancelled: user already sent intro, advancing to study_goal");
-      return;
-    }
+    // No moderator cue — just wait for the human to introduce themselves
     session.waitingForHumanIntro = true;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.humanMessagesThisRound = [];
