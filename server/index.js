@@ -193,16 +193,20 @@ const MODERATOR_SCRIPT_CONTROL = [
   },
   {
     type: "poll",
-    messages: ["Have you ever used or heard about satellite phone communication?"],
+    messages: ["Have you ever used or heard about VPN?"],
   },
   {
     type: "poll",
-    messages: ["Have you ever used or heard about generative AI?"],
+    messages: ["Have you ever used or heard about password managers?"],
+  },
+  {
+    type: "poll",
+    messages: ["Have you ever used or heard about passkeys?"],
   },
   {
     type: "big_question",
     messages: [
-      "Have you ever used generative AI like ChatGPT, Gemini, or Copilot?\n\nIf so, which one do you use and why did you choose it? When and in what context do you use it?\nIf you haven't tried it, what has held you back?",
+      "For some Google accounts, users can switch their account login to \"passkey\".\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
     ],
   },
 ];

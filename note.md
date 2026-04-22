@@ -102,7 +102,7 @@ Users enter a name on the welcome page ("Anthony") but may introduce themselves 
 
 This feature existed before (commit `c439662`) using regex but was removed. Restored with OpenAI-based extraction instead of regex.
 
-### Nudge messages ignored intro context — 2026-04-22
+### Nudge messages ignored intro context — 2026-04-22 (`d62d9d8`, `38ff3aa`)
 
 During intro phase, nudge messages said generic "hear what you think about this" instead of asking the user to introduce themselves. The `waitingForHumanIntro` flag was correctly set and the context was passed to `generateNudgeMessage()`, but the LLM was ignoring the intro context and returning generic question-phase text.
 
@@ -110,9 +110,13 @@ Fix: Rewrote the LLM prompt in `generateNudgeMessage()` to be much more forceful
 
 Also fixed the idle kick: moderator chat message says "No worries @user, looks like you got pulled away..." but the browser alert shows "You have been removed from the session." (previously both showed the same long message).
 
-### Removed intro cue from moderator — 2026-04-22
+### Removed intro cue from moderator — 2026-04-22 (`78954a2`)
 
 After all bots introduce themselves, Eunice used to generate a cue like "Nice to meet you, @Anthony! @dfa, your turn to introduce yourself." via `generateModeratorCue` with `isIntro: true`. This was an unnecessary extra step — the human should just introduce themselves without being prompted. Removed the cue generation and `emitModeratorLine` call; now it goes straight to `waitingForHumanIntro = true` and the nudge timer.
+
+### Control group moderator script aligned — 2026-04-22
+
+Control group had different poll questions (satellite phone, generative AI) and a generative AI big question. Changed to use the exact same polls (VPN, password managers, passkeys) and passkey big question as pro/anti/half. Now the only difference between control and other groups is the bot personas.
 
 ## 3. Ideas & Backlog
 
