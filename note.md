@@ -168,9 +168,24 @@ Replaced Derek with Anthony as the deployed bot. Derek personas kept in `persona
 
 After all bots introduce themselves, Eunice used to generate a cue like "Nice to meet you, @Anthony! @dfa, your turn to introduce yourself." via `generateModeratorCue` with `isIntro: true`. This was an unnecessary extra step — the human should just introduce themselves without being prompted. Removed the cue generation and `emitModeratorLine` call; now it goes straight to `waitingForHumanIntro = true` and the nudge timer.
 
-### Control group moderator script aligned — 2026-04-22
+### Control group moderator script — 2026-04-22
 
-Control group had different poll questions (satellite phone, generative AI) and a generative AI big question. Changed to use the exact same polls (VPN, password managers, passkeys) and passkey big question as pro/anti/half. Now the only difference between control and other groups is the bot personas.
+Control group now uses:
+- Same polls as other groups (VPN, password managers) EXCEPT last poll asks about **generative AI** instead of passkeys
+- Last big question asks about **generative AI** (ChatGPT, Gemini, Copilot) instead of passkeys
+- This is the key difference: control group never discusses passkeys in the big question round
+
+### Moderator cue adding information and opinions — 2026-04-22
+
+`generateModeratorCue` was explaining technologies and adding opinions when cueing the next person. Example: Mina says "i had no idea what passkeys were" → Eunice replies "A passkey is a way to sign in using your face, fingerprint, or device instead of a password. Makes logging in way easier! @Anthony, what's your take?"
+
+Two problems:
+1. **Explaining in the cue**: The `participantAskedWhatPasskeyIs` branch told the LLM to "give ONE short sentence explaining passkey" before cueing the next person. Eunice was re-explaining passkeys even if she already explained them earlier. Changed to just acknowledge and move on — the separate `generateModeratorQuestionAnswer` function handles explanations when someone explicitly asks.
+2. **Adding opinions**: The system prompt had no instruction to stay neutral. Added explicit rules: do NOT explain/define any technology, do NOT add opinions ("it's easier", "it's more secure"), stay neutral. Added bad examples showing what to avoid.
+
+### DB: assigned_group ENUM missing 'control' — 2026-04-22
+
+`Data truncated for column 'assigned_group'` error when saving control group sessions. The `assigned_group` column was `ENUM('pro', 'anti', 'half')` — didn't include `control`. Added `'control'` to both the CREATE TABLE and a `MODIFY COLUMN` ALTER for existing tables.
 
 ## 3. Ideas & Backlog
 

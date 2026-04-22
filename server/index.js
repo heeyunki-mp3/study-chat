@@ -259,7 +259,7 @@ let dbPool = null;
         q4_passkeys_heard TEXT,
         q5_passkey_switch TEXT,
         auth_choice ENUM('password', 'passkey') DEFAULT NULL,
-        assigned_group ENUM('pro', 'anti', 'half') DEFAULT NULL,
+        assigned_group ENUM('pro', 'anti', 'half', 'cont') DEFAULT NULL,
         bots_config VARCHAR(255) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
@@ -268,7 +268,7 @@ let dbPool = null;
     // Ensure columns/keys exist for tables created before these were added
     await dbPool.execute(`
       ALTER TABLE participant_responses
-        ADD COLUMN IF NOT EXISTS assigned_group ENUM('pro', 'anti', 'half') DEFAULT NULL
+        MODIFY COLUMN assigned_group ENUM('pro', 'anti', 'half', 'cont') DEFAULT NULL
     `).catch(() => {});
     await dbPool.execute(`
       ALTER TABLE participant_responses
@@ -1708,7 +1708,7 @@ io.on("connection", (socket) => {
         [
           sess.sessionId,
           sess.participantName,
-          sess.assignedGroup || null,
+          sess.assignedGroup === "control" ? "cont" : (sess.assignedGroup || null),
           sess.botIds ? sess.botIds.join(",") : null,
           r[0] || null,
           r[1] || null,
