@@ -936,11 +936,10 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // Session state (one per socket/room)
 // =====================
 // Group rotation: pro → anti → half → pro → ...
-const GROUP_ROTATION = ["pro", "anti", "half", "control"];
+const GROUP_ROTATION = ["pro", "anti", "control"];
 const GROUP_BOTS = {
   pro:     ["sid_pro", "mina_pro", "anthony_pro"],
   anti:    ["sid_anti", "mina_anti", "anthony_anti"],
-  half:    ["sid_pro", "mina_pro", "anthony_anti"],
   control: ["sid_control", "mina_control", "anthony_control"],
 };
 let groupRotationIndex = 0;
