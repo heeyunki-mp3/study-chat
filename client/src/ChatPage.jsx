@@ -228,7 +228,12 @@ export default function ChatPage() {
         console.log("attempting rejoin", existingSessionId);
         socket.emit("rejoin", { sessionId: existingSessionId });
       } else {
-        socket.emit("participant_name", { name: participantName });
+        socket.emit("participant_name", {
+          name: participantName,
+          prolificPid: sessionStorage.getItem("PROLIFIC_PID") || undefined,
+          studyId: sessionStorage.getItem("STUDY_ID") || undefined,
+          prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
+        });
       }
     });
     socket.on("connect_error", (err) => console.log("connect_error", err));
@@ -236,7 +241,12 @@ export default function ChatPage() {
     socket.on("rejoin_failed", () => {
       console.log("rejoin failed, starting new session");
       sessionStorage.removeItem("studySessionId");
-      socket.emit("participant_name", { name: participantName });
+      socket.emit("participant_name", {
+        name: participantName,
+        prolificPid: sessionStorage.getItem("PROLIFIC_PID") || undefined,
+        studyId: sessionStorage.getItem("STUDY_ID") || undefined,
+        prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
+      });
     });
 
     socket.on("session", (s) => {

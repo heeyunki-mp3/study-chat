@@ -187,6 +187,18 @@ Two problems:
 
 `Data truncated for column 'assigned_group'` error when saving control group sessions. The `assigned_group` column was `ENUM('pro', 'anti', 'half')` — didn't include `control`. Added `'control'` to both the CREATE TABLE and a `MODIFY COLUMN` ALTER for existing tables.
 
+### Prolific integration — 2026-04-28
+
+Added support for Prolific URL parameters (`PROLIFIC_PID`, `STUDY_ID`, `SESSION_ID`).
+
+Flow:
+1. **NamePage**: Parses URL params on load, stores in `sessionStorage`
+2. **ChatPage**: Sends params to server via `participant_name` socket event
+3. **Server**: Stores in `session.prolificPid`, `session.prolificStudyId`, `session.prolificSessionId`; saves to DB in 3 new columns (`prolific_pid`, `prolific_study_id`, `prolific_session_id`)
+4. **SurveyPage**: Passes all 3 params + `sessionId` to the Qualtrics iframe URL as query params
+
+Qualtrics setup: In Qualtrics, go to Survey Flow → Add Embedded Data fields named `PROLIFIC_PID`, `STUDY_ID`, `SESSION_ID`. Qualtrics automatically captures query params that match embedded data field names.
+
 ## 3. Ideas & Backlog
 
 - (moved to Todo List above)

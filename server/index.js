@@ -261,6 +261,9 @@ let dbPool = null;
         auth_choice ENUM('password', 'passkey') DEFAULT NULL,
         assigned_group ENUM('pro', 'anti', 'half', 'cont') DEFAULT NULL,
         bots_config VARCHAR(255) DEFAULT NULL,
+        prolific_pid VARCHAR(100) DEFAULT NULL,
+        prolific_study_id VARCHAR(100) DEFAULT NULL,
+        prolific_session_id VARCHAR(100) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -277,6 +280,18 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS bots_config VARCHAR(255) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS prolific_pid VARCHAR(100) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS prolific_study_id VARCHAR(100) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS prolific_session_id VARCHAR(100) DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -1697,19 +1712,25 @@ io.on("connection", (socket) => {
     try {
       await dbPool.execute(
         `INSERT INTO participant_responses
-         (session_id, participant_id, assigned_group, bots_config, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
            q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
            q3_password_managers = COALESCE(VALUES(q3_password_managers), q3_password_managers),
            q4_passkeys_heard = COALESCE(VALUES(q4_passkeys_heard), q4_passkeys_heard),
-           q5_passkey_switch = COALESCE(VALUES(q5_passkey_switch), q5_passkey_switch)`,
+           q5_passkey_switch = COALESCE(VALUES(q5_passkey_switch), q5_passkey_switch),
+           prolific_pid = COALESCE(VALUES(prolific_pid), prolific_pid),
+           prolific_study_id = COALESCE(VALUES(prolific_study_id), prolific_study_id),
+           prolific_session_id = COALESCE(VALUES(prolific_session_id), prolific_session_id)`,
         [
           sess.sessionId,
           sess.participantName,
           sess.assignedGroup === "control" ? "cont" : (sess.assignedGroup || null),
           sess.botIds ? sess.botIds.join(",") : null,
+          sess.prolificPid || null,
+          sess.prolificStudyId || null,
+          sess.prolificSessionId || null,
           r[0] || null,
           r[1] || null,
           r[2] || null,
@@ -2104,6 +2125,10 @@ io.on("connection", (socket) => {
   socket.on("participant_name", async (data) => {
     const name = (data?.name || "").trim() || "Participant";
     session = createSession(name);
+    // Store Prolific params if provided
+    if (data?.prolificPid) session.prolificPid = String(data.prolificPid).trim();
+    if (data?.studyId) session.prolificStudyId = String(data.studyId).trim();
+    if (data?.prolificSessionId) session.prolificSessionId = String(data.prolificSessionId).trim();
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     // Write transcript header with group info

@@ -13,6 +13,17 @@ export default function NamePage() {
   const [stream, setStream] = useState(null);
   const [cameraRequested, setCameraRequested] = useState(false);
   const videoRef = useRef(null);
+
+  // Parse and store Prolific URL params on first load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prolificPid = params.get("PROLIFIC_PID");
+    const studyId = params.get("STUDY_ID");
+    const prolificSessionId = params.get("SESSION_ID");
+    if (prolificPid) sessionStorage.setItem("PROLIFIC_PID", prolificPid);
+    if (studyId) sessionStorage.setItem("STUDY_ID", studyId);
+    if (prolificSessionId) sessionStorage.setItem("PROLIFIC_SESSION_ID", prolificSessionId);
+  }, []);
   const streamRef = useRef(null);
   const navigate = useNavigate();
 
