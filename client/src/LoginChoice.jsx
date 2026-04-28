@@ -1,8 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+
+const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_bPBOLqFJFN18XtQ";
 
 export default function LoginChoice() {
   const [start] = useState(Date.now());
   const [status, setStatus] = useState("");
+
+  const surveyUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    const chatSessionId = sessionStorage.getItem("chatCompleted");
+    if (chatSessionId && chatSessionId !== "1") params.set("CHAT_SESSION_ID", chatSessionId);
+    const prolificPid = sessionStorage.getItem("PROLIFIC_PID");
+    const studyId = sessionStorage.getItem("STUDY_ID");
+    const prolificSessionId = sessionStorage.getItem("PROLIFIC_SESSION_ID");
+    if (prolificPid) params.set("PROLIFIC_PID", prolificPid);
+    if (studyId) params.set("STUDY_ID", studyId);
+    if (prolificSessionId) params.set("PROLIFIC_SESSION_ID", prolificSessionId);
+    const qs = params.toString();
+    return qs ? `${QUALTRICS_BASE}?${qs}` : QUALTRICS_BASE;
+  }, []);
 
   async function submit(choice) {
     const sessionId = localStorage.getItem("sessionId");
@@ -67,7 +83,7 @@ export default function LoginChoice() {
       </div>
 
       <iframe
-        src="https://qualtricsxml5jbfgkjs.qualtrics.com/jfe/form/SV_1LBmGog10Hsu6r4"
+        src={surveyUrl}
         style={{ flex: 1, border: "none", width: "100%", marginTop: 8 }}
         title="Study Survey"
         allow="fullscreen"
