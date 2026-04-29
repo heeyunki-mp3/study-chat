@@ -3,9 +3,8 @@
 ## 1. Todo List
 
 - ~~**Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)~~ **Done** — Mina's texting style updated across all 4 variants (default, pro, anti, control): all lowercase, only `.` punctuation (never at end of last sentence), `??` and `!!` for questions/exclamations, no apostrophes/commas/quotes/dashes.
-- **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer)
-- **Fix routing**: Correct the flow — where users start, where they go after chat ends, etc. (maybe separate branch)
-- **Prolific integration**: Learn how to hook from Prolific into our app and back; need a way to track participant identity throughout the routing
+- ~~**Prolific integration**~~ **Done** — URL params parsed on entry, saved to DB, passed to Qualtrics iframe
+- **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer). Note: Derek is no longer deployed (replaced by Anthony) but personas kept in file.
 
 ## 2. Issue
 
@@ -191,13 +190,44 @@ Two problems:
 
 Added support for Prolific URL parameters (`PROLIFIC_PID`, `STUDY_ID`, `SESSION_ID`).
 
+Entry URL format: `https://focusgroup.cc.gatech.edu/?PROLIFIC_PID={{%PROLIFIC_PID%}}&STUDY_ID={{%STUDY_ID%}}&SESSION_ID={{%SESSION_ID%}}`
+
 Flow:
 1. **NamePage**: Parses URL params on load, stores in `sessionStorage`
 2. **ChatPage**: Sends params to server via `participant_name` socket event
 3. **Server**: Stores in `session.prolificPid`, `session.prolificStudyId`, `session.prolificSessionId`; saves to DB in 3 new columns (`prolific_pid`, `prolific_study_id`, `prolific_session_id`)
-4. **SurveyPage**: Passes all 3 params + `sessionId` to the Qualtrics iframe URL as query params
+4. **SurveyPage + LoginChoice**: Both pass 4 params to the Qualtrics iframe URL: `PROLIFIC_PID`, `STUDY_ID`, `PROLIFIC_SESSION_ID`, `CHAT_SESSION_ID`
 
-Qualtrics setup: In Qualtrics, go to Survey Flow → Add Embedded Data fields named `PROLIFIC_PID`, `STUDY_ID`, `SESSION_ID`. Qualtrics automatically captures query params that match embedded data field names.
+Qualtrics URL: `https://gatech.co1.qualtrics.com/jfe/form/SV_bPBOLqFJFN18XtQ`
+
+Qualtrics setup:
+- Survey Flow → Add Embedded Data block (must be **above** all question blocks) with fields: `PROLIFIC_PID`, `STUDY_ID`, `PROLIFIC_SESSION_ID`, `CHAT_SESSION_ID`
+- Leave values blank — Qualtrics auto-captures from URL query params
+- To see the data: Data & Analysis tab → **Column Chooser** → enable the embedded data columns (they are hidden by default)
+
+### Removed "half" group — 2026-04-28
+
+Removed "half" from group rotation. Now cycles: pro → anti → control → pro → ...
+
+### DB: assigned_group saves "control" as "cont" — 2026-04-28
+
+The `assigned_group` ENUM column has a 4-char limit inherited from the original `ENUM('pro', 'anti', 'half')`. Rather than altering the column, "control" is mapped to "cont" when saving to DB.
+
+### Qualtrics URL updated — 2026-04-29
+
+Old URL (`qualtricsxml5jbfgkjs.qualtrics.com/...`) replaced with new GT Qualtrics URL in both `SurveyPage.jsx` and `LoginChoice.jsx`. Both now use a shared `QUALTRICS_BASE` constant and pass Prolific + chat session params.
+
+### Test script: configurable participant name — 2026-04-22
+
+`simulate.mjs` now accepts a second CLI arg for participant name:
+- `node simulate.mjs 3 Alex` → Alex1, Alex2, Alex3
+- `node simulate.mjs 1` → Hailey (default)
+
+Answers are built per-session with the name baked in (intro text, `@name` regex match). Timeout increased from 15 → 20 min. Results now show duration (e.g. "Session 1: complete — 8.3 min").
+
+### Qualtrics embedded data not visible — 2026-04-29
+
+Embedded data fields (`PROLIFIC_PID`, `STUDY_ID`, etc.) were being recorded correctly by Qualtrics but not showing in the Data & Analysis table. **Solution**: In Data & Analysis → click **Column Chooser** → enable the embedded data columns. They are hidden by default.
 
 ## 3. Ideas & Backlog
 
