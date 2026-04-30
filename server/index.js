@@ -16,6 +16,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import OpenAI from "openai";
 import bcrypt from "bcrypt";
+import zxcvbn from "zxcvbn";
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -299,18 +300,32 @@ let dbPool = null;
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS prolific_session_id VARCHAR(100) DEFAULT NULL
     `).catch(() => {});
+    // Registration flow columns on participant_responses (single table)
     await dbPool.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) DEFAULT NULL,
-        webauthn_credential JSON DEFAULT NULL,
-        webauthn_challenge VARCHAR(255) DEFAULT NULL,
-        session_token VARCHAR(255) DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses + users tables ready ===");
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS password_strength TINYINT DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS webauthn_credential JSON DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS webauthn_challenge VARCHAR(255) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS session_token VARCHAR(255) DEFAULT NULL
+    `).catch(() => {});
+    logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
     logLine("DB_ERROR", `=== DATABASE INIT FAILED: ${e?.message} ===`);
     logLine("DB_ERROR", `Full error: ${JSON.stringify(e, Object.getOwnPropertyNames(e || {}))}`);
@@ -1146,8 +1161,9 @@ const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || `http://localhost:${proce
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, sessionId, participantId } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (typeof password !== "string" || password.length < 12) return res.status(400).json({ error: "Password must be at least 12 characters" });
   if (!/[a-zA-Z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
     return res.status(400).json({ error: "Password must contain letters, numbers, and symbols" });
@@ -1155,13 +1171,15 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
   try {
     const hash = await bcrypt.hash(password, 12);
+    const strength = zxcvbn(password).score; // 0–4 (zxcvbn standard)
     const token = crypto.randomUUID();
     await dbPool.execute(
-      `INSERT INTO users (email, password_hash, session_token) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), session_token = VALUES(session_token)`,
-      [email, hash, token]
+      `UPDATE participant_responses
+       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?
+       WHERE session_id = ? AND participant_id = ?`,
+      [email, hash, strength, token, sessionId, participantId]
     );
-    logLine("DB", `User registered (password) email=${email}`);
+    logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
     logLine("DB_ERROR", `register-password failed: ${e?.message}`);
@@ -1171,8 +1189,9 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
 
 // POST /api/focus-group/webauthn-register-options
 app.post("/api/focus-group/webauthn-register-options", express.json(), async (req, res) => {
-  const { email } = req.body || {};
+  const { email, sessionId, participantId } = req.body || {};
   if (!email) return res.status(400).json({ error: "Email is required" });
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
   try {
     const options = await generateRegistrationOptions({
@@ -1188,11 +1207,12 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
     });
     // Persist challenge so we can verify later
     await dbPool.execute(
-      `INSERT INTO users (email, webauthn_challenge) VALUES (?, ?)
-       ON DUPLICATE KEY UPDATE webauthn_challenge = VALUES(webauthn_challenge)`,
-      [email, options.challenge]
+      `UPDATE participant_responses
+       SET email = ?, webauthn_challenge = ?
+       WHERE session_id = ? AND participant_id = ?`,
+      [email, options.challenge, sessionId, participantId]
     );
-    logLine("DB", `WebAuthn options generated for email=${email}`);
+    logLine("DB", `WebAuthn options generated for email=${email} participant=${participantId}`);
     res.json({ ok: true, options });
   } catch (e) {
     logLine("DB_ERROR", `webauthn-register-options failed: ${e?.message}`);
@@ -1202,14 +1222,18 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
 
 // POST /api/focus-group/webauthn-register-verify
 app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req, res) => {
-  const { email, attestation } = req.body || {};
+  const { email, attestation, sessionId, participantId } = req.body || {};
   if (!email || !attestation) return res.status(400).json({ error: "Email and attestation are required" });
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
   try {
     // Retrieve stored challenge
-    const [rows] = await dbPool.execute(`SELECT webauthn_challenge FROM users WHERE email = ?`, [email]);
+    const [rows] = await dbPool.execute(
+      `SELECT webauthn_challenge FROM participant_responses WHERE session_id = ? AND participant_id = ?`,
+      [sessionId, participantId]
+    );
     if (!rows.length || !rows[0].webauthn_challenge) {
-      return res.status(400).json({ error: "No pending registration for this email" });
+      return res.status(400).json({ error: "No pending registration for this session" });
     }
     const expectedChallenge = rows[0].webauthn_challenge;
     const verification = await verifyRegistrationResponse({
@@ -1223,10 +1247,12 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
     }
     const token = crypto.randomUUID();
     await dbPool.execute(
-      `UPDATE users SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ? WHERE email = ?`,
-      [JSON.stringify(verification.registrationInfo), token, email]
+      `UPDATE participant_responses
+       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?
+       WHERE session_id = ? AND participant_id = ?`,
+      [JSON.stringify(verification.registrationInfo), token, sessionId, participantId]
     );
-    logLine("DB", `User registered (passkey) email=${email}`);
+    logLine("DB", `User registered (passkey) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
     logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}`);

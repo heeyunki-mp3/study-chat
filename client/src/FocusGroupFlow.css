@@ -364,6 +364,35 @@
   padding-top: 8px;
 }
 
+/* — Password strength bar — */
+.fg-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fg-strength-bar {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.fg-strength-segment {
+  height: 6px;
+  flex: 1;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.fg-strength-label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 72px;
+  text-align: right;
+}
+
 .fg-password-rules {
   display: flex;
   flex-direction: column;

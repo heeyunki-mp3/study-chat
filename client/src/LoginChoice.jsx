@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { startRegistration } from "@simplewebauthn/browser";
+import zxcvbn from "zxcvbn";
 import "./FocusGroupFlow.css";
 
 // ─── Shared sub-components ────────────────────────────────────
@@ -73,6 +74,51 @@ const PASSWORD_RULES = [
 
 function allRulesPass(password) {
   return PASSWORD_RULES.every((r) => r.test(password));
+}
+
+// zxcvbn score 0–4 → label + color
+const STRENGTH_META = [
+  { label: "Very weak", color: "#dc2626" },
+  { label: "Weak", color: "#ea580c" },
+  { label: "Fair", color: "#ca8a04" },
+  { label: "Strong", color: "#16a34a" },
+  { label: "Very strong", color: "#059669" },
+];
+
+function PasswordStrengthBar({ password }) {
+  const score = password.length > 0 ? zxcvbn(password).score : -1;
+  const meta = score >= 0 ? STRENGTH_META[score] : null;
+  const segments = 4; // 4 bar segments
+
+  return (
+    <div className="fg-strength" aria-label={meta ? `Password strength: ${meta.label}` : "Password strength"}>
+      <div className="fg-strength-bar">
+        {Array.from({ length: segments }, (_, i) => (
+          <div
+            key={i}
+            className="fg-strength-segment"
+            style={{
+              background: score >= 0 && i <= score ? meta.color : "var(--border)",
+            }}
+          />
+        ))}
+      </div>
+      {meta && (
+        <span className="fg-strength-label" style={{ color: meta.color }}>
+          {meta.label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Session context helper ──────────────────────────────────
+
+function getSessionContext() {
+  return {
+    sessionId: localStorage.getItem("sessionId") || "",
+    participantId: localStorage.getItem("participantId") || "",
+  };
 }
 
 // ─── Screen 1: Email ──────────────────────────────────────────
@@ -161,22 +207,21 @@ function SecureStep({ email }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hesitationStart] = useState(Date.now());
+  const ctx = useMemo(getSessionContext, []);
 
   // Record auth choice in participant_responses
   const recordChoice = useCallback(async (choice) => {
-    const sessionId = localStorage.getItem("sessionId");
-    const participantId = localStorage.getItem("participantId");
     const hesitationMs = Date.now() - hesitationStart;
     try {
       await fetch("/api/auth_choice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, participantId, choice, hesitationMs }),
+        body: JSON.stringify({ sessionId: ctx.sessionId, participantId: ctx.participantId, choice, hesitationMs }),
       });
     } catch {
       // non-critical — don't block registration
     }
-  }, [hesitationStart]);
+  }, [hesitationStart, ctx]);
 
   async function handlePasswordSubmit(e) {
     e.preventDefault();
@@ -191,7 +236,7 @@ function SecureStep({ email }) {
       const res = await fetch("/api/focus-group/register-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -214,7 +259,7 @@ function SecureStep({ email }) {
       const optRes = await fetch("/api/focus-group/webauthn-register-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const optData = await optRes.json();
       if (!optRes.ok) throw new Error(optData.error || "Failed to start passkey registration");
@@ -226,7 +271,7 @@ function SecureStep({ email }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, attestation }),
+        body: JSON.stringify({ email, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -327,6 +372,8 @@ function SecureStep({ email }) {
                     aria-describedby="fg-pw-rules"
                   />
                 </label>
+
+                <PasswordStrengthBar password={password} />
 
                 <div id="fg-pw-rules" className="fg-password-rules" aria-label="Password requirements">
                   {PASSWORD_RULES.map((rule) => (
