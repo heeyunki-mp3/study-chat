@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { startRegistration } from "@simplewebauthn/browser";
 import zxcvbn from "zxcvbn";
@@ -211,6 +211,7 @@ function SecureStep({ email, onBack }) {
   const [error, setError] = useState("");
   const [hesitationStart] = useState(Date.now());
   const ctx = useMemo(getSessionContext, []);
+  const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
 
   // Record auth choice in participant_responses
   const recordChoice = useCallback(async (choice) => {
@@ -235,7 +236,6 @@ function SecureStep({ email, onBack }) {
     setLoading(true);
     setError("");
     try {
-      await recordChoice("password");
       const res = await fetch("/api/focus-group/register-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -243,6 +243,7 @@ function SecureStep({ email, onBack }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
+      await recordChoice("password");
       sessionStorage.setItem("sessionToken", data.sessionToken);
       navigate("/survey", { replace: true });
     } catch (err) {
@@ -252,12 +253,10 @@ function SecureStep({ email, onBack }) {
     }
   }
 
-  async function handlePasskey() {
+  async function handlePasskey(requestId) {
     setLoading(true);
     setError("");
     try {
-      await recordChoice("passkey");
-
       // 1. Get registration options from server
       const optRes = await fetch("/api/focus-group/webauthn-register-options", {
         method: "POST",
@@ -266,9 +265,11 @@ function SecureStep({ email, onBack }) {
       });
       const optData = await optRes.json();
       if (!optRes.ok) throw new Error(optData.error || "Failed to start passkey registration");
+      if (activeRequestRef.current !== requestId) return;
 
       // 2. Browser ceremony
       const attestation = await startRegistration({ optionsJSON: optData.options });
+      if (activeRequestRef.current !== requestId) return;
 
       // 3. Verify with server
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
@@ -278,27 +279,32 @@ function SecureStep({ email, onBack }) {
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
+      if (activeRequestRef.current !== requestId) return;
 
+      await recordChoice("passkey");
       sessionStorage.setItem("sessionToken", verData.sessionToken);
       navigate("/survey", { replace: true });
     } catch (err) {
-      // WebAuthn can throw DOMException when user cancels
+      if (activeRequestRef.current !== requestId) return;
       if (err.name === "NotAllowedError") {
         setError("Passkey registration was cancelled. Please try again.");
       } else {
         setError(err.message);
       }
     } finally {
-      setLoading(false);
+      if (activeRequestRef.current === requestId) setLoading(false);
     }
   }
 
   function selectMethod(m) {
-    if (loading) return;
+    // Cancel any in-flight request
+    activeRequestRef.current += 1;
+    setLoading(false);
     setMethod(m);
+    setPassword("");
     setError("");
     if (m === "passkey") {
-      handlePasskey();
+      handlePasskey(activeRequestRef.current);
     }
   }
 
@@ -326,8 +332,10 @@ function SecureStep({ email, onBack }) {
           <div className="fg-form-area">
             <BackButton
               onClick={() => {
-                if (method && !loading) { setMethod(null); setPassword(""); setError(""); }
-                else if (!loading) { onBack(); }
+                activeRequestRef.current += 1;
+                setLoading(false);
+                if (method) { setMethod(null); setPassword(""); setError(""); }
+                else { onBack(); }
               }}
               label={method ? "Back to method selection" : "Back to email"}
             />
