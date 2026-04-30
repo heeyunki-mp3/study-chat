@@ -1164,10 +1164,6 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
   const { email, password, sessionId, participantId } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
-  if (typeof password !== "string" || password.length < 12) return res.status(400).json({ error: "Password must be at least 12 characters" });
-  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
-    return res.status(400).json({ error: "Password must contain letters, numbers, and symbols" });
-  }
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
   try {
     const hash = await bcrypt.hash(password, 12);

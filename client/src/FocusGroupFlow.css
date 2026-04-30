@@ -448,6 +448,38 @@
   margin-bottom: -8px;
 }
 
+/* — Back button — */
+.fg-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--page);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  padding: 0;
+  align-self: flex-start;
+}
+
+.fg-back-btn:hover {
+  border-color: var(--gt-navy);
+  background: var(--surface);
+}
+
+.fg-back-btn:focus-visible {
+  outline: 2px solid var(--gt-navy);
+  outline-offset: 2px;
+}
+
+.fg-back-btn svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ink-2);
+}
+
 /* — Error banner — */
 .fg-error-banner {
   padding: 12px 16px;

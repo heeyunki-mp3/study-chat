@@ -57,23 +57,26 @@ function PasskeyIcon() {
   );
 }
 
+function BackButton({ onClick, label }) {
+  return (
+    <button
+      type="button"
+      className="fg-back-btn"
+      onClick={onClick}
+      aria-label={label || "Go back"}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M19 12H5" />
+        <path d="M12 19l-7-7 7-7" />
+      </svg>
+    </button>
+  );
+}
+
 // ─── Email validation (RFC 5322 simplified) ───────────────────
 
 function isValidEmail(email) {
   return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(email);
-}
-
-// ─── Password strength rules ─────────────────────────────────
-
-const PASSWORD_RULES = [
-  { label: "At least 12 characters", test: (p) => p.length >= 12 },
-  { label: "Contains a letter", test: (p) => /[a-zA-Z]/.test(p) },
-  { label: "Contains a number", test: (p) => /\d/.test(p) },
-  { label: "Contains a symbol", test: (p) => /[^a-zA-Z0-9]/.test(p) },
-];
-
-function allRulesPass(password) {
-  return PASSWORD_RULES.every((r) => r.test(password));
 }
 
 // zxcvbn score 0–4 → label + color
@@ -200,7 +203,7 @@ function EmailStep({ onContinue }) {
 
 // ─── Screen 2: Secure ─────────────────────────────────────────
 
-function SecureStep({ email }) {
+function SecureStep({ email, onBack }) {
   const navigate = useNavigate();
   const [method, setMethod] = useState(null); // "password" | "passkey"
   const [password, setPassword] = useState("");
@@ -225,8 +228,8 @@ function SecureStep({ email }) {
 
   async function handlePasswordSubmit(e) {
     e.preventDefault();
-    if (!allRulesPass(password)) {
-      setError("Please meet all password requirements.");
+    if (!password) {
+      setError("Please enter a password.");
       return;
     }
     setLoading(true);
@@ -321,6 +324,13 @@ function SecureStep({ email }) {
 
           {/* Right: method picker */}
           <div className="fg-form-area">
+            <BackButton
+              onClick={() => {
+                if (method && !loading) { setMethod(null); setPassword(""); setError(""); }
+                else if (!loading) { onBack(); }
+              }}
+              label={method ? "Back to method selection" : "Back to email"}
+            />
             <span className="fg-methods-label">Choose a sign-in method</span>
 
             <div className="fg-methods">
@@ -369,27 +379,16 @@ function SecureStep({ email }) {
                     placeholder="Create a strong password"
                     autoComplete="new-password"
                     autoFocus
-                    aria-describedby="fg-pw-rules"
+                    aria-describedby="fg-pw-strength"
                   />
                 </label>
 
                 <PasswordStrengthBar password={password} />
 
-                <div id="fg-pw-rules" className="fg-password-rules" aria-label="Password requirements">
-                  {PASSWORD_RULES.map((rule) => (
-                    <span
-                      key={rule.label}
-                      className={`fg-password-rule${rule.test(password) ? " fg-rule-pass" : ""}`}
-                    >
-                      {rule.test(password) ? "\u2713" : "\u2022"} {rule.label}
-                    </span>
-                  ))}
-                </div>
-
                 <button
                   type="submit"
                   className="fg-btn-primary"
-                  disabled={!allRulesPass(password) || loading}
+                  disabled={!password || loading}
                 >
                   {loading ? "Creating account\u2026" : "Create account"}
                 </button>
@@ -436,5 +435,5 @@ export default function LoginChoice() {
     return <EmailStep onContinue={handleEmailContinue} />;
   }
 
-  return <SecureStep email={email} />;
+  return <SecureStep email={email} onBack={() => setStep(1)} />;
 }
