@@ -300,7 +300,7 @@ export default function ChatPage() {
       if (sessionId) localStorage.setItem("sessionId", sessionId);
       if (participantId) localStorage.setItem("participantId", participantId);
       sessionStorage.setItem("chatCompleted", sessionId || "1");
-      setTimeout(() => navigate("/login-choice", { replace: true }), 3000);
+      setTimeout(() => navigate("/login", { replace: true }), 3000);
     });
 
     socket.connect();
@@ -388,7 +388,7 @@ export default function ChatPage() {
     const sid = session?.sessionId || sessionStorage.getItem("studySessionId") || "";
     if (sid) localStorage.setItem("sessionId", sid);
     sessionStorage.setItem("chatCompleted", sid || "1");
-    navigate("/login-choice", { replace: true });
+    navigate("/login", { replace: true });
   }
 
   const participantProfilePic = (() => {
@@ -504,7 +504,7 @@ export default function ChatPage() {
 
         <div className="chat-footer">
           <button onClick={goLogin} className="chat-exit-btn">
-            Exit to Survey
+            Exit Chat
           </button>
         </div>
       </div>

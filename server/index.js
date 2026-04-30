@@ -8,12 +8,18 @@
 import "dotenv/config";
 import express from "express";
 import fs from "fs";
+import crypto from "crypto";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import OpenAI from "openai";
+import bcrypt from "bcrypt";
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+} from "@simplewebauthn/server";
 // mysql2 loaded lazily — see DB section below
 import {
   getCastByHandles,
@@ -293,7 +299,18 @@ let dbPool = null;
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS prolific_session_id VARCHAR(100) DEFAULT NULL
     `).catch(() => {});
-    logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
+    await dbPool.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) DEFAULT NULL,
+        webauthn_credential JSON DEFAULT NULL,
+        webauthn_challenge VARCHAR(255) DEFAULT NULL,
+        session_token VARCHAR(255) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses + users tables ready ===");
   } catch (e) {
     logLine("DB_ERROR", `=== DATABASE INIT FAILED: ${e?.message} ===`);
     logLine("DB_ERROR", `Full error: ${JSON.stringify(e, Object.getOwnPropertyNames(e || {}))}`);
@@ -1119,6 +1136,104 @@ app.post("/api/auth_choice", express.json(), async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+// =====================
+// Focus-group registration endpoints
+// =====================
+const WEBAUTHN_RP_NAME = "Georgia Tech Focus Group";
+const WEBAUTHN_RP_ID = process.env.WEBAUTHN_RP_ID || "localhost";
+const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || `http://localhost:${process.env.PORT || 3001}`;
+
+// POST /api/focus-group/register-password
+app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
+  if (typeof password !== "string" || password.length < 12) return res.status(400).json({ error: "Password must be at least 12 characters" });
+  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+    return res.status(400).json({ error: "Password must contain letters, numbers, and symbols" });
+  }
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const hash = await bcrypt.hash(password, 12);
+    const token = crypto.randomUUID();
+    await dbPool.execute(
+      `INSERT INTO users (email, password_hash, session_token) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), session_token = VALUES(session_token)`,
+      [email, hash, token]
+    );
+    logLine("DB", `User registered (password) email=${email}`);
+    res.json({ ok: true, sessionToken: token });
+  } catch (e) {
+    logLine("DB_ERROR", `register-password failed: ${e?.message}`);
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+// POST /api/focus-group/webauthn-register-options
+app.post("/api/focus-group/webauthn-register-options", express.json(), async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Email is required" });
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  try {
+    const options = await generateRegistrationOptions({
+      rpName: WEBAUTHN_RP_NAME,
+      rpID: WEBAUTHN_RP_ID,
+      userName: email,
+      userDisplayName: email,
+      attestationType: "none",
+      authenticatorSelection: {
+        residentKey: "preferred",
+        userVerification: "preferred",
+      },
+    });
+    // Persist challenge so we can verify later
+    await dbPool.execute(
+      `INSERT INTO users (email, webauthn_challenge) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE webauthn_challenge = VALUES(webauthn_challenge)`,
+      [email, options.challenge]
+    );
+    logLine("DB", `WebAuthn options generated for email=${email}`);
+    res.json({ ok: true, options });
+  } catch (e) {
+    logLine("DB_ERROR", `webauthn-register-options failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to generate registration options" });
+  }
+});
+
+// POST /api/focus-group/webauthn-register-verify
+app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req, res) => {
+  const { email, attestation } = req.body || {};
+  if (!email || !attestation) return res.status(400).json({ error: "Email and attestation are required" });
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  try {
+    // Retrieve stored challenge
+    const [rows] = await dbPool.execute(`SELECT webauthn_challenge FROM users WHERE email = ?`, [email]);
+    if (!rows.length || !rows[0].webauthn_challenge) {
+      return res.status(400).json({ error: "No pending registration for this email" });
+    }
+    const expectedChallenge = rows[0].webauthn_challenge;
+    const verification = await verifyRegistrationResponse({
+      response: attestation,
+      expectedChallenge,
+      expectedOrigin: WEBAUTHN_ORIGIN,
+      expectedRPID: WEBAUTHN_RP_ID,
+    });
+    if (!verification.verified) {
+      return res.status(400).json({ error: "Passkey verification failed" });
+    }
+    const token = crypto.randomUUID();
+    await dbPool.execute(
+      `UPDATE users SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ? WHERE email = ?`,
+      [JSON.stringify(verification.registrationInfo), token, email]
+    );
+    logLine("DB", `User registered (passkey) email=${email}`);
+    res.json({ ok: true, sessionToken: token });
+  } catch (e) {
+    logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}`);
+    res.status(500).json({ error: "Verification failed" });
+  }
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {

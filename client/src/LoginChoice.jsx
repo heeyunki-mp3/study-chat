@@ -1,93 +1,393 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { startRegistration } from "@simplewebauthn/browser";
+import "./FocusGroupFlow.css";
 
-const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_bPBOLqFJFN18XtQ";
+// ─── Shared sub-components ────────────────────────────────────
 
-export default function LoginChoice() {
-  const [start] = useState(Date.now());
-  const [status, setStatus] = useState("");
+function StudyTimeline() {
+  return (
+    <div className="fg-timeline">
+      <span className="fg-timeline-label">Study timeline</span>
+      <div className="fg-timeline-item fg-timeline-has-future">
+        <div className="fg-timeline-dot" />
+        <div className="fg-timeline-content">
+          <span className="fg-timeline-title">Today &middot; $3 on submission</span>
+        </div>
+      </div>
+      <div className="fg-timeline-item fg-timeline-future">
+        <div className="fg-timeline-dot fg-timeline-dot-hollow" />
+        <div className="fg-timeline-content">
+          <span className="fg-timeline-title">Future follow-ups &middot; Also compensated</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const surveyUrl = useMemo(() => {
-    const params = new URLSearchParams();
-    const chatSessionId = sessionStorage.getItem("chatCompleted");
-    if (chatSessionId && chatSessionId !== "1") params.set("CHAT_SESSION_ID", chatSessionId);
-    const prolificPid = sessionStorage.getItem("PROLIFIC_PID");
-    const studyId = sessionStorage.getItem("STUDY_ID");
-    const prolificSessionId = sessionStorage.getItem("PROLIFIC_SESSION_ID");
-    if (prolificPid) params.set("PROLIFIC_PID", prolificPid);
-    if (studyId) params.set("STUDY_ID", studyId);
-    if (prolificSessionId) params.set("PROLIFIC_SESSION_ID", prolificSessionId);
-    const qs = params.toString();
-    return qs ? `${QUALTRICS_BASE}?${qs}` : QUALTRICS_BASE;
-  }, []);
+function TrustFooter() {
+  return (
+    <footer className="fg-footer">
+      <span>Paid within 24h</span>
+      <span className="fg-footer-dot" aria-hidden="true" />
+      <span>Withdraw anytime</span>
+    </footer>
+  );
+}
 
-  async function submit(choice) {
+// ─── Icons (inline SVG) ───────────────────────────────────────
+
+function PasswordIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function PasskeyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+      <path d="M12 10v12" />
+      <path d="M18 16l-6-2-6 2" />
+    </svg>
+  );
+}
+
+// ─── Email validation (RFC 5322 simplified) ───────────────────
+
+function isValidEmail(email) {
+  return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(email);
+}
+
+// ─── Password strength rules ─────────────────────────────────
+
+const PASSWORD_RULES = [
+  { label: "At least 12 characters", test: (p) => p.length >= 12 },
+  { label: "Contains a letter", test: (p) => /[a-zA-Z]/.test(p) },
+  { label: "Contains a number", test: (p) => /\d/.test(p) },
+  { label: "Contains a symbol", test: (p) => /[^a-zA-Z0-9]/.test(p) },
+];
+
+function allRulesPass(password) {
+  return PASSWORD_RULES.every((r) => r.test(password));
+}
+
+// ─── Screen 1: Email ──────────────────────────────────────────
+
+function EmailStep({ onContinue }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError("Please enter your email address.");
+      return;
+    }
+    if (!isValidEmail(trimmed)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    setError("");
+    onContinue(trimmed);
+  }
+
+  return (
+    <div className="fg-page">
+      <main className="fg-main">
+        <div className="fg-container">
+          {/* Left: hero */}
+          <div className="fg-hero">
+            <div>
+              <span className="fg-step">Step 1 of 2</span>
+            </div>
+            <span className="fg-eyebrow">You're almost done</span>
+            <h1>Register to continue</h1>
+            <p>
+              Create an account to submit your exit survey and receive today's
+              payment. You may also be invited to future paid follow-up studies.
+            </p>
+            <StudyTimeline />
+          </div>
+
+          {/* Right: form */}
+          <div className="fg-form-area">
+            <form onSubmit={handleSubmit} noValidate>
+              <label className="fg-label" htmlFor="fg-email">
+                Email
+                <input
+                  id="fg-email"
+                  className="fg-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  autoFocus={false}
+                  aria-describedby="fg-email-hint"
+                />
+              </label>
+              <span id="fg-email-hint" className="fg-input-hint">
+                Used for your payment and any future study invitations.
+              </span>
+              {error && <p className="fg-input-error" role="alert">{error}</p>}
+
+              <button type="submit" className="fg-btn-primary" style={{ marginTop: 20 }}>
+                Continue
+              </button>
+            </form>
+
+            <a href="/login" className="fg-link" style={{ marginTop: 4 }}>
+              Returning participant? Log in
+            </a>
+          </div>
+        </div>
+      </main>
+      <TrustFooter />
+    </div>
+  );
+}
+
+// ─── Screen 2: Secure ─────────────────────────────────────────
+
+function SecureStep({ email }) {
+  const navigate = useNavigate();
+  const [method, setMethod] = useState(null); // "password" | "passkey"
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [hesitationStart] = useState(Date.now());
+
+  // Record auth choice in participant_responses
+  const recordChoice = useCallback(async (choice) => {
     const sessionId = localStorage.getItem("sessionId");
     const participantId = localStorage.getItem("participantId");
-    const hesitationMs = Date.now() - start;
-
+    const hesitationMs = Date.now() - hesitationStart;
     try {
       await fetch("/api/auth_choice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, participantId, choice, hesitationMs }),
       });
-      setStatus(`Recorded: ${choice}`);
-    } catch (e) {
-      setStatus("Failed to save choice. Please try again.");
+    } catch {
+      // non-critical — don't block registration
+    }
+  }, [hesitationStart]);
+
+  async function handlePasswordSubmit(e) {
+    e.preventDefault();
+    if (!allRulesPass(password)) {
+      setError("Please meet all password requirements.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await recordChoice("password");
+      const res = await fetch("/api/focus-group/register-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Registration failed");
+      sessionStorage.setItem("sessionToken", data.sessionToken);
+      navigate("/survey", { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePasskey() {
+    setLoading(true);
+    setError("");
+    try {
+      await recordChoice("passkey");
+
+      // 1. Get registration options from server
+      const optRes = await fetch("/api/focus-group/webauthn-register-options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const optData = await optRes.json();
+      if (!optRes.ok) throw new Error(optData.error || "Failed to start passkey registration");
+
+      // 2. Browser ceremony
+      const attestation = await startRegistration({ optionsJSON: optData.options });
+
+      // 3. Verify with server
+      const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, attestation }),
+      });
+      const verData = await verRes.json();
+      if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
+
+      sessionStorage.setItem("sessionToken", verData.sessionToken);
+      navigate("/survey", { replace: true });
+    } catch (err) {
+      // WebAuthn can throw DOMException when user cancels
+      if (err.name === "NotAllowedError") {
+        setError("Passkey registration was cancelled. Please try again.");
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function selectMethod(m) {
+    if (loading) return;
+    setMethod(m);
+    setError("");
+    if (m === "passkey") {
+      handlePasskey();
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui" }}>
-      <div style={{ maxWidth: 640, margin: "40px auto 0", padding: "0 24px", width: "100%" }}>
-        <h2>Compensation Login</h2>
-        <p>To receive compensation, please log into the study portal.</p>
+    <div className="fg-page">
+      <main className="fg-main">
+        <div className="fg-container">
+          {/* Left: hero */}
+          <div className="fg-hero">
+            <div>
+              <span className="fg-step">Step 2 of 2</span>
+            </div>
+            <span className="fg-eyebrow">You're almost done</span>
+            <h1>Secure your account</h1>
+            <p>
+              Your exit survey contains sensitive information. Secure your
+              account with a strong password or passkey — it's the only thing
+              protecting your responses and any future study data tied to your
+              account.
+            </p>
+            <StudyTimeline />
+          </div>
 
-        <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
-          <button
-            onClick={() => submit("passkey")}
-            disabled={!!status}
-            style={{
-              padding: "12px 24px",
-              fontSize: 16,
-              borderRadius: 8,
-              border: "1px solid #1976d2",
-              background: "#1976d2",
-              color: "#fff",
-              cursor: status ? "default" : "pointer",
-            }}
-          >
-            Use Passkey (recommended)
-          </button>
-          <button
-            onClick={() => submit("password")}
-            disabled={!!status}
-            style={{
-              padding: "12px 24px",
-              fontSize: 16,
-              borderRadius: 8,
-              border: "1px solid #ccc",
-              background: "#fff",
-              color: "#333",
-              cursor: status ? "default" : "pointer",
-            }}
-          >
-            Use Password
-          </button>
+          {/* Right: method picker */}
+          <div className="fg-form-area">
+            <span className="fg-methods-label">Choose a sign-in method</span>
+
+            <div className="fg-methods">
+              {/* Password card */}
+              <button
+                type="button"
+                className={`fg-method-card${method === "password" ? " fg-method-active" : ""}`}
+                onClick={() => selectMethod("password")}
+                disabled={loading}
+                aria-pressed={method === "password"}
+              >
+                <div className="fg-method-icon"><PasswordIcon /></div>
+                <div className="fg-method-text">
+                  <h3>Password</h3>
+                  <p>Set a strong password you'll remember</p>
+                </div>
+              </button>
+
+              {/* Passkey card */}
+              <button
+                type="button"
+                className={`fg-method-card${method === "passkey" ? " fg-method-active" : ""}`}
+                onClick={() => selectMethod("passkey")}
+                disabled={loading}
+                aria-pressed={method === "passkey"}
+              >
+                <div className="fg-method-icon"><PasskeyIcon /></div>
+                <div className="fg-method-text">
+                  <h3>Passkey</h3>
+                  <p>Use Touch ID, Face ID, or a security key</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Password inline form */}
+            {method === "password" && (
+              <form onSubmit={handlePasswordSubmit} className="fg-password-form">
+                <label className="fg-label" htmlFor="fg-password">
+                  Password
+                  <input
+                    id="fg-password"
+                    className="fg-input"
+                    type="password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                    placeholder="Create a strong password"
+                    autoComplete="new-password"
+                    autoFocus
+                    aria-describedby="fg-pw-rules"
+                  />
+                </label>
+
+                <div id="fg-pw-rules" className="fg-password-rules" aria-label="Password requirements">
+                  {PASSWORD_RULES.map((rule) => (
+                    <span
+                      key={rule.label}
+                      className={`fg-password-rule${rule.test(password) ? " fg-rule-pass" : ""}`}
+                    >
+                      {rule.test(password) ? "\u2713" : "\u2022"} {rule.label}
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  type="submit"
+                  className="fg-btn-primary"
+                  disabled={!allRulesPass(password) || loading}
+                >
+                  {loading ? "Creating account\u2026" : "Create account"}
+                </button>
+              </form>
+            )}
+
+            {/* Passkey loading state */}
+            {method === "passkey" && loading && (
+              <p style={{ fontSize: 14, color: "var(--ink-3)" }}>
+                Follow the prompts in your browser to register your passkey&hellip;
+              </p>
+            )}
+
+            {error && <div className="fg-error-banner" role="alert">{error}</div>}
+          </div>
         </div>
-
-        {status && <div style={{ marginTop: 16, color: "#388e3c", fontWeight: 500 }}>{status}</div>}
-
-        <hr style={{ margin: "32px 0 16px", borderColor: "#e0e0e0" }} />
-        <p style={{ color: "#666", fontSize: 14 }}>Please also complete the study survey below:</p>
-      </div>
-
-      <iframe
-        src={surveyUrl}
-        style={{ flex: 1, border: "none", width: "100%", marginTop: 8 }}
-        title="Study Survey"
-        allow="fullscreen"
-      />
+      </main>
+      <TrustFooter />
     </div>
   );
+}
+
+// ─── Main export: two-step flow ───────────────────────────────
+
+export default function LoginChoice() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState("");
+
+  // Guard: must have completed chat
+  const chatCompleted = sessionStorage.getItem("chatCompleted");
+  if (!chatCompleted) {
+    navigate("/", { replace: true });
+    return null;
+  }
+
+  function handleEmailContinue(validEmail) {
+    setEmail(validEmail);
+    sessionStorage.setItem("registrationEmail", validEmail);
+    setStep(2);
+  }
+
+  if (step === 1) {
+    return <EmailStep onContinue={handleEmailContinue} />;
+  }
+
+  return <SecureStep email={email} />;
 }

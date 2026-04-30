@@ -13,7 +13,7 @@ export default function App() {
         <Route path="/waiting" element={<WaitingPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/survey" element={<SurveyPage />} />
-        <Route path="/login-choice" element={<LoginChoice />} />
+        <Route path="/login" element={<LoginChoice />} />
       </Routes>
     </BrowserRouter>
   );

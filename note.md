@@ -229,6 +229,40 @@ Answers are built per-session with the name baked in (intro text, `@name` regex 
 
 Embedded data fields (`PROLIFIC_PID`, `STUDY_ID`, etc.) were being recorded correctly by Qualtrics but not showing in the Data & Analysis table. **Solution**: In Data & Analysis → click **Column Chooser** → enable the embedded data columns. They are hidden by default.
 
+### Post-focus-group registration & sign-in flow — 2026-04-30
+
+Added a two-step registration flow that replaces the old `LoginChoice` (simple passkey/password button recorder). Now at `/login` (renamed from `/login-choice`).
+
+**User flow:**
+1. Chat ends → "Exit Chat" button (renamed from "Exit to Survey") → `/login`
+2. **Step 1** (`/login`): Email input with RFC 5322 validation → Continue
+3. **Step 2** (`/login`): Two equal method cards — Password or Passkey
+   - **Password**: Inline form (min 12 chars, mixed letters/numbers/symbols) → bcrypt-hashed → account created
+   - **Passkey**: WebAuthn registration ceremony via `@simplewebauthn/browser` + `@simplewebauthn/server` → credential stored as JSON
+4. On success → session token stored → redirect to `/survey`
+5. Auth choice (password/passkey) still recorded in `participant_responses.auth_choice` column
+
+**New DB table**: `users` (email, password_hash, webauthn_credential, webauthn_challenge, session_token)
+
+**New API endpoints:**
+- `POST /api/focus-group/register-password` — create user with bcrypt-hashed password
+- `POST /api/focus-group/webauthn-register-options` — generate WebAuthn challenge + options
+- `POST /api/focus-group/webauthn-register-verify` — verify attestation, store credential
+
+**New dependencies:**
+- Server: `bcrypt`, `@simplewebauthn/server`
+- Client: `@simplewebauthn/browser`
+
+**Styling**: New `FocusGroupFlow.css` — GT brand colors (navy #003057, gold #B3A369), Geist font, two-column hero layout, study timeline component, method cards, trust footer ("Paid within 24h · Withdraw anytime").
+
+**Production env vars needed:**
+```
+WEBAUTHN_RP_ID=focusgroup.cc.gatech.edu
+WEBAUTHN_ORIGIN=https://focusgroup.cc.gatech.edu
+```
+
+**Files changed:** `LoginChoice.jsx` (rewritten), `FocusGroupFlow.css` (new), `App.jsx` (route rename), `ChatPage.jsx` (button text + route), `server/index.js` (imports, users table, 3 endpoints)
+
 ## 3. Ideas & Backlog
 
 - (moved to Todo List above)
