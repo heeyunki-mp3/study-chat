@@ -1171,7 +1171,7 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?
+       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password'
        WHERE session_id = ? AND participant_id = ?`,
       [email, hash, strength, token, sessionId, participantId]
     );
@@ -1244,7 +1244,7 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?
+       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey'
        WHERE session_id = ? AND participant_id = ?`,
       [JSON.stringify(verification.registrationInfo), token, sessionId, participantId]
     );

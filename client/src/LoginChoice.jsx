@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { startRegistration } from "@simplewebauthn/browser";
 import zxcvbn from "zxcvbn";
@@ -209,23 +209,9 @@ function SecureStep({ email, onBack }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [hesitationStart] = useState(Date.now());
   const ctx = useMemo(getSessionContext, []);
   const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
 
-  // Record auth choice in participant_responses
-  const recordChoice = useCallback(async (choice) => {
-    const hesitationMs = Date.now() - hesitationStart;
-    try {
-      await fetch("/api/auth_choice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: ctx.sessionId, participantId: ctx.participantId, choice, hesitationMs }),
-      });
-    } catch {
-      // non-critical — don't block registration
-    }
-  }, [hesitationStart, ctx]);
 
   async function handlePasswordSubmit(e) {
     e.preventDefault();
@@ -243,7 +229,6 @@ function SecureStep({ email, onBack }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
-      await recordChoice("password");
       sessionStorage.setItem("sessionToken", data.sessionToken);
       navigate("/survey", { replace: true });
     } catch (err) {
@@ -281,7 +266,6 @@ function SecureStep({ email, onBack }) {
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
       if (activeRequestRef.current !== requestId) return;
 
-      await recordChoice("passkey");
       sessionStorage.setItem("sessionToken", verData.sessionToken);
       navigate("/survey", { replace: true });
     } catch (err) {
