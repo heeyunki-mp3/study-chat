@@ -6,27 +6,18 @@
 
 ### Frontend Deployment
 
-1. **Build the frontend:**
+1. **Build and push from your local machine:**
 
    ```bash
-   cd client
-   npm install
-   npm run build
+   make deploy-client
    ```
 
-   This will generate a `dist/` folder.
+   Run this from the project root. It builds the client and pushes the `dist/` to the **study-chat-dist** repository.
 
-2. **Push the built files:**
+2. **Deploy via Plesk:**
 
-   Copy or push the updated `dist/` contents to the **study-chat-dist** repository.
-
-   Make sure you are only updating the built frontend (not the full client source).
-
-3. **Deploy via Plesk:**
-
-   - Log into your Plesk server.
-   - Navigate to the web hosting directory (`httpdocs` or equivalent).
-   - Pull the latest changes from the **study-chat-dist** repository.
+   - Log into Plesk and pull the latest from the **study-chat-dist** Git repository.
+   - Go to the **Node.js** tab, run `npm install`, then restart the app.
 
 ### Backend Deployment
 
