@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import SiteHeader from "./SiteHeader.jsx";
 import NamePage from "./NamePage.jsx";
 import WaitingPage from "./WaitingPage.jsx";
 import ChatPage from "./ChatPage.jsx";
@@ -8,6 +9,7 @@ import LoginChoice from "./LoginChoice.jsx";
 export default function App() {
   return (
     <BrowserRouter>
+      <SiteHeader />
       <Routes>
         <Route path="/" element={<NamePage />} />
         <Route path="/waiting" element={<WaitingPage />} />

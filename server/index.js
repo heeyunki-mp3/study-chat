@@ -1202,13 +1202,13 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
       },
     });
     // Persist challenge so we can verify later
-    await dbPool.execute(
+    const [result] = await dbPool.execute(
       `UPDATE participant_responses
        SET email = ?, webauthn_challenge = ?
        WHERE session_id = ? AND participant_id = ?`,
       [email, options.challenge, sessionId, participantId]
     );
-    logLine("DB", `WebAuthn options generated for email=${email} participant=${participantId}`);
+    logLine("DB", `WebAuthn options generated for email=${email} participant=${participantId} rows=${result.affectedRows}`);
     res.json({ ok: true, options });
   } catch (e) {
     logLine("DB_ERROR", `webauthn-register-options failed: ${e?.message}`);
@@ -1251,8 +1251,8 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
     logLine("DB", `User registered (passkey) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
-    logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}`);
-    res.status(500).json({ error: "Verification failed" });
+    logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}\n${e?.stack}`);
+    res.status(500).json({ error: e?.message || "Verification failed" });
   }
 });
 

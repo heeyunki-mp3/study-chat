@@ -232,3 +232,43 @@ button:focus-visible {
   min-height: 1.5em !important;
   max-height: none !important;
 }
+
+/* ─── Site header (GT logo + Focus Group) ─── */
+.site-header {
+  width: 100%;
+  padding: 16px 24px;
+  box-sizing: border-box;
+  background: #fff;
+  border-bottom: 1px solid #E5E7EB;
+  flex-shrink: 0;
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.site-header-logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.site-header-divider {
+  width: 1px;
+  height: 20px;
+  background: #D1D5DB;
+  flex-shrink: 0;
+}
+
+.site-header-title {
+  font-family: "Geist", system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #003057;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}

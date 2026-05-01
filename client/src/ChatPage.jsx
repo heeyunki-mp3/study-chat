@@ -387,7 +387,8 @@ export default function ChatPage() {
     socket.emit("end");
     const sid = session?.sessionId || sessionStorage.getItem("studySessionId") || "";
     if (sid) localStorage.setItem("sessionId", sid);
-    if (socket.id) localStorage.setItem("participantId", socket.id);
+    const pName = sessionStorage.getItem("participantName") || "";
+    if (pName) localStorage.setItem("participantId", pName);
     sessionStorage.setItem("chatCompleted", sid || "1");
     navigate("/login", { replace: true });
   }
