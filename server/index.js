@@ -104,7 +104,7 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 
 // --- Bot message timing ---
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
-const TYPING_SPEED = { min: 0.7, max: 1.3 };  // Bot typing speed range (words/sec)
+const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words/sec) — 33% faster than original (0.7–1.3)
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
 const MODERATOR_THINK_DELAY_MS = { min: 1000, max: 3000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
@@ -416,7 +416,20 @@ async function getBotResponse(botName, context) {
     .map((a) => a.text)
     .join(" | ") || "(none)";
 
-  const maxBubbles = roundType === "poll" ? 1 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
+  // Determine if bot messages should be shortened:
+  // - Control group: shorten ALL big_question rounds
+  // - Pro/anti groups: shorten only the last big_question (new feature question)
+  const group = session?.assignedGroup;
+  const isLastBigQuestion = session?.currentRoundIndex != null
+    && session?.allRounds
+    && session.currentRoundIndex === session.allRounds.length - 1
+    && session.allRounds[session.currentRoundIndex]?.type === "big_question";
+  const shorten = roundType !== "poll" && (
+    group === "control" ||
+    ((group === "pro" || group === "anti") && isLastBigQuestion)
+  );
+
+  const maxBubbles = roundType === "poll" ? 1 : shorten ? 2 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
 
   const userPrompt = buildUserPrompt({
     transcript,
@@ -430,6 +443,7 @@ async function getBotResponse(botName, context) {
     humanParticipantName: humanRefName,
     maxBubbles,
     questionType: roundType,
+    shorten,
   });
 
   const completion = await openai.chat.completions.create({
@@ -438,7 +452,7 @@ async function getBotResponse(botName, context) {
       { role: "system", content: sys },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: roundType === "poll" ? 60 : maxBubbles <= 2 ? 400 : 600,
+    max_tokens: roundType === "poll" ? 60 : shorten ? 200 : maxBubbles <= 2 ? 400 : 600,
     temperature: 0.7,
   });
 
@@ -1895,6 +1909,8 @@ io.on("connection", (socket) => {
       logLine("QUEUE", "all rounds done, wrapping up");
       await saveSessionToDatabase();
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today!");
+      if (!session) return;
+      await emitModeratorLine("Next, please click the \"End Chat\" button, and then create your login credentials to complete the exit survey.", { consecutive: true });
       if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName });
       return;
     }

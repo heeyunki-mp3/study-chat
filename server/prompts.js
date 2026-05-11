@@ -243,6 +243,7 @@ export function buildUserPrompt({
   humanParticipantName = "You",
   maxBubbles = 3,
   questionType = "big_question",
+  shorten = false,
 }) {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
@@ -289,6 +290,21 @@ HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array with exactly 1 string.
 - 6 words maximum. No exceptions.`
+    : shorten
+    ? `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Keep it SHORT — maximum 2 sentences TOTAL across all bubbles.
+
+HARD FORMAT RULES:
+- Output ONLY valid JSON. No markdown, no extra text.
+- Must be a JSON array of strings.
+
+CONTENT RULES:
+- MAXIMUM 2 sentences total across ALL bubbles combined. Be concise.
+- Each JSON item = ONE short idea or sentence. Up to ${maxBubbles} items max.
+- Each item should be ~1 sentence, up to ~100 characters.
+- Avoid low-content filler like: "yeah", "true", "i agree", "same".
+- AVOID USING ---, --, - OR OTHER SEPARATORS.
+- You are ${me}. Never claim to be ${others}.
+- Never say "I'm <other participant>".`
     : `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Use 1–${maxBubbles} bubbles depending on how much you have to say; one bubble is fine for short answers.
 
 HARD FORMAT RULES:
