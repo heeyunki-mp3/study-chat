@@ -418,15 +418,13 @@ async function getBotResponse(botName, context) {
 
   // Determine if bot messages should be shortened:
   // - Control group: shorten ALL big_question rounds
-  // - Pro/anti groups: shorten only the last big_question (new feature question)
+  // - Pro/anti groups: shorten only the first big_question (general new-feature question)
   const group = session?.assignedGroup;
-  const isLastBigQuestion = session?.currentRoundIndex != null
-    && session?.allRounds
-    && session.currentRoundIndex === session.allRounds.length - 1
-    && session.allRounds[session.currentRoundIndex]?.type === "big_question";
+  const isFirstBigQuestion = session?.currentRoundIndex === 0
+    && session?.allRounds?.[0]?.type === "big_question";
   const shorten = roundType !== "poll" && (
     group === "control" ||
-    ((group === "pro" || group === "anti") && isLastBigQuestion)
+    ((group === "pro" || group === "anti") && isFirstBigQuestion)
   );
 
   const maxBubbles = roundType === "poll" ? 1 : shorten ? 2 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
