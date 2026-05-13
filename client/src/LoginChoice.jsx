@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { startRegistration } from "@simplewebauthn/browser";
 import zxcvbn from "zxcvbn";
@@ -215,22 +215,6 @@ function UserIdStep({ onContinue }) {
 
 // ─── Screen 2: Secure ─────────────────────────────────────────
 
-const AUTH_METHOD_TOP_KEY = "authMethodTop";
-
-function getOrInitAuthMethodTop() {
-  // Persist the randomized order for the duration of the browser session so it
-  // stays stable across re-renders, back/forward, and page refreshes.
-  try {
-    const existing = sessionStorage.getItem(AUTH_METHOD_TOP_KEY);
-    if (existing === "password" || existing === "passkey") return existing;
-    const picked = Math.random() < 0.5 ? "password" : "passkey";
-    sessionStorage.setItem(AUTH_METHOD_TOP_KEY, picked);
-    return picked;
-  } catch {
-    return Math.random() < 0.5 ? "password" : "passkey";
-  }
-}
-
 function SecureStep({ userId, onBack }) {
   const navigate = useNavigate();
   const [method, setMethod] = useState(null); // "password" | "passkey"
@@ -238,8 +222,34 @@ function SecureStep({ userId, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const ctx = useMemo(getSessionContext, []);
-  const topMethod = useMemo(getOrInitAuthMethodTop, []); // "password" or "passkey" — which card is shown on top
+  // Server-assigned order (strict alternation). null while loading.
+  const [topMethod, setTopMethod] = useState(null);
   const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/focus-group/assign-auth-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (data?.authMethodTop === "password" || data?.authMethodTop === "passkey") {
+          setTopMethod(data.authMethodTop);
+        } else {
+          // Server didn't return a valid value — fall back to password-first so the
+          // page is still usable.
+          setTopMethod("password");
+        }
+      } catch {
+        if (!cancelled) setTopMethod("password");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [ctx.sessionId, ctx.participantId]);
 
 
   async function handlePasswordSubmit(e) {
@@ -255,7 +265,7 @@ function SecureStep({ userId, onBack }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Server still keys this on `email` — pass the user ID through that field.
-        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodTop: topMethod }),
+        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -290,7 +300,7 @@ function SecureStep({ userId, onBack }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodTop: topMethod }),
+        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -356,7 +366,10 @@ function SecureStep({ userId, onBack }) {
             <span className="fg-methods-label">Choose a sign-in method</span>
 
             <div className="fg-methods">
-              {(topMethod === "password" ? ["password", "passkey"] : ["passkey", "password"]).map((m) => (
+              {topMethod === null && (
+                <p style={{ fontSize: 14, color: "var(--ink-3)", margin: "8px 0" }}>Loading sign-in options…</p>
+              )}
+              {topMethod !== null && (topMethod === "password" ? ["password", "passkey"] : ["passkey", "password"]).map((m) => (
                 m === "password" ? (
                   <button
                     key="password"
