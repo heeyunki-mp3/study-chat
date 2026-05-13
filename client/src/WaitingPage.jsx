@@ -13,7 +13,7 @@ export default function WaitingPage() {
   // Guard: must come from welcome page, and not already past this step
   useEffect(() => {
     if (!sessionStorage.getItem("participantName") || sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {
-      navigate("/", { replace: true });
+      navigate("/welcome", { replace: true });
       return;
     }
   }, [navigate]);
@@ -23,7 +23,7 @@ export default function WaitingPage() {
     window.history.replaceState(null, "", "/waiting");
     window.history.pushState(null, "", "/waiting");
     const onBack = () => {
-      navigate("/", { replace: true });
+      navigate("/welcome", { replace: true });
     };
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);

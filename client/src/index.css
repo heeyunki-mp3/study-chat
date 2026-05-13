@@ -24,9 +24,13 @@ a:hover {
 
 body {
   margin: 0;
-  /* display: flex; */
-  place-items: center;
+  display: block;
   min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
   min-height: 100vh;
 }
 
@@ -235,7 +239,9 @@ button:focus-visible {
 
 /* ─── Site header (GT logo + Focus Group) ─── */
 .site-header {
-  width: 100%;
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
   padding: 16px 24px;
   box-sizing: border-box;
   background: #fff;
@@ -247,8 +253,7 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 14px;
-  max-width: 960px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .site-header-logo {
