@@ -214,7 +214,9 @@ export default function NamePage() {
     >
       <h1 style={{ margin: 0, marginBottom: 6, fontSize: "1.5rem" }}>Welcome</h1>
       <p style={{ color: "#666", margin: 0, marginBottom: 16, textAlign: "center" }}>
-        Enter your name and pick a profile — take a photo or choose an icon to the right.
+        Enter your name and pick a profile
+        <br />
+        Take a photo or choose an icon to the right.
       </p>
 
       {/* Carousel: [camera | preset | preset | preset] */}
