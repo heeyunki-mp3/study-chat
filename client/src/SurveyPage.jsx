@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./SurveyPage.css";
 
 const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_bPBOLqFJFN18XtQ";
+const PROLIFIC_COMPLETE_URL = "https://app.prolific.com/submissions/complete?cc=CQVN22U3";
 
 export default function SurveyPage() {
   const navigate = useNavigate();
@@ -27,6 +28,21 @@ export default function SurveyPage() {
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);
   }, [navigate]);
+
+  // Fallback path for Qualtrics → top-level redirect.
+  // The End-of-Survey script in Qualtrics may also try `window.top.location.replace(...)`
+  // directly; this postMessage listener is the safety net when the browser blocks
+  // top-navigation from a cross-origin iframe without user activation.
+  useEffect(() => {
+    function onMessage(e) {
+      // We accept any origin here — the only thing we do is navigate to a fixed URL.
+      if (e?.data && e.data.type === "studyComplete") {
+        window.location.replace(PROLIFIC_COMPLETE_URL);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   const surveyUrl = useMemo(() => {
     const params = new URLSearchParams();
