@@ -73,10 +73,17 @@ function BackButton({ onClick, label }) {
   );
 }
 
-// ─── Email validation (RFC 5322 simplified) ───────────────────
+// ─── User ID validation ──────────────────────────────────────
 
-function isValidEmail(email) {
-  return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(email);
+const USER_ID_PATTERN = /^[a-zA-Z0-9._-]+$/;
+const USER_ID_MIN = 3;
+const USER_ID_MAX = 32;
+
+function validateUserId(value) {
+  if (value.length < USER_ID_MIN) return `User ID must be at least ${USER_ID_MIN} characters.`;
+  if (value.length > USER_ID_MAX) return `User ID must be at most ${USER_ID_MAX} characters.`;
+  if (!USER_ID_PATTERN.test(value)) return "User ID can only contain letters, numbers, dots, underscores, and hyphens.";
+  return "";
 }
 
 // zxcvbn score 0–4 → label + color
@@ -124,21 +131,22 @@ function getSessionContext() {
   };
 }
 
-// ─── Screen 1: Email ──────────────────────────────────────────
+// ─── Screen 1: User ID ────────────────────────────────────────
 
-function EmailStep({ onContinue }) {
-  const [email, setEmail] = useState("");
+function UserIdStep({ onContinue }) {
+  const [userId, setUserId] = useState("");
   const [error, setError] = useState("");
 
   function handleSubmit(e) {
     e.preventDefault();
-    const trimmed = email.trim();
+    const trimmed = userId.trim();
     if (!trimmed) {
-      setError("Please enter your email address.");
+      setError("Please create a user ID.");
       return;
     }
-    if (!isValidEmail(trimmed)) {
-      setError("Please enter a valid email address.");
+    const validationError = validateUserId(trimmed);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setError("");
@@ -166,22 +174,26 @@ function EmailStep({ onContinue }) {
           {/* Right: form */}
           <div className="fg-form-area">
             <form onSubmit={handleSubmit} noValidate>
-              <label className="fg-label" htmlFor="fg-email">
-                Email
+              <label className="fg-label" htmlFor="fg-user-id">
+                User ID
                 <input
-                  id="fg-email"
+                  id="fg-user-id"
                   className="fg-input"
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  placeholder="you@example.com"
-                  autoComplete="email"
+                  type="text"
+                  value={userId}
+                  onChange={(e) => { setUserId(e.target.value); setError(""); }}
+                  placeholder="Create a user ID"
+                  autoComplete="username"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  maxLength={USER_ID_MAX}
                   autoFocus={false}
-                  aria-describedby="fg-email-hint"
+                  aria-describedby="fg-user-id-hint"
                 />
               </label>
-              <span id="fg-email-hint" className="fg-input-hint">
-                Used for your payment and any future study invitations.
+              <span id="fg-user-id-hint" className="fg-input-hint">
+                {USER_ID_MIN}–{USER_ID_MAX} characters: letters, numbers, dots, underscores, or hyphens.
               </span>
               {error && <p className="fg-input-error" role="alert">{error}</p>}
 
@@ -203,7 +215,7 @@ function EmailStep({ onContinue }) {
 
 // ─── Screen 2: Secure ─────────────────────────────────────────
 
-function SecureStep({ email, onBack }) {
+function SecureStep({ userId, onBack }) {
   const navigate = useNavigate();
   const [method, setMethod] = useState(null); // "password" | "passkey"
   const [password, setPassword] = useState("");
@@ -225,7 +237,8 @@ function SecureStep({ email, onBack }) {
       const res = await fetch("/api/focus-group/register-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        // Server still keys this on `email` — pass the user ID through that field.
+        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -246,7 +259,7 @@ function SecureStep({ email, onBack }) {
       const optRes = await fetch("/api/focus-group/webauthn-register-options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({ email: userId, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const optData = await optRes.json();
       if (!optRes.ok) throw new Error(optData.error || "Failed to start passkey registration");
@@ -260,7 +273,7 @@ function SecureStep({ email, onBack }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -321,7 +334,7 @@ function SecureStep({ email, onBack }) {
                 if (method) { setMethod(null); setPassword(""); setError(""); }
                 else { onBack(); }
               }}
-              label={method ? "Back to method selection" : "Back to email"}
+              label={method ? "Back to method selection" : "Back to user ID"}
             />
             <span className="fg-methods-label">Choose a sign-in method</span>
 
@@ -408,7 +421,7 @@ function SecureStep({ email, onBack }) {
 export default function LoginChoice() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");
 
   // Guard: must have completed chat
   const chatCompleted = sessionStorage.getItem("chatCompleted");
@@ -417,15 +430,15 @@ export default function LoginChoice() {
     return null;
   }
 
-  function handleEmailContinue(validEmail) {
-    setEmail(validEmail);
-    sessionStorage.setItem("registrationEmail", validEmail);
+  function handleUserIdContinue(validUserId) {
+    setUserId(validUserId);
+    sessionStorage.setItem("registrationUserId", validUserId);
     setStep(2);
   }
 
   if (step === 1) {
-    return <EmailStep onContinue={handleEmailContinue} />;
+    return <UserIdStep onContinue={handleUserIdContinue} />;
   }
 
-  return <SecureStep email={email} onBack={() => setStep(1)} />;
+  return <SecureStep userId={userId} onBack={() => setStep(1)} />;
 }
