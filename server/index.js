@@ -325,6 +325,12 @@ let dbPool = null;
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS session_token VARCHAR(255) DEFAULT NULL
     `).catch(() => {});
+    // Records which auth method was rendered on top of the SecureStep card list
+    // (randomized per-participant in the client). Value: "password" or "passkey".
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS auth_method_top VARCHAR(16) DEFAULT NULL
+    `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
     logLine("DB_ERROR", `=== DATABASE INIT FAILED: ${e?.message} ===`);
@@ -1173,21 +1179,22 @@ const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || `http://localhost:${proce
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password, sessionId, participantId } = req.body || {};
+  const { email, password, sessionId, participantId, authMethodTop } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  const top = authMethodTop === "password" || authMethodTop === "passkey" ? authMethodTop : null;
   try {
     const hash = await bcrypt.hash(password, 12);
     const strength = zxcvbn(password).score; // 0–4 (zxcvbn standard)
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password'
+       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password', auth_method_top = ?
        WHERE session_id = ? AND participant_id = ?`,
-      [email, hash, strength, token, sessionId, participantId]
+      [email, hash, strength, token, top, sessionId, participantId]
     );
-    logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
+    logLine("DB", `User registered (password, strength=${strength}, top=${top}) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
     logLine("DB_ERROR", `register-password failed: ${e?.message}`);
@@ -1230,10 +1237,11 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
 
 // POST /api/focus-group/webauthn-register-verify
 app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req, res) => {
-  const { email, attestation, sessionId, participantId } = req.body || {};
+  const { email, attestation, sessionId, participantId, authMethodTop } = req.body || {};
   if (!email || !attestation) return res.status(400).json({ error: "Email and attestation are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  const top = authMethodTop === "password" || authMethodTop === "passkey" ? authMethodTop : null;
   try {
     // Retrieve stored challenge
     const [rows] = await dbPool.execute(
@@ -1256,11 +1264,11 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey'
+       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey', auth_method_top = ?
        WHERE session_id = ? AND participant_id = ?`,
-      [JSON.stringify(verification.registrationInfo), token, sessionId, participantId]
+      [JSON.stringify(verification.registrationInfo), token, top, sessionId, participantId]
     );
-    logLine("DB", `User registered (passkey) email=${email} participant=${participantId}`);
+    logLine("DB", `User registered (passkey, top=${top}) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
     logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}\n${e?.stack}`);

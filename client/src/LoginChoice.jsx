@@ -215,6 +215,22 @@ function UserIdStep({ onContinue }) {
 
 // ─── Screen 2: Secure ─────────────────────────────────────────
 
+const AUTH_METHOD_TOP_KEY = "authMethodTop";
+
+function getOrInitAuthMethodTop() {
+  // Persist the randomized order for the duration of the browser session so it
+  // stays stable across re-renders, back/forward, and page refreshes.
+  try {
+    const existing = sessionStorage.getItem(AUTH_METHOD_TOP_KEY);
+    if (existing === "password" || existing === "passkey") return existing;
+    const picked = Math.random() < 0.5 ? "password" : "passkey";
+    sessionStorage.setItem(AUTH_METHOD_TOP_KEY, picked);
+    return picked;
+  } catch {
+    return Math.random() < 0.5 ? "password" : "passkey";
+  }
+}
+
 function SecureStep({ userId, onBack }) {
   const navigate = useNavigate();
   const [method, setMethod] = useState(null); // "password" | "passkey"
@@ -222,6 +238,7 @@ function SecureStep({ userId, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const ctx = useMemo(getSessionContext, []);
+  const topMethod = useMemo(getOrInitAuthMethodTop, []); // "password" or "passkey" — which card is shown on top
   const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
 
 
@@ -238,7 +255,7 @@ function SecureStep({ userId, onBack }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Server still keys this on `email` — pass the user ID through that field.
-        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodTop: topMethod }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -273,7 +290,7 @@ function SecureStep({ userId, onBack }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodTop: topMethod }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -339,35 +356,39 @@ function SecureStep({ userId, onBack }) {
             <span className="fg-methods-label">Choose a sign-in method</span>
 
             <div className="fg-methods">
-              {/* Password card */}
-              <button
-                type="button"
-                className={`fg-method-card${method === "password" ? " fg-method-active" : ""}`}
-                onClick={() => selectMethod("password")}
-                disabled={loading}
-                aria-pressed={method === "password"}
-              >
-                <div className="fg-method-icon"><PasswordIcon /></div>
-                <div className="fg-method-text">
-                  <h3>Password</h3>
-                  <p>Set a strong password you'll remember</p>
-                </div>
-              </button>
-
-              {/* Passkey card */}
-              <button
-                type="button"
-                className={`fg-method-card${method === "passkey" ? " fg-method-active" : ""}`}
-                onClick={() => selectMethod("passkey")}
-                disabled={loading}
-                aria-pressed={method === "passkey"}
-              >
-                <div className="fg-method-icon"><PasskeyIcon /></div>
-                <div className="fg-method-text">
-                  <h3>Passkey</h3>
-                  <p>Use Touch ID, Face ID, or a security key</p>
-                </div>
-              </button>
+              {(topMethod === "password" ? ["password", "passkey"] : ["passkey", "password"]).map((m) => (
+                m === "password" ? (
+                  <button
+                    key="password"
+                    type="button"
+                    className={`fg-method-card${method === "password" ? " fg-method-active" : ""}`}
+                    onClick={() => selectMethod("password")}
+                    disabled={loading}
+                    aria-pressed={method === "password"}
+                  >
+                    <div className="fg-method-icon"><PasswordIcon /></div>
+                    <div className="fg-method-text">
+                      <h3>Password</h3>
+                      <p>Set a strong password you'll remember</p>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    key="passkey"
+                    type="button"
+                    className={`fg-method-card${method === "passkey" ? " fg-method-active" : ""}`}
+                    onClick={() => selectMethod("passkey")}
+                    disabled={loading}
+                    aria-pressed={method === "passkey"}
+                  >
+                    <div className="fg-method-icon"><PasskeyIcon /></div>
+                    <div className="fg-method-text">
+                      <h3>Passkey</h3>
+                      <p>Use Touch ID, Face ID, or a security key</p>
+                    </div>
+                  </button>
+                )
+              ))}
             </div>
 
             {/* Password inline form */}
