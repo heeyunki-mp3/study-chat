@@ -1193,6 +1193,28 @@ function sanitizeAuthMethodClicks(raw) {
   return cleaned.length ? JSON.stringify(cleaned) : null;
 }
 
+// POST /api/focus-group/log-auth-click
+// Persists the running click log on EVERY SecureStep card click, so the data
+// survives even if the participant never completes registration (abandons the
+// page, cancels the passkey prompt, etc.). Sole writer of auth_method_clicks.
+app.post("/api/focus-group/log-auth-click", express.json(), async (req, res) => {
+  const { sessionId, participantId, authMethodClicks } = req.body || {};
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  const clicks = sanitizeAuthMethodClicks(authMethodClicks);
+  if (!clicks) return res.json({ ok: true }); // nothing valid to store
+  try {
+    await dbPool.execute(
+      `UPDATE participant_responses SET auth_method_clicks = ? WHERE session_id = ? AND participant_id = ?`,
+      [clicks, sessionId, participantId]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    logLine("DB_ERROR", `log-auth-click failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to log click" });
+  }
+});
+
 // POST /api/focus-group/assign-auth-order
 // Alternates the SecureStep card order strictly: even-indexed assigned participants
 // see password on top, odd-indexed see passkey on top. Idempotent per participant —
@@ -1229,20 +1251,19 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password, sessionId, participantId, authMethodClicks } = req.body || {};
+  const { email, password, sessionId, participantId } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
-  const clicks = sanitizeAuthMethodClicks(authMethodClicks);
   try {
     const hash = await bcrypt.hash(password, 12);
     const strength = zxcvbn(password).score; // 0–4 (zxcvbn standard)
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password', auth_method_clicks = ?
+       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password'
        WHERE session_id = ? AND participant_id = ?`,
-      [email, hash, strength, token, clicks, sessionId, participantId]
+      [email, hash, strength, token, sessionId, participantId]
     );
     logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
@@ -1287,11 +1308,10 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
 
 // POST /api/focus-group/webauthn-register-verify
 app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req, res) => {
-  const { email, attestation, sessionId, participantId, authMethodClicks } = req.body || {};
+  const { email, attestation, sessionId, participantId } = req.body || {};
   if (!email || !attestation) return res.status(400).json({ error: "Email and attestation are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
-  const clicks = sanitizeAuthMethodClicks(authMethodClicks);
   try {
     // Retrieve stored challenge
     const [rows] = await dbPool.execute(
@@ -1314,9 +1334,9 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey', auth_method_clicks = ?
+       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey'
        WHERE session_id = ? AND participant_id = ?`,
-      [JSON.stringify(verification.registrationInfo), token, clicks, sessionId, participantId]
+      [JSON.stringify(verification.registrationInfo), token, sessionId, participantId]
     );
     logLine("DB", `User registered (passkey) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });

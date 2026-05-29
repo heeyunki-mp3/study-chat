@@ -266,7 +266,7 @@ function SecureStep({ userId, onBack }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Server still keys this on `email` — pass the user ID through that field.
-        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodClicks: clicksRef.current }),
+        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -301,7 +301,7 @@ function SecureStep({ userId, onBack }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodClicks: clicksRef.current }),
+        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -321,10 +321,31 @@ function SecureStep({ userId, onBack }) {
     }
   }
 
+  function logClicks() {
+    // Fire-and-forget: persist the running click log immediately so it survives
+    // even if the participant abandons the page or cancels the passkey prompt.
+    // keepalive lets the request finish if the page starts navigating away.
+    try {
+      fetch("/api/focus-group/log-auth-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          sessionId: ctx.sessionId,
+          participantId: ctx.participantId,
+          authMethodClicks: clicksRef.current,
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore — logging is best-effort
+    }
+  }
+
   function selectMethod(m) {
     // Cancel any in-flight request
     activeRequestRef.current += 1;
     clicksRef.current.push(m); // record every click, including back-and-forth switches
+    logClicks(); // persist on every click, not just on successful registration
     setLoading(false);
     setMethod(m);
     setPassword("");
