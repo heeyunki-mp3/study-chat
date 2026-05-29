@@ -104,6 +104,8 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 
 // --- Bot message timing ---
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
+const POLL_STAGGER_MS = 2500;                 // Per-bot offset so poll bots don't fire OpenAI calls in one burst (avoids rate-limit retry storms)
+const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words/sec) — 33% faster than original (0.7–1.3)
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
 const MODERATOR_THINK_DELAY_MS = { min: 1000, max: 3000 };       // Moderator think delay before typing
@@ -2167,26 +2169,34 @@ io.on("connection", (socket) => {
   // =====================
   async function runPollRound(question) {
     if (!session) return;
-    session.pollState = {
+    const pollState = {
       question,
       botsFinished: false,
       humanFinished: false,
+      finished: false,
+      graceTimer: null,
       answers: {},
     };
+    session.pollState = pollState;
 
-    // All bots respond in parallel with 3–5 s random think delay + typing delay
-    const botPromises = session.bots.map((bot) => {
-      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
+    // Bots answer in a staggered wave (not one simultaneous burst). Firing all
+    // getBotResponse calls at once was overrunning the OpenAI rate limit and
+    // triggering long silent retry-backoffs on a straggler; the per-bot offset
+    // spreads the calls out so they don't pile up.
+    const botPromises = session.bots.map((bot, idx) => {
+      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max) + idx * POLL_STAGGER_MS;
       return new Promise(async (resolve) => {
         logLine("WAIT", `${bot} start waiting for ${(thinkMs / 1000).toFixed(1)}s`);
         await delay(thinkMs);
         logLine("WAIT", `${bot} done waiting`);
-        if (!session) { resolve(); return; }
+        if (!session || pollState.finished) { resolve(); return; }
+        // Keep the "typing…" indicator ON for the whole OpenAI call. Otherwise the
+        // indicator turns off and a slow/rate-limited completion (sometimes 30–50s)
+        // leaves the bot looking frozen/cancelled with no feedback.
         emitTyping(bot, true);
-        await delay(typingDelayMs("yes I have heard of it"));
-        if (!session) { resolve(); return; }
-        emitTyping(bot, false);
         let bubbles = [];
+        const openaiStart = Date.now();
+        logLine("OPENAI_REQ", `poll bot=${bot} question="${clip(question, 80)}"`);
         try {
           bubbles = await getBotResponse(bot, {
             moderatorQuestion: question,
@@ -2196,15 +2206,21 @@ io.on("connection", (socket) => {
             bots: session.bots,
             roundType: "poll",
           });
-          logLine("OPENAI_OK", `poll bot=${bot} ans="${clip(JSON.stringify(bubbles), 80)}"`);
+          logLine("OPENAI_OK", `poll bot=${bot} rtt=${Date.now() - openaiStart}ms ans="${clip(JSON.stringify(bubbles), 80)}"`);
         } catch (e) {
-          logLine("OPENAI_ERR", `poll bot=${bot} ${e?.message || e}`);
+          logLine("OPENAI_ERR", `poll bot=${bot} rtt=${Date.now() - openaiStart}ms ${e?.message || e}`);
           bubbles = ["Not sure."];
         }
-        if (!session) { resolve(); return; }
+        // If the round already wrapped up (straggler that exceeded the grace
+        // window), don't post a stale answer into the next round.
+        if (!session || pollState.finished) { emitTyping(bot, false); resolve(); return; }
         const answer = bubbles[0] || "Not sure.";
+        // Short, realistic type-out for the actual answer, then send.
+        await delay(typingDelayMs(answer));
+        if (!session || pollState.finished) { emitTyping(bot, false); resolve(); return; }
+        emitTyping(bot, false);
         emitMessage(bot, answer);
-        if (session.pollState) session.pollState.answers[bot] = answer;
+        if (session.pollState === pollState) pollState.answers[bot] = answer;
         await checkAndAnswerBotQuestion(bubbles, question);
         resolve();
       });
@@ -2223,19 +2239,43 @@ io.on("connection", (socket) => {
 
     // Wait for all bots (they run concurrently with human's response)
     await Promise.all(botPromises);
-    if (!session) return;
+    if (!session || session.pollState !== pollState) return;
 
-    session.pollState.botsFinished = true;
-    logLine("QUEUE", `poll: all bots answered. humanFinished=${session.pollState.humanFinished}`);
+    pollState.botsFinished = true;
+    logLine("QUEUE", `poll: all bots answered. humanFinished=${pollState.humanFinished}`);
+    await maybeFinishPollRound();
+  }
 
-    // If human already went idle after replying, finish now; otherwise wait for human_idle event
-    if (session.pollState.humanFinished) {
-      await finishPollRound();
-    }
+  // Start a grace timer after the human finishes a poll, so a slow/stuck bot can't
+  // freeze the round forever — once it elapses we send the summary with whatever
+  // answers we have.
+  function startPollStragglerGrace() {
+    const ps = session?.pollState;
+    if (!ps || ps.finished || ps.graceTimer) return;
+    ps.graceTimer = setTimeout(() => {
+      ps.graceTimer = null;
+      if (!session || session.pollState !== ps || ps.finished) return;
+      logLine("QUEUE", "poll: straggler grace elapsed, finishing without remaining bot(s)");
+      maybeFinishPollRound(true);
+    }, POLL_STRAGGLER_GRACE_MS);
+  }
+
+  // Finish when the human is done AND (all bots are done OR the grace window forced it).
+  async function maybeFinishPollRound(force = false) {
+    const ps = session?.pollState;
+    if (!ps || ps.finished) return;
+    if (!ps.humanFinished) return;            // always wait for the participant
+    if (!ps.botsFinished && !force) return;   // otherwise wait for the bots
+    await finishPollRound();
   }
 
   async function finishPollRound() {
-    if (!session?.pollState) return;
+    if (!session?.pollState || session.pollState.finished) return;
+    session.pollState.finished = true;
+    if (session.pollState.graceTimer) {
+      clearTimeout(session.pollState.graceTimer);
+      session.pollState.graceTimer = null;
+    }
     const { question, answers } = session.pollState;
 
     // Include human's answer(s) in the summary
@@ -2507,17 +2547,16 @@ io.on("connection", (socket) => {
     if (!co?.waitingForHumanIdle) return;
     // Moderator only moves on when human has sent at least 1 message AND is idle
     if (!co.humanRepliedThisTurn) return;
-    // Poll round: mark human done, then finish if bots are also done
+    // Poll round: mark human done, then finish if bots are also done (or after a
+    // grace window so one slow bot can't freeze the round).
     if (session.currentRoundType === "poll") {
       clearIdleNudgeTimer();
       logLine("QUEUE", `human_idle after poll answer from ${session.humanDisplayName}`);
       co.waitingForHumanIdle = false;
       if (session.pollState) {
         session.pollState.humanFinished = true;
-        if (session.pollState.botsFinished) {
-          await finishPollRound();
-        }
-        // else: wait; finishPollRound will be triggered after botPromises resolve
+        startPollStragglerGrace();
+        await maybeFinishPollRound();
       }
       return;
     }
