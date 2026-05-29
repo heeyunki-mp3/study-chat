@@ -104,7 +104,6 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 
 // --- Bot message timing ---
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
-const POLL_STAGGER_MS = 1500;                 // Per-bot offset so poll bots don't fire OpenAI calls in one burst (avoids rate-limit retry storms)
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words/sec) — 33% faster than original (0.7–1.3)
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
@@ -2239,15 +2238,14 @@ io.on("connection", (socket) => {
     session.pollState = pollState;
 
     // Each bot has exactly two visible delays: (1) a thinking delay before it
-    // starts typing, and (2) a typing delay for the type-out. The OpenAI call runs
-    // CONCURRENTLY with the thinking delay, so API latency hides inside the thinking
-    // phase instead of adding a third wait. A per-bot stagger before firing keeps
-    // the calls from hitting OpenAI in one burst (rate-limit avoidance).
-    const botPromises = session.bots.map((bot, idx) => {
-      const staggerMs = idx * POLL_STAGGER_MS;
+    // starts typing, and (2) a typing delay for the type-out. The OpenAI call is
+    // fired immediately (all bots at once) and runs CONCURRENTLY with the thinking
+    // delay, so API latency hides inside the thinking phase instead of adding a
+    // third wait. (No stagger — the 20–36s tails were per-minute rate-limit retries,
+    // not instant concurrency, so spacing the calls only added delay for no gain.)
+    const botPromises = session.bots.map((bot) => {
       const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
       return new Promise(async (resolve) => {
-        if (staggerMs) await delay(staggerMs);
         if (!session || pollState.finished) { resolve(); return; }
 
         // Fire the OpenAI call now (no typing indicator yet) and run the thinking
