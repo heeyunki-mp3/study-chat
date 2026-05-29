@@ -225,6 +225,7 @@ function SecureStep({ userId, onBack }) {
   // Server-assigned order (strict alternation). null while loading.
   const [topMethod, setTopMethod] = useState(null);
   const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
+  const clicksRef = useRef([]); // ordered log of every method card the user clicked, e.g. ["passkey","password"]
 
   useEffect(() => {
     let cancelled = false;
@@ -265,7 +266,7 @@ function SecureStep({ userId, onBack }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Server still keys this on `email` — pass the user ID through that field.
-        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodClicks: clicksRef.current }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -300,7 +301,7 @@ function SecureStep({ userId, onBack }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId, authMethodClicks: clicksRef.current }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -323,6 +324,7 @@ function SecureStep({ userId, onBack }) {
   function selectMethod(m) {
     // Cancel any in-flight request
     activeRequestRef.current += 1;
+    clicksRef.current.push(m); // record every click, including back-and-forth switches
     setLoading(false);
     setMethod(m);
     setPassword("");

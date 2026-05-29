@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SurveyPage.css";
 
-const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_bPBOLqFJFN18XtQ";
+const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_3HIPgZRXfMvUgsu";
 const PROLIFIC_COMPLETE_URL = "https://app.prolific.com/submissions/complete?cc=CQVN22U3";
 
 export default function SurveyPage() {
@@ -60,7 +60,7 @@ export default function SurveyPage() {
   return (
     <div className="survey-page">
       <div className="survey-header">
-        <h2>Pilot Survey</h2>
+        <h2>Survey</h2>
         <p>Please complete the following survey before you go.</p>
       </div>
       <iframe

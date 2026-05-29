@@ -326,10 +326,16 @@ let dbPool = null;
         ADD COLUMN IF NOT EXISTS session_token VARCHAR(255) DEFAULT NULL
     `).catch(() => {});
     // Records which auth method was rendered on top of the SecureStep card list
-    // (randomized per-participant in the client). Value: "password" or "passkey".
+    // (alternated per-participant by the server). Value: "password" or "passkey".
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS auth_method_top VARCHAR(16) DEFAULT NULL
+    `).catch(() => {});
+    // Ordered log of every method card the user clicked on SecureStep, including
+    // back-and-forth switches, e.g. ["passkey","password","passkey"]. JSON array.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS auth_method_clicks JSON DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -1177,6 +1183,16 @@ const WEBAUTHN_RP_NAME = "Georgia Tech Focus Group";
 const WEBAUTHN_RP_ID = process.env.WEBAUTHN_RP_ID || "localhost";
 const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || `http://localhost:${process.env.PORT || 3001}`;
 
+// Sanitize the client-supplied click log into a JSON string of valid method names,
+// or null if there's nothing usable. Capped to avoid unbounded payloads.
+function sanitizeAuthMethodClicks(raw) {
+  if (!Array.isArray(raw)) return null;
+  const cleaned = raw
+    .filter((m) => m === "password" || m === "passkey")
+    .slice(0, 100);
+  return cleaned.length ? JSON.stringify(cleaned) : null;
+}
+
 // POST /api/focus-group/assign-auth-order
 // Alternates the SecureStep card order strictly: even-indexed assigned participants
 // see password on top, odd-indexed see passkey on top. Idempotent per participant —
@@ -1213,19 +1229,20 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password, sessionId, participantId } = req.body || {};
+  const { email, password, sessionId, participantId, authMethodClicks } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  const clicks = sanitizeAuthMethodClicks(authMethodClicks);
   try {
     const hash = await bcrypt.hash(password, 12);
     const strength = zxcvbn(password).score; // 0–4 (zxcvbn standard)
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password'
+       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password', auth_method_clicks = ?
        WHERE session_id = ? AND participant_id = ?`,
-      [email, hash, strength, token, sessionId, participantId]
+      [email, hash, strength, token, clicks, sessionId, participantId]
     );
     logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
@@ -1270,10 +1287,11 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
 
 // POST /api/focus-group/webauthn-register-verify
 app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req, res) => {
-  const { email, attestation, sessionId, participantId } = req.body || {};
+  const { email, attestation, sessionId, participantId, authMethodClicks } = req.body || {};
   if (!email || !attestation) return res.status(400).json({ error: "Email and attestation are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  const clicks = sanitizeAuthMethodClicks(authMethodClicks);
   try {
     // Retrieve stored challenge
     const [rows] = await dbPool.execute(
@@ -1296,9 +1314,9 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
     const token = crypto.randomUUID();
     await dbPool.execute(
       `UPDATE participant_responses
-       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey'
+       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey', auth_method_clicks = ?
        WHERE session_id = ? AND participant_id = ?`,
-      [JSON.stringify(verification.registrationInfo), token, sessionId, participantId]
+      [JSON.stringify(verification.registrationInfo), token, clicks, sessionId, participantId]
     );
     logLine("DB", `User registered (passkey) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
