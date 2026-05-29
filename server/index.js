@@ -2153,7 +2153,13 @@ io.on("connection", (socket) => {
 
   /** Study goal: moderator messages, then 1 ack (one random bot). */
   async function runStudyGoal() {
-    if (!session) return;
+    if (!session || session.studyGoalStarted) return;
+    // One-shot guard: the intro→study-goal transition can be reached from both the
+    // human_message and human_idle handlers (and the intro-cue path). Each clears
+    // waitingForHumanIntro only AFTER an async evaluateHumanIntro call, so two events
+    // can race through and call runStudyGoal twice → the whole moderator flow runs in
+    // parallel and every line is double-sent. Claim the transition synchronously here.
+    session.studyGoalStarted = true;
     // Clear stale advance-cancel flags from intro phase so emitModeratorLine won't skip
     session.pendingAdvanceFromIdle = false;
     session.cancelAdvanceFromIdle = false;

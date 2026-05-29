@@ -14,6 +14,10 @@
 
 ## 2. Issue
 
+### Moderator double-texts the entire flow — 2026-05-29 (FIXED)
+
+Symptom: from the study-goal segment onward, EVERY moderator (Eunice) message was sent twice (and two bots acked the study goal, two "first round" log lines). Root cause: the intro→study-goal transition is reachable from multiple handlers — `human_message` after intro (`index.js` ~2778), `human_idle` after intro (~2595), the intro-cue reply path (~2764), and `runIntroRound` (~2138). Each clears `waitingForHumanIntro` only AFTER an `await evaluateHumanIntro()` (OpenAI) call, so when the user sends their intro and then goes idle ~4s later, `human_idle` fires while `human_message`'s evaluate call is still in flight → both pass the `waitingForHumanIntro` guard and both call `runStudyGoal()`. Two concurrent `runStudyGoal()` → two parallel copies of the whole moderator flow (study goal → startFirstRound → call-on → …), so everything downstream is doubled too. **Fix:** one-shot guard at the top of `runStudyGoal()` — `if (!session || session.studyGoalStarted) return; session.studyGoalStarted = true;` (synchronous check-and-set, race-safe single-threaded; `studyGoalStarted` defaults falsy on the fresh per-session object). Same race family as the classify/nudge races below (guard flag set after an await). NOT touched: the idle-nudge race (nudge still posts if the user answers while a nudge is mid-generation) — separate, still open.
+
 ### Poll bots appear "cancelled" / take forever — 2026-05-29
 
 Symptom from logs: in poll rounds, a bot's typing indicator turned off, then the message appeared 30–50s later (e.g. Sid: typing-false at 06:33:41, OPENAI_OK at 06:34:32). The poll summary is gated on `Promise.all(botPromises)`, so the human who answered stares at a dead screen until the slowest bot returns.
