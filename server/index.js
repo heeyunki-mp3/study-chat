@@ -655,7 +655,8 @@ Return ONLY the first name they introduced themselves as, capitalized. If they d
 /**
  * True if the participant's message is a genuine self-introduction (shares a name
  * and/or something about themselves), not just a bare greeting like "hi".
- * Fails open (returns true) on error so a classifier hiccup never traps the user.
+ * Fails closed (returns false) on error so a classifier hiccup never lets a bare
+ * greeting slip through; the idle nudge will keep prompting a legitimate user.
  */
 async function isIntroSufficient(introText) {
   const trimmed = String(introText || "").trim();
@@ -676,7 +677,7 @@ async function isIntroSufficient(introText) {
     return !!parsed.introduced;
   } catch (e) {
     console.error("isIntroSufficient error", e?.message || e);
-    return true;
+    return false;
   }
 }
 
@@ -688,13 +689,20 @@ async function isIntroSufficient(introText) {
 async function evaluateHumanIntro(session) {
   const introText = (session?.humanMessagesThisRound || []).join(" ").trim();
   if (!introText) return false;
+  // Sufficiency is decided ONLY by isIntroSufficient. Do NOT use name extraction as the
+  // gate: extractIntroducedName is given the display name in its prompt and will sometimes
+  // echo it back even for a bare greeting (e.g. "hi" → display name), which would wrongly
+  // advance past the intro.
+  const sufficient = await isIntroSufficient(introText);
+  logLine("QUEUE", `intro check: "${clip(introText, 80)}" sufficient=${sufficient}`);
+  if (!sufficient) return false;
+  // Real introduction — now capture the name they gave (if any) for later reference.
   const introduced = await extractIntroducedName(introText, session.humanDisplayName);
   if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
     session.introducedName = introduced.trim();
     logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
   }
-  if (introduced) return true;
-  return await isIntroSufficient(introText);
+  return true;
 }
 
 /** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
