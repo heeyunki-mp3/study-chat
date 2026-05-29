@@ -293,14 +293,14 @@ export default function ChatPage() {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
       sessionStorage.setItem("chatCompleted", sessionStorage.getItem("studySessionId") || "1");
-      navigate("/survey", { replace: true });
+      navigate("/?declined=1", { replace: true });
     });
 
     socket.on("study_complete", ({ sessionId, participantId } = {}) => {
       if (sessionId) localStorage.setItem("sessionId", sessionId);
       if (participantId) localStorage.setItem("participantId", participantId);
       sessionStorage.setItem("chatCompleted", sessionId || "1");
-      setTimeout(() => navigate("/login", { replace: true }), 3000);
+      // No auto-redirect: the participant must click the "Exit Chat" button to proceed.
     });
 
     socket.connect();

@@ -104,7 +104,7 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 
 // --- Bot message timing ---
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
-const POLL_STAGGER_MS = 2500;                 // Per-bot offset so poll bots don't fire OpenAI calls in one burst (avoids rate-limit retry storms)
+const POLL_STAGGER_MS = 1500;                 // Per-bot offset so poll bots don't fire OpenAI calls in one burst (avoids rate-limit retry storms)
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words/sec) — 33% faster than original (0.7–1.3)
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
@@ -652,6 +652,51 @@ Return ONLY the first name they introduced themselves as, capitalized. If they d
   return null;
 }
 
+/**
+ * True if the participant's message is a genuine self-introduction (shares a name
+ * and/or something about themselves), not just a bare greeting like "hi".
+ * Fails open (returns true) on error so a classifier hiccup never traps the user.
+ */
+async function isIntroSufficient(introText) {
+  const trimmed = String(introText || "").trim();
+  if (!trimmed) return false;
+  const sys = `You decide whether a chat message is a genuine self-introduction in a group discussion. The participant was asked to introduce themselves and share their name and anything they'd like. Return ONLY valid JSON: {"introduced": true} or {"introduced": false}.
+- true: they share their name and/or something about themselves (e.g. "I'm Ana", "Hey, I'm Ana and I work in tech", "Hi I go by T, excited to be here").
+- false: just a greeting or filler with no name or self-info (e.g. "hi", "hello everyone", "hey", "yo", "sup", "ok", "hi all").`;
+  const user = `Message: "${trimmed.slice(0, 400)}"`;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODELS.default,
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      max_tokens: 20,
+      temperature: 0,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = JSON.parse(raw || "{}");
+    return !!parsed.introduced;
+  } catch (e) {
+    console.error("isIntroSufficient error", e?.message || e);
+    return true;
+  }
+}
+
+/**
+ * Evaluate the human's intro messages so far. Records the introduced name on the
+ * session as a side effect, and returns true only if the intro is sufficient
+ * (a name was given, or the reply is a real self-introduction rather than a bare greeting).
+ */
+async function evaluateHumanIntro(session) {
+  const introText = (session?.humanMessagesThisRound || []).join(" ").trim();
+  if (!introText) return false;
+  const introduced = await extractIntroducedName(introText, session.humanDisplayName);
+  if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
+    session.introducedName = introduced.trim();
+    logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+  }
+  if (introduced) return true;
+  return await isIntroSufficient(introText);
+}
+
 /** True if the participant's message indicates they don't know what passkey is and are asking for an explanation. */
 async function isAskingWhatPasskeyIs(text, roundQuestion) {
   if (!text || !String(text).trim()) return false;
@@ -1046,6 +1091,7 @@ function createSession(participantName) {
     humanDisplayName: capitalizeFirst(participantName),
     messages: [],
     waitingForHumanIntro: false,
+    humanGaveIntro: false,
     moderatorTypingIntroCue: false,
     userRepliedDuringIntroCue: false,
     callOnState: {
@@ -2079,12 +2125,17 @@ io.on("connection", (socket) => {
     await Promise.all(botPromises);
     if (!session) return;
     if (hasHumanRepliedAfterIntroPrompt(session)) {
-      logLine("QUEUE", `intro: human already replied after "To start us off", advancing to study_goal`);
-      await runStudyGoal();
-      return;
+      if (await evaluateHumanIntro(session)) {
+        session.humanGaveIntro = true;
+        logLine("QUEUE", `intro: human already gave a real intro after "To start us off", advancing to study_goal`);
+        await runStudyGoal();
+        return;
+      }
+      logLine("QUEUE", `intro: human replied after "To start us off" but it was not a real intro, waiting for actual introduction`);
     }
     // No moderator cue — just wait for the human to introduce themselves
     session.waitingForHumanIntro = true;
+    session.humanGaveIntro = false;
     session.humanGaveSubstantiveResponseThisTurn = false;
     session.humanMessagesThisRound = [];
     session.humanMessagesBurst = [];
@@ -2179,43 +2230,50 @@ io.on("connection", (socket) => {
     };
     session.pollState = pollState;
 
-    // Bots answer in a staggered wave (not one simultaneous burst). Firing all
-    // getBotResponse calls at once was overrunning the OpenAI rate limit and
-    // triggering long silent retry-backoffs on a straggler; the per-bot offset
-    // spreads the calls out so they don't pile up.
+    // Each bot has exactly two visible delays: (1) a thinking delay before it
+    // starts typing, and (2) a typing delay for the type-out. The OpenAI call runs
+    // CONCURRENTLY with the thinking delay, so API latency hides inside the thinking
+    // phase instead of adding a third wait. A per-bot stagger before firing keeps
+    // the calls from hitting OpenAI in one burst (rate-limit avoidance).
     const botPromises = session.bots.map((bot, idx) => {
-      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max) + idx * POLL_STAGGER_MS;
+      const staggerMs = idx * POLL_STAGGER_MS;
+      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
       return new Promise(async (resolve) => {
-        logLine("WAIT", `${bot} start waiting for ${(thinkMs / 1000).toFixed(1)}s`);
-        await delay(thinkMs);
-        logLine("WAIT", `${bot} done waiting`);
+        if (staggerMs) await delay(staggerMs);
         if (!session || pollState.finished) { resolve(); return; }
-        // Keep the "typing…" indicator ON for the whole OpenAI call. Otherwise the
-        // indicator turns off and a slow/rate-limited completion (sometimes 30–50s)
-        // leaves the bot looking frozen/cancelled with no feedback.
-        emitTyping(bot, true);
-        let bubbles = [];
+
+        // Fire the OpenAI call now (no typing indicator yet) and run the thinking
+        // delay alongside it.
         const openaiStart = Date.now();
         logLine("OPENAI_REQ", `poll bot=${bot} question="${clip(question, 80)}"`);
-        try {
-          bubbles = await getBotResponse(bot, {
-            moderatorQuestion: question,
-            directive: null,
-            previousAnswers: [],
-            session,
-            bots: session.bots,
-            roundType: "poll",
-          });
-          logLine("OPENAI_OK", `poll bot=${bot} rtt=${Date.now() - openaiStart}ms ans="${clip(JSON.stringify(bubbles), 80)}"`);
-        } catch (e) {
-          logLine("OPENAI_ERR", `poll bot=${bot} rtt=${Date.now() - openaiStart}ms ${e?.message || e}`);
-          bubbles = ["Not sure."];
-        }
-        // If the round already wrapped up (straggler that exceeded the grace
-        // window), don't post a stale answer into the next round.
-        if (!session || pollState.finished) { emitTyping(bot, false); resolve(); return; }
+        const fetchPromise = (async () => {
+          try {
+            const b = await getBotResponse(bot, {
+              moderatorQuestion: question,
+              directive: null,
+              previousAnswers: [],
+              session,
+              bots: session.bots,
+              roundType: "poll",
+            });
+            logLine("OPENAI_OK", `poll bot=${bot} rtt=${Date.now() - openaiStart}ms ans="${clip(JSON.stringify(b), 80)}"`);
+            return b;
+          } catch (e) {
+            logLine("OPENAI_ERR", `poll bot=${bot} rtt=${Date.now() - openaiStart}ms ${e?.message || e}`);
+            return ["Not sure."];
+          }
+        })();
+
+        // (1) Thinking delay — silent, overlaps the OpenAI call.
+        logLine("WAIT", `${bot} thinking for ${(thinkMs / 1000).toFixed(1)}s`);
+        await delay(thinkMs);
+        const bubbles = await fetchPromise; // wait for the answer only if the API is still slower than the think delay
+        if (!session || pollState.finished) { resolve(); return; }
+
         const answer = bubbles[0] || "Not sure.";
-        // Short, realistic type-out for the actual answer, then send.
+        // (2) Typing delay — indicator stays ON for the FULL type-out of the answer.
+        // The "typing…" the participant sees == this delay exactly; no hidden waiting.
+        emitTyping(bot, true);
         await delay(typingDelayMs(answer));
         if (!session || pollState.finished) { emitTyping(bot, false); resolve(); return; }
         emitTyping(bot, false);
@@ -2518,16 +2576,14 @@ io.on("connection", (socket) => {
     if (session?.waitingForHumanIntro) {
       // Only advance if user actually sent a message; otherwise let the nudge timer handle it
       if (!hasHumanRepliedAfterIntroPrompt(session)) return;
-      clearIdleNudgeTimer();
-      // Extract introduced name from all intro messages if not already done
-      if (!session.introducedName) {
-        const introText = (session.humanMessagesThisRound || []).join(" ");
-        const introduced = await extractIntroducedName(introText, session.humanDisplayName);
-        if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
-          session.introducedName = introduced.trim();
-          logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
-        }
+      // ...and only if that message was a real introduction. A bare greeting like "hi"
+      // does not count — keep waiting and let the nudge timer ask for an actual intro.
+      if (!session.humanGaveIntro && !(await evaluateHumanIntro(session))) {
+        logLine("QUEUE", `human_idle during intro: reply was not a real introduction yet, waiting for actual intro`);
+        return;
       }
+      clearIdleNudgeTimer();
+      session.humanGaveIntro = true;
       logLine("QUEUE", `human_idle after intro from ${session.humanDisplayName}`);
       session.waitingForHumanIntro = false;
       await runStudyGoal();
@@ -2703,11 +2759,14 @@ io.on("connection", (socket) => {
       return;
     }
     if (session.waitingForHumanIntro) {
-      const introduced = await extractIntroducedName(text, session.humanDisplayName);
-      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
-        session.introducedName = introduced.trim();
-        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
+      // Don't advance on a bare greeting like "hi" — wait until the participant actually
+      // introduces themselves (shares a name and/or something about themselves).
+      if (!(await evaluateHumanIntro(session))) {
+        session.humanGaveIntro = false;
+        logLine("QUEUE", `human_message during intro: not a real introduction yet ("${clip(text, 60)}"), waiting for actual intro`);
+        return;
       }
+      session.humanGaveIntro = true;
       session.waitingForHumanIntro = false;
       logLine("QUEUE", `human_message after intro: advancing to study_goal`);
       await runStudyGoal();

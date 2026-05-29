@@ -6,7 +6,11 @@ const CONSENT_KEY = "participantConsent";
 export default function ConsentPage() {
   const [choice, setChoice] = useState(null); // "agree" | "decline" | null
   const [error, setError] = useState("");
-  const [declined, setDeclined] = useState(false);
+  // Kicked participants are redirected here with ?declined=1 so they land on the
+  // same "you will not proceed" screen shown when consent is declined.
+  const [declined, setDeclined] = useState(
+    () => new URLSearchParams(window.location.search).get("declined") === "1"
+  );
   const navigate = useNavigate();
 
   // Capture Prolific URL params on entry so they survive even if the participant
