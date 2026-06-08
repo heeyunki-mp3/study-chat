@@ -3,7 +3,12 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  /* Bind to the visual viewport so the page shrinks above the mobile keyboard.
+     --app-h is set from window.visualViewport.height (ChatPage.jsx);
+     100dvh is the modern fallback, 100vh is the ancient fallback. */
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
   display: flex;
   overflow: hidden;
   background: #ffffff;
@@ -112,10 +117,11 @@
   flex-direction: column;
   overflow: hidden;
   padding: 16px;
+  /* Honor iPhone home-indicator inset so the input isn't covered. */
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .chat-messages-wrapper {
-  height: 75vh;
   flex: 1 1 0;
   min-height: 0;
   min-width: 0;
@@ -134,12 +140,14 @@
   padding: 10px 14px;
 }
 
-/* Small screens: collapse sidebar to icon-only */
+/* Small screens: collapse sidebar to icon-only, drop the rigid 15cm width,
+   tighten paddings, and shrink the typing strip so the input stays visible. */
 @media (max-width: 700px) {
   .chat-sidebar {
     width: auto;
     min-width: auto;
-    padding: 12px 8px;
+    padding: 10px 6px;
+    gap: 8px;
     align-items: center;
   }
 
@@ -148,15 +156,45 @@
   }
 
   .chat-participant-card {
-    padding: 6px;
+    padding: 4px;
     gap: 0;
     justify-content: center;
     border-radius: 50%;
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .chat-participant-avatar {
+    width: 32px;
+    height: 32px;
   }
 
   .chat-participant-info {
     display: none;
+  }
+
+  .chat-main {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .chat-footer {
+    margin-top: 6px;
+  }
+
+  .chat-exit-btn {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
+
+/* Shorter typing-indicator strip on phones so the input doesn't get pushed under the keyboard. */
+@media (max-width: 700px) {
+  .chat-layout-with-gap .chat-typing-gap {
+    min-height: 2em;
+    font-size: 0.8em;
+    padding: 0 0.5em;
   }
 }

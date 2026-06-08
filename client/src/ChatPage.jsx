@@ -199,6 +199,29 @@ export default function ChatPage() {
     };
   }, []);
 
+  // Mobile: track the visual viewport (shrinks when the keyboard opens on iOS/Android)
+  // and keep the latest message visible above the keyboard.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    let raf = 0;
+    const update = () => {
+      document.documentElement.style.setProperty("--app-h", `${vv.height}px`);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const list = document.querySelector(".cs-message-list__scroll-wrapper");
+        if (list) list.scrollTop = list.scrollHeight;
+      });
+    };
+    update();
+    vv.addEventListener("resize", update);
+    return () => {
+      cancelAnimationFrame(raf);
+      vv.removeEventListener("resize", update);
+      document.documentElement.style.removeProperty("--app-h");
+    };
+  }, []);
+
   // Debounce: stop-typing after 800ms; then idle = session.idleEmptyMs (empty) or session.idleTypingMs (has text)
   const typingTimeoutRef = useRef(null);
   const idleTimeoutRef = useRef(null);
