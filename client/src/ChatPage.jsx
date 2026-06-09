@@ -201,8 +201,10 @@ export default function ChatPage() {
 
   // Mobile: track the visual viewport (shrinks when the keyboard opens on iOS/Android),
   // measure the SiteHeader so chat-page can sit below it, and keep the latest message
-  // visible above the keyboard.
+  // visible above the keyboard. Also lock html/body to the visible viewport so the
+  // page itself can't scroll behind the chat (which on iOS leaves white space at the bottom).
   useEffect(() => {
+    document.documentElement.classList.add("chat-active");
     const vv = window.visualViewport;
     let raf = 0;
     const update = () => {
@@ -210,11 +212,16 @@ export default function ChatPage() {
       const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
       document.documentElement.style.setProperty("--header-h", `${headerH}px`);
       if (vv) document.documentElement.style.setProperty("--app-h", `${vv.height}px`);
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const list = document.querySelector(".cs-message-list__scroll-wrapper");
-        if (list) list.scrollTop = list.scrollHeight;
-      });
+      // Force scroll-to-bottom only on small screens — that's where the keyboard
+      // appearing pushes the last message out of view. On desktop, the user might
+      // be scrolled up reading older messages; a window resize shouldn't yank them.
+      if (window.matchMedia("(max-width: 700px)").matches) {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const list = document.querySelector(".cs-message-list__scroll-wrapper");
+          if (list) list.scrollTop = list.scrollHeight;
+        });
+      }
     };
     update();
     if (vv) vv.addEventListener("resize", update);
@@ -225,6 +232,7 @@ export default function ChatPage() {
       window.removeEventListener("resize", update);
       document.documentElement.style.removeProperty("--app-h");
       document.documentElement.style.removeProperty("--header-h");
+      document.documentElement.classList.remove("chat-active");
     };
   }, []);
 
