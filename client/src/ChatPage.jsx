@@ -199,22 +199,46 @@ export default function ChatPage() {
     };
   }, []);
 
-  // Mobile: track the visual viewport (shrinks when the keyboard opens on iOS/Android),
-  // measure the SiteHeader so chat-page can sit below it, and keep the latest message
-  // visible above the keyboard. Also lock html/body to the visible viewport so the
-  // page itself can't scroll behind the chat (which on iOS leaves white space at the bottom).
+  // Mobile keyboard handling. iOS Safari ignores `overflow: hidden` on html/body when
+  // an input is focused — it auto-scrolls the document to bring the input into view,
+  // and CSS `height: var(--app-h)` doesn't always win against the browser's own layout.
+  // So we force the layout into the visual viewport with INLINE styles on html/body/#root
+  // (inline beats any CSS), pin #root with position: fixed at vv.offsetTop, and snap
+  // window.scroll back to 0 whenever iOS tries to move it. This eliminates the long
+  // scroll + white space below the chat when the keyboard appears.
   useEffect(() => {
     document.documentElement.classList.add("chat-active");
     const vv = window.visualViewport;
+    const rootEl = document.getElementById("root");
     let raf = 0;
     const update = () => {
+      const h = vv ? vv.height : window.innerHeight;
+      const top = vv ? vv.offsetTop : 0;
+      const html = document.documentElement;
+      html.style.height = `${h}px`;
+      document.body.style.height = `${h}px`;
+      if (rootEl) {
+        rootEl.style.position = "fixed";
+        rootEl.style.top = `${top}px`;
+        rootEl.style.left = "0";
+        rootEl.style.right = "0";
+        rootEl.style.height = `${h}px`;
+        rootEl.style.display = "flex";
+        rootEl.style.flexDirection = "column";
+        rootEl.style.overflow = "hidden";
+      }
       const headerEl = document.querySelector(".site-header");
       const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
-      document.documentElement.style.setProperty("--header-h", `${headerH}px`);
-      if (vv) document.documentElement.style.setProperty("--app-h", `${vv.height}px`);
-      // Force scroll-to-bottom only on small screens — that's where the keyboard
-      // appearing pushes the last message out of view. On desktop, the user might
-      // be scrolled up reading older messages; a window resize shouldn't yank them.
+      html.style.setProperty("--header-h", `${headerH}px`);
+      html.style.setProperty("--app-h", `${h}px`);
+      // Undo iOS auto-scroll: any non-zero document scroll means iOS shifted us;
+      // snap back so the chat stays anchored to the visible viewport.
+      if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
+      // Keyboard-up: hide the Exit footer and drop bottom padding so the input
+      // sits flush against the keyboard (no white space stripe below it).
+      const kbOpen = !!vv && h < window.innerHeight - 100;
+      html.classList.toggle("kb-open", kbOpen);
+      // Force scroll-to-bottom only on small screens.
       if (window.matchMedia("(max-width: 700px)").matches) {
         cancelAnimationFrame(raf);
         raf = requestAnimationFrame(() => {
@@ -224,15 +248,40 @@ export default function ChatPage() {
       }
     };
     update();
-    if (vv) vv.addEventListener("resize", update);
+    if (vv) {
+      vv.addEventListener("resize", update);
+      vv.addEventListener("scroll", update);
+    }
     window.addEventListener("resize", update);
+    const onScroll = () => {
+      if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
-      if (vv) vv.removeEventListener("resize", update);
+      if (vv) {
+        vv.removeEventListener("resize", update);
+        vv.removeEventListener("scroll", update);
+      }
       window.removeEventListener("resize", update);
-      document.documentElement.style.removeProperty("--app-h");
-      document.documentElement.style.removeProperty("--header-h");
-      document.documentElement.classList.remove("chat-active");
+      window.removeEventListener("scroll", onScroll);
+      const html = document.documentElement;
+      html.style.height = "";
+      document.body.style.height = "";
+      if (rootEl) {
+        rootEl.style.position = "";
+        rootEl.style.top = "";
+        rootEl.style.left = "";
+        rootEl.style.right = "";
+        rootEl.style.height = "";
+        rootEl.style.display = "";
+        rootEl.style.flexDirection = "";
+        rootEl.style.overflow = "";
+      }
+      html.style.removeProperty("--app-h");
+      html.style.removeProperty("--header-h");
+      html.classList.remove("chat-active");
+      html.classList.remove("kb-open");
     };
   }, []);
 

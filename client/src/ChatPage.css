@@ -239,3 +239,16 @@ html.chat-active .chat-page {
     padding: 0 0.5em;
   }
 }
+
+/* When the soft keyboard is open on a phone, drop the Exit-button strip and the
+   chat-main's bottom padding so the input sits flush against the keyboard with
+   no white space below it. (env(safe-area-inset-bottom) isn't reliably zeroed
+   by Safari while the keyboard is up, hence the explicit override.) */
+@media (max-width: 700px) {
+  html.kb-open .chat-main {
+    padding-bottom: 0;
+  }
+  html.kb-open .chat-footer {
+    display: none;
+  }
+}
