@@ -1,14 +1,16 @@
 .chat-page {
   position: fixed;
-  top: 0;
+  /* Sit below the global SiteHeader. --header-h is measured at runtime in ChatPage.jsx;
+     the 60px default matches the header's natural height to avoid a first-paint flash. */
+  top: var(--header-h, 60px);
   left: 0;
   right: 0;
   /* Bind to the visual viewport so the page shrinks above the mobile keyboard.
      --app-h is set from window.visualViewport.height (ChatPage.jsx);
      100dvh is the modern fallback, 100vh is the ancient fallback. */
-  height: 100vh;
-  height: 100dvh;
-  height: var(--app-h, 100dvh);
+  height: calc(100vh - var(--header-h, 60px));
+  height: calc(100dvh - var(--header-h, 60px));
+  height: calc(var(--app-h, 100dvh) - var(--header-h, 60px));
   display: flex;
   overflow: hidden;
   background: #ffffff;

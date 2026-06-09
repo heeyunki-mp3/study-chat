@@ -199,14 +199,17 @@ export default function ChatPage() {
     };
   }, []);
 
-  // Mobile: track the visual viewport (shrinks when the keyboard opens on iOS/Android)
-  // and keep the latest message visible above the keyboard.
+  // Mobile: track the visual viewport (shrinks when the keyboard opens on iOS/Android),
+  // measure the SiteHeader so chat-page can sit below it, and keep the latest message
+  // visible above the keyboard.
   useEffect(() => {
     const vv = window.visualViewport;
-    if (!vv) return;
     let raf = 0;
     const update = () => {
-      document.documentElement.style.setProperty("--app-h", `${vv.height}px`);
+      const headerEl = document.querySelector(".site-header");
+      const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
+      document.documentElement.style.setProperty("--header-h", `${headerH}px`);
+      if (vv) document.documentElement.style.setProperty("--app-h", `${vv.height}px`);
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const list = document.querySelector(".cs-message-list__scroll-wrapper");
@@ -214,11 +217,14 @@ export default function ChatPage() {
       });
     };
     update();
-    vv.addEventListener("resize", update);
+    if (vv) vv.addEventListener("resize", update);
+    window.addEventListener("resize", update);
     return () => {
       cancelAnimationFrame(raf);
-      vv.removeEventListener("resize", update);
+      if (vv) vv.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
       document.documentElement.style.removeProperty("--app-h");
+      document.documentElement.style.removeProperty("--header-h");
     };
   }, []);
 
