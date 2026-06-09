@@ -215,8 +215,17 @@ export default function ChatPage() {
       const h = vv ? vv.height : window.innerHeight;
       const top = vv ? vv.offsetTop : 0;
       const html = document.documentElement;
+      // Classic scroll-lock: pin html/body with position:fixed + overflow:hidden so
+      // the document itself has no scrollable area. iOS Safari ignores overflow:hidden
+      // alone on focused inputs, but a fixed, fully-pinned html+body it must respect.
       html.style.height = `${h}px`;
+      html.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = "0";
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.height = `${h}px`;
+      document.body.style.overflow = "hidden";
       if (rootEl) {
         rootEl.style.position = "fixed";
         rootEl.style.top = `${top}px`;
@@ -231,8 +240,7 @@ export default function ChatPage() {
       const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
       html.style.setProperty("--header-h", `${headerH}px`);
       html.style.setProperty("--app-h", `${h}px`);
-      // Undo iOS auto-scroll: any non-zero document scroll means iOS shifted us;
-      // snap back so the chat stays anchored to the visible viewport.
+      // Undo iOS auto-scroll: any non-zero document scroll means iOS shifted us.
       if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
       // Keyboard-up: hide the Exit footer and drop bottom padding so the input
       // sits flush against the keyboard (no white space stripe below it).
@@ -267,7 +275,13 @@ export default function ChatPage() {
       window.removeEventListener("scroll", onScroll);
       const html = document.documentElement;
       html.style.height = "";
+      html.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
       document.body.style.height = "";
+      document.body.style.overflow = "";
       if (rootEl) {
         rootEl.style.position = "";
         rootEl.style.top = "";
@@ -460,6 +474,14 @@ export default function ChatPage() {
 
     setInput("");
     inputRef.current = "";
+
+    // Keep the cursor in the text box after sending (chatscope's MessageInput
+    // blurs the contenteditable on send; refocus it so the user can keep typing
+    // without tapping the field again — important on mobile to avoid keyboard flicker).
+    requestAnimationFrame(() => {
+      const editor = document.querySelector(".cs-message-input__content-editor");
+      if (editor && typeof editor.focus === "function") editor.focus();
+    });
 
     // After sending, wait for idle (same as empty input) so we don't advance while user might type again
     const idleEmptyMs = session?.idleEmptyMs ?? 4000;
