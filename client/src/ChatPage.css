@@ -1,7 +1,7 @@
 /* While the chat page is mounted, lock the document to the visible viewport so the
-   body can't scroll behind the fixed chat-page. Global rules in index.css set
-   `min-height: 100vh` on body/#root, which on iOS doesn't shrink with the keyboard —
-   that's what produces the long scroll + white space below the chat. Reset those. */
+   body can't scroll behind the chat. Globals set `min-height: 100vh` which on iOS is
+   the *large* viewport — it doesn't shrink with the keyboard, so without this reset
+   the body becomes scrollable and white space appears below the chat. */
 html.chat-active,
 html.chat-active body,
 html.chat-active #root {
@@ -12,6 +12,23 @@ html.chat-active #root {
   overflow: hidden;
   /* Don't let the page rubber-band on iOS while chatting. */
   overscroll-behavior: none;
+}
+
+/* Use a flex layout (header on top, chat below filling the rest) instead of
+   `position: fixed`. Fixed-positioned elements on iOS drift when the keyboard
+   opens because iOS auto-scrolls the layout viewport — that's what was leaving
+   white space at the bottom when the keyboard appeared. As a flex item, chat-page
+   naturally tracks whatever vertical space remains after the header, shrinking
+   correctly when --app-h shrinks with the keyboard. */
+html.chat-active #root {
+  display: flex;
+  flex-direction: column;
+}
+html.chat-active .chat-page {
+  position: static;
+  height: auto;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .chat-page {

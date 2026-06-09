@@ -26,12 +26,17 @@ body {
   margin: 0;
   display: block;
   min-width: 320px;
+  /* 100dvh tracks the *small* viewport on mobile (shrinks with the address bar),
+     so the page doesn't overflow into scrollable empty space at the bottom.
+     100vh stays as a fallback for browsers that don't support dvh. */
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 h1 {
