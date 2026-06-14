@@ -1,4 +1,5 @@
 /**
+ * It works
  * Study-chat server: moderator-led call-on flow.
  * No queue. Eunice (moderator) calls on one participant at a time; only that participant gets one OpenAI request (up to 3 messages).
  * Human turn: moderator advances only when human has sent at least 1 message AND is idle. Idle = no typing 3s with empty input, or no typing 7s with non-empty input.
