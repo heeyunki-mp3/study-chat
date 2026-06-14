@@ -110,7 +110,6 @@ const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/s
 const MODERATOR_THINK_DELAY_MS = { min: 1000, max: 3000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
-const INTRO_STAGGER_BASE_MS = 1000;           // Minimum stagger before a bot sends its intro
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -772,6 +771,10 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
  *   isQuestion   — based on burst text only (messages since last moderator response).
  *   substantive  — based on combined round text.
  *   inappropriate — based on combined round text.
+ *
+ * All three are computed in ONE OpenAI call (previously two parallel calls). The
+ * burst/combined distinction is preserved by passing both texts and telling the
+ * model which one each field is keyed off of.
  */
 async function classifyHumanMessage(burstText, combinedText, context, roundQuestion) {
   if (!burstText || !String(burstText).trim()) return { isQuestion: false, substantive: false, inappropriate: false };
@@ -783,45 +786,42 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const { type = "call_on", prompt = "" } = context || {};
   const qContext = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"`;
 
-  // Two parallel calls: burst-only for isQuestion, combined-only for substantive/inappropriate
-  const questionCall = loggedOpenAI("classify_is_question", {
-    model: MODELS.default,
-    messages: [
-      { role: "system", content: `You are a strict classifier. Return ONLY valid JSON with one boolean field:
-- "isQuestion": True ONLY if the participant's message contains an explicit, direct question directed at the moderator asking for clarification or explanation. The message must contain a clear question form (e.g. "what is X?", "can you explain X?", "how does X work?").
-  False for: filler ("ok","idk","nope","not sure"), emotions, statements, opinions, expressions of uncertainty or confusion ("I'm not sure what X is", "I don't really know about X", "never heard of X"), or anything that tries to answer the prompt. Uncertainty or lack of knowledge is NOT a question — they must be explicitly asking.
-Return format: {"isQuestion": true/false}` },
-      { role: "user", content: `${qContext}\nMessage: "${String(burstText).trim().slice(0, 400)}"` },
-    ],
-    max_tokens: 20,
-    temperature: 0,
-  });
+  const sys = `You are a strict classifier. Return ONLY valid JSON with THREE boolean fields:
 
-  const substCall = loggedOpenAI("classify_substantive_inappropriate", {
-    model: MODELS.default,
-    messages: [
-      { role: "system", content: `You are a classifier. Return ONLY valid JSON with two boolean fields:
-- "substantive": True if the messages substantively answer the prompt with relevant content—experiences, opinions, or thoughts. False if still just filler, too vague, off-topic, or only questions.
-- "inappropriate": True if the messages are clearly inappropriate — aggressive, hostile, offensive, sexual, nonsensical gibberish, or wildly off-topic. Normal short or vague answers are NOT inappropriate.
-Return format: {"substantive": true/false, "inappropriate": true/false}` },
-      { role: "user", content: `${qContext}\nMessages: "${String(combined).trim().slice(0, 800)}"` },
-    ],
-    max_tokens: 20,
-    temperature: 0,
-  });
+- "isQuestion": Look ONLY at the BURST text. True ONLY if the burst contains an explicit, direct question directed at the moderator asking for clarification or explanation. Must contain a clear question form (e.g. "what is X?", "can you explain X?", "how does X work?"). False for: filler ("ok","idk","nope","not sure"), emotions, statements, opinions, expressions of uncertainty or confusion ("I'm not sure what X is", "I don't really know about X", "never heard of X"), or anything that tries to answer the prompt. Uncertainty or lack of knowledge is NOT a question — they must be explicitly asking.
+
+- "substantive": Look at the COMBINED text. True if the messages substantively answer the prompt with relevant content — experiences, opinions, or thoughts. False if still just filler, too vague, off-topic, or only questions.
+
+- "inappropriate": Look at the COMBINED text. True if the messages are clearly inappropriate — aggressive, hostile, offensive, sexual, nonsensical gibberish, or wildly off-topic. Normal short or vague answers are NOT inappropriate.
+
+Return format: {"isQuestion": true/false, "substantive": true/false, "inappropriate": true/false}`;
+
+  const user = `${qContext}
+
+BURST (recent messages since last moderator response): "${String(burstText).trim().slice(0, 400)}"
+
+COMBINED (all participant messages this round): "${String(combined).trim().slice(0, 800)}"`;
 
   try {
-    const [qRes, sRes] = await Promise.all([questionCall, substCall]);
-    const parse = (r) => {
-      const raw = (r?.choices?.[0]?.message?.content ?? "").trim().replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
-      return JSON.parse(raw || "{}");
-    };
-    const qParsed = parse(qRes);
-    const sParsed = parse(sRes);
+    const completion = await loggedOpenAI("classify_human_message", {
+      model: MODELS.default,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user },
+      ],
+      max_tokens: 40,
+      temperature: 0,
+    });
+    const raw = (completion?.choices?.[0]?.message?.content ?? "")
+      .trim()
+      .replace(/^```json?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+    const parsed = JSON.parse(raw || "{}");
     return {
-      isQuestion: !!qParsed.isQuestion,
-      substantive: forcedSubstantive !== null ? forcedSubstantive : !!sParsed.substantive,
-      inappropriate: !!sParsed.inappropriate,
+      isQuestion: !!parsed.isQuestion,
+      substantive: forcedSubstantive !== null ? forcedSubstantive : !!parsed.substantive,
+      inappropriate: !!parsed.inappropriate,
     };
   } catch (e) {
     console.error("classifyHumanMessage error", e?.message || e);
@@ -2201,36 +2201,45 @@ io.on("connection", (socket) => {
     await runIntroRound();
   }
 
-  /** Intro: bots take turns introducing themselves. Previously parallel-with-stagger,
-   *  which let think+type durations balance the staggered starts so all three bots
-   *  often emitted within ~200ms of each other (then nginx batched the burst into one
-   *  client delivery). Sequential guarantees clean staggering. */
+  /** Intro: all bots start in parallel from "To start us off…" — straight to
+   *  think → type → emit, no head-start stagger. To prevent random think+type
+   *  durations from converging so the three emits land at the same instant
+   *  (which the proxy then delivers as one batch), the emit step is gated:
+   *  the first bot to finish typing emits, the next bot waits for the previous
+   *  emit + a min gap. */
   async function runIntroRound() {
     if (!session?.bots?.length) return;
-    logLine("QUEUE", "intro: bots take turns introducing themselves");
-    for (let i = 0; i < session.bots.length; i++) {
-      if (!session) return;
-      const bot = session.bots[i];
-      const options = BOT_INTROS[bot];
-      const intro = options?.length
-        ? options[Math.floor(Math.random() * options.length)]
-        : `Hi, I'm ${bot}.`;
-      // Brief pause between bots: first one waits a moment after "To start us off…",
-      // subsequent ones wait a moment after the previous bot's message.
-      const staggerMs = randomBetween(INTRO_STAGGER_BASE_MS, INTRO_STAGGER_BASE_MS + 1500);
-      logLine("WAIT", `${bot} stagger ${(staggerMs / 1000).toFixed(1)}s`);
-      await delay(staggerMs);
-      if (!session) return;
-      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
-      logLine("WAIT", `${bot} thinking for ${(thinkMs / 1000).toFixed(1)}s`);
-      await delay(thinkMs);
-      if (!session) return;
-      emitTyping(bot, true);
-      await delay(typingDelayMs(intro));
-      if (!session) return;
-      emitTyping(bot, false);
-      emitMessage(bot, intro);
-    }
+    logLine("QUEUE", "intro: bots all start thinking in parallel from 'To start us off', emit gated");
+    let emitGate = Promise.resolve();
+    const INTRO_EMIT_GAP_MS = 1500; // min gap between consecutive bot intro messages
+    const botPromises = session.bots.map((bot) => {
+      return (async () => {
+        if (!session) return;
+        const options = BOT_INTROS[bot];
+        const intro = options?.length
+          ? options[Math.floor(Math.random() * options.length)]
+          : `Hi, I'm ${bot}.`;
+        const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
+        logLine("WAIT", `${bot} thinking for ${(thinkMs / 1000).toFixed(1)}s`);
+        await delay(thinkMs);
+        if (!session) return;
+        emitTyping(bot, true);
+        await delay(typingDelayMs(intro));
+        if (!session) return;
+        // Wait for the previous bot's emit (+ gap) so two messages can't land
+        // at the same time. Typing indicator stays ON while waiting — reads as
+        // "still typing", which is fine for the few-second gap.
+        const prev = emitGate;
+        let releaseNext;
+        emitGate = new Promise((r) => { releaseNext = r; });
+        await prev;
+        if (!session) { releaseNext(); return; }
+        emitTyping(bot, false);
+        emitMessage(bot, intro);
+        setTimeout(releaseNext, INTRO_EMIT_GAP_MS);
+      })();
+    });
+    await Promise.all(botPromises);
     if (!session) return;
     if (hasHumanRepliedAfterIntroPrompt(session)) {
       if (await evaluateHumanIntro(session)) {
