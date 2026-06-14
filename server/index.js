@@ -107,7 +107,7 @@ const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words/sec) — 33% faster than original (0.7–1.3)
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
-const MODERATOR_THINK_DELAY_MS = { min: 1000, max: 3000 };       // Moderator think delay before typing
+const MODERATOR_THINK_DELAY_MS = { min: 2000, max: 4000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
 
