@@ -359,28 +359,53 @@ export default function ChatPage() {
     });
 
     socket.on("seed", (seedMsgs) => {
-      // On rejoin, replace messages instead of appending
-      setMessages((Array.isArray(seedMsgs) ? seedMsgs : []).map((m) => ({
-        sender: m?.name ?? "",
-        message: typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000),
-        direction: "incoming",
-        ts: m?.ts,
-      })));
+      // On rejoin, replace messages instead of appending. Compute direction per
+      // message — hard-coding "incoming" makes the participant's own prior messages
+      // render on the bot side after every reconnect.
+      setMessages((Array.isArray(seedMsgs) ? seedMsgs : []).map((m) => {
+        const sender = m?.name ?? "";
+        const isOutgoing = isSelf(sender, participantName);
+        return {
+          sender,
+          message: typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000),
+          direction: isOutgoing ? "outgoing" : "incoming",
+          ts: m?.ts,
+        };
+      }));
     });
 
     socket.on("message", (m) => {
       const text = typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000);
       const sender = m?.name ?? "";
       const isOutgoing = isSelf(sender, participantName);
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender,
-          message: text,
-          direction: isOutgoing ? "outgoing" : "incoming",
-          ts: m?.ts,
-        },
-      ]);
+      setMessages((prev) => {
+        if (isOutgoing) {
+          // Find the first matching optimistic entry and confirm it with the
+          // server's authoritative ts. Case-insensitive sender match because the
+          // optimistic copy uses participantName (raw) while the server echo uses
+          // humanDisplayName (capitalized).
+          const idx = prev.findIndex(
+            (p) =>
+              p._optimistic &&
+              p.message === text &&
+              (p.sender || "").toLowerCase() === sender.toLowerCase()
+          );
+          if (idx >= 0) {
+            const next = prev.slice();
+            next[idx] = { sender, message: text, direction: "outgoing", ts: m?.ts };
+            return next;
+          }
+        }
+        return [
+          ...prev,
+          {
+            sender,
+            message: text,
+            direction: isOutgoing ? "outgoing" : "incoming",
+            ts: m?.ts,
+          },
+        ];
+      });
       // Play notification sound for incoming messages
       if (!isOutgoing) {
         const snd = tabFocusedRef.current ? sndFocusRef.current : sndOutRef.current;
@@ -483,6 +508,23 @@ export default function ChatPage() {
     }
     socket.emit("human_typing", { isTyping: false, hasDraft: false });
     socket.emit("human_message", { text: t });
+
+    // Optimistic render: show the participant's message immediately. On Plesk
+    // (polling-only transport) the server echo can lag behind by several
+    // seconds and arrive batched with bot messages; without this the chat
+    // looks frozen between hitting send and seeing your own message. The
+    // server's echo handler matches via _optimistic + sender + text and
+    // confirms with the authoritative ts.
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: participantName || "",
+        message: t,
+        direction: "outgoing",
+        ts: Date.now(),
+        _optimistic: true,
+      },
+    ]);
 
     setInput("");
     inputRef.current = "";

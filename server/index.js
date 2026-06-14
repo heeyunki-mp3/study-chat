@@ -945,12 +945,12 @@ Sound like a real person texting, not a formal moderator.
 IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Anthony, @Mina). Every single name mention must have the @ prefix.
 
 Good examples (specific reaction → @next):
-- "Yeah, work made you use it. @${nextName}, you?"
+- "Yeah I hear you. @${nextName}, you?"
 - "Mm, the kids thing. @${nextName}, how about you?"
-- "Right, never heard of it. @${nextName}, same question for you"
-- "Switched for the speed, gotcha. @${nextName}?"
-- "Old-school password person. @${nextName}, what about you?"
-- "Tried it once, didn't stick. @${nextName}, your turn"
+- "Right, it is exciting to try out new stuff. @${nextName}, same question for you"
+- "Switched for the speed. @${nextName}?"
+- "Fair. It is good to stick to what works. @${nextName}, what about you?"
+- "Ohh I totally understand why. @${nextName}, your turn"
 
 BAD examples (too generic OR adds info/opinion — avoid these):
 - "Makes sense. @${nextName}, how about you?" (generic — no specific reaction)
@@ -2200,7 +2200,15 @@ io.on("connection", (socket) => {
     const botIndex = Math.floor(Math.random() * bots.length);
     const bot = bots[botIndex];
     const ack = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
+    // Two delays to feel natural: (1) silent pause after Eunice finishes, then
+    // (2) typing indicator for the duration of typing the ack. Without the
+    // indicator the ack popped into chat instantly and felt jarring.
     await delay(STUDY_GOAL_ACK_DELAY_MS);
+    if (!session) return;
+    emitTyping(bot, true);
+    await delay(typingDelayMs(ack));
+    if (!session) return;
+    emitTyping(bot, false);
     emitMessage(bot, ack);
 
     logLine("QUEUE", "study_goal ack done, starting first round");
