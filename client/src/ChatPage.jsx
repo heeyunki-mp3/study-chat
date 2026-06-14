@@ -178,6 +178,10 @@ export default function ChatPage() {
   const [typing, setTyping] = useState({});
   const [session, setSession] = useState(null);
   const [input, setInput] = useState("");
+  // Once the moderator sends `study_complete`, lock the input and stop emitting
+  // typing/idle/message events so post-study keystrokes don't leak into the transcript.
+  const studyCompleteRef = useRef(false);
+  const [studyComplete, setStudyComplete] = useState(false);
   // Notification sounds
   const tabFocusedRef = useRef(document.hasFocus());
   const sndFocusRef = useRef(new Audio("/new_message_on_focus.mp3"));
@@ -400,6 +404,12 @@ export default function ChatPage() {
       if (sessionId) localStorage.setItem("sessionId", sessionId);
       if (participantId) localStorage.setItem("participantId", participantId);
       sessionStorage.setItem("chatCompleted", sessionId || "1");
+      // Lock the input: any further typing must not leak into the server transcript.
+      studyCompleteRef.current = true;
+      setStudyComplete(true);
+      if (typingTimeoutRef.current) { clearTimeout(typingTimeoutRef.current); typingTimeoutRef.current = null; }
+      if (idleTimeoutRef.current) { clearTimeout(idleTimeoutRef.current); idleTimeoutRef.current = null; }
+      try { socket.emit("human_typing", { isTyping: false, hasDraft: false }); } catch { /* socket may be closed */ }
       // No auto-redirect: the participant must click the "Exit Chat" button to proceed.
     });
 
@@ -431,6 +441,7 @@ export default function ChatPage() {
 
   // Fires on every keystroke
   function handleInputChange(val) {
+    if (studyCompleteRef.current) return; // study over — don't emit anything
     setInput(val);
     inputRef.current = val ?? "";
     const hasDraft = String(val ?? "").trim().length > 0;
@@ -458,6 +469,7 @@ export default function ChatPage() {
   }
 
   function onSend(text) {
+    if (studyCompleteRef.current) return; // study over — don't send post-study messages
     const t = (text || "").trim();
     if (!t) return;
 
@@ -603,10 +615,11 @@ export default function ChatPage() {
               )}
             </div>
             <MessageInput
-              placeholder="Type..."
+              placeholder={studyComplete ? "Chat ended — click Exit Chat" : "Type..."}
               value={input}
               onChange={handleInputChange}
               onSend={onSend}
+              disabled={studyComplete}
             />
           </div>
         </MainContainer>

@@ -109,7 +109,7 @@ const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words
 const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
 const MODERATOR_THINK_DELAY_MS = { min: 1000, max: 3000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
-const STUDY_GOAL_ACK_DELAY_MS = 1500;         // Delay before bot acknowledges the study goal
+const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
 const INTRO_STAGGER_BASE_MS = 1000;           // Minimum stagger before a bot sends its intro
 
 // --- Disagreement follow-ups ---
@@ -225,7 +225,14 @@ function getModeratorScript(group) {
 
 const STUDY_GOAL_ACKS = ["Got it!", "Ok!", "Sure!"];
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// 25s timeout per call so a single stuck completion can't freeze the call-on round
+// for the SDK default of 10min. Real 429 retry-after waves (~20s) still fit; longer
+// hangs throw and each caller's try/catch falls back to a default line.
+const OPENAI_TIMEOUT_MS = 25000;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: OPENAI_TIMEOUT_MS,
+});
 let MODELS = { default: "gpt-4o-mini" };
 try {
   const raw = fs.readFileSync(path.join(__dirname, "models.json"), "utf8");
@@ -922,34 +929,36 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
 
   const sys = `You are a real human discussion moderator in a casual group chat. Generate ONE short message (1-2 sentences max).
 
-Your message should:
-1. Briefly acknowledge what was just said (keep it VERY short — just a quick ack or short summary)
-2. Smoothly pass to the next person
+Your message MUST have these two parts in order:
+1. A SHORT PERSONAL REACTION (3-4 words) that references the SPECIFIC content of what the person just said. Not a generic "makes sense" or "gotcha" — your reaction must show you actually heard the specific thing they said. E.g. if they mentioned "kids", react to the kids part; if they mentioned "work VPN", react to the work VPN part.
+2. Then smoothly pass to the next person with their @name.
 
 CRITICAL RULES:
-- Do NOT explain, define, or add information about any technology (passkeys, VPNs, password managers, etc.). Your job is ONLY to acknowledge and cue the next person.
-- Do NOT add your own opinion or commentary. Stay completely neutral.
-- Do NOT say things like "it makes logging in easier", "it's more secure", "it's convenient", etc. Those are opinions.
-- If someone says they don't know what something is, just acknowledge that and move on. Do NOT explain it to them here.
+- The reaction MUST be specific to what they said. Do NOT use generic acks like "Makes sense", "Gotcha", "Got it", "Interesting" by themselves — they're too vague. Add 2-3 words that point at the actual content.
+- Keep the reaction SHORT — 3-4 words, not a full sentence. The goal is "I heard you specifically", not "let me summarize".
+- Do NOT explain, define, or add information about any technology (passkeys, VPNs, password managers, etc.).
+- Do NOT add your own opinion or commentary (no "that's smart", "great approach", "it's safer", etc.). Stay neutral — react to WHAT they said, not whether it's good.
+- If someone says they don't know what something is, react to that ("Fair, never came up") and move on. Do NOT explain it to them here.
 
-Sound like a real person texting, not a formal moderator. Vary your style — sometimes just a quick reaction + name, sometimes a brief observation.
+Sound like a real person texting, not a formal moderator.
 
 IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name with @ (e.g. @Anthony, @Mina). Every single name mention must have the @ prefix.
 
-Good examples:
-- "Gotcha. @${nextName}, how about you?"
-- "That makes sense! @${nextName}, what's your take?"
-- "Interesting — @${nextName}, same question for you"
-- "Right right. @${nextName}?"
-- "Oh nice. @${nextName}, what about you?"
-- "Haha fair enough. @${nextName}, your turn!"
+Good examples (specific reaction → @next):
+- "Yeah, work made you use it. @${nextName}, you?"
+- "Mm, the kids thing. @${nextName}, how about you?"
+- "Right, never heard of it. @${nextName}, same question for you"
+- "Switched for the speed, gotcha. @${nextName}?"
+- "Old-school password person. @${nextName}, what about you?"
+- "Tried it once, didn't stick. @${nextName}, your turn"
 
-BAD examples (too stiff/formal or adding information — avoid these):
-- "Thanks for sharing, @[Name]. @[Name], what do you think?"
-- "That's a great point, @[Name]. How about you, @[Name]?"
-- "I appreciate your perspective, @[Name]."
-- "A passkey is a way to sign in using biometrics. @[Name], what about you?" (DO NOT explain things)
-- "That makes logging in so much easier! @[Name], your turn?" (DO NOT add opinions)
+BAD examples (too generic OR adds info/opinion — avoid these):
+- "Makes sense. @${nextName}, how about you?" (generic — no specific reaction)
+- "Gotcha. @${nextName}, your turn?" (generic — no specific reaction)
+- "Interesting. @${nextName}?" (generic — no specific reaction)
+- "Thanks for sharing, @[Name]. @[Name], what do you think?" (too formal)
+- "A passkey is a way to sign in using biometrics. @[Name]?" (DO NOT explain things)
+- "That makes logging in so much easier! @[Name]?" (DO NOT add opinions)
 
 Output ONLY the message text — no JSON, no quotes, no formatting, no separators like ---.
 When in the middle of a round, do NOT ask a new question — only react and cue the next person for the same question.`;
@@ -1099,8 +1108,6 @@ function createSession(participantName) {
     messages: [],
     waitingForHumanIntro: false,
     humanGaveIntro: false,
-    moderatorTypingIntroCue: false,
-    userRepliedDuringIntroCue: false,
     callOnState: {
       question: allRounds[0]?.question || "",
       order,
@@ -1520,6 +1527,7 @@ io.on("connection", (socket) => {
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
         saveCurrentRoundResponses();
         await saveSessionToDatabase(session);
+        activeSessions.delete(session.sessionId);
         session = null;
         return;
       }
@@ -1539,13 +1547,16 @@ io.on("connection", (socket) => {
       const recentMsgs = (session.roundTranscript || session.messages || []).slice(-8);
       nudgeContext.transcript = recentMsgs.map((m) => `${m.name}: ${m.text}`).join("\n").slice(0, 600);
       const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount, nudgeContext);
-      await emitModeratorLine(nudgeMsg, { cancelCheck: () => !!session?.humanIsTyping });
-      if (session?.humanIsTyping) {
-        // Nudge was cancelled mid-emission; undo the nudge count increment and reset timer
-        session.idleNudgeCount = Math.max(0, (session.idleNudgeCount || 0) - 1);
-        session.idleLastNudgeAt = null;
-        session.idleLastActivityAt = Date.now();
-        logLine("QUEUE", "idle nudge cancelled (user started typing)");
+      // Cancel if user is typing OR if the wait state changed (user already responded and advanced) mid-await.
+      const cancelCheck = () => !session || !!session.humanIsTyping || !isWaitingForHuman(session);
+      await emitModeratorLine(nudgeMsg, { cancelCheck });
+      if (!session || cancelCheck()) {
+        if (session) {
+          session.idleNudgeCount = Math.max(0, (session.idleNudgeCount || 0) - 1);
+          session.idleLastNudgeAt = null;
+          session.idleLastActivityAt = Date.now();
+        }
+        logLine("QUEUE", "idle nudge cancelled (user responded or started typing)");
         return;
       }
       logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
@@ -1563,6 +1574,7 @@ io.on("connection", (socket) => {
     io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
     saveCurrentRoundResponses();
     await saveSessionToDatabase(session);
+    activeSessions.delete(session.sessionId);
     session = null;
   }
 
@@ -1631,6 +1643,12 @@ io.on("connection", (socket) => {
       session.cancelAdvanceFromIdle = false;
     }
     logLine("QUEUE", reason);
+    // human_idle handler cleared the nudge timer before calling advanceCallOn; now
+    // that we're waiting for the user again, re-arm it so a draft-and-sit user still
+    // gets escalated and the chat never sits silently with no path forward.
+    if (session && isWaitingForHuman(session)) {
+      startIdleNudgeTimer();
+    }
   }
 
   function wasAdvanceCancelled(session) {
@@ -1638,7 +1656,7 @@ io.on("connection", (socket) => {
   }
 
   async function emitModeratorLine(text, opts = {}) {
-    const { skipIfUserReplied: skipIfUserRepliedDuringCue, cancelCheck, skipThinkDelay, consecutive } = opts;
+    const { cancelCheck, skipThinkDelay, consecutive } = opts;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
     // Think delay (no typing indicator yet)
@@ -1656,10 +1674,6 @@ io.on("connection", (socket) => {
     await delay(typingDelayMs(text, { moderator: true }));
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
-      emitTyping(MODERATOR_NAME, false);
-      return;
-    }
-    if (skipIfUserRepliedDuringCue && session.userRepliedDuringIntroCue) {
       emitTyping(MODERATOR_NAME, false);
       return;
     }
@@ -1879,13 +1893,20 @@ io.on("connection", (socket) => {
     const participantName = session.participantName;
     const toPrompt = [];
     const humanIntroName = session.introducedName || "";
+    // Only names that actually have answers this round are valid resolution targets.
+    // Without this, the LLM can hallucinate a non-speaker and we send a follow-up to
+    // someone whose disagreedByText is empty.
+    const spoke = new Set(Object.keys(answersByPerson));
     const resolve = (name) => {
       const n = String(name ?? "").trim().toLowerCase();
+      // Prefer the human on a name collision: if the user introduced themselves as a
+      // bot's name (e.g. "I'm Sid"), the follow-up should go to the human who spoke
+      // under that name, not the bot persona.
+      if (participantName && participantName.toLowerCase() === n && spoke.has(humanDisplayName)) return participantName;
+      if (humanDisplayName && humanDisplayName.toLowerCase() === n && spoke.has(humanDisplayName)) return participantName;
+      if (humanIntroName && humanIntroName.toLowerCase() === n && spoke.has(humanDisplayName)) return participantName;
       const bot = botNames.find((b) => b.toLowerCase() === n);
-      if (bot) return bot;
-      if (participantName && participantName.toLowerCase() === n) return participantName;
-      if (humanDisplayName && humanDisplayName.toLowerCase() === n) return participantName;
-      if (humanIntroName && humanIntroName.toLowerCase() === n) return participantName;
+      if (bot && spoke.has(bot)) return bot;
       return null;
     };
 
@@ -1898,6 +1919,9 @@ io.on("connection", (socket) => {
       let a = resolve(p.disagreedWith);
       let b = resolve(p.disagreedBy);
       if (!a || !b || a === b) continue;
+      // Both must have actually spoken; resolve() already enforces this, so any
+      // orderIndex==999 would be an internal bug — skip defensively.
+      if (orderIndex(a) === 999 || orderIndex(b) === 999) continue;
       // disagreedWith must be the one who spoke first; swap if LLM got order wrong
       if (orderIndex(a) > orderIndex(b)) [a, b] = [b, a];
       const disagreedWithResolved = a;
@@ -2503,6 +2527,119 @@ io.on("connection", (socket) => {
     setImmediate(() => runIntroWithTyping());
   });
 
+  /**
+   * After a rejoin, the in-flight async chain from the prior socket is dead — every
+   * function bailed when its `if (!session) return` guard fired on disconnect.
+   * Bot turns, study-goal, and round transitions store no resume cursor, so without
+   * this the chat halts forever. We infer what to re-drive from the session flags.
+   *
+   * Order matters: most-specific waiting state first so we don't double-drive.
+   */
+  function maybeResumeAfterRejoin() {
+    if (!session) return;
+    const co = session.callOnState;
+
+    // 1. Waiting on the human (intro / call-on / poll / disagreement) — idle timer
+    //    is already restarted below. No drive needed.
+    if (
+      session.waitingForHumanIntro ||
+      co?.waitingForHumanIdle ||
+      session.waitingForHumanDisagreementResponse
+    ) {
+      return;
+    }
+
+    // 2. Mid-poll: human is done (waitingForHumanIdle would be false) but the
+    //    bot promises died. Force-finish so the summary goes out and we advance.
+    if (session.pollState && !session.pollState.finished) {
+      logLine("REJOIN", "resuming: mid-poll, force-finishing");
+      maybeFinishPollRound(true);
+      return;
+    }
+
+    // 3. Disagreement queue mid-flight with a bot next — re-drive.
+    if (co?.disagreementPhase && co.disagreementIndex < co.disagreementQueue.length) {
+      const next = co.disagreementQueue[co.disagreementIndex];
+      if (next && !next.isHuman) {
+        logLine("REJOIN", `resuming: disagreement follow-up for bot ${next.disagreedWith}`);
+        runNextDisagreementFollowUp();
+        return;
+      }
+    }
+
+    // 4. Round done but we haven't started disagreement / summary / next round.
+    if (co?.roundDone) {
+      // disagreementPhase guard prevents re-entry — clear it if detect never produced
+      // a queue (it died mid-await). Then re-run from the top.
+      if (!co.disagreementPhase || co.disagreementQueue.length === 0) {
+        co.disagreementPhase = false;
+        logLine("REJOIN", "resuming: roundDone, re-running disagreement phase");
+        runDisagreementPhase();
+        return;
+      }
+      // disagreementPhase=true and queue exhausted → advance to next round.
+      if (co.disagreementIndex >= co.disagreementQueue.length) {
+        logLine("REJOIN", "resuming: post-disagreement, advancing to next round");
+        advanceToNextRound();
+        return;
+      }
+      // Otherwise case #3 should have caught a mid-queue bot follow-up.
+      return;
+    }
+
+    // 5. Mid call-on with a bot next.
+    //    - If the bot already has any message in this round's transcript OR is in
+    //      whoSpoke, treat them as done and advance — otherwise re-driving runBotTurn
+    //      would emit a fresh OpenAI response on top of any partial bubbles already
+    //      visible, duplicating the bot's voice.
+    //    - Otherwise re-drive their turn fresh.
+    if (co && !co.roundDone) {
+      const cur = co.order?.[co.currentIndex];
+      if (cur && !isHumanTurn(session, cur)) {
+        const botSpokeThisRound = session.roundTranscript?.some((m) => m.name === cur);
+        if (co.whoSpoke.includes(cur) || botSpokeThisRound) {
+          logLine("REJOIN", `resuming: ${cur} already partially/fully spoke this round, advancing call-on`);
+          if (!co.whoSpoke.includes(cur)) co.whoSpoke.push(cur);
+          advanceCallOn();
+        } else {
+          logLine("REJOIN", `resuming: mid call-on, re-driving bot ${cur}`);
+          runBotTurn(cur, co.question);
+        }
+        return;
+      }
+    }
+
+    // 6. studyGoalStarted but first round never began — finish the study-goal path.
+    if (session.studyGoalStarted && (session.currentRoundIndex ?? -1) < 0) {
+      logLine("REJOIN", "resuming: studyGoal interrupted, starting first round");
+      startFirstRound();
+      return;
+    }
+
+    // 7. Intro phase never set waitingForHumanIntro (interrupted before runIntroRound
+    //    finished). Restart the intro round — it's idempotent for bots that already
+    //    sent intros because addMessage just appends; the bot intros aren't
+    //    deduped, so to avoid duplicate intros, only restart if no bot has spoken.
+    if (!session.studyGoalStarted) {
+      const anyBotSpoke = session.messages.some(
+        (m) => session.bots.includes(m.name)
+      );
+      if (!anyBotSpoke) {
+        logLine("REJOIN", "resuming: intro never completed, replaying");
+        runIntroWithTyping();
+      } else {
+        // Bots already introduced; just wait for the human's intro.
+        session.waitingForHumanIntro = true;
+        session.humanGaveIntro = false;
+        session.humanMessagesThisRound = [];
+        session.humanMessagesBurst = [];
+        session.lastPromptForHuman = { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." };
+        startIdleNudgeTimer();
+        logLine("REJOIN", "resuming: intro bots already done, waiting for human intro");
+      }
+    }
+  }
+
   // Rejoin an existing session after reconnect
   socket.on("rejoin", (data) => {
     const sid = data?.sessionId;
@@ -2525,9 +2662,11 @@ io.on("connection", (socket) => {
       session.messages.map((m) => ({ name: m.name, text: m.text, ts: m.ts }))
     );
     // Restart idle timer if it's the human's turn
-    if (session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse) {
+    if (session.callOnState?.waitingForHumanIdle || session.waitingForHumanDisagreementResponse || session.waitingForHumanIntro) {
       startIdleNudgeTimer();
     }
+    // Drive any orphaned bot / round-transition that died on disconnect.
+    setImmediate(maybeResumeAfterRejoin);
   });
 
   function clearElaborationPromptTimer() {
@@ -2538,9 +2677,29 @@ io.on("connection", (socket) => {
     if (session) session.elaborationPromptCancelled = true;
   }
 
+  // Watchdog: if the client says isTyping=true but never sends the matching false
+  // (dropped polling packet on a flaky link), the nudge timer would defer forever.
+  // Auto-clear humanIsTyping after this many ms with no further typing event.
+  const HUMAN_TYPING_WATCHDOG_MS = 8000;
   socket.on("human_typing", ({ isTyping, hasDraft } = {}) => {
     if (isTyping !== undefined) logLine("TYPING", `human ${isTyping}`);
     if (session && isTyping !== undefined) session.humanIsTyping = !!isTyping;
+    if (session) {
+      if (session.humanTypingWatchdog) {
+        clearTimeout(session.humanTypingWatchdog);
+        session.humanTypingWatchdog = null;
+      }
+      if (isTyping) {
+        session.humanTypingWatchdog = setTimeout(() => {
+          if (!session) return;
+          if (session.humanIsTyping) {
+            session.humanIsTyping = false;
+            logLine("TYPING", "human typing watchdog: auto-cleared stuck isTyping flag");
+          }
+          session.humanTypingWatchdog = null;
+        }, HUMAN_TYPING_WATCHDOG_MS);
+      }
+    }
     if (isTyping && session?.waitingForElaborationAfterNonSubstantive) {
       clearElaborationPromptTimer(); // user typing again, cancel 5s countdown
     }
@@ -2645,8 +2804,9 @@ io.on("connection", (socket) => {
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();
       session.idleUserHasTyped = true;
-      session.idleNudgeCount = 0;
-      session.idleLastNudgeAt = null;
+      // Don't reset idleNudgeCount here — that lets a bare-greeting loop ("hi" every
+      // 15s) stall the chat in intro forever. Counter is reset only when the message
+      // actually progresses the flow (substantive answer, accepted intro, etc.).
     }
     logLine("HUMAN_INPUT", `[${session.humanDisplayName}] "${clip(text, 160)}"`);
 
@@ -2670,7 +2830,7 @@ io.on("connection", (socket) => {
 
     // Validate response before advancing: treat non-substantive replies as if user never responded.
     // Once the user has given at least one substantive response this turn, skip further checks and just wait for idle to advance.
-    const inIntroPhase = session.waitingForHumanIntro || session.moderatorTypingIntroCue;
+    const inIntroPhase = session.waitingForHumanIntro;
     const ctx = session.lastPromptForHuman || (inIntroPhase ? { type: "intro", prompt: "Please introduce yourself—share your name and anything you feel like mentioning." } : null);
     const isPollRound = session.currentRoundType === "poll";
     // Moderator-question check runs for ALL round types (including polls).
@@ -2707,6 +2867,7 @@ io.on("connection", (socket) => {
       if (session) {
         saveCurrentRoundResponses();
         await saveSessionToDatabase(session);
+        activeSessions.delete(session.sessionId);
       }
       session = null;
       return;
@@ -2751,25 +2912,17 @@ io.on("connection", (socket) => {
         session.substantialNudgeCount = 0; // reset: user gave a substantive response
         session.waitingForElaborationAfterNonSubstantive = false;
         session.humanGaveSubstantiveResponseThisTurn = true;
+        // Real progress — extinguish any nudges that were already escalating.
+        session.idleNudgeCount = 0;
+        session.idleLastNudgeAt = null;
         logLine("HUMAN", "human_message: response is substantive, advancing");
+      } else if (isPollRound) {
+        // Polls only need ANY non-question, non-inappropriate message — that's progress.
+        session.idleNudgeCount = 0;
+        session.idleLastNudgeAt = null;
       }
     }
 
-    const repliedWhileModeratorTypingIntroCue = !!session.moderatorTypingIntroCue;
-    if (repliedWhileModeratorTypingIntroCue) {
-      session.userRepliedDuringIntroCue = true;
-      session.moderatorTypingIntroCue = false;
-    }
-    if (repliedWhileModeratorTypingIntroCue) {
-      const introduced = await extractIntroducedName(text, session.humanDisplayName);
-      if (introduced && introduced.toLowerCase() !== session.participantName.trim().toLowerCase()) {
-        session.introducedName = introduced.trim();
-        logLine("QUEUE", `intro: using introduced name "${session.introducedName}" when referring (NamePage had "${session.participantName}")`);
-      }
-      logLine("QUEUE", "human_message during intro cue: cancelling cue, advancing to study_goal");
-      await runStudyGoal();
-      return;
-    }
     if (session.waitingForHumanIntro) {
       // Don't advance on a bare greeting like "hi" — wait until the participant actually
       // introduces themselves (shares a name and/or something about themselves).
@@ -2780,6 +2933,9 @@ io.on("connection", (socket) => {
       }
       session.humanGaveIntro = true;
       session.waitingForHumanIntro = false;
+      // Real intro accepted — extinguish nudges.
+      session.idleNudgeCount = 0;
+      session.idleLastNudgeAt = null;
       logLine("QUEUE", `human_message after intro: advancing to study_goal`);
       await runStudyGoal();
       return;
@@ -2789,6 +2945,8 @@ io.on("connection", (socket) => {
       logLine("QUEUE", `human_message during call-on: ${session.humanDisplayName} replied, waiting for idle to advance`);
     }
     if (session.waitingForHumanDisagreementResponse) {
+      session.idleNudgeCount = 0;
+      session.idleLastNudgeAt = null;
       logLine("QUEUE", `human_message: replied to view-misalignment follow-up, waiting for idle to advance`);
     }
     // If we're in the middle of showing the next question (mod typing) and user sent a message, cancel and roll back to waiting for human_idle.
@@ -2820,7 +2978,14 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     clearIdleNudgeTimer();
     clearElaborationPromptTimer();
+    if (session?.humanTypingWatchdog) {
+      clearTimeout(session.humanTypingWatchdog);
+      session.humanTypingWatchdog = null;
+    }
     if (session) {
+      // Disconnect implies typing has ended; clear stuck flag so a future rejoin
+      // can't inherit "typing forever".
+      session.humanIsTyping = false;
       logLine("DISCONNECT", `id=${socket.id} sessionId=${session.sessionId} (session preserved for rejoin)`);
       saveCurrentRoundResponses();
       await saveSessionToDatabase(session);
