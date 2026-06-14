@@ -233,6 +233,40 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   timeout: OPENAI_TIMEOUT_MS,
 });
+
+// Verbosity for OpenAI prompt logging. Default 600 chars per prompt; tune via env
+// if a prompt is being truncated mid-instruction. Output is always logged in full
+// (clip length 600 too) so you can see what the LLM actually returned.
+const OPENAI_LOG_LEN = Number(process.env.OPENAI_LOG_LEN || 600);
+
+/**
+ * Wrapped chat-completion call that logs purpose, model, params, prompts, output
+ * and rtt for every OpenAI request. `purpose` is a short tag like "moderator_cue:mid_round"
+ * — make it specific enough that you can grep the log to find one prompt path.
+ */
+async function loggedOpenAI(purpose, params) {
+  const start = Date.now();
+  const sysMsg = params.messages?.find((m) => m.role === "system")?.content || "";
+  const userMsg = params.messages?.find((m) => m.role === "user")?.content || "";
+  logLine(
+    "OPENAI_REQ",
+    `[${purpose}] model=${params.model} temp=${params.temperature ?? "?"} max_tokens=${params.max_tokens ?? "?"}`
+  );
+  logLine("OPENAI_SYS", `[${purpose}] ${clip(sysMsg, OPENAI_LOG_LEN)}`);
+  logLine("OPENAI_USR", `[${purpose}] ${clip(userMsg, OPENAI_LOG_LEN)}`);
+  try {
+    const completion = await openai.chat.completions.create(params);
+    const out = completion?.choices?.[0]?.message?.content ?? "";
+    logLine(
+      "OPENAI_OK",
+      `[${purpose}] rtt=${Date.now() - start}ms out=${clip(out, OPENAI_LOG_LEN)}`
+    );
+    return completion;
+  } catch (e) {
+    logLine("OPENAI_ERR", `[${purpose}] rtt=${Date.now() - start}ms err=${e?.message || e}`);
+    throw e;
+  }
+}
 let MODELS = { default: "gpt-4o-mini" };
 try {
   const raw = fs.readFileSync(path.join(__dirname, "models.json"), "utf8");
@@ -464,7 +498,7 @@ async function getBotResponse(botName, context) {
     shorten,
   });
 
-  const completion = await openai.chat.completions.create({
+  const completion = await loggedOpenAI(`bot_response:${botName}:${roundType}`, {
     model: MODELS.default,
     messages: [
       { role: "system", content: sys },
@@ -530,7 +564,7 @@ If all participants express essentially the same stance, output: [].
 
 Output ONLY valid JSON. No extra text.`;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await loggedOpenAI("detect_disagreement", {
     model: MODELS.default,
     messages: [
       { role: "system", content: sys },
@@ -590,7 +624,7 @@ IMPORTANT: When mentioning any participant by name, ALWAYS prefix their name wit
 Context: The discussion question was: "${moderatorQuestion}". ${disagreedBy} said: "${(disagreedByText || "").slice(0, 200)}". The difference: ${(differenceSummary || "").slice(0, 200)}.
 Output ONLY the message text. No quotes, no JSON, no separators.`;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await loggedOpenAI(`disagreement_followup:${disagreedWith}`, {
     model: MODELS.default,
     messages: [
       { role: "system", content: sys },
@@ -612,7 +646,7 @@ async function generateRoundSummary(question, roundTranscript, opts = {}) {
   const sys = roundType === "poll"
     ? `You are a discussion moderator. Given a yes/no/heard-of poll question and each participant's short answer, write ONE casual sentence summarizing how many people have used it / heard of it vs haven't. Example: "Looks like 2 of us use VPNs and 2 don't!" or "Cool! 3 out of 4 have heard of passkeys but only 1 has actually used one." Keep it under 20 words, warm and natural. Output ONLY the sentence, no quotes or extra text.`
     : `You are a casual human discussion moderator wrapping up a round. Write 1-2 short sentences that briefly capture what people said. Sound like a real person — warm but concise. If people had different takes, note it naturally (e.g. "Sounds like some of you are more cautious while others jump right in"). Do NOT list everyone's individual views. Keep it under 30 words. Output ONLY the text, no quotes or formatting.`;
-  const completion = await openai.chat.completions.create({
+  const completion = await loggedOpenAI(`round_summary:${roundType}`, {
     model: MODELS.default,
     messages: [
       { role: "system", content: sys },
@@ -643,7 +677,7 @@ Examples:
 Return ONLY the first name they introduced themselves as, capitalized. If they didn't say a name, return null.`;
   const user = `Their display name is "${displayName}". Their message: "${text.trim().slice(0, 400)}"`;
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await loggedOpenAI("extract_intro_name", {
       model: MODELS.default,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 30,
@@ -672,7 +706,7 @@ async function isIntroSufficient(introText) {
 - false: just a greeting or filler with no name or self-info (e.g. "hi", "hello everyone", "hey", "yo", "sup", "ok", "hi all").`;
   const user = `Message: "${trimmed.slice(0, 400)}"`;
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await loggedOpenAI("is_intro_sufficient", {
       model: MODELS.default,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 20,
@@ -718,7 +752,7 @@ async function isAskingWhatPasskeyIs(text, roundQuestion) {
   const sys = `You classify whether a chat message indicates the participant does NOT know what passkey is and is asking for an explanation. Return ONLY valid JSON: {"asksWhatPasskeyIs": true} or {"asksWhatPasskeyIs": false}. True when: asks what passkey is, expresses confusion, requests explanation. False when: already knows, sharing opinion.`;
   const user = `Round: ${String(roundQuestion ?? "").slice(0, 150)}\nMessage: "${trimmed.slice(0, 300)}"\nDoes this indicate they don't know passkey and want explanation?`;
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await loggedOpenAI("is_asking_passkey", {
       model: MODELS.default,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 20,
@@ -750,7 +784,7 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const qContext = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"`;
 
   // Two parallel calls: burst-only for isQuestion, combined-only for substantive/inappropriate
-  const questionCall = openai.chat.completions.create({
+  const questionCall = loggedOpenAI("classify_is_question", {
     model: MODELS.default,
     messages: [
       { role: "system", content: `You are a strict classifier. Return ONLY valid JSON with one boolean field:
@@ -763,7 +797,7 @@ Return format: {"isQuestion": true/false}` },
     temperature: 0,
   });
 
-  const substCall = openai.chat.completions.create({
+  const substCall = loggedOpenAI("classify_substantive_inappropriate", {
     model: MODELS.default,
     messages: [
       { role: "system", content: `You are a classifier. Return ONLY valid JSON with two boolean fields:
@@ -823,7 +857,7 @@ Text should be very natural and conversational and very human-like. Do NOT use a
 
   const user = `Discussion question: "${String(roundQuestion ?? "").slice(0, 300)}"\nParticipant's question: "${String(questionText).trim().slice(0, 300)}"`;
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await loggedOpenAI("moderator_answer", {
       model: MODELS.default,
       messages: [
         { role: "system", content: sys },
@@ -889,7 +923,7 @@ Rules:
 Return ONLY the message text. No quotes, no JSON, no formatting.`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await loggedOpenAI(`nudge:${phase}:${nudgeNumber}`, {
       model: MODELS.default,
       messages: [
         { role: "system", content: sys },
@@ -971,13 +1005,39 @@ When in the middle of a round, do NOT ask a new question — only react and cue 
   } else if (isFirstInRound && bigQuestion) {
     userPrompt = `We're starting a new question: "${String(bigQuestion).slice(0, 300)}". No one has answered this question yet. Cue @${nextName} to answer first (brief transition only, e.g. "@[Name], what do you think?"). Do NOT thank or acknowledge anyone as having just responded—no one has responded to this question yet. Remember to prefix the name with @.`;
   } else if (roundQuestion) {
-    userPrompt = `The current question for this round is: "${String(roundQuestion).slice(0, 300)}". Latest message to acknowledge: ${latestStr}. Next person to cue: @${nextName}. Brief ack, then cue them to respond to this same question. Do NOT introduce a new or different question. Remember to prefix the name with @.`;
+    userPrompt = `The current question for this round is: "${String(roundQuestion).slice(0, 300)}".
+
+Latest message to react to: ${latestStr}
+
+Next person to cue: @${nextName}
+
+Your reaction MUST quote, paraphrase, or name a SPECIFIC thing from their message in 3-4 words — not a generic "got it", "makes sense", "interesting", or "gotcha". If they said they're cautious, react to "cautious". If they mentioned VPN at work, react to "VPN at work". If they said they don't know, react to "never heard of it" or similar. Then cue @${nextName}.
+
+Do NOT introduce a new or different question. Remember to prefix the name with @.`;
   } else {
-    userPrompt = `Latest message to acknowledge: ${latestStr}. Next person to cue: @${nextName}. Brief ack, then cue them. Remember to prefix the name with @.`;
+    userPrompt = `Latest message to react to: ${latestStr}
+
+Next person to cue: @${nextName}
+
+Your reaction MUST quote, paraphrase, or name a SPECIFIC thing from their message in 3-4 words — not a generic "got it", "makes sense", "interesting", or "gotcha". Then cue @${nextName}.
+
+Remember to prefix the name with @.`;
   }
 
+  // Tag which branch this cue came from so the log shows whether the strengthened
+  // mid-round prompt is actually being used vs. one of the other paths.
+  const cueBranch = participantAskedWhatPasskeyIs
+    ? "asked_what_passkey"
+    : isIntro
+      ? "intro"
+      : isFirstInRound && bigQuestion
+        ? "first_in_round"
+        : roundQuestion
+          ? "mid_round"
+          : "default";
+
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await loggedOpenAI(`moderator_cue:${cueBranch}:${nextName}`, {
       model: MODELS.default,
       messages: [
         { role: "system", content: sys },
@@ -1415,6 +1475,19 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+});
+
+// Tell nginx / Plesk's reverse proxy not to buffer socket.io polling responses.
+// Without this, long-poll responses (server → client) get held until the proxy's
+// buffer fills, so each emit lands at the client batched with whatever the
+// server writes next — often making the participant's own echo appear bundled
+// with the next bot message. The header is honored by nginx (X-Accel-Buffering)
+// and is a no-op anywhere else, so it's safe to set unconditionally.
+io.engine.on("headers", (headers) => {
+  headers["X-Accel-Buffering"] = "no";
+});
+io.engine.on("initial_headers", (headers) => {
+  headers["X-Accel-Buffering"] = "no";
 });
 
 const PORT = process.env.PORT || 3001;
@@ -2128,32 +2201,36 @@ io.on("connection", (socket) => {
     await runIntroRound();
   }
 
-  /** Intro: all bots start their timer as soon as "To start us off..." is shown; 1st bot 1–2s, 2nd 1–3s, 3rd 1–4s, etc. */
+  /** Intro: bots take turns introducing themselves. Previously parallel-with-stagger,
+   *  which let think+type durations balance the staggered starts so all three bots
+   *  often emitted within ~200ms of each other (then nginx batched the burst into one
+   *  client delivery). Sequential guarantees clean staggering. */
   async function runIntroRound() {
     if (!session?.bots?.length) return;
-    logLine("QUEUE", "intro: bots start staggered timers from 'To start us off', type in parallel");
-    const botPromises = session.bots.map((bot, i) => {
-      const maxSec = 2 + i;
-      const staggerMs = randomBetween(INTRO_STAGGER_BASE_MS, maxSec * 1000);
-      return new Promise((resolve) => {
-        setTimeout(async () => {
-          const options = BOT_INTROS[bot];
-          const intro = options?.length
-            ? options[Math.floor(Math.random() * options.length)]
-            : `Hi, I'm ${bot}.`;
-          const introWaitMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
-          logLine("WAIT", `${bot} start waiting for ${(introWaitMs / 1000).toFixed(1)}s`);
-          await delay(introWaitMs);
-          logLine("WAIT", `${bot} done waiting`);
-          emitTyping(bot, true);
-          await delay(typingDelayMs(intro));
-          emitTyping(bot, false);
-          emitMessage(bot, intro);
-          resolve();
-        }, staggerMs);
-      });
-    });
-    await Promise.all(botPromises);
+    logLine("QUEUE", "intro: bots take turns introducing themselves");
+    for (let i = 0; i < session.bots.length; i++) {
+      if (!session) return;
+      const bot = session.bots[i];
+      const options = BOT_INTROS[bot];
+      const intro = options?.length
+        ? options[Math.floor(Math.random() * options.length)]
+        : `Hi, I'm ${bot}.`;
+      // Brief pause between bots: first one waits a moment after "To start us off…",
+      // subsequent ones wait a moment after the previous bot's message.
+      const staggerMs = randomBetween(INTRO_STAGGER_BASE_MS, INTRO_STAGGER_BASE_MS + 1500);
+      logLine("WAIT", `${bot} stagger ${(staggerMs / 1000).toFixed(1)}s`);
+      await delay(staggerMs);
+      if (!session) return;
+      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
+      logLine("WAIT", `${bot} thinking for ${(thinkMs / 1000).toFixed(1)}s`);
+      await delay(thinkMs);
+      if (!session) return;
+      emitTyping(bot, true);
+      await delay(typingDelayMs(intro));
+      if (!session) return;
+      emitTyping(bot, false);
+      emitMessage(bot, intro);
+    }
     if (!session) return;
     if (hasHumanRepliedAfterIntroPrompt(session)) {
       if (await evaluateHumanIntro(session)) {
