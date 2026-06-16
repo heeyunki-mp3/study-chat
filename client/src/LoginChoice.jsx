@@ -13,13 +13,23 @@ function StudyTimeline() {
       <div className="fg-timeline-item fg-timeline-has-future">
         <div className="fg-timeline-dot" />
         <div className="fg-timeline-content">
-          <span className="fg-timeline-title">Today &middot; $3 on submission</span>
+          <div className="fg-timeline-row">
+            <span className="fg-timeline-title">Today</span>
+            <span className="fg-timeline-payout">+$3</span>
+          </div>
+          <span className="fg-timeline-desc">Paid on submission of the exit survey.</span>
         </div>
       </div>
       <div className="fg-timeline-item fg-timeline-future">
         <div className="fg-timeline-dot fg-timeline-dot-hollow" />
         <div className="fg-timeline-content">
-          <span className="fg-timeline-title">Future follow-ups &middot; Also compensated</span>
+          <div className="fg-timeline-row">
+            <span className="fg-timeline-title">In 2 weeks &middot; Follow-up study</span>
+            <span className="fg-timeline-payout">+$3</span>
+          </div>
+          <span className="fg-timeline-desc">
+            You&apos;ll sign back in with this same account to complete the follow-up.
+          </span>
         </div>
       </div>
     </div>
@@ -367,10 +377,9 @@ function SecureStep({ userId, onBack }) {
             <span className="fg-eyebrow">You're almost done</span>
             <h1>Secure your account</h1>
             <p>
-              Your exit survey contains sensitive information. Secure your
-              account with a strong password or passkey — it's the only thing
-              protecting your responses and any future study data tied to your
-              account.
+              You'll use this account again in <strong>2 weeks</strong> for the
+              paid follow-up study, so pick something you'll have access to.
+              Your exit survey and any future study data are tied to it.
             </p>
             <StudyTimeline />
           </div>
