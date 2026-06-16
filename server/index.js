@@ -504,7 +504,7 @@ async function getBotResponse(botName, context) {
       { role: "system", content: sys },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: roundType === "poll" ? 60 : shorten ? 200 : maxBubbles <= 2 ? 400 : 600,
+    max_tokens: roundType === "poll" ? 120 : shorten ? 200 : maxBubbles <= 2 ? 400 : 600,
     temperature: 0.7,
   });
 

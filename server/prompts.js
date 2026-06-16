@@ -283,13 +283,22 @@ Answer this first, then you may react to newer messages in the transcript.
         : "";
 
   const formatBlock = questionType === "poll"
-    ? `Return EXACTLY 1 chat message as a JSON array with one string. The message must be 6 words or fewer — a very short phrase or single sentence (e.g. ["Yes I use one"] or ["Nope never heard of it"] or ["Heard of it never tried"]).
-  If you don't know the technology that the moderator is asking about, you MUST ask a clarification question. For example, if the moderator asks about passkeys, and you don't know what it is, you must ask: "What is a passkey?" or "I don't know what a passkey is. Can you explain what it is?" or "I only know that it is about login. Can someone explain what passkey is?" depnding on your knowledge about the technology.
-  
+    ? `Return EXACTLY 1 chat message as a JSON array with one string. The message must be a short, casual poll answer (roughly 4–15 words). Stay 100% in your character's voice — your phrasing, slang, punctuation, and capitalization MUST match the Language Realism rules in your persona block above. The answer should sound like YOU specifically, not a generic poll response.
+
+Example voices (DO NOT copy verbatim — your own persona block defines your voice):
+- Cynical IT person: ["tbh passwords are the worst use a manager"]
+- Casual retail worker who lowercases everything: ["honestly idk what that even is"]
+- Cautious teacher: ["I feel like I tried it once cuz of work"]
+- Skeptical case worker: ["heard of em but never bothered to set up"]
+- Calm minimalist: ["I prefer simple things so I dont really use that"]
+
+If you don't know the technology the moderator is asking about, ask a brief clarification question IN YOUR VOICE (e.g. an indifferent retail worker would say "wait what even is that thingy", a blunt IT person would say "what specifically you mean by X"). Match your persona's awareness level — if your persona says you have NO awareness of the topic, don't pretend to know.
+
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array with exactly 1 string.
-- 6 words maximum. No exceptions.`
+- Roughly 4–15 words. Keep it casual and short — a single chat message, not a paragraph.
+- Voice must match your persona's Language Realism rules (lowercase / no apostrophes / etc. if your persona requires it).`
     : shorten
     ? `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Keep it SHORT — maximum 2 sentences TOTAL across all bubbles.
 
