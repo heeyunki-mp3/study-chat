@@ -36,16 +36,6 @@ function StudyTimeline() {
   );
 }
 
-function TrustFooter() {
-  return (
-    <footer className="fg-footer">
-      <span>Paid within 24h</span>
-      <span className="fg-footer-dot" aria-hidden="true" />
-      <span>Withdraw anytime</span>
-    </footer>
-  );
-}
-
 // ─── Icons (inline SVG) ───────────────────────────────────────
 
 function PasswordIcon() {
@@ -218,7 +208,6 @@ function UserIdStep({ onContinue }) {
           </div>
         </div>
       </main>
-      <TrustFooter />
     </div>
   );
 }
@@ -477,7 +466,6 @@ function SecureStep({ userId, onBack }) {
           </div>
         </div>
       </main>
-      <TrustFooter />
     </div>
   );
 }
