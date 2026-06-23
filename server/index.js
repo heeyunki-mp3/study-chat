@@ -973,7 +973,8 @@ CRITICAL RULES:
 - Keep the reaction SHORT — 3-4 words, not a full sentence. The goal is "I heard you specifically", not "let me summarize".
 - Do NOT explain, define, or add information about any technology (passkeys, VPNs, password managers, etc.).
 - Do NOT add your own opinion or commentary (no "that's smart", "great approach", "it's safer", etc.). Stay neutral — react to WHAT they said, not whether it's good.
-- If someone says they don't know what something is, react to that ("Fair, never came up") and move on. Do NOT explain it to them here.
+- Make it human and casual. No separators like "---", "—", "-", ";", or ":" in your message. No markdown formatting. No quotes. No JSON. No extra text.
+- Don't say "noted"
 
 Sound like a real person texting, not a formal moderator.
 
@@ -989,6 +990,7 @@ Good examples (specific reaction → @next):
 
 BAD examples (too generic OR adds info/opinion — avoid these):
 - "Makes sense. @${nextName}, how about you?" (generic — no specific reaction)
+- "Fast adoption, noted. @${nextName}, how about you?" (too robotic — "noted" is not human)
 - "Gotcha. @${nextName}, your turn?" (generic — no specific reaction)
 - "Interesting. @${nextName}?" (generic — no specific reaction)
 - "Thanks for sharing, @[Name]. @[Name], what do you think?" (too formal)
