@@ -29,6 +29,21 @@ export default function WaitingPage() {
     return () => window.removeEventListener("popstate", onBack);
   }, [navigate]);
 
+  // Warn the participant before they reload or close the tab in the waiting room.
+  // Reloading here drops their spot and forfeits payment. The native browser dialog
+  // can't show custom text (browsers force a generic "Reload site? / Leave site?"
+  // message), but it forces a confirmation. The auto-advance to /chat is a
+  // client-side navigation that unmounts this page, so it won't trigger the warning.
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ""; // required for Chrome to show the prompt
+      return "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   useEffect(() => {
     let navId = null;
     const totalWait = MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS);
