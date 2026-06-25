@@ -225,26 +225,6 @@ function SecureStep({ userId, onBack }) {
   const [topMethod, setTopMethod] = useState(null);
   const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
   const clicksRef = useRef([]); // ordered log of every method card the user clicked, e.g. ["passkey","password"]
-  // True once we're intentionally moving the participant forward to the survey, so
-  // the reload/close warning below doesn't fire on that legitimate navigation.
-  const leavingRef = useRef(false);
-
-  // Warn the participant before they reload or close the tab on this registration
-  // step. Abandoning here loses their place in the study and forfeits payment. The
-  // native browser dialog can't show custom text (browsers force a generic
-  // "Reload site? / Leave site?" message), but it does force a confirmation so an
-  // accidental reload can't silently drop them. Suppressed once we navigate to the
-  // survey (leavingRef) — that and the unmount cleanup keep it off the proper flow.
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      if (leavingRef.current) return undefined;
-      e.preventDefault();
-      e.returnValue = ""; // required for Chrome to show the prompt
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -293,7 +273,6 @@ function SecureStep({ userId, onBack }) {
       // Record the auth method the participant completed registration with, for
       // Qualtrics: pw = password, pk = passkey.
       sessionStorage.setItem("pw_vs_pk", "pw");
-      leavingRef.current = true; // legitimate forward navigation — don't warn
       navigate("/survey", { replace: true });
     } catch (err) {
       setError(err.message);
@@ -334,7 +313,6 @@ function SecureStep({ userId, onBack }) {
       // Record the auth method the participant completed registration with, for
       // Qualtrics: pw = password, pk = passkey.
       sessionStorage.setItem("pw_vs_pk", "pk");
-      leavingRef.current = true; // legitimate forward navigation — don't warn
       navigate("/survey", { replace: true });
     } catch (err) {
       if (activeRequestRef.current !== requestId) return;
@@ -504,6 +482,22 @@ export default function LoginChoice() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
+
+  // Warn the participant before they reload or close the tab anywhere on the login/
+  // registration page (both the user-ID step and the password/passkey step).
+  // Abandoning here loses their place in the study and forfeits payment. The native
+  // browser dialog can't show custom text (browsers force a generic "Reload site? /
+  // Leave site?" message), but it forces a confirmation. The forward navigation to
+  // /survey unmounts this page (and is client-side), so it won't trigger the warning.
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ""; // required for Chrome to show the prompt
+      return "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
 
   // Guard: must have completed chat
   const chatCompleted = sessionStorage.getItem("chatCompleted");
