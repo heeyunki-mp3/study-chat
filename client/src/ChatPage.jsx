@@ -319,6 +319,24 @@ export default function ChatPage() {
     return () => window.removeEventListener("popstate", onBack);
   }, [navigate]);
 
+  // Warn the participant before they reload or close the tab mid-study. A reload
+  // past the 30-min session TTL (or after a server restart) starts a fresh
+  // session and loses all progress, which forfeits their payment. The native
+  // browser dialog can't show custom text — browsers force a generic
+  // "Reload site? / Leave site?" message and ignore any string we provide — but
+  // it does force a confirmation so an accidental reload can't silently wipe the
+  // session. Skip the warning once the study is complete (they're meant to leave).
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (studyCompleteRef.current) return undefined;
+      e.preventDefault();
+      e.returnValue = ""; // required for Chrome to show the prompt
+      return "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   useEffect(() => {
     if (!participantName || !sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {
       navigate("/", { replace: true });
