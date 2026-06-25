@@ -270,6 +270,9 @@ function SecureStep({ userId, onBack }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
       sessionStorage.setItem("sessionToken", data.sessionToken);
+      // Record the auth method the participant completed registration with, for
+      // Qualtrics: pw = password, pk = passkey.
+      sessionStorage.setItem("pw_vs_pk", "pw");
       navigate("/survey", { replace: true });
     } catch (err) {
       setError(err.message);
@@ -307,6 +310,9 @@ function SecureStep({ userId, onBack }) {
       if (activeRequestRef.current !== requestId) return;
 
       sessionStorage.setItem("sessionToken", verData.sessionToken);
+      // Record the auth method the participant completed registration with, for
+      // Qualtrics: pw = password, pk = passkey.
+      sessionStorage.setItem("pw_vs_pk", "pk");
       navigate("/survey", { replace: true });
     } catch (err) {
       if (activeRequestRef.current !== requestId) return;

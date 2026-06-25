@@ -53,6 +53,9 @@ export default function SurveyPage() {
     if (prolificPid) params.set("PROLIFIC_PID", prolificPid);
     if (studyId) params.set("STUDY_ID", studyId);
     if (prolificSessionId) params.set("PROLIFIC_SESSION_ID", prolificSessionId);
+    // Auth method the participant registered with: "pw" (password) or "pk" (passkey).
+    const pwVsPk = sessionStorage.getItem("pw_vs_pk");
+    if (pwVsPk) params.set("pw_vs_pk", pwVsPk);
     const qs = params.toString();
     return qs ? `${QUALTRICS_BASE}?${qs}` : QUALTRICS_BASE;
   }, [sessionId]);
