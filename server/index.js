@@ -1864,7 +1864,7 @@ io.on("connection", (socket) => {
     }
     for (let i = 0; i < answerBubbles.length; i++) {
       if (!session) return;
-      await emitModeratorLine(answerBubbles[i], { consecutive: i > 0 });
+      await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
     }
     if (session) {
       session.answeredQuestions = session.answeredQuestions || [];
@@ -2077,7 +2077,7 @@ io.on("connection", (socket) => {
       summary = "Thanks everyone for sharing your views on that.";
     }
     if (!session) return;
-    await emitModeratorLine(summary);
+    await emitModeratorLine(summary, { humanPace: true });
     if (!session) return;
     await advanceToNextRound();
   }
@@ -2492,7 +2492,7 @@ io.on("connection", (socket) => {
       summary = "Thanks everyone for the quick answers!";
     }
     if (!session) return;
-    await emitModeratorLine(summary);
+    await emitModeratorLine(summary, { humanPace: true });
     if (!session) return;
     session.pollState = null;
     await advanceToNextRound();
@@ -2529,7 +2529,7 @@ io.on("connection", (socket) => {
       followUpText = `${item.disagreedBy} had a different view. ${disagreedWithForCue}, what do you think?`;
     }
     if (!session) return;
-    await emitModeratorLine(followUpText);
+    await emitModeratorLine(followUpText, { humanPace: true });
     if (!session) return;
     // If the moderator line was skipped because cancelAdvanceFromIdle was set (shouldn't
     // happen after the fix in runDisagreementPhase, but guard here as a safety net).
@@ -2997,7 +2997,7 @@ io.on("connection", (socket) => {
         }
         for (let i = 0; i < bubbles.length; i++) {
           if (!session) return;
-          await emitModeratorLine(bubbles[i], { consecutive: i > 0 });
+          await emitModeratorLine(bubbles[i], { consecutive: i > 0, humanPace: true });
         }
         if (!session) return;
         // Reset the burst so the old question doesn't leak into future isQuestion classification
