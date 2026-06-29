@@ -1,5 +1,17 @@
 # Notes
 
+## 0. Today's Plan — 2026-06-29 (NOT STARTED — do not touch code until told)
+
+1. ~~**Adjust bot typing speed to feel human.**~~ **Done — 2026-06-29** — `TYPING_SPEED` lowered from `0.93–1.73` to `0.8–1.4` words/sec (≈48–84 WPM) in `server/index.js`. Eunice now has two speeds: `typingDelayMs`/`emitModeratorLine` gained a `humanPace` option. Her big/explanatory messages (big questions, poll instructions, study goal, summaries, intro, wrap-up) keep the fast `MODERATOR_TYPING_SPEED = 3` w/s (copy-paste feel); her **per-person replies** now pass `humanPace: true` and type at the human `TYPING_SPEED` range — applied to call-on cues, first-speaker cues, round acks, idle nudges, and "could you elaborate?". NOTE: left as fast/explanatory (not human-paced): the moderator's answers to a participant's clarifying question (~L1859) and follow-up/summary lines — flag if these should also be human-paced. Speeds are easy to tune via the two constants.
+
+2. **Make Eunice's passkey explanation more informative.** Eunice's explanation of what a passkey is should give more substance. Still deciding the right amount of detail — **wait for my call before implementing.** ⏰ If I haven't prompted about this by **4:00 PM today (2026-06-29)**, remind me.
+
+3. **Fix the first big question.** (a) Make the question itself more specific — participants keep asking what "new features" means, so the wording needs to define/clarify that up front. (b) Cut the discussion phase of this first big question entirely to save time.
+
+4. **Reword the final (passkey) big question to avoid repetition.** Feedback: the moderator asks about passkeys twice — once in the poll and again in the last big question — which feels repetitive. Keep a passkey discussion in the last question, but reword it so it doesn't echo the poll and instead provokes new conversation.
+
+5. **Add a clear closing wrap-up from Eunice.** At the end of all discussions, Eunice should give clear next-step directions. It must convey three things: (1) press "Exit Chat", and you'll need to **create an account** to do the exit survey; (2) the account's security matters because the survey may ask **sensitive questions**, so create strong/secure credentials; (3) you'll **return to this site with those same login credentials** to complete a **paid follow-up study**, so use credentials you'll keep access to. Example phrasing to refine: *"Press Exit Chat. You'll need to make an account to take the exit survey — the questions may be sensitive, so please create secure credentials. You'll also use this same account to come back and complete the paid follow-up study, so make sure it's one you'll have access to."*
+
 ## 1. Todo List
 
 - ~~**Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)~~ **Done** — Mina's texting style updated across all 4 variants (default, pro, anti, control): all lowercase, only `.` punctuation (never at end of last sentence), `??` and `!!` for questions/exclamations, no apostrophes/commas/quotes/dashes.

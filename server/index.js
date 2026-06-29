@@ -106,8 +106,8 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 // --- Bot message timing ---
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
-const TYPING_SPEED = { min: 0.93, max: 1.73 };  // Bot typing speed range (words/sec) — 33% faster than original (0.7–1.3)
-const MODERATOR_TYPING_SPEED = 3;             // Moderator typing speed (words/sec)
+const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
+const MODERATOR_TYPING_SPEED = 3;             // Moderator FAST speed (words/sec) — only for big questions / instructions / explanations (copy-paste feel); per-person replies use TYPING_SPEED via humanPace
 const MODERATOR_THINK_DELAY_MS = { min: 2000, max: 3000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
@@ -1625,7 +1625,7 @@ io.on("connection", (socket) => {
       const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount, nudgeContext);
       // Cancel if user is typing OR if the wait state changed (user already responded and advanced) mid-await.
       const cancelCheck = () => !session || !!session.humanIsTyping || !isWaitingForHuman(session);
-      await emitModeratorLine(nudgeMsg, { cancelCheck });
+      await emitModeratorLine(nudgeMsg, { cancelCheck, humanPace: true });
       if (!session || cancelCheck()) {
         if (session) {
           session.idleNudgeCount = Math.max(0, (session.idleNudgeCount || 0) - 1);
@@ -1662,10 +1662,15 @@ io.on("connection", (socket) => {
     return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
   }
 
-  /** Typing delay based on message length. Uses fixed speed for moderator, random range for bots. Min 800ms. */
-  function typingDelayMs(text, { moderator = false } = {}) {
+  /**
+   * Typing delay based on message length. Min 800ms.
+   * Moderator big/explanatory messages use the fast MODERATOR_TYPING_SPEED
+   * (copy-paste feel). Bots — and the moderator's per-person replies (humanPace)
+   * — use the human TYPING_SPEED range so they don't read as a bot.
+   */
+  function typingDelayMs(text, { moderator = false, humanPace = false } = {}) {
     const words = String(text ?? "").trim().split(/\s+/).filter(Boolean).length || 1;
-    const speed = moderator
+    const speed = (moderator && !humanPace)
       ? MODERATOR_TYPING_SPEED
       : TYPING_SPEED.min + Math.random() * (TYPING_SPEED.max - TYPING_SPEED.min);
     return Math.max(800, Math.round((words / speed) * 1000));
@@ -1732,7 +1737,10 @@ io.on("connection", (socket) => {
   }
 
   async function emitModeratorLine(text, opts = {}) {
-    const { cancelCheck, skipThinkDelay, consecutive } = opts;
+    // humanPace: type this message at the human bot speed instead of the fast
+    // moderator speed — used for Eunice's per-person replies (call-on cues, round
+    // acks, elaboration nudges) so they don't read as copy-paste.
+    const { cancelCheck, skipThinkDelay, consecutive, humanPace } = opts;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
     // Think delay (no typing indicator yet)
@@ -1747,7 +1755,7 @@ io.on("connection", (socket) => {
     }
     // Now show typing indicator + type delay
     emitTyping(MODERATOR_NAME, true);
-    await delay(typingDelayMs(text, { moderator: true }));
+    await delay(typingDelayMs(text, { moderator: true, humanPace }));
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
       emitTyping(MODERATOR_NAME, false);
@@ -1780,7 +1788,7 @@ io.on("connection", (socket) => {
       session.pendingAdvanceFromIdle = false;
       session.cancelAdvanceFromIdle = false;
       logLine("QUEUE", "call-on round done, acknowledging then view-misalignment phase");
-      await emitModeratorLine(pickRoundAckText(session));
+      await emitModeratorLine(pickRoundAckText(session), { humanPace: true });
       if (!session) return;
       runDisagreementPhase();
       return;
@@ -1803,7 +1811,7 @@ io.on("connection", (socket) => {
     }
 
     if (isHuman) {
-      await emitModeratorLine(cue);
+      await emitModeratorLine(cue, { humanPace: true });
       if (fromHumanIdle && wasAdvanceCancelled(session)) {
         cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
         return;
@@ -1816,7 +1824,7 @@ io.on("connection", (socket) => {
 
     const nextNameForLog = isHuman ? session.humanDisplayName : nextName;
     logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=${nextNameForLog}`);
-    await emitModeratorLine(cue);
+    await emitModeratorLine(cue, { humanPace: true });
     if (fromHumanIdle && wasAdvanceCancelled(session)) {
       cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
       return;
@@ -2183,7 +2191,7 @@ io.on("connection", (socket) => {
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
-    await emitModeratorLine(cue);
+    await emitModeratorLine(cue, { humanPace: true });
     if (!session) return;
     if (isHumanTurn(session, firstSpeaker)) {
       startHumanTurnForCallOn(firstSpeaker);
@@ -2340,7 +2348,7 @@ io.on("connection", (socket) => {
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
-    await emitModeratorLine(cue);
+    await emitModeratorLine(cue, { humanPace: true });
     if (!session) return;
     if (isHumanTurn(session, firstSpeaker)) {
       startHumanTurnForCallOn(firstSpeaker);
@@ -2830,6 +2838,7 @@ io.on("connection", (socket) => {
         }
         session.substantialNudgeCount = nudgeCount;
         await emitModeratorLine("Could you elaborate please?", {
+          humanPace: true,
           cancelCheck: () => session?.elaborationPromptCancelled,
         });
         if (!session?.elaborationPromptCancelled) {
