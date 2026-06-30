@@ -11,7 +11,10 @@ const ITEM_SIZE = 140;
 const ITEM_GAP = 24;
 const STEP = ITEM_SIZE + ITEM_GAP;
 const PRESET_COUNT = 3;
-const PRESET_POOL = 9;
+// User picker draws from profile_1..7.jpg only. profile_8.jpg and profile_9.jpg are
+// reserved as the bots Mina's and Sid's avatars (see ChatPage RESERVED_BOT_AVATARS),
+// so participants can't pick an avatar that matches a bot.
+const PRESET_POOL = 7;
 
 function pickRandomPresets(n, pool) {
   const arr = Array.from({ length: pool }, (_, i) => i + 1);

@@ -14,6 +14,11 @@ const PARTICIPANT_NAME_KEY = "participantName";
 const PARTICIPANT_PROFILE_KEY = "participantProfilePicture";
 const SERVER_BASE = import.meta.env.DEV ? "http://127.0.0.1:3001" : "";
 
+// Bots that use one of the reserved participant-style photos instead of their own
+// named PNG. profile_8.jpg / profile_9.jpg are excluded from the user picker
+// (NamePage PRESET_POOL) so a participant can't share an avatar with these bots.
+const RESERVED_BOT_AVATARS = { Mina: "profile_8.jpg", Sid: "profile_9.jpg" };
+
 function fmtTime(ts) {
   try {
     return new Date(ts || Date.now()).toLocaleTimeString([], {
@@ -147,7 +152,7 @@ function getParticipants(session, participantName) {
       isYou: false,
       isModerator: false,
       color: PARTICIPANT_PALETTE[(paletteIndex + i) % PARTICIPANT_PALETTE.length],
-      profilePic: `${SERVER_BASE}/profile_pictures/${bot}.png`,
+      profilePic: `${SERVER_BASE}/profile_pictures/${RESERVED_BOT_AVATARS[bot] || `${bot}.png`}`,
     });
   });
   return list;

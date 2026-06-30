@@ -107,7 +107,7 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
-const EXPLANATORY_TYPING_DELAY_MS = { min: 4000, max: 6000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
+const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
 const MODERATOR_THINK_DELAY_MS = { min: 2000, max: 3000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
@@ -975,6 +975,7 @@ CRITICAL RULES:
 - Do NOT add your own opinion or commentary (no "that's smart", "great approach", "it's safer", etc.). Stay neutral — react to WHAT they said, not whether it's good.
 - Make it human and casual. No separators like "---", "—", "-", ";", or ":" in your message. No markdown formatting. No quotes. No JSON. No extra text.
 - Don't say "noted"
+- Never use the word "huh"
 
 Sound like a real person texting, not a formal moderator.
 
@@ -1096,6 +1097,31 @@ function resetCallOnState(co, question) {
   co.disagreementIndex = 0;
 }
 
+// Fixed call-on orders for the first and last big questions (Item 11); any other
+// big question keeps the rotate-by-one behavior. CALL_ON_USER_TOKEN = the human
+// participant; the rest are bot handles (every study group uses Sid / Mina /
+// Anthony). buildCallOnOrder maps the token to the participant and filters to
+// whoever is actually present, appending anyone not named so no one is dropped.
+const CALL_ON_USER_TOKEN = "@user";
+const FIRST_BIG_Q_ORDER = ["Anthony", "Mina", CALL_ON_USER_TOKEN, "Sid"];
+const LAST_BIG_Q_ORDER = ["Sid", "Anthony", "Mina", CALL_ON_USER_TOKEN];
+// Item 12: this bot is never asked the disagreement follow-up in the last big question.
+const LAST_Q_DISAGREEMENT_EXCLUDE = "Mina";
+
+function buildCallOnOrder(session, template) {
+  const present = [...(session.bots || []), session.participantName];
+  const mapped = template.map((n) => (n === CALL_ON_USER_TOKEN ? session.participantName : n));
+  const ordered = mapped.filter((n) => present.includes(n));
+  for (const n of present) if (!ordered.includes(n)) ordered.push(n);
+  return ordered;
+}
+
+function lastBigQuestionIndex(session) {
+  const rounds = session?.allRounds || [];
+  for (let i = rounds.length - 1; i >= 0; i--) if (rounds[i]?.type === "big_question") return i;
+  return -1;
+}
+
 /** True if the human has sent any message after Eunice's last "To start us off" intro prompt. */
 function hasHumanRepliedAfterIntroPrompt(session) {
   if (!session?.messages?.length || !session.participantName) return false;
@@ -1194,8 +1220,26 @@ function createSession(participantName) {
   };
 }
 
+// Item 7: strip the filler word "huh" from bot/moderator text (LLM sometimes adds
+// it, e.g. "Clutter and broken workflows, huh @Mina"). Removes the token plus an
+// adjacent comma and tidies spacing/punctuation. Applied to generated messages only,
+// never the human participant's own text.
+function stripHuh(text) {
+  if (!text) return text;
+  return String(text)
+    .replace(/\s*,?\s*\bhuh\b\s*,?/gi, " ")
+    .replace(/\s+([,.!?;:])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function addMessage(session, name, text) {
-  const m = { name, text: String(text).trim(), ts: Date.now() };
+  let clean = String(text).trim();
+  // Don't touch the human participant's own words — only bot/moderator messages.
+  if (name !== session.humanDisplayName && name !== session.participantName) {
+    clean = stripHuh(clean);
+  }
+  const m = { name, text: clean, ts: Date.now() };
   session.messages.push(m);
   if (session.roundTranscript) session.roundTranscript.push({ name, text: m.text });
   appendTranscriptLine(session, name, m.text);
@@ -2051,10 +2095,16 @@ io.on("connection", (socket) => {
       return true;
     });
 
-    co.disagreementQueue = deduped;
+    // Item 12: in the final big question, never ask Mina the disagreement follow-up,
+    // so drop any pair where Mina is the one who would be asked (disagreedWith).
+    const queue = (session.currentRoundIndex === lastBigQuestionIndex(session))
+      ? deduped.filter((p) => p.disagreedWith !== LAST_Q_DISAGREEMENT_EXCLUDE)
+      : deduped;
+
+    co.disagreementQueue = queue;
     co.disagreementIndex = 0;
-    if (deduped.length === 0) {
-      logLine("QUEUE", "no view misalignments detected");
+    if (queue.length === 0) {
+      logLine("QUEUE", "no view misalignments to follow up");
       // The disagreement phase is bot-driven — clear stale pending-advance flags so
       // user typing during it doesn't falsely cancel the round summary / next round.
       session.pendingAdvanceFromIdle = false;
@@ -2072,7 +2122,7 @@ io.on("connection", (socket) => {
     // after the user has already gone idle).
     session.pendingAdvanceFromIdle = false;
     session.cancelAdvanceFromIdle = false;
-    for (const p of deduped) {
+    for (const p of queue) {
       logLine("QUEUE", `view misalignment: ${p.disagreedWith} ↔ ${p.disagreedBy} — ${p.differenceSummary}`);
     }
     runNextDisagreementFollowUp();
@@ -2162,9 +2212,11 @@ io.on("connection", (socket) => {
       session.pendingAdvanceFromIdle = false;
       logLine("QUEUE", "all rounds done, wrapping up");
       await saveSessionToDatabase();
-      await emitModeratorLine("Thanks everyone, that wraps up our discussion for today!");
+      await emitModeratorLine("Thanks everyone, that wraps up our discussion for today. I really appreciate you all sharing your experiences!");
       if (!session) return;
-      await emitModeratorLine("Next, please click the \"End Chat\" button, and then create your login credentials to complete the exit survey.", { consecutive: true });
+      await emitModeratorLine("To finish up, click the \"Exit Chat\" button below. You'll create an account and then complete a short exit survey. Some of the questions may be sensitive, so please set up your account with secure login credentials.", { consecutive: true });
+      if (!session) return;
+      await emitModeratorLine("You will also use this same account again in about two weeks for a paid follow-up study, so keep your login handy.", { consecutive: true });
       if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName });
       return;
     }
@@ -2200,8 +2252,14 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // big_question: rotate call-on order by 1, reset state, cue first speaker
-    co.order = [...co.order.slice(1), co.order[0]];
+    // big_question: set call-on order (Item 11), reset state, cue first speaker.
+    if (nextRoundIndex === lastBigQuestionIndex(session)) {
+      // Last big question: fixed order (Sid → Anthony → Mina → user).
+      co.order = buildCallOnOrder(session, LAST_BIG_Q_ORDER);
+    } else {
+      // Any middle big question keeps the rotate-by-one behavior.
+      co.order = [...co.order.slice(1), co.order[0]];
+    }
     resetCallOnState(co, nextRound.question);
 
     const firstSpeaker = co.order[0];
@@ -2358,8 +2416,9 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // big_question
+    // big_question — first big question: fixed call-on order (Item 11).
     const co = session.callOnState;
+    co.order = buildCallOnOrder(session, FIRST_BIG_Q_ORDER);
     resetCallOnState(co, firstRound.question);
     const firstSpeaker = co.order[0];
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
