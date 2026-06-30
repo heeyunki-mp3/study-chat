@@ -483,6 +483,10 @@ async function getBotResponse(botName, context) {
 
   const maxBubbles = roundType === "poll" ? 1 : shorten ? 2 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
 
+  // Poll answers: 50/50 per bot between a bare yes/no (Variant A) and a short
+  // yes/no + reason under 10 words (Variant B). Both stay in the persona's voice.
+  const pollExplain = roundType === "poll" ? Math.random() < 0.5 : false;
+
   const userPrompt = buildUserPrompt({
     transcript,
     recentBot,
@@ -496,9 +500,11 @@ async function getBotResponse(botName, context) {
     maxBubbles,
     questionType: roundType,
     shorten,
+    pollExplain,
   });
 
-  const completion = await loggedOpenAI(`bot_response:${botName}:${roundType}`, {
+  const pollModeTag = roundType === "poll" ? (pollExplain ? ":explain" : ":simple") : "";
+  const completion = await loggedOpenAI(`bot_response:${botName}:${roundType}${pollModeTag}`, {
     model: MODELS.default,
     messages: [
       { role: "system", content: sys },

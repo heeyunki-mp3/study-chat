@@ -245,6 +245,7 @@ export function buildUserPrompt({
   maxBubbles = 3,
   questionType = "big_question",
   shorten = false,
+  pollExplain = false,
 }) {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
@@ -284,23 +285,35 @@ Answer this first, then you may react to newer messages in the transcript.
         : "";
 
   const formatBlock = questionType === "poll"
-    ? `Return EXACTLY 1 chat message as a JSON array with one string. The message must be a short, casual poll answer (roughly 4–15 words). Stay 100% in your character's voice — your phrasing, slang, punctuation, and capitalization MUST match the Language Realism rules in your persona block above. The answer should sound like YOU specifically, not a generic poll response.
+    ? (pollExplain
+      ? `Return EXACTLY 1 chat message as a JSON array with one string. This is a quick poll. Give your yes/no stance plus a SHORT reason, but keep the WHOLE message UNDER 10 words, in your character's voice.
 
-Example voices (DO NOT copy verbatim — your own persona block defines your voice):
-- Cynical IT person: ["tbh passwords are the worst use a manager"]
-- Casual retail worker who lowercases everything: ["honestly idk what that even is"]
-- Cautious teacher: ["I feel like I tried it once cuz of work"]
-- Skeptical case worker: ["heard of em but never bothered to set up"]
-- Calm minimalist: ["I prefer simple things so I dont really use that"]
-- For 50% chance, return: "yes" "yeah" "no" "nope" "i dont think so". This is a poll, not a discussion. Keep it short and casual.
+- Base your yes/no on your persona's actual experience and awareness, not at random.
+- Stay 100% in your character's voice: phrasing, slang, punctuation, and capitalization MUST match the Language Realism rules in your persona block above.
+- Examples of the vibe (DO NOT copy, use your own voice and experience):
+  - "yeah i use one for work mostly"
+  - "nope never really got into that"
+  - "heard of it but never set one up"
 
-If you don't know the technology the moderator is asking about, ask a brief clarification question IN YOUR VOICE (e.g. an indifferent retail worker would say "wait what even is that thingy", a blunt IT person would say "what specifically you mean by X"). Match your persona's awareness level — if your persona says you have NO awareness of the topic, don't pretend to know.
+If you genuinely don't know the technology the moderator is asking about, instead ask a brief clarification question IN YOUR VOICE (e.g. an indifferent retail worker would say "wait what even is that thingy"). Match your persona's awareness level — if your persona says you have NO awareness of the topic, don't pretend to know.
 
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array with exactly 1 string.
-- Roughly 4–15 words. Keep it casual and short — a single chat message, not a paragraph.
+- UNDER 10 words total. One short chat message, not a paragraph.
 - Voice must match your persona's Language Realism rules (lowercase / no apostrophes / etc. if your persona requires it).`
+      : `Return EXACTLY 1 chat message as a JSON array with one string. This is a quick poll and you are giving a SHORT answer with NO explanation.
+
+Pick ONE option that matches your character's actual experience (have you used it / heard of it / not?):
+"yes" "Yes" "Yeah" "yeah" "yea" "Yea" "no" "No" "Nope" "I don't think so" "i dont think so"
+
+- Choose a yes-type or no-type answer based on your persona's real experience and awareness, NOT at random.
+- Use the capitalization that fits your persona's Language Realism rules (if your persona always lowercases, use the lowercase options).
+
+HARD FORMAT RULES:
+- Output ONLY valid JSON. No markdown, no extra text.
+- Must be a JSON array with exactly 1 string.
+- The string must be ONLY one of the options listed above. No explanation, no extra words.`)
     : shorten
     ? `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Keep it SHORT — maximum 2 sentences TOTAL across all bubbles.
 
