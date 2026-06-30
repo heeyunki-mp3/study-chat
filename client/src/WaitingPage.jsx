@@ -67,7 +67,7 @@ export default function WaitingPage() {
   return (
     <div
       style={{
-        minHeight: "100dvh",
+        minHeight: "calc(100dvh - 61px)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

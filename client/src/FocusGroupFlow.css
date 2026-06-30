@@ -24,7 +24,7 @@
 
 /* — Page shell — */
 .fg-page {
-  min-height: calc(100vh - 61px);
+  min-height: calc(100dvh - 61px);
   display: flex;
   flex-direction: column;
   background: var(--page);

@@ -238,7 +238,9 @@ a:hover {
 
 /* ─── Site header (GT logo + Focus Group) ─── */
 .site-header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   padding: 16px 24px;

@@ -127,6 +127,7 @@ export function systemPrompt(botName, otherNamesCsv, persona = {}, moderatorName
 
   const bio = sanitizeOneLine(persona.bio || persona.about || "");
   const personaPrompt = safeStr(persona.persona_prompt || "");
+  const pollStyle = safeStr(persona.poll_style || "");
 
   const awareness = (persona.passkeys?.awareness || "").toString().toLowerCase();
   let passkeyBlock;
@@ -227,6 +228,9 @@ ${personaPrompt ? `
 The following rules define your personality, tone, and writing style. If anything above conflicts with these rules, THESE RULES WIN. Follow them exactly.
 
 ${personaPrompt}` : ""}
+${pollStyle ? `
+POLL ANSWER WORDING (your preferred yes/no forms):
+${pollStyle}` : ""}
 `.trim();
 
   return base;
@@ -289,6 +293,7 @@ Answer this first, then you may react to newer messages in the transcript.
       ? `Return EXACTLY 1 chat message as a JSON array with one string. This is a quick poll. Give your yes/no stance plus a SHORT reason, but keep the WHOLE message UNDER 10 words, in your character's voice.
 
 - Base your yes/no on your persona's actual experience and awareness, not at random.
+- For the yes/no word itself, use your preferred wording from the POLL ANSWER WORDING block in your persona above (e.g. "Yea"/"Yes"/"yeah", "nope"/"no").
 - Stay 100% in your character's voice: phrasing, slang, punctuation, and capitalization MUST match the Language Realism rules in your persona block above.
 - Examples of the vibe (DO NOT copy, use your own voice and experience):
   - "yeah i use one for work mostly"
@@ -308,7 +313,7 @@ Pick ONE option that matches your character's actual experience (have you used i
 "yes" "Yes" "Yeah" "yeah" "yea" "Yea" "no" "No" "Nope" "I don't think so" "i dont think so"
 
 - Choose a yes-type or no-type answer based on your persona's real experience and awareness, NOT at random.
-- Use the capitalization that fits your persona's Language Realism rules (if your persona always lowercases, use the lowercase options).
+- For WHICH wording to use, follow the POLL ANSWER WORDING block in your persona above (your preferred yes form, e.g. "Yea" vs "Yes" vs "yeah", and your preferred no form, e.g. "nope" vs "no"). Match your persona's capitalization; if no rule is given, capitalize the first letter.
 
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.

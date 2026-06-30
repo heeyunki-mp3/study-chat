@@ -204,7 +204,7 @@ export default function NamePage() {
   return (
     <div
       style={{
-        height: "calc(100vh - 61px)",
+        height: "calc(100dvh - 61px)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

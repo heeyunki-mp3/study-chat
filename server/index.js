@@ -104,13 +104,13 @@ const MAX_ELABORATION_NUDGES = 4;             // Kick user after this many elabo
 const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes idle before asking to elaborate
 
 // --- Bot message timing ---
-const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
+const BOT_THINK_DELAY_MS = { min: 4000, max: 6000 }; // Pause before bot shows "typing…" indicator
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
-const MODERATOR_THINK_DELAY_MS = { min: 2000, max: 3000 };       // Moderator think delay before typing
+const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 5000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
-const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
+const STUDY_GOAL_ACK_DELAY_MS = { min: 5000, max: 7000 };  // Randomized think pause before a bot acknowledges the study goal ("Ok!")
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -2385,7 +2385,7 @@ io.on("connection", (socket) => {
     // Two delays to feel natural: (1) silent pause after Eunice finishes, then
     // (2) typing indicator for the duration of typing the ack. Without the
     // indicator the ack popped into chat instantly and felt jarring.
-    await delay(STUDY_GOAL_ACK_DELAY_MS);
+    await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS.min, STUDY_GOAL_ACK_DELAY_MS.max));
     if (!session) return;
     emitTyping(bot, true);
     await delay(typingDelayMs(ack));

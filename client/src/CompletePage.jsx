@@ -27,7 +27,7 @@ export default function CompletePage() {
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 61px)",
+        minHeight: "calc(100dvh - 61px)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
