@@ -107,7 +107,7 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 const BOT_THINK_DELAY_MS = { min: 3000, max: 5000 }; // Pause before bot shows "typing…" indicator
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
-const MODERATOR_TYPING_SPEED = 3;             // Moderator FAST speed (words/sec) — only for big questions / instructions / explanations (copy-paste feel); per-person replies use TYPING_SPEED via humanPace
+const EXPLANATORY_TYPING_DELAY_MS = { min: 4000, max: 6000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
 const MODERATOR_THINK_DELAY_MS = { min: 2000, max: 3000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 const STUDY_GOAL_ACK_DELAY_MS = 2000;         // Delay before bot acknowledges the study goal
@@ -155,7 +155,7 @@ const MODERATOR_SCRIPT_DEFAULT = [
   {
     type: "big_question",
     messages: [
-      "First question: Big tech companies like Google roll out new features pretty often.\n\nHow do you usually feel when a company you use introduces something new?\nDo you tend to try new features right away, or do you usually ignore them at first?",
+      "First question: Tech companies often roll out new features in apps you already use, like a redesigned layout, a new tool or button, or new AI features.\n\nWhen something new like that shows up, how do you usually feel? Do you try it right away, or ignore it at first?",
     ],
   },
   {
@@ -173,7 +173,7 @@ const MODERATOR_SCRIPT_DEFAULT = [
   {
     type: "big_question",
     messages: [
-      "For some Google accounts, users can switch their account login to \"passkey\".\n\nHave you seen or heard about passkey before?\nIf you've used it, what made you decide to switch? If you haven't, what held you back?",
+      "Since some of you have already come across passkeys, I'd love to dig into that a bit. If you've tried one, how did it go, and would you keep using it? If you haven't, what's your gut reaction to the idea of switching to one?",
     ],
   },
 ];
@@ -196,7 +196,7 @@ const MODERATOR_SCRIPT_CONTROL = [
   {
     type: "big_question",
     messages: [
-      "First question: Big tech companies like Google roll out new features pretty often.\n\nHow do you usually feel when a company you use introduces something new?\nDo you tend to try new features right away, or do you usually ignore them at first?",
+      "First question: Tech companies often roll out new features in apps you already use, like a redesigned layout, a new tool or button, or new AI features.\n\nWhen something new like that shows up, how do you usually feel? Do you try it right away, or ignore it at first?",
     ],
   },
   {
@@ -1663,17 +1663,16 @@ io.on("connection", (socket) => {
   }
 
   /**
-   * Typing delay based on message length. Min 800ms.
-   * Moderator big/explanatory messages use the fast MODERATOR_TYPING_SPEED
-   * (copy-paste feel). Bots — and the moderator's per-person replies (humanPace)
-   * — use the human TYPING_SPEED range so they don't read as a bot.
+   * Length-based typing delay (min 800ms), used for bots and for the moderator's
+   * human-paced messages (per-person reactions, round summaries, discussion
+   * prompts, and the final big question). Moderator explanatory broadcasts do NOT
+   * use this — they get a fixed delay (EXPLANATORY_TYPING_DELAY_MS) regardless of
+   * length, handled in emitModeratorLine.
    */
-  function typingDelayMs(text, { moderator = false, humanPace = false } = {}) {
+  function typingDelayMs(text) {
     const words = String(text ?? "").trim().split(/\s+/).filter(Boolean).length || 1;
-    const speed = (moderator && !humanPace)
-      ? MODERATOR_TYPING_SPEED
-      : TYPING_SPEED.min + Math.random() * (TYPING_SPEED.max - TYPING_SPEED.min);
-    return Math.max(800, Math.round((words / speed) * 1000));
+    const wps = TYPING_SPEED.min + Math.random() * (TYPING_SPEED.max - TYPING_SPEED.min);
+    return Math.max(800, Math.round((words / wps) * 1000));
   }
 
   /** Emit a bot's message bubbles with typing indicators; uses timeoutRef so disconnect can clear pending delay. */
@@ -1737,9 +1736,9 @@ io.on("connection", (socket) => {
   }
 
   async function emitModeratorLine(text, opts = {}) {
-    // humanPace: type this message at the human bot speed instead of the fast
-    // moderator speed — used for Eunice's per-person replies (call-on cues, round
-    // acks, elaboration nudges) so they don't read as copy-paste.
+    // humanPace: type this message at the length-based human speed (per-person
+    // replies, summaries, discussion prompts, final big question). Without it, the
+    // message is an explanatory broadcast and uses a fixed 4–6s delay (see below).
     const { cancelCheck, skipThinkDelay, consecutive, humanPace } = opts;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
@@ -1755,7 +1754,12 @@ io.on("connection", (socket) => {
     }
     // Now show typing indicator + type delay
     emitTyping(MODERATOR_NAME, true);
-    await delay(typingDelayMs(text, { moderator: true, humanPace }));
+    // Explanatory broadcasts use a fixed 4–6s type delay regardless of length;
+    // human-paced messages type at the length-based human speed.
+    const typeDelay = humanPace
+      ? typingDelayMs(text)
+      : randomBetween(EXPLANATORY_TYPING_DELAY_MS.min, EXPLANATORY_TYPING_DELAY_MS.max);
+    await delay(typeDelay);
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
       emitTyping(MODERATOR_NAME, false);
@@ -1783,14 +1787,25 @@ io.on("connection", (socket) => {
 
     if (co.currentIndex >= co.order.length) {
       co.roundDone = true;
-      // Commit to the ack + disagreement phase: clear pending-advance flags now so
-      // user typing can no longer skip the ack or cancel the disagreement phase.
+      // Commit to the ack + next phase: clear pending-advance flags now so
+      // user typing can no longer skip the ack or cancel the next phase.
       session.pendingAdvanceFromIdle = false;
       session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "call-on round done, acknowledging then view-misalignment phase");
+      // The first big question is a warmup — skip the disagreement/discussion phase
+      // to save time and go straight to the round summary. Later big questions still
+      // get the full discussion. (advanceCallOn only runs for big_question rounds,
+      // so currentRoundIndex === 0 here means the first big question.)
+      const skipDiscussion = session.currentRoundIndex === 0;
+      logLine("QUEUE", skipDiscussion
+        ? "call-on round done (first big question): acknowledging then summary, discussion skipped"
+        : "call-on round done, acknowledging then view-misalignment phase");
       await emitModeratorLine(pickRoundAckText(session), { humanPace: true });
       if (!session) return;
-      runDisagreementPhase();
+      if (skipDiscussion) {
+        runRoundSummary();
+      } else {
+        runDisagreementPhase();
+      }
       return;
     }
 
@@ -2163,7 +2178,13 @@ io.on("connection", (socket) => {
       if (!session) return;
       await emitModeratorLine(nextRound.question, { consecutive: true });
     } else {
-      await emitModeratorLine(nextRound.question);
+      // The final big question (reached here, not via startFirstRound) types at the
+      // length-based human speed so it reads as personally typed. Polls in this
+      // branch stay on the fixed explanatory delay.
+      await emitModeratorLine(
+        nextRound.question,
+        nextRound.type === "big_question" ? { humanPace: true } : {}
+      );
     }
     if (!session) return;
     if (wasAdvanceCancelled(session)) {
