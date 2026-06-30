@@ -707,9 +707,9 @@ Return ONLY the first name they introduced themselves as, capitalized. If they d
 async function isIntroSufficient(introText) {
   const trimmed = String(introText || "").trim();
   if (!trimmed) return false;
-  const sys = `You decide whether a chat message is a genuine self-introduction in a group discussion. The participant was asked to introduce themselves and share their name and anything they'd like. Return ONLY valid JSON: {"introduced": true} or {"introduced": false}.
-- true: they share their name and/or something about themselves (e.g. "I'm Ana", "Hey, I'm Ana and I work in tech", "Hi I go by T, excited to be here").
-- false: just a greeting or filler with no name or self-info (e.g. "hi", "hello everyone", "hey", "yo", "sup", "ok", "hi all").`;
+  const sys = `You decide whether a chat message is a genuine self-introduction or greeting in a group discussion. The participant was asked to introduce themselves and share their name and anything they'd like. Be lenient: accept any sincere attempt to greet or engage the group, even without an explicit name. Return ONLY valid JSON: {"introduced": true} or {"introduced": false}.
+- true: they share their name, share something about themselves, OR greet/engage the group socially (e.g. "I'm Ana", "Hey, I'm Ana and I work in tech", "Hi I go by T, excited to be here", "hi everyone, nice to meet you all", "hey all, happy to be here", "this is Test, nice to meet you all").
+- false: ONLY a bare one-word greeting or filler with nothing else added (e.g. "hi", "hello", "hey", "yo", "sup", "ok").`;
   const user = `Message: "${trimmed.slice(0, 400)}"`;
   try {
     const completion = await loggedOpenAI("is_intro_sufficient", {
