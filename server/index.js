@@ -483,10 +483,9 @@ async function getBotResponse(botName, context) {
 
   const maxBubbles = roundType === "poll" ? 1 : shorten ? 2 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
 
-  // Poll answers per bot: 40% bare yes/no (Variant A) vs 60% short yes/no + reason
-  // under 10 words (Variant B). Both stay in the persona's voice. pollExplain=true
-  // (the explain variant) fires when the roll is < 0.6.
-  const pollExplain = roundType === "poll" ? Math.random() < 0.6 : false;
+  // Poll answers per bot: 50/50 between a bare yes/no (Variant A) and a short
+  // yes/no + reason under 10 words (Variant B). Both stay in the persona's voice.
+  const pollExplain = roundType === "poll" ? Math.random() < 0.5 : false;
 
   const userPrompt = buildUserPrompt({
     transcript,
@@ -789,7 +788,7 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const combined = combinedText || burstText;
 
   const combinedWordCount = String(combined).trim().split(/\s+/).filter(Boolean).length;
-  const forcedSubstantive = combinedWordCount > 15 ? true : combinedWordCount <= 2 ? false : null;
+  const forcedSubstantive = combinedWordCount > 10 ? true : combinedWordCount <= 2 ? false : null;
 
   const { type = "call_on", prompt = "" } = context || {};
   const qContext = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"`;
@@ -798,7 +797,7 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
 
 - "isQuestion": Look ONLY at the BURST text. True ONLY if the burst contains an explicit, direct question directed at the moderator asking for clarification or explanation. Must contain a clear question form (e.g. "what is X?", "can you explain X?", "how does X work?"). False for: filler ("ok","idk","nope","not sure"), emotions, statements, opinions, expressions of uncertainty or confusion ("I'm not sure what X is", "I don't really know about X", "never heard of X"), or anything that tries to answer the prompt. Uncertainty or lack of knowledge is NOT a question — they must be explicitly asking.
 
-- "substantive": Look at the COMBINED text. True if the messages substantively answer the prompt with relevant content — experiences, opinions, or thoughts. False if still just filler, too vague, off-topic, or only questions.
+- "substantive": Look at the COMBINED text. True if the messages give ANY genuine answer to the prompt — an experience, opinion, or thought, OR an honest statement that they don't know / have never heard of / aren't familiar with the topic (e.g. "I've never heard of them", "I don't really know what that is", "no idea, never used it"). Those ARE complete, valid answers — do NOT treat them as needing elaboration. Be lenient. Set false ONLY for pure filler with no actual answer ("ok", "idk", "sure", "lol", "hmm"), off-topic content, or messages that are only a question.
 
 - "inappropriate": Look at the COMBINED text. True if the messages are clearly inappropriate — aggressive, hostile, offensive, sexual, nonsensical gibberish, or wildly off-topic. Normal short or vague answers are NOT inappropriate.
 
@@ -887,6 +886,27 @@ Text should be very natural and conversational and very human-like. Do NOT use a
     console.error("generateModeratorQuestionAnswer error", e?.message || e);
   }
   return fallback;
+}
+
+// Canonical passkey explanation (2 bubbles). Fixed — NOT LLM-generated — so every
+// participant who asks "what is a passkey?" gets the exact same neutral definition
+// (controlled study stimulus). Emitted at the normal human pace like other answers.
+const PASSKEY_EXPLANATION = [
+  "Good question! A passkey is a passwordless way to log into websites and apps. Instead of a password, you sign in with the fingerprint, face scan, or PIN you already use to unlock your device.",
+  "The passkey stays on your own device, and only you can activate it through those biometrics or whatever unlock method your device uses.",
+];
+
+/**
+ * Answer a participant's question to the moderator. If they're asking what a
+ * passkey is (only checked on passkey rounds), return the fixed canonical
+ * explanation; otherwise fall back to the LLM. Returns the bubbles array.
+ */
+async function answerParticipantQuestion(questionText, roundQuestion, alreadyAnswered = []) {
+  const roundIsPasskey = String(roundQuestion ?? "").toLowerCase().includes("passkey");
+  if (roundIsPasskey && (await isAskingWhatPasskeyIs(questionText, roundQuestion))) {
+    return PASSKEY_EXPLANATION;
+  }
+  return generateModeratorQuestionAnswer(questionText, roundQuestion, alreadyAnswered);
 }
 
 /**
@@ -1926,9 +1946,9 @@ io.on("connection", (socket) => {
     logLine("QUEUE", "bot asked a question, moderator answering");
     let answerBubbles;
     try {
-      answerBubbles = await generateModeratorQuestionAnswer(combined, roundQuestion, session.answeredQuestions || []);
+      answerBubbles = await answerParticipantQuestion(combined, roundQuestion, session.answeredQuestions || []);
     } catch (e) {
-      console.error("generateModeratorQuestionAnswer (bot) error", e?.message || e);
+      console.error("answerParticipantQuestion (bot) error", e?.message || e);
       return;
     }
     for (let i = 0; i < answerBubbles.length; i++) {
@@ -3076,9 +3096,9 @@ io.on("connection", (socket) => {
         logLine("QUEUE", "human_message: question for moderator detected, generating answer");
         let bubbles;
         try {
-          bubbles = await generateModeratorQuestionAnswer(text, roundQuestion, session.answeredQuestions || []);
+          bubbles = await answerParticipantQuestion(text, roundQuestion, session.answeredQuestions || []);
         } catch (e) {
-          console.error("generateModeratorQuestionAnswer error", e?.message || e);
+          console.error("answerParticipantQuestion error", e?.message || e);
           bubbles = ["Happy to clarify!"];
         }
         if (session) {

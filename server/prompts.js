@@ -299,10 +299,11 @@ Answer this first, then you may react to newer messages in the transcript.
 - Base your yes/no on your persona's actual experience and awareness, not at random.
 - For the yes/no word itself, use your preferred wording from the POLL ANSWER WORDING block in your persona above (e.g. "Yea"/"Yes"/"yeah", "nope"/"no").
 - Stay 100% in your character's voice: phrasing, slang, punctuation, and capitalization MUST match the Language Realism rules in your persona block above.
+- If there is no note about capitalization, captialize as a correct English sentence would.
 - Examples of the vibe (DO NOT copy, use your own voice and experience):
-  - "yeah i use one for work mostly"
+  - "Yes, I use one for work mostly"
   - "nope never really got into that"
-  - "heard of it but never set one up"
+  - "Ive heard of it but never set one up"
 
 If you genuinely don't know the technology the moderator is asking about, instead ask a brief clarification question IN YOUR VOICE (e.g. an indifferent retail worker would say "wait what even is that thingy"). Match your persona's awareness level — if your persona says you have NO awareness of the topic, don't pretend to know.
 
