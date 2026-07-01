@@ -214,7 +214,7 @@ const MODERATOR_SCRIPT_CONTROL = [
   {
     type: "big_question",
     messages: [
-      "Have you ever used generative AI like ChatGPT, Gemini, or Copilot?\n\nIf so, which one do you use and why did you choose it? When and in what context do you use it?\nIf you haven't tried it, what has held you back?",
+      "Since some of you have already come across generative AI tools, I'd love to dig into that a bit. If you've tried one, how did it go, and would you keep using it? If you haven't, what's your gut reaction to the idea of trying one?",
     ],
   },
 ];
