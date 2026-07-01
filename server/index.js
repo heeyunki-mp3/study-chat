@@ -110,7 +110,7 @@ const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/s
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
 const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 5000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
-const STUDY_GOAL_ACK_DELAY_MS = { min: 6000, max: 8000 };  // Randomized think pause before a bot acknowledges the study goal ("Ok!")
+const STUDY_GOAL_ACK_DELAY_MS = { min: 6000, max: 7000 };  // Randomized think pause before a bot acknowledges the study goal ("Ok!")
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -483,9 +483,10 @@ async function getBotResponse(botName, context) {
 
   const maxBubbles = roundType === "poll" ? 1 : shorten ? 2 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
 
-  // Poll answers: 50/50 per bot between a bare yes/no (Variant A) and a short
-  // yes/no + reason under 10 words (Variant B). Both stay in the persona's voice.
-  const pollExplain = roundType === "poll" ? Math.random() < 0.5 : false;
+  // Poll answers per bot: 40% bare yes/no (Variant A) vs 60% short yes/no + reason
+  // under 10 words (Variant B). Both stay in the persona's voice. pollExplain=true
+  // (the explain variant) fires when the roll is < 0.6.
+  const pollExplain = roundType === "poll" ? Math.random() < 0.6 : false;
 
   const userPrompt = buildUserPrompt({
     transcript,

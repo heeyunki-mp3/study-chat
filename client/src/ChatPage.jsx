@@ -174,6 +174,11 @@ export default function ChatPage() {
         autoConnect: false,
         path: "/socket.io",
         transports: ["polling"],
+        // Don't let socket.io close the connection on `beforeunload`. Our reload/close
+        // warning fires beforeunload; if the participant cancels (stays), the default
+        // closeOnBeforeunload=true would have already killed the socket and the chat
+        // freezes. Keeping it open lets the chat run normally after they dismiss.
+        closeOnBeforeunload: false,
         ...(import.meta.env.DEV && { withCredentials: true }),
       }),
     []

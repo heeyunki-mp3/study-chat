@@ -128,6 +128,7 @@ export function systemPrompt(botName, otherNamesCsv, persona = {}, moderatorName
   const bio = sanitizeOneLine(persona.bio || persona.about || "");
   const personaPrompt = safeStr(persona.persona_prompt || "");
   const pollStyle = safeStr(persona.poll_style || "");
+  const techExperience = safeStr(persona.tech_experience || "");
 
   const awareness = (persona.passkeys?.awareness || "").toString().toLowerCase();
   let passkeyBlock;
@@ -228,6 +229,9 @@ ${personaPrompt ? `
 The following rules define your personality, tone, and writing style. If anything above conflicts with these rules, THESE RULES WIN. Follow them exactly.
 
 ${personaPrompt}` : ""}
+${techExperience ? `
+YOUR EXPERIENCE WITH THESE TECHNOLOGIES (use this to answer poll questions truthfully in character):
+${techExperience}` : ""}
 ${pollStyle ? `
 POLL ANSWER WORDING (your preferred yes/no forms):
 ${pollStyle}` : ""}
