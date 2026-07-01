@@ -314,11 +314,12 @@ Pick ONE option that matches your character's actual experience (have you used i
 
 - Choose a yes-type or no-type answer based on your persona's real experience and awareness, NOT at random.
 - For WHICH wording to use, follow the POLL ANSWER WORDING block in your persona above (your preferred yes form, e.g. "Yea" vs "Yes" vs "yeah", and your preferred no form, e.g. "nope" vs "no"). Match your persona's capitalization; if no rule is given, capitalize the first letter.
+- EXCEPTION: if your persona genuinely does NOT know the technology the moderator is asking about, do NOT pick a yes/no option. Instead ask a short question in your voice about what it is (e.g. "wait whats a passkey??", "what even is that thing"). If your persona says you have NO awareness of the topic, you MUST ask what it is rather than answer yes/no.
 
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array with exactly 1 string.
-- The string must be ONLY one of the options listed above. No explanation, no extra words.`)
+- Unless you are asking what the technology is (see the EXCEPTION above), the string must be ONLY one of the options listed above, with no explanation or extra words.`)
     : shorten
     ? `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Keep it SHORT — maximum 2 sentences TOTAL across all bubbles.
 

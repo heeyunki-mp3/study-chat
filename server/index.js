@@ -110,7 +110,7 @@ const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/s
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
 const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 5000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
-const STUDY_GOAL_ACK_DELAY_MS = { min: 5000, max: 7000 };  // Randomized think pause before a bot acknowledges the study goal ("Ok!")
+const STUDY_GOAL_ACK_DELAY_MS = { min: 6000, max: 8000 };  // Randomized think pause before a bot acknowledges the study goal ("Ok!")
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -972,11 +972,13 @@ async function generateModeratorCue(latestMessage, nextName, opts = {}) {
 
 Your message MUST have these two parts in order:
 1. A SHORT PERSONAL REACTION (3-4 words) that references the SPECIFIC content of what the person just said. Not a generic "makes sense" or "gotcha" — your reaction must show you actually heard the specific thing they said. E.g. if they mentioned "kids", react to the kids part; if they mentioned "work VPN", react to the work VPN part.
-2. Then smoothly pass to the next person with their @name.
+2. Then CLEARLY hand the turn to the next person: END the reaction with a punctuation mark (a period, "!", or ".."), THEN @name followed by a SHORT prompt phrase (2-4 words) so it is obviously a hand-off and not a comment about them.
 
 CRITICAL RULES:
 - The reaction MUST be specific to what they said. Do NOT use generic acks like "Makes sense", "Gotcha", "Got it", "Interesting" by themselves — they're too vague. Add 2-3 words that point at the actual content.
 - Keep the reaction SHORT — 3-4 words, not a full sentence. The goal is "I heard you specifically", not "let me summarize".
+- ALWAYS separate the reaction from the hand-off with punctuation (a period, "!", or ".."). The reaction and the @name must NEVER run together into one phrase — e.g. "Love new technology excitement @Sid" is WRONG because it reads like you are describing @Sid. Correct: "Love the excitement! @Sid, what about you?"
+- ALWAYS put a SHORT prompt phrase after the @name so it clearly hands over the turn (2-4 words), e.g. "what about you?", "your take?", "how about you?", "your turn?". NEVER end with just "@name" or "@name?" alone.
 - Do NOT explain, define, or add information about any technology (passkeys, VPNs, password managers, etc.).
 - Do NOT add your own opinion or commentary (no "that's smart", "great approach", "it's safer", etc.). Stay neutral — react to WHAT they said, not whether it's good.
 - Make it human and casual. No separators like "---", "—", "-", ";", or ":" in your message. No markdown formatting. No quotes. No JSON. No extra text.
@@ -991,7 +993,7 @@ Good examples (specific reaction → @next):
 - "Yeah I hear you. @${nextName}, you?"
 - "Mm, the kids thing. @${nextName}, how about you?"
 - "Right, it is exciting to try out new stuff. @${nextName}, same question for you"
-- "Switched for the speed. @${nextName}?"
+- "Switched for the speed. @${nextName}, your take?"
 - "Fair. It is good to stick to what works. @${nextName}, what about you?"
 - "Ohh I totally understand why. @${nextName}, your turn"
 
@@ -999,7 +1001,8 @@ BAD examples (too generic OR adds info/opinion — avoid these):
 - "Makes sense. @${nextName}, how about you?" (generic — no specific reaction)
 - "Fast adoption, noted. @${nextName}, how about you?" (too robotic — "noted" is not human)
 - "Gotcha. @${nextName}, your turn?" (generic — no specific reaction)
-- "Interesting. @${nextName}?" (generic — no specific reaction)
+- "Interesting. @${nextName}?" (generic — no specific reaction, and no prompt phrase after the @name)
+- "Love new technology excitement @${nextName}" (WRONG — no punctuation before the @name and no prompt phrase, so it reads like you are describing them instead of calling on them)
 - "Thanks for sharing, @[Name]. @[Name], what do you think?" (too formal)
 - "A passkey is a way to sign in using biometrics. @[Name]?" (DO NOT explain things)
 - "That makes logging in so much easier! @[Name]?" (DO NOT add opinions)
