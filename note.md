@@ -1,8 +1,20 @@
 # Notes
 
-## 0. Work Log — Issues & Fixes (2026-06-29 → 2026-07-01)
+## 0. Open Todos
 
-Each item: **Issue** (what was wrong / the goal) then **Fix** (what was done). ✅ = done, ⬜ = not started.
+Still open. Completed work is in §0b below (item numbers are preserved there since these notes cross-reference them).
+
+8. **Log each moderator message with its purpose and source function.** ⬜
+   - **Issue / goal:** No easy way to audit the moderator flow — can't tell which function produced a given Eunice message or what its purpose/type is.
+   - **Fix:** TBD — add logging that records, per moderator message: the text, its purpose/type (intro, big question, cue, ack, summary, follow-up, answer…), and the producing function.
+
+10. **Rethink the poll summary.** ⬜
+   - **Issue:** The "X people have used it and Y haven't" summary sounds robotic, and it assumes usage (prof: I answered just "yes" to the pw-manager poll and Eunice's summary assumed I'd used one).
+   - **Fix:** TBD — delete it entirely or find a more natural phrasing. Needs discussion.
+
+## 0b. Completed — Issues & Fixes (2026-06-29 → 2026-07-01)
+
+Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-reference them).
 
 1. **Bot typing speed to feel human.** ✅ Done — 2026-06-29 (model revised 2026-06-30)
    - **Issue:** Bots typed too fast, reading as obviously bot-like. Wanted a human feel, but with the moderator able to go faster on scripted/explanatory content (a real moderator copy-pastes those) while her per-person replies stay human-speed.
@@ -32,17 +44,9 @@ Each item: **Issue** (what was wrong / the goal) then **Fix** (what was done). �
    - **Issue:** Bots/Eunice output the filler word "huh" (bad example: "Clutter and broken workflows, huh @Mina").
    - **Fix (two layers):** (1) **Backstop** — `stripHuh()` in `server/index.js` removes the "huh" token (+ adjacent comma, tidies spacing), applied inside `addMessage` to ALL bot + moderator messages; guarded to skip the human's own text (echoed via `emitMessage`→`addMessage`) and word-boundary safe (won't touch "Huntsville"). (2) **Prompt rules** — `Never use the word "huh"` added to the bot system prompt HARD RULES (`prompts.js`) and the moderator cue prompt. Other moderator generators are covered by the backstop.
 
-8. **Log each moderator message with its purpose and source function.** ⬜ Not started
-   - **Issue / goal:** No easy way to audit the moderator flow — can't tell which function produced a given Eunice message or what its purpose/type is.
-   - **Fix:** TBD — add logging that records, per moderator message: the text, its purpose/type (intro, big question, cue, ack, summary, follow-up, answer…), and the producing function.
-
 9. **Differentiate bots' poll answers by character.** ✅ Done — 2026-06-30
    - **Issue:** The poll prompt told every bot to return a bare lowercase "yes"/"yeah"/"no" ~50% of the time, flattening all personas into the same reply.
    - **Fix (`buildUserPrompt` + `getBotResponse`):** Two persona-driven poll variants selected by a per-bot 50/50 coin flip (`pollExplain`, `Math.random() < 0.5`). **Variant A (simple):** picks ONE from a fixed set with capitalization variety (`yes/Yes/Yeah/yeah/yea/Yea/no/No/Nope/I don't think so/i dont think so`) by the persona's real experience, casing per its Language Realism rules. **Variant B (explain):** yes/no + short reason UNDER 10 words in the persona's voice. OpenAI log label gains a `:simple`/`:explain` tag.
-
-10. **Rethink the poll summary.** ⬜ Not started
-   - **Issue:** The current poll summary ("X people have used it and Y haven't") sounds robotic.
-   - **Fix:** TBD — delete it entirely or find a more natural phrasing. Needs discussion before implementing.
 
 11. **Fix the call-on order for first and last questions.** ✅ Done — 2026-06-30
    - **Issue:** Call-on order was the initial `[bots…, user]` list rotated by one; needed specific orders — first Q: Anthony → Mina → User → Sid; last Q: Sid → Anthony → Mina → User.
