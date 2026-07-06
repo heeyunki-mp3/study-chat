@@ -650,7 +650,27 @@ Output ONLY the message text. No quotes, no JSON, no separators.`;
 async function generateRoundSummary(question, roundTranscript, opts = {}) {
   const { roundType = "big_question" } = opts;
   const sys = roundType === "poll"
-    ? `You are a discussion moderator. Given a yes/no/heard-of poll question and each participant's short answer, write ONE casual sentence summarizing how many people have used it / heard of it vs haven't. Example: "Looks like 2 of us use VPNs and 2 don't!" or "Cool! 3 out of 4 have heard of passkeys but only 1 has actually used one." Keep it under 20 words, warm and natural. Output ONLY the sentence, no quotes or extra text.`
+    ? `You are Eunice, a warm, professional-but-friendly discussion moderator. Given this poll question and the short answers, write ONE bubble that acknowledges HOW MANY people had experience with the topic.
+
+RULES:
+- Under 12 words. One sentence. Warm and upbeat, but not overly casual.
+- Use FUZZY quantifiers ("everyone", "most of you", "some of you", "nobody"). NEVER give exact counts ("2 of you", "3 out of 4").
+- If someone said they've USED it → they've used it.
+  If someone said they've HEARD of it but not used → heard of it, NOT used.
+  If someone asked what it is or said they don't know → they don't know it.
+  Don't collapse these three.
+- Vary the opener: "Great!", "Oh nice!", "Interesting!", "Cool!", "Perfect!", "Oh got it,", "Wonderful,", "Awesome!"
+- NEVER use "haha", "lol", "hmm", or filler laughs.
+- DO NOT add opinions about the tech itself.
+
+Examples of good output:
+- "Oh nice! Sounds like everyone here uses one."
+- "Interesting, most of you have tried it!"
+- "Cool, looks like a bit of a mix here!"
+- "Oh got it, some of you haven't heard of it yet."
+- "Great, sounds like nobody's really used it yet!"
+
+Output only the sentence, no quotes or extra text.`
     : `You are a casual human discussion moderator wrapping up a round. Write 1-2 short sentences that briefly capture what people said. Sound like a real person — warm but concise. If people had different takes, note it naturally (e.g. "Sounds like some of you are more cautious while others jump right in"). Do NOT list everyone's individual views. Keep it under 30 words. Output ONLY the text, no quotes or formatting.`;
   const completion = await loggedOpenAI(`round_summary:${roundType}`, {
     model: MODELS.default,
@@ -1301,6 +1321,47 @@ function pickRoundAckText(session) {
     : Math.floor(Math.random() * ROUND_ACK_TEXTS.length);
   session.usedRoundAckIndices = [...used, idx];
   return ROUND_ACK_TEXTS[idx];
+}
+
+// =====================
+// Poll lead-in transitions — prepended (same bubble) to the poll question for
+// polls 2 & 3. Poll 1 still uses the standalone "quick poll" preamble.
+// MIDDLE pool = polls that aren't the last poll; LAST pool = the final poll of
+// the sequence. Each pool picks with no-repeat-in-session.
+// =====================
+const POLL_LEAD_INS_MIDDLE = [
+  "Moving on,",
+  "Alright, next one,",
+  "Ok, next up,",
+  "Great, next question,",
+  "Onto the next,",
+];
+
+const POLL_LEAD_INS_LAST = [
+  "Lastly,",
+  "One more,",
+  "Last one,",
+];
+
+/** Pick a random lead-in not yet used this session from the given pool. */
+function pickFromPool(session, pool, key) {
+  const used = session[key] ?? [];
+  const available = pool.map((_, i) => i).filter((i) => !used.includes(i));
+  const idx = available.length > 0
+    ? available[Math.floor(Math.random() * available.length)]
+    : Math.floor(Math.random() * pool.length);
+  session[key] = [...used, idx];
+  return pool[idx];
+}
+
+/** Prepend a lead-in to a poll question. Lowercases the first char of the
+ *  question so "Have you ever…" becomes "…, have you ever…" while acronyms
+ *  like VPN stay intact. */
+function withPollLeadIn(leadIn, question) {
+  const rest = question.length > 0
+    ? question.charAt(0).toLowerCase() + question.slice(1)
+    : question;
+  return `${leadIn} ${rest}`;
 }
 
 // =====================
@@ -2259,10 +2320,20 @@ io.on("connection", (socket) => {
       await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly — yes, no, or a short comment like \"I've only heard of it.\"");
       if (!session) return;
       await emitModeratorLine(nextRound.question, { consecutive: true });
+    } else if (nextRound.type === "poll") {
+      // Polls 2 & 3: prepend a short lead-in ("Moving on,") to the question in
+      // the SAME bubble so the pivot reads as one continuous moderator line.
+      // The last poll of the sequence uses a distinct "Lastly," pool.
+      const isLastPoll = !session.allRounds
+        .slice(nextRoundIndex + 1)
+        .some((r) => r.type === "poll");
+      const leadIn = isLastPoll
+        ? pickFromPool(session, POLL_LEAD_INS_LAST, "usedPollLeadInLastIndices")
+        : pickFromPool(session, POLL_LEAD_INS_MIDDLE, "usedPollLeadInMiddleIndices");
+      await emitModeratorLine(withPollLeadIn(leadIn, nextRound.question));
     } else {
       // The final big question (reached here, not via startFirstRound) types at the
-      // length-based human speed so it reads as personally typed. Polls in this
-      // branch stay on the fixed explanatory delay.
+      // length-based human speed so it reads as personally typed.
       await emitModeratorLine(
         nextRound.question,
         nextRound.type === "big_question" ? { humanPace: true } : {}
