@@ -110,7 +110,6 @@ const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/s
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
 const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 5000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
-const STUDY_GOAL_ACK_DELAY_MS = { min: 6000, max: 7000 };  // Randomized think pause before a bot acknowledges the study goal ("Ok!")
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -873,7 +872,7 @@ async function generateModeratorQuestionAnswer(questionText, roundQuestion, alre
 
   const sys = `You are ${MODERATOR_NAME}, a warm and natural HUMAN discussion moderator. A participant has asked a question.${previousCtx}
 
-If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONLY a very brief reminder of 8 words or fewer — a single casual sentence. Return a JSON array with exactly 1 string.
+If the participant's question is asking about a topic you already answered above (same concept, even if worded differently), respond with ONE short sentence (up to ~15 words) that BOTH acknowledges you answered it earlier AND gives a brief one-line reminder of the answer. Examples: "Like I mentioned above, it's a passwordless way to log in using your biometrics." / "As I said earlier, it lets you sign in with your face or fingerprint instead of a password." Return a JSON array with exactly 1 string.
 
 Otherwise (new topic not yet covered), respond with EXACTLY a JSON array of 1 string:
 1. Answer the question naturally in at most 2 short sentences. Be casual and direct—no "as a moderator" preamble.
@@ -908,12 +907,11 @@ Text should be very natural and conversational and very human-like. Do NOT use a
   return fallback;
 }
 
-// Canonical passkey explanation (2 bubbles). Fixed — NOT LLM-generated — so every
+// Canonical passkey explanation (1 bubble). Fixed — NOT LLM-generated — so every
 // participant who asks "what is a passkey?" gets the exact same neutral definition
 // (controlled study stimulus). Emitted at the normal human pace like other answers.
 const PASSKEY_EXPLANATION = [
   "Good question! A passkey is a passwordless way to log into websites and apps. Instead of a password, you sign in with the fingerprint, face scan, or PIN you already use to unlock your device.",
-  "The passkey stays on your own device, and only you can activate it through those biometrics or whatever unlock method your device uses.",
 ];
 
 /**
@@ -924,7 +922,13 @@ const PASSKEY_EXPLANATION = [
 async function answerParticipantQuestion(questionText, roundQuestion, alreadyAnswered = []) {
   const roundIsPasskey = String(roundQuestion ?? "").toLowerCase().includes("passkey");
   if (roundIsPasskey && (await isAskingWhatPasskeyIs(questionText, roundQuestion))) {
-    return PASSKEY_EXPLANATION;
+    // If the fixed explanation was already emitted this session, fall through
+    // to the LLM so the second asker gets a brief "already covered" reminder
+    // instead of a full re-explanation.
+    const alreadyExplained = alreadyAnswered.some(
+      (a) => a && a.answer === PASSKEY_EXPLANATION[0]
+    );
+    if (!alreadyExplained) return PASSKEY_EXPLANATION;
   }
   return generateModeratorQuestionAnswer(questionText, roundQuestion, alreadyAnswered);
 }
@@ -1989,7 +1993,7 @@ io.on("connection", (socket) => {
    * a question to the moderator. If so, have Eunice answer (2 bubbles: answer +
    * re-ask of the round question) before the caller continues the flow.
    */
-  async function checkAndAnswerBotQuestion(bubbles, roundQuestion) {
+  async function checkAndAnswerBotQuestion(bubbles, roundQuestion, askerBotName) {
     if (!Array.isArray(bubbles) || bubbles.length === 0 || !session) return;
     const combined = bubbles.join(" ");
     let isQuestion = false;
@@ -2012,13 +2016,70 @@ io.on("connection", (socket) => {
       console.error("answerParticipantQuestion (bot) error", e?.message || e);
       return;
     }
-    for (let i = 0; i < answerBubbles.length; i++) {
-      if (!session) return;
-      await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
+    if (!answerBubbles || answerBubbles.length === 0 || !session) return;
+
+    // Passkey-coordination: if this is the fixed PASSKEY_EXPLANATION, we may
+    // already be "claimed" by the human_message handler. In that case skip our
+    // own emit and just wait for the human path to finish; otherwise claim it
+    // ourselves and emit normally.
+    const isPasskeyAnswer = answerBubbles[0] === PASSKEY_EXPLANATION[0];
+    const ps = session.pollState;
+
+    if (isPasskeyAnswer && ps) {
+      // NOTE: `ps.minaAskedPasskeyResolve` is now called from `runPollRound`
+      // right after Mina's `emitMessage` — earlier and unconditional — so the
+      // human_message handler unblocks even when Mina's answer doesn't classify
+      // as a question. Not duplicated here.
+
+      if (ps.passkeyExplanationEmitPromise) {
+        // Human path claimed the emit — wait for it, do not emit here.
+        logLine("QUEUE", "checkAndAnswerBotQuestion: human already claimed passkey explanation, waiting");
+        await ps.passkeyExplanationEmitPromise;
+        if (!session) return;
+      } else {
+        // We are the primary emitter. Claim the promise, emit normally, resolve.
+        ps.passkeyExplanationEmitPromise = new Promise((r) => { ps.passkeyExplanationEmitResolve = r; });
+        for (let i = 0; i < answerBubbles.length; i++) {
+          if (!session) { ps.passkeyExplanationEmitResolve?.(); return; }
+          await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
+        }
+        if (session) {
+          session.answeredQuestions = session.answeredQuestions || [];
+          session.answeredQuestions.push({ question: combined, answer: answerBubbles[0] });
+        }
+        ps.passkeyExplanationEmitResolve?.();
+      }
+    } else {
+      // Non-passkey answer path — emit normally.
+      for (let i = 0; i < answerBubbles.length; i++) {
+        if (!session) return;
+        await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
+      }
+      if (session) {
+        session.answeredQuestions = session.answeredQuestions || [];
+        session.answeredQuestions.push({ question: combined, answer: answerBubbles[0] });
+      }
     }
-    if (session) {
-      session.answeredQuestions = session.answeredQuestions || [];
-      session.answeredQuestions.push({ question: combined, answer: answerBubbles[0] });
+
+    // Canned Mina follow-up: only fires when MINA asked a question that Eunice
+    // then answered with the fixed PASSKEY_EXPLANATION (`isPasskeyAnswer=true`).
+    // If Mina answered without asking a question (e.g., "never heard of it"),
+    // `checkAndAnswerBotQuestion` has already bailed at the `if (!isQuestion)`
+    // guard above, so this line is unreachable in that case. If the human primary
+    // path emitted first and Mina's `answerParticipantQuestion` returned an LLM
+    // recap (alreadyExplained), `isPasskeyAnswer` is false → no follow-up.
+    if (session && askerBotName === "Mina" && isPasskeyAnswer) {
+      const followUp = "oh i dont think i have used it before";
+      await delay(2000);
+      if (!session) return;
+      emitTyping("Mina", true);
+      await delay(typingDelayMs(followUp));
+      if (!session) return;
+      emitTyping("Mina", false);
+      emitMessage("Mina", followUp);
+      if (session.pollState && session.pollState.answers) {
+        session.pollState.answers["Mina"] = followUp;
+      }
     }
   }
 
@@ -2075,7 +2136,7 @@ io.on("connection", (socket) => {
 
     await emitBotBubblesWithTyping(botName, bubbles, botTypingTimeoutRef);
     if (!session) return;
-    await checkAndAnswerBotQuestion(bubbles, co.question);
+    await checkAndAnswerBotQuestion(bubbles, co.question, botName);
     if (!session) return;
     co.whoSpoke.push(botName);
     await advanceCallOn();
@@ -2477,24 +2538,36 @@ io.on("connection", (socket) => {
     const botIndex = Math.floor(Math.random() * bots.length);
     const bot = bots[botIndex];
     const ack = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
-    // Two delays to feel natural: (1) silent pause after Eunice finishes, then
-    // (2) typing indicator for the duration of typing the ack. Without the
-    // indicator the ack popped into chat instantly and felt jarring.
-    await delay(randomBetween(STUDY_GOAL_ACK_DELAY_MS.min, STUDY_GOAL_ACK_DELAY_MS.max));
-    if (!session) return;
-    emitTyping(bot, true);
-    await delay(typingDelayMs(ack));
-    if (!session) return;
-    emitTyping(bot, false);
-    emitMessage(bot, ack);
 
-    logLine("QUEUE", "study_goal ack done, starting first round");
-    startFirstRound();
+    // Eunice doesn't WAIT for the bot ack — she pauses 2s and moves on. The bot
+    // ack runs concurrently in the background: it appears before Eunice's first
+    // question is emitted (Eunice takes 2s pause + 3-5s explanatory-typing, and
+    // the longest ack "Got it!" types in ≤2.5s, so ordering is guaranteed).
+    (async () => {
+      // Tiny pre-delay so the ack doesn't pop the instant Eunice finishes.
+      await delay(300);
+      if (!session) return;
+      emitTyping(bot, true);
+      await delay(typingDelayMs(ack));
+      if (!session) return;
+      emitTyping(bot, false);
+      emitMessage(bot, ack);
+    })();
+
+    await delay(2000);
+    if (!session) return;
+
+    logLine("QUEUE", "study_goal → first round (2s wait, bot ack fires in background)");
+    startFirstRound({ skipThinkDelay: true });
   }
 
-  /** Start first round (big_question or poll): set state, emit moderator question, then first speaker. */
-  async function startFirstRound() {
+  /** Start first round (big_question or poll): set state, emit moderator question, then first speaker.
+   *  opts.skipThinkDelay — when called from runStudyGoal, Eunice's own 2s pre-question
+   *  pause already served as her think delay; skip emitModeratorLine's built-in one
+   *  so the total gap stays exactly 2s instead of stacking another 3-5s on top. */
+  async function startFirstRound(opts = {}) {
     if (!session) return;
+    const skipThinkDelay = !!opts.skipThinkDelay;
     const firstRound = session.allRounds?.[0];
     if (!firstRound) return;
     session.currentRoundIndex = 0;
@@ -2504,11 +2577,11 @@ io.on("connection", (socket) => {
     logLine("QUEUE", `first round [${firstRound.type}]: "${clip(firstRound.question, 60)}"`);
     if (firstRound.type === "poll" && !session.pollIntroSent) {
       session.pollIntroSent = true;
-      await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly:yes, no, or a short comment like \"I've only heard of it.\"");
+      await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly:yes, no, or a short comment like \"I've only heard of it.\"", { skipThinkDelay });
       if (!session) return;
       await emitModeratorLine(firstRound.question, { consecutive: true });
     } else {
-      await emitModeratorLine(firstRound.question);
+      await emitModeratorLine(firstRound.question, { skipThinkDelay });
     }
     if (!session) return;
 
@@ -2550,7 +2623,20 @@ io.on("connection", (socket) => {
       finished: false,
       graceTimer: null,
       answers: {},
+      // Passkey-poll coordination between (a) the human_message handler when
+      // the participant asks "what is a passkey?" and (b) Mina's poll bot when
+      // her persona-driven answer is also a passkey question. Whichever asks
+      // FIRST claims `passkeyExplanationEmitPromise`; the other waits on it
+      // and skips its own emit so the fixed explanation lands exactly once.
+      // The human path additionally waits on `minaAskedPasskeyPromise` before
+      // emitting, so the transcript reads "human asks → Mina asks → Eunice
+      // explains" instead of "human asks → Eunice explains → Mina asks".
+      passkeyExplanationEmitPromise: null,
+      passkeyExplanationEmitResolve: null,
+      minaAskedPasskeyPromise: null,
+      minaAskedPasskeyResolve: null,
     };
+    pollState.minaAskedPasskeyPromise = new Promise((r) => { pollState.minaAskedPasskeyResolve = r; });
     session.pollState = pollState;
 
     // Each bot has exactly two visible delays: (1) a thinking delay before it
@@ -2601,7 +2687,23 @@ io.on("connection", (socket) => {
         emitTyping(bot, false);
         emitMessage(bot, answer);
         if (session.pollState === pollState) pollState.answers[bot] = answer;
-        await checkAndAnswerBotQuestion(bubbles, question);
+
+        // Passkey coordination — stall guard fix: as soon as Mina emits her
+        // poll answer (regardless of whether the LLM produced a question form
+        // like "wait whats a passkey??" or a persona-inconsistent statement
+        // like "never heard of it"), unblock any human_message handler that is
+        // waiting on `minaAskedPasskeyPromise` before emitting the passkey
+        // explanation. Prior behavior only resolved this inside
+        // `checkAndAnswerBotQuestion` (which requires Mina's answer to
+        // classify as a question), so ~20-35% of runs (when gpt-4o-mini goes
+        // off-persona) would stall the human path for the full 20s guard.
+        // NOTE: the CANNED FOLLOW-UP (Mina's "oh i dont think i have used it
+        // before") is NOT fired here — it lives inside `checkAndAnswerBotQuestion`
+        // so it only fires when Mina's answer was actually classified as a
+        // question that Eunice then answered. See item 23(d) in note.md.
+        if (bot === "Mina") pollState.minaAskedPasskeyResolve?.();
+
+        await checkAndAnswerBotQuestion(bubbles, question, bot);
         resolve();
       });
     });
@@ -2655,6 +2757,23 @@ io.on("connection", (socket) => {
     if (session.pollState.graceTimer) {
       clearTimeout(session.pollState.graceTimer);
       session.pollState.graceTimer = null;
+    }
+    // Fix B (2026-07-06): a passkey explanation queued this round runs on its own
+    // async flow (checkAndAnswerBotQuestion / the human_message handler) and toggles
+    // the SAME moderator "typing…" indicator as the summary + next-question emits
+    // below. If it's still typing when we start, the two flows race: its
+    // emitTyping(false) clears the indicator mid-message, so the participant sees a
+    // long dead gap with NO "typing…" before the next question (observed ~37s). Wait
+    // for any in-flight explanation to finish first, bounded by a defensive timeout
+    // so a stuck/never-resolved promise can't freeze the round. NOTE: this only
+    // covers the case where the explanation has ALREADY been claimed by now; see
+    // note.md "Moderator typing-indicator race" for the residual edge + the full
+    // (Option A) serialize-all-moderator-emits fix.
+    const pendingPasskey = session.pollState.passkeyExplanationEmitPromise;
+    if (pendingPasskey) {
+      logLine("QUEUE", "finishPollRound: waiting for in-flight passkey explanation before summary/next question");
+      await Promise.race([pendingPasskey, delay(45000)]);
+      if (!session || !session.pollState) return;
     }
     const { question, answers } = session.pollState;
 
@@ -2765,7 +2884,7 @@ io.on("connection", (socket) => {
       await emitBotBubblesWithTyping(botName, bubbles, botTypingTimeoutRef);
     }
     if (!session) return;
-    await checkAndAnswerBotQuestion(bubbles, co.question);
+    await checkAndAnswerBotQuestion(bubbles, co.question, botName);
     if (!session) return;
     await runNextDisagreementFollowUp();
   }
@@ -3165,6 +3284,62 @@ io.on("connection", (socket) => {
         // Participant asked the moderator a question instead of answering the prompt.
         // Have Eunice answer it (2 bubbles) and re-ask the question; keep waiting.
         logLine("QUEUE", "human_message: question for moderator detected, generating answer");
+
+        // Passkey-coordination path: if this is the passkey poll AND the human
+        // is asking "what is a passkey?", coordinate with Mina's poll bot. We
+        // want the transcript to read "human asks → Mina asks → Eunice explains"
+        // so Eunice waits for Mina before emitting. Whichever side claims the
+        // emit first drives it; the other waits.
+        const ps = session.pollState;
+        const roundIsPasskey = String(roundQuestion ?? "").toLowerCase().includes("passkey");
+        if (isPollRound && roundIsPasskey && ps && (await isAskingWhatPasskeyIs(text, roundQuestion))) {
+          if (!ps.passkeyExplanationEmitPromise) {
+            // Human is primary — drive the coordinated flow.
+            logLine("QUEUE", "human_message: claiming passkey explanation, will wait for Mina");
+            ps.passkeyExplanationEmitPromise = new Promise((r) => { ps.passkeyExplanationEmitResolve = r; });
+
+            // Eunice: think delay
+            const modWaitMs = randomBetween(MODERATOR_THINK_DELAY_MS.min, MODERATOR_THINK_DELAY_MS.max);
+            await delay(modWaitMs);
+            if (!session) { ps.passkeyExplanationEmitResolve?.(); return; }
+
+            // Typing indicator on for the entire type-out + optional wait-for-Mina
+            emitTyping(MODERATOR_NAME, true);
+            await delay(typingDelayMs(PASSKEY_EXPLANATION[0]));
+            if (!session) { emitTyping(MODERATOR_NAME, false); ps.passkeyExplanationEmitResolve?.(); return; }
+
+            // Wait for Mina to ask (or 20s timeout as a stall guard).
+            await Promise.race([ps.minaAskedPasskeyPromise, delay(20000)]);
+            if (!session) { emitTyping(MODERATOR_NAME, false); ps.passkeyExplanationEmitResolve?.(); return; }
+
+            // Extra 2s of typing indicator so Mina's message lands, then Eunice sends.
+            await delay(2000);
+            if (!session) { emitTyping(MODERATOR_NAME, false); ps.passkeyExplanationEmitResolve?.(); return; }
+
+            emitTyping(MODERATOR_NAME, false);
+            const m = addMessage(session, MODERATOR_NAME, PASSKEY_EXPLANATION[0]);
+            logLine("MESSAGE", `[${MODERATOR_NAME}] "${clip(m.text, 160)}"`);
+            io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
+
+            session.answeredQuestions = session.answeredQuestions || [];
+            session.answeredQuestions.push({ question: text, answer: PASSKEY_EXPLANATION[0] });
+            ps.passkeyExplanationEmitResolve?.();
+
+            session.humanMessagesBurst = [];
+            if (isWaitingForHuman(session)) startIdleNudgeTimer();
+            logLine("QUEUE", "human_message: passkey explanation emitted (human primary, waited for Mina)");
+            return;
+          } else {
+            // Mina claimed. Wait for her emit, then fall through to the LLM
+            // path below (session.answeredQuestions will have the passkey entry
+            // by then, so answerParticipantQuestion will pick generateModeratorQuestionAnswer,
+            // which produces the brief "like I mentioned above" recap).
+            logLine("QUEUE", "human_message: passkey emit already claimed by Mina, waiting then LLM recap");
+            await ps.passkeyExplanationEmitPromise;
+            if (!session) return;
+          }
+        }
+
         let bubbles;
         try {
           bubbles = await answerParticipantQuestion(text, roundQuestion, session.answeredQuestions || []);
