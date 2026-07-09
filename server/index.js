@@ -95,7 +95,7 @@ function logLine(tag, message) {
 // =====================
 
 // --- Human idle detection ---
-const IDLE_EMPTY_MS = 4000;                   // Human stopped typing with empty input → considered idle after this
+const IDLE_EMPTY_MS = 3000;                   // Human stopped typing with empty input → considered idle after this
 const IDLE_TYPING_MS = 4000;                 // Human stopped typing with non-empty input → considered idle after this
 const IDLE_CHECK_MS = 2000;                   // How often the server polls to check if human is idle
 
@@ -110,6 +110,16 @@ const ELABORATION_WAIT_MS = 5000;             // Wait this long after human goes
 
 // --- Bot message timing ---
 const BOT_THINK_DELAY_MS = { min: 4000, max: 6000 }; // Pause before bot shows "typing…" indicator
+// Poll-specific silent think before a bot starts typing its poll answer. Longer
+// than the call-on think: a short yes/no landing 4s after the question reads as
+// bot-like, and the wider range spreads the three bots apart instead of all
+// starting to type at once. The OpenAI call still runs hidden inside this delay.
+// Keep max + type-out comfortably under POLL_STRAGGLER_GRACE_MS (15s).
+const POLL_BOT_THINK_DELAY_MS = { min: 3000, max: 5000 };
+// Silent "reading" pause before the bot's study-goal ack ("Ok!") starts typing.
+// Upper bound matters: pre-delay + type-out (longest ack ≈2.5s) must land BEFORE
+// Eunice's first question, which arrives at 2s pause + 3–5s typing = 5s earliest.
+const STUDY_GOAL_ACK_PRE_DELAY_MS = { min: 1500, max: 2200 };
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
@@ -944,6 +954,12 @@ Text should be very natural and conversational and very human-like. Do NOT use a
 const PASSKEY_EXPLANATION = [
   "Good question! A passkey is a passwordless way to log into websites and apps. Instead of a password, you sign in with the fingerprint, face scan, or PIN you already use to unlock your device.",
 ];
+
+// Mina's canned reaction after Eunice's fixed passkey explanation (item 23),
+// written in her persona style. In poll rounds runPollRound emits it in the
+// background (so the poll summary can be written concurrently and only its SEND
+// waits for it); outside polls checkAndAnswerBotQuestion emits it inline.
+const MINA_PASSKEY_FOLLOWUP = "oh i dont think i have used it before";
 
 /**
  * Answer a participant's question to the moderator. If they're asking what a
@@ -1938,7 +1954,12 @@ io.on("connection", (socket) => {
     // humanPace: type this message at the length-based human speed (per-person
     // replies, summaries, discussion prompts, final big question). Without it, the
     // message is an explanatory broadcast and uses a fixed 4–6s delay (see below).
-    const { cancelCheck, skipThinkDelay, consecutive, humanPace } = opts;
+    // awaitBeforeSend: promise to await AFTER the type-out, right before the send —
+    // the typing indicator stays on while waiting. Lets a flow "write up" a message
+    // concurrently with something else and only serialize the final emit (poll
+    // summary vs Mina's canned follow-up). Callers MUST pass a bounded promise
+    // (Promise.race with a timeout) so a never-resolved promise can't hang here.
+    const { cancelCheck, skipThinkDelay, consecutive, humanPace, awaitBeforeSend } = opts;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) return;
     // Think delay (no typing indicator yet)
@@ -1959,6 +1980,7 @@ io.on("connection", (socket) => {
       ? typingDelayMs(text)
       : randomBetween(EXPLANATORY_TYPING_DELAY_MS.min, EXPLANATORY_TYPING_DELAY_MS.max);
     await delay(typeDelay);
+    if (awaitBeforeSend) await awaitBeforeSend;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
       emitTyping(MODERATOR_NAME, false);
@@ -2052,9 +2074,15 @@ io.on("connection", (socket) => {
    * After a bot emits its bubbles, check whether the last thing it said contains
    * a question to the moderator. If so, have Eunice answer it (answer only — the
    * round question is never re-asked here) before the caller continues the flow.
+   *
+   * Returns true when Mina asked and got the fixed PASSKEY_EXPLANATION, i.e. her
+   * canned follow-up is warranted. With opts.deferMinaFollowUp the follow-up is
+   * NOT emitted here — the caller (runPollRound) fires it in the background so
+   * the poll summary can be written concurrently and only its send waits.
    */
-  async function checkAndAnswerBotQuestion(bubbles, roundQuestion, askerBotName) {
-    if (!Array.isArray(bubbles) || bubbles.length === 0 || !session) return;
+  async function checkAndAnswerBotQuestion(bubbles, roundQuestion, askerBotName, opts = {}) {
+    const { deferMinaFollowUp = false } = opts;
+    if (!Array.isArray(bubbles) || bubbles.length === 0 || !session) return false;
     const combined = bubbles.join(" ");
     let isQuestion = false;
     try {
@@ -2067,16 +2095,16 @@ io.on("connection", (socket) => {
     } catch (e) {
       console.error("checkAndAnswerBotQuestion classify error", e?.message || e);
     }
-    if (!isQuestion || !session) return;
+    if (!isQuestion || !session) return false;
     logLine("QUEUE", "bot asked a question, moderator answering");
     let answerBubbles;
     try {
       answerBubbles = await answerParticipantQuestion(combined, roundQuestion, session.answeredQuestions || []);
     } catch (e) {
       console.error("answerParticipantQuestion (bot) error", e?.message || e);
-      return;
+      return false;
     }
-    if (!answerBubbles || answerBubbles.length === 0 || !session) return;
+    if (!answerBubbles || answerBubbles.length === 0 || !session) return false;
 
     // Passkey-coordination: if this is the fixed PASSKEY_EXPLANATION, we may
     // already be "claimed" by the human_message handler. In that case skip our
@@ -2095,12 +2123,12 @@ io.on("connection", (socket) => {
         // Human path claimed the emit — wait for it, do not emit here.
         logLine("QUEUE", "checkAndAnswerBotQuestion: human already claimed passkey explanation, waiting");
         await ps.passkeyExplanationEmitPromise;
-        if (!session) return;
+        if (!session) return false;
       } else {
         // We are the primary emitter. Claim the promise, emit normally, resolve.
         ps.passkeyExplanationEmitPromise = new Promise((r) => { ps.passkeyExplanationEmitResolve = r; });
         for (let i = 0; i < answerBubbles.length; i++) {
-          if (!session) { ps.passkeyExplanationEmitResolve?.(); return; }
+          if (!session) { ps.passkeyExplanationEmitResolve?.(); return false; }
           await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
         }
         if (session) {
@@ -2112,7 +2140,7 @@ io.on("connection", (socket) => {
     } else {
       // Non-passkey answer path — emit normally.
       for (let i = 0; i < answerBubbles.length; i++) {
-        if (!session) return;
+        if (!session) return false;
         await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
       }
       if (session) {
@@ -2121,7 +2149,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    // Canned Mina follow-up: only fires when MINA asked a question that Eunice
+    // Canned Mina follow-up: only warranted when MINA asked a question that Eunice
     // then answered with the fixed PASSKEY_EXPLANATION (`isPasskeyAnswer=true`).
     // If Mina answered without asking a question (e.g., "never heard of it"),
     // `checkAndAnswerBotQuestion` has already bailed at the `if (!isQuestion)`
@@ -2129,18 +2157,31 @@ io.on("connection", (socket) => {
     // path emitted first and Mina's `answerParticipantQuestion` returned an LLM
     // recap (alreadyExplained), `isPasskeyAnswer` is false → no follow-up.
     if (session && askerBotName === "Mina" && isPasskeyAnswer) {
-      const followUp = "oh i dont think i have used it before";
-      await delay(2000);
-      if (!session) return;
-      emitTyping("Mina", true);
-      await delay(typingDelayMs(followUp));
-      if (!session) return;
-      emitTyping("Mina", false);
-      emitMessage("Mina", followUp);
-      if (session.pollState && session.pollState.answers) {
-        session.pollState.answers["Mina"] = followUp;
+      // Poll rounds fire the follow-up from runPollRound in the background, so
+      // Mina's bot turn can resolve now and the summary can start being "written"
+      // while she types — only the summary's SEND waits for her.
+      if (deferMinaFollowUp) {
+        // Record her real stance HERE, synchronously — after the explanation
+        // resolve above but before any microtask can let finishPollRound build
+        // the summary prompt — so the summary says "haven't used it" instead of
+        // quoting her question (item 23b). Written on the poll's own captured
+        // state (`ps`) so it can never leak into a later poll's answers.
+        if (ps && ps.answers) ps.answers["Mina"] = MINA_PASSKEY_FOLLOWUP;
+        return true;
       }
+      await delay(2000);
+      if (!session) return true;
+      emitTyping("Mina", true);
+      await delay(typingDelayMs(MINA_PASSKEY_FOLLOWUP));
+      if (!session) return true;
+      emitTyping("Mina", false);
+      emitMessage("Mina", MINA_PASSKEY_FOLLOWUP);
+      if (session.pollState && session.pollState.answers) {
+        session.pollState.answers["Mina"] = MINA_PASSKEY_FOLLOWUP;
+      }
+      return true;
     }
+    return false;
   }
 
   async function runBotTurn(botName, directiveOverride) {
@@ -2605,11 +2646,12 @@ io.on("connection", (socket) => {
 
     // Eunice doesn't WAIT for the bot ack — she pauses 2s and moves on. The bot
     // ack runs concurrently in the background: it appears before Eunice's first
-    // question is emitted (Eunice takes 2s pause + 3-5s explanatory-typing, and
-    // the longest ack "Got it!" types in ≤2.5s, so ordering is guaranteed).
+    // question is emitted (worst case: 2.2s reading pause + ≤2.5s typing "Got
+    // it!" = 4.7s, vs the question's earliest arrival at 2s pause + 3s typing = 5s).
     (async () => {
-      // Tiny pre-delay so the ack doesn't pop the instant Eunice finishes.
-      await delay(300);
+      // Reading pause — a human needs a moment to read the two study-goal
+      // bubbles before acking; an instant "Ok!" reads as bot-like.
+      await delay(randomBetween(STUDY_GOAL_ACK_PRE_DELAY_MS.min, STUDY_GOAL_ACK_PRE_DELAY_MS.max));
       if (!session) return;
       emitTyping(bot, true);
       await delay(typingDelayMs(ack));
@@ -2699,8 +2741,19 @@ io.on("connection", (socket) => {
       passkeyExplanationEmitResolve: null,
       minaAskedPasskeyPromise: null,
       minaAskedPasskeyResolve: null,
+      // Resolved once Mina's canned follow-up has been emitted — or once her
+      // turn ends without one. The follow-up fires in the BACKGROUND (her bot
+      // turn resolves first, so botsFinished → the summary can start being
+      // "written" a few sec after the explanation); finishPollRound gates only
+      // the summary's final SEND on this, so the visible order is always
+      // explanation → Mina follow-up → summary, without serializing the work.
+      minaFollowUpDonePromise: null,
+      minaFollowUpDoneResolve: null,
     };
     pollState.minaAskedPasskeyPromise = new Promise((r) => { pollState.minaAskedPasskeyResolve = r; });
+    if (session.bots.includes("Mina")) {
+      pollState.minaFollowUpDonePromise = new Promise((r) => { pollState.minaFollowUpDoneResolve = r; });
+    }
     session.pollState = pollState;
 
     // Each bot has exactly two visible delays: (1) a thinking delay before it
@@ -2710,8 +2763,9 @@ io.on("connection", (socket) => {
     // third wait. (No stagger — the 20–36s tails were per-minute rate-limit retries,
     // not instant concurrency, so spacing the calls only added delay for no gain.)
     const botPromises = session.bots.map((bot) => {
-      const thinkMs = randomBetween(BOT_THINK_DELAY_MS.min, BOT_THINK_DELAY_MS.max);
-      return new Promise(async (resolve) => {
+      const thinkMs = randomBetween(POLL_BOT_THINK_DELAY_MS.min, POLL_BOT_THINK_DELAY_MS.max);
+      let minaFollowUpFired = false; // set when Mina's deferred follow-up task is launched
+      const turn = new Promise(async (resolve) => {
         if (!session || pollState.finished) { resolve(); return; }
 
         // Fire the OpenAI call now (no typing indicator yet) and run the thinking
@@ -2761,15 +2815,37 @@ io.on("connection", (socket) => {
         // `checkAndAnswerBotQuestion` (which requires Mina's answer to
         // classify as a question), so ~20-35% of runs (when gpt-4o-mini goes
         // off-persona) would stall the human path for the full 20s guard.
-        // NOTE: the CANNED FOLLOW-UP (Mina's "oh i dont think i have used it
-        // before") is NOT fired here — it lives inside `checkAndAnswerBotQuestion`
-        // so it only fires when Mina's answer was actually classified as a
-        // question that Eunice then answered. See item 23(d) in note.md.
         if (bot === "Mina") pollState.minaAskedPasskeyResolve?.();
 
-        await checkAndAnswerBotQuestion(bubbles, question, bot);
+        // deferMinaFollowUp: when Mina asked and Eunice gave the fixed passkey
+        // explanation, don't emit her canned follow-up inside cAABQ — fire it in
+        // the background BELOW so this turn resolves now and the summary can
+        // start being written concurrently (its SEND still waits for the
+        // follow-up via minaFollowUpDonePromise — see finishPollRound).
+        const minaShouldFollowUp = await checkAndAnswerBotQuestion(bubbles, question, bot, { deferMinaFollowUp: true });
+        if (bot === "Mina" && minaShouldFollowUp && session) {
+          minaFollowUpFired = true;
+          // (Her stance is already in pollState.answers — written synchronously
+          // inside checkAndAnswerBotQuestion's deferred branch, so the summary
+          // prompt can never be built without it.)
+          (async () => {
+            // Reads as: Eunice explains → 2s "reading" pause → Mina types → ack.
+            await delay(2000);
+            if (!session) return;
+            emitTyping("Mina", true);
+            await delay(typingDelayMs(MINA_PASSKEY_FOLLOWUP));
+            if (!session) return;
+            emitTyping("Mina", false);
+            emitMessage("Mina", MINA_PASSKEY_FOLLOWUP);
+          })().finally(() => pollState.minaFollowUpDoneResolve?.());
+        }
         resolve();
       });
+      // If Mina's turn ends WITHOUT firing the follow-up (no passkey question,
+      // suppressed straggler, session died), release the summary gate so
+      // finishPollRound never waits on a follow-up that isn't coming.
+      if (bot === "Mina") turn.then(() => { if (!minaFollowUpFired) pollState.minaFollowUpDoneResolve?.(); });
+      return turn;
     });
 
     // Set up human waiting state (same idle/nudge mechanism as intro/call-on)
@@ -2834,10 +2910,23 @@ io.on("connection", (socket) => {
     // note.md "Moderator typing-indicator race" for the residual edge + the full
     // (Option A) serialize-all-moderator-emits fix.
     const pendingPasskey = session.pollState.passkeyExplanationEmitPromise;
+    // Gate for the summary's SEND (not its generation/typing): Mina's canned
+    // follow-up fires in the background AFTER the explanation, so Eunice starts
+    // "writing" the summary a few sec after the explanation and holds the final
+    // send until Mina's ack has landed — visible order is always explanation →
+    // Mina follow-up → summary, without serializing the work. Bounded (20s cap;
+    // real remaining time after the explanation is ~7-11s) so it can never hang.
+    // Only armed when an explanation was actually claimed — a stuck Mina fetch
+    // on a non-passkey poll never delays a grace-forced summary.
+    let holdSendForMina = null;
     if (pendingPasskey) {
       logLine("QUEUE", "finishPollRound: waiting for in-flight passkey explanation before summary/next question");
       await Promise.race([pendingPasskey, delay(45000)]);
       if (!session || !session.pollState) return;
+      const minaFollowUpDone = session.pollState.minaFollowUpDonePromise;
+      if (minaFollowUpDone) {
+        holdSendForMina = Promise.race([minaFollowUpDone, delay(20000)]);
+      }
     }
     const { question, answers } = session.pollState;
 
@@ -2849,14 +2938,22 @@ io.on("connection", (socket) => {
     if (humanMsgs.length) answers[humanDisplayName] = humanMsgs.join(" ");
 
     const transcriptStr = Object.entries(answers).map(([name, text]) => `${name}: ${text}`).join("\n");
-    let summary;
-    try {
-      summary = await generateRoundSummary(question, transcriptStr, { roundType: "poll" });
-    } catch (e) {
-      summary = "Thanks everyone for the quick answers!";
-    }
-    if (!session) return;
-    await emitModeratorLine(summary, { humanPace: true });
+    // Fire the summary generation and run Eunice's think delay CONCURRENTLY (same
+    // pattern as the poll bots' hidden OpenAI calls), so the API latency doesn't
+    // stack on top of the think — typing starts right after the think delay.
+    const summaryPromise = (async () => {
+      try {
+        return await generateRoundSummary(question, transcriptStr, { roundType: "poll" });
+      } catch (e) {
+        return "Thanks everyone for the quick answers!";
+      }
+    })();
+    await delay(randomBetween(MODERATOR_THINK_DELAY_MS.min, MODERATOR_THINK_DELAY_MS.max));
+    if (!session || !session.pollState) return;
+    const summary = await summaryPromise;
+    if (!session || !session.pollState) return;
+    // skipThinkDelay: the think already ran above, alongside the generation.
+    await emitModeratorLine(summary, { humanPace: true, skipThinkDelay: true, awaitBeforeSend: holdSendForMina });
     if (!session) return;
     session.pollState = null;
     await advanceToNextRound();

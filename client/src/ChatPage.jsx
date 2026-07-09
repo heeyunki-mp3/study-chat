@@ -325,6 +325,12 @@ export default function ChatPage() {
   const typingTimeoutRef = useRef(null);
   const idleTimeoutRef = useRef(null);
   const inputRef = useRef("");
+  // Outbox: text of sent messages the server hasn't echoed back yet. If the
+  // connection dies mid-send, the server never receives the message and the
+  // rejoin seed would silently wipe its optimistic copy off the screen — so
+  // after each seed we re-send whatever is still unconfirmed (deduped against
+  // the seed in case only the echo was lost).
+  const outboxRef = useRef([]);
 
   // If user presses back, send them to "/" (new session) instead of previous page
   useEffect(() => {
@@ -368,6 +374,8 @@ export default function ChatPage() {
         console.log("attempting rejoin", existingSessionId);
         socket.emit("rejoin", { sessionId: existingSessionId });
       } else {
+        // Fresh session — unsent answers from a previous session don't apply.
+        outboxRef.current = [];
         // Opening duration: how long from opening the app (consent page) to
         // reaching the chat — computed here on the client's own clock.
         const openedAtMs = Number(sessionStorage.getItem("openedAtMs"));
@@ -385,6 +393,8 @@ export default function ChatPage() {
     socket.on("rejoin_failed", () => {
       console.log("rejoin failed, starting new session");
       sessionStorage.removeItem("studySessionId");
+      // Fresh session — unsent answers from the expired session don't apply.
+      outboxRef.current = [];
       const openedAtMs = Number(sessionStorage.getItem("openedAtMs"));
       socket.emit("participant_name", {
         name: participantName,
@@ -409,7 +419,7 @@ export default function ChatPage() {
       // On rejoin, replace messages instead of appending. Compute direction per
       // message — hard-coding "incoming" makes the participant's own prior messages
       // render on the bot side after every reconnect.
-      setMessages((Array.isArray(seedMsgs) ? seedMsgs : []).map((m) => {
+      const seeded = (Array.isArray(seedMsgs) ? seedMsgs : []).map((m) => {
         const sender = m?.name ?? "";
         const isOutgoing = isSelf(sender, participantName);
         return {
@@ -418,13 +428,49 @@ export default function ChatPage() {
           direction: isOutgoing ? "outgoing" : "incoming",
           ts: m?.ts,
         };
-      }));
+      });
+      // Outbox messages that appear in the server's history were delivered after
+      // all (only the echo was lost) — drop those. Match against the tail only,
+      // so an identical short answer from an earlier round can't mask a real loss.
+      const tail = seeded.slice(-10);
+      outboxRef.current = outboxRef.current.filter(
+        (text) => !tail.some((s) => s.direction === "outgoing" && s.message === text)
+      );
+      const pending = [...outboxRef.current];
+      setMessages([
+        ...seeded,
+        // Keep unconfirmed messages visible (still _optimistic — the echo of the
+        // re-send below will confirm them with the authoritative ts).
+        ...pending.map((text) => ({
+          sender: participantName || "",
+          message: text,
+          direction: "outgoing",
+          ts: Date.now(),
+          _optimistic: true,
+        })),
+      ]);
+      // Re-send what the dead connection swallowed, then arm the idle timer so
+      // the moderator flow advances once the resent answer lands.
+      if (pending.length && !studyCompleteRef.current) {
+        console.log("resending", pending.length, "unconfirmed message(s) after rejoin");
+        for (const text of pending) socket.emit("human_message", { text });
+        if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = setTimeout(() => {
+          socket.emit("human_idle");
+          idleTimeoutRef.current = null;
+        }, 4000); // server's IDLE_EMPTY_MS default (session state isn't in this closure)
+      }
     });
 
     socket.on("message", (m) => {
       const text = typeof m?.text === "string" ? m.text : String(m?.text ?? "").slice(0, 2000);
       const sender = m?.name ?? "";
       const isOutgoing = isSelf(sender, participantName);
+      // Server echoed our message back — it's delivered, clear it from the outbox.
+      if (isOutgoing) {
+        const obIdx = outboxRef.current.indexOf(text);
+        if (obIdx >= 0) outboxRef.current.splice(obIdx, 1);
+      }
       setMessages((prev) => {
         if (isOutgoing) {
           // Find the first matching optimistic entry and confirm it with the
@@ -557,6 +603,7 @@ export default function ChatPage() {
     }
     socket.emit("human_typing", { isTyping: false, hasDraft: false });
     socket.emit("human_message", { text: t });
+    outboxRef.current.push(t); // unconfirmed until the server echoes it back
 
     // Optimistic render: show the participant's message immediately. On Plesk
     // (polling-only transport) the server echo can lag behind by several
