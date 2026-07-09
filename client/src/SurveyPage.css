@@ -1,6 +1,8 @@
 .survey-page {
   position: fixed;
-  top: 0;
+  /* Below the sticky 61px GT site header — with top: 0 this page slid underneath
+     it and the header covered the "Please complete the following survey" line. */
+  top: 61px;
   left: 0;
   right: 0;
   bottom: 0;

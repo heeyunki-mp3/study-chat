@@ -120,6 +120,7 @@ export default function ConsentPage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        justifyContent: "center",
         padding: "24px 24px 40px",
         boxSizing: "border-box",
         fontFamily: "system-ui, sans-serif",
