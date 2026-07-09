@@ -26,7 +26,7 @@ function StudyTimeline() {
         <div className="fg-timeline-content">
           <div className="fg-timeline-row">
             <span className="fg-timeline-title">Today</span>
-            <span className="fg-timeline-payout">+$3</span>
+            <span className="fg-timeline-payout">+$4</span>
           </div>
           <span className="fg-timeline-desc">Paid on submission of the exit survey.</span>
         </div>
@@ -36,7 +36,7 @@ function StudyTimeline() {
         <div className="fg-timeline-content">
           <div className="fg-timeline-row">
             <span className="fg-timeline-title">In 2 weeks &middot; Follow-up study</span>
-            <span className="fg-timeline-payout">+$3</span>
+            <span className="fg-timeline-payout">+$10</span>
           </div>
           <span className="fg-timeline-desc">
             You&apos;ll sign back in with this same account to complete the follow-up.
