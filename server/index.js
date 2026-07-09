@@ -115,7 +115,7 @@ const BOT_THINK_DELAY_MS = { min: 4000, max: 6000 }; // Pause before bot shows "
 // bot-like, and the wider range spreads the three bots apart instead of all
 // starting to type at once. The OpenAI call still runs hidden inside this delay.
 // Keep max + type-out comfortably under POLL_STRAGGLER_GRACE_MS (15s).
-const POLL_BOT_THINK_DELAY_MS = { min: 3000, max: 5000 };
+const POLL_BOT_THINK_DELAY_MS = { min: 3000, max: 6000 };
 // Silent "reading" pause before the bot's study-goal ack ("Ok!") starts typing.
 // Upper bound matters: pre-delay + type-out (longest ack ≈2.5s) must land BEFORE
 // Eunice's first question, which arrives at 2s pause + 3–5s typing = 5s earliest.
@@ -125,6 +125,11 @@ const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/s
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
 const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 5000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
+
+
+// --- Poll answer style ---
+const POLL_EXPLAIN_PROBABILITY = 0.4;         // Chance a bot's poll answer includes a short reason (Variant B, "explain") instead of a bare yes/no (Variant A, "simple")
+const POLL_SUMMARY_TO_NEXT_PAUSE_MS = { min: 1000, max: 2000 }; // Breather after the poll summary posts before Eunice's next-question flow (its own think delay) starts — back-to-back felt too quick
 
 // --- Disagreement follow-ups ---
 const MAX_DISAGREEMENT_FOLLOWUPS = 1;         // How many disagreement questions the moderator asks (all misalignments are still detected, but only this many are discussed)
@@ -524,9 +529,10 @@ async function getBotResponse(botName, context) {
 
   const maxBubbles = roundType === "poll" ? 1 : shorten ? 2 : Math.min(3, Math.max(1, Number(persona.max_bubbles) || 3));
 
-  // Poll answers per bot: 50/50 between a bare yes/no (Variant A) and a short
-  // yes/no + reason under 10 words (Variant B). Both stay in the persona's voice.
-  const pollExplain = roundType === "poll" ? Math.random() < 0.5 : false;
+  // Poll answers per bot: POLL_EXPLAIN_PROBABILITY (40%) chance of a short
+  // yes/no + reason under 10 words (Variant B), else a bare yes/no (Variant A).
+  // Both stay in the persona's voice.
+  const pollExplain = roundType === "poll" ? Math.random() < POLL_EXPLAIN_PROBABILITY : false;
 
   const userPrompt = buildUserPrompt({
     transcript,
@@ -960,6 +966,22 @@ const PASSKEY_EXPLANATION = [
 // background (so the poll summary can be written concurrently and only its SEND
 // waits for it); outside polls checkAndAnswerBotQuestion emits it inline.
 const MINA_PASSKEY_FOLLOWUP = "oh i dont think i have used it before";
+
+/**
+ * Copy of the fixed passkey explanation addressed to whoever asked, so it's
+ * clear who Eunice is answering when other messages landed in between:
+ * "Good question @Mina! …" / "Good question @Mina @Test! …" (prof feedback).
+ * The mentions decorate the EMITTED text only — everything that matches or
+ * stores the explanation (alreadyExplained, isPasskeyAnswer, answeredQuestions,
+ * the canned-follow-up trigger) keeps using the canonical PASSKEY_EXPLANATION[0].
+ * NOTE: relies on the canonical text starting with "Good question!" — if that
+ * wording changes, update the replace target here too.
+ */
+function personalizedPasskeyExplanation(askers) {
+  const mentions = (askers || []).filter(Boolean).map((n) => `@${n}`).join(" ");
+  if (!mentions) return PASSKEY_EXPLANATION[0];
+  return PASSKEY_EXPLANATION[0].replace("Good question!", `Good question ${mentions}!`);
+}
 
 /**
  * Answer a participant's question to the moderator. If they're asking what a
@@ -2119,6 +2141,10 @@ io.on("connection", (socket) => {
       // human_message handler unblocks even when Mina's answer doesn't classify
       // as a question. Not duplicated here.
 
+      // Record that Mina asked — the human-primary emit path reads this at send
+      // time to address the explanation to both askers ("Good question @Test @Mina!").
+      if (askerBotName === "Mina") ps.minaAskedPasskey = true;
+
       if (ps.passkeyExplanationEmitPromise) {
         // Human path claimed the emit — wait for it, do not emit here.
         logLine("QUEUE", "checkAndAnswerBotQuestion: human already claimed passkey explanation, waiting");
@@ -2129,7 +2155,12 @@ io.on("connection", (socket) => {
         ps.passkeyExplanationEmitPromise = new Promise((r) => { ps.passkeyExplanationEmitResolve = r; });
         for (let i = 0; i < answerBubbles.length; i++) {
           if (!session) { ps.passkeyExplanationEmitResolve?.(); return false; }
-          await emitModeratorLine(answerBubbles[i], { consecutive: i > 0, humanPace: true });
+          // Address the explanation to the asker(s): the bot who asked, plus the
+          // human if they asked too before this emit (ps.humanAskedPasskey).
+          const textToEmit = i === 0
+            ? personalizedPasskeyExplanation([askerBotName, ps.humanAskedPasskey ? session.humanDisplayName : null])
+            : answerBubbles[i];
+          await emitModeratorLine(textToEmit, { consecutive: i > 0, humanPace: true });
         }
         if (session) {
           session.answeredQuestions = session.answeredQuestions || [];
@@ -2956,6 +2987,10 @@ io.on("connection", (socket) => {
     await emitModeratorLine(summary, { humanPace: true, skipThinkDelay: true, awaitBeforeSend: holdSendForMina });
     if (!session) return;
     session.pollState = null;
+    // Breather before pivoting to the next question (which then runs its own
+    // 3-5s think before typing) — summary → "Moving on…" read as too quick.
+    await delay(randomBetween(POLL_SUMMARY_TO_NEXT_PAUSE_MS.min, POLL_SUMMARY_TO_NEXT_PAUSE_MS.max));
+    if (!session) return;
     await advanceToNextRound();
   }
 
@@ -3463,6 +3498,9 @@ io.on("connection", (socket) => {
         const ps = session.pollState;
         const roundIsPasskey = String(roundQuestion ?? "").toLowerCase().includes("passkey");
         if (isPollRound && roundIsPasskey && ps && (await isAskingWhatPasskeyIs(text, roundQuestion))) {
+          // Record that the human asked — if Mina drives the emit, she reads this
+          // to address the explanation to both ("Good question @Mina @Test!").
+          ps.humanAskedPasskey = true;
           if (!ps.passkeyExplanationEmitPromise) {
             // Human is primary — drive the coordinated flow.
             logLine("QUEUE", "human_message: claiming passkey explanation, will wait for Mina");
@@ -3487,7 +3525,14 @@ io.on("connection", (socket) => {
             if (!session) { emitTyping(MODERATOR_NAME, false); ps.passkeyExplanationEmitResolve?.(); return; }
 
             emitTyping(MODERATOR_NAME, false);
-            const m = addMessage(session, MODERATOR_NAME, PASSKEY_EXPLANATION[0]);
+            // Address the asker(s), decided at SEND time so Mina's question —
+            // classified while Eunice "typed" and waited above — still counts.
+            // Ask order: the human asked first on this path.
+            const explanationText = personalizedPasskeyExplanation([
+              session.humanDisplayName,
+              ps.minaAskedPasskey ? "Mina" : null,
+            ]);
+            const m = addMessage(session, MODERATOR_NAME, explanationText);
             logLine("MESSAGE", `[${MODERATOR_NAME}] "${clip(m.text, 160)}"`);
             io.to(socket.id).emit("message", { name: m.name, text: m.text, ts: m.ts });
 
@@ -3523,7 +3568,12 @@ io.on("connection", (socket) => {
         }
         for (let i = 0; i < bubbles.length; i++) {
           if (!session) return;
-          await emitModeratorLine(bubbles[i], { consecutive: i > 0, humanPace: true });
+          // Fixed passkey explanation can reach this generic path outside the
+          // poll (e.g. asked during the last big question) — address the asker.
+          const textToEmit = i === 0 && bubbles[0] === PASSKEY_EXPLANATION[0]
+            ? personalizedPasskeyExplanation([session.humanDisplayName])
+            : bubbles[i];
+          await emitModeratorLine(textToEmit, { consecutive: i > 0, humanPace: true });
         }
         if (!session) return;
         // Reset the burst so the old question doesn't leak into future isQuestion classification
