@@ -117,9 +117,17 @@ const BOT_THINK_DELAY_MS = { min: 4000, max: 6000 }; // Pause before bot shows "
 // Keep max + type-out comfortably under POLL_STRAGGLER_GRACE_MS (15s).
 const POLL_BOT_THINK_DELAY_MS = { min: 3000, max: 6000 };
 // Silent "reading" pause before the bot's study-goal ack ("Ok!") starts typing.
-// Upper bound matters: pre-delay + type-out (longest ack ≈2.5s) must land BEFORE
-// Eunice's first question, which arrives at 2s pause + 3–5s typing = 5s earliest.
+// No upper-bound constraint: the first question's SEND is gated on the ack emit
+// (bounded promise in runStudyGoal → startFirstRound's holdFirstEmitFor), so the
+// ack always lands first by construction — tune this freely. Only soft limit:
+// past ~7.5s total (pre-delay + type-out) the 10s hold cap could truncate.
 const STUDY_GOAL_ACK_PRE_DELAY_MS = { min: 2200, max: 3200 };
+// Minimum visible gap between a gating ack and the moderator message whose send
+// waits on it (study-goal "Ok!" → first question; Mina's passkey follow-up →
+// poll summary). The gap timer starts the moment the ack LANDS (eager promise
+// chain), so it adds nothing when the ack arrived before the type-out finished —
+// it only prevents the two messages from posting in the same instant.
+const POST_ACK_SEND_GAP_MS = { min: 600, max: 800 };
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
@@ -2675,10 +2683,15 @@ io.on("connection", (socket) => {
     const bot = bots[botIndex];
     const ack = STUDY_GOAL_ACKS[Math.floor(Math.random() * STUDY_GOAL_ACKS.length)];
 
-    // Eunice doesn't WAIT for the bot ack — she pauses 2s and moves on. The bot
-    // ack runs concurrently in the background: it appears before Eunice's first
-    // question is emitted (worst case: 2.2s reading pause + ≤2.5s typing "Got
-    // it!" = 4.7s, vs the question's earliest arrival at 2s pause + 3s typing = 5s).
+    // Eunice doesn't WAIT for the bot ack — she pauses 2s and moves on while the
+    // ack runs concurrently in the background. Ordering (ack BEFORE the first
+    // question) is guaranteed by construction, not timing arithmetic: the ack
+    // task resolves `ackEmitted`, and startFirstRound passes it as the first
+    // question's awaitBeforeSend — Eunice types the question while the bot acks
+    // and only the SEND waits, exactly like Mina's canned follow-up gating the
+    // poll summary. STUDY_GOAL_ACK_PRE_DELAY_MS can therefore be tuned freely.
+    let ackEmitResolve;
+    const ackEmitted = new Promise((r) => { ackEmitResolve = r; });
     (async () => {
       // Reading pause — a human needs a moment to read the two study-goal
       // bubbles before acking; an instant "Ok!" reads as bot-like.
@@ -2689,22 +2702,32 @@ io.on("connection", (socket) => {
       if (!session) return;
       emitTyping(bot, false);
       emitMessage(bot, ack);
-    })();
+    })().finally(() => ackEmitResolve()).catch(() => {});
 
     await delay(2000);
     if (!session) return;
 
     logLine("QUEUE", "study_goal → first round (2s wait, bot ack fires in background)");
-    startFirstRound({ skipThinkDelay: true });
+    // Bounded hold: worst legit ack = pre-delay max + ~2.5s type-out; the 10s cap
+    // means a dead ack task can never stall the first question. The chained gap
+    // keeps the question from posting in the same instant as the ack.
+    startFirstRound({
+      skipThinkDelay: true,
+      holdFirstEmitFor: Promise.race([ackEmitted, delay(10000)])
+        .then(() => delay(randomBetween(POST_ACK_SEND_GAP_MS.min, POST_ACK_SEND_GAP_MS.max))),
+    });
   }
 
   /** Start first round (big_question or poll): set state, emit moderator question, then first speaker.
    *  opts.skipThinkDelay — when called from runStudyGoal, Eunice's own 2s pre-question
    *  pause already served as her think delay; skip emitModeratorLine's built-in one
-   *  so the total gap stays exactly 2s instead of stacking another 3-5s on top. */
+   *  so the total gap stays exactly 2s instead of stacking another 3-5s on top.
+   *  opts.holdFirstEmitFor — bounded promise the FIRST emit's send waits on (typing
+   *  indicator stays on), used to keep the study-goal bot ack before the question. */
   async function startFirstRound(opts = {}) {
     if (!session) return;
     const skipThinkDelay = !!opts.skipThinkDelay;
+    const holdFirstEmitFor = opts.holdFirstEmitFor || null;
     const firstRound = session.allRounds?.[0];
     if (!firstRound) return;
     session.currentRoundIndex = 0;
@@ -2714,11 +2737,11 @@ io.on("connection", (socket) => {
     logLine("QUEUE", `first round [${firstRound.type}]: "${clip(firstRound.question, 60)}"`);
     if (firstRound.type === "poll" && !session.pollIntroSent) {
       session.pollIntroSent = true;
-      await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly:yes, no, or a short comment like \"I've only heard of it.\"", { skipThinkDelay });
+      await emitModeratorLine("For the next few questions, we're going to do a quick poll. For each question, please respond briefly:yes, no, or a short comment like \"I've only heard of it.\"", { skipThinkDelay, awaitBeforeSend: holdFirstEmitFor });
       if (!session) return;
       await emitModeratorLine(firstRound.question, { consecutive: true });
     } else {
-      await emitModeratorLine(firstRound.question, { skipThinkDelay });
+      await emitModeratorLine(firstRound.question, { skipThinkDelay, awaitBeforeSend: holdFirstEmitFor });
     }
     if (!session) return;
 
@@ -2956,7 +2979,10 @@ io.on("connection", (socket) => {
       if (!session || !session.pollState) return;
       const minaFollowUpDone = session.pollState.minaFollowUpDonePromise;
       if (minaFollowUpDone) {
-        holdSendForMina = Promise.race([minaFollowUpDone, delay(20000)]);
+        // Chained gap: starts when Mina's follow-up lands, so the summary never
+        // posts in the same instant — and adds nothing if she landed early.
+        holdSendForMina = Promise.race([minaFollowUpDone, delay(20000)])
+          .then(() => delay(randomBetween(POST_ACK_SEND_GAP_MS.min, POST_ACK_SEND_GAP_MS.max)));
       }
     }
     const { question, answers } = session.pollState;
