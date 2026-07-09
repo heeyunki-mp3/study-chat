@@ -14,6 +14,14 @@ const PARTICIPANT_NAME_KEY = "participantName";
 const PARTICIPANT_PROFILE_KEY = "participantProfilePicture";
 const SERVER_BASE = import.meta.env.DEV ? "http://127.0.0.1:3001" : "";
 
+// TESTING TOGGLE — Exit Chat button visibility.
+//   false (production): the button only appears once Eunice wraps up and
+//     `study_complete` fires, so participants can't skip the focus group.
+//   true (testing): the button is always visible so you can jump to the
+//     login/survey flow without sitting through the whole chat.
+// ⚠️ Must be false before launching the pilot.
+const SHOW_EXIT_BUTTON_ALWAYS = false;
+
 // Bots that use one of the reserved participant-style photos instead of their own
 // named PNG. profile_8.jpg / profile_9.jpg are excluded from the user picker
 // (NamePage PRESET_POOL) so a participant can't share an avatar with these bots.
@@ -708,9 +716,11 @@ export default function ChatPage() {
         </div>
 
         <div className="chat-footer">
-          <button onClick={goLogin} className="chat-exit-btn">
-            Exit Chat
-          </button>
+          {(SHOW_EXIT_BUTTON_ALWAYS || studyComplete) && (
+            <button onClick={goLogin} className="chat-exit-btn">
+              Exit Chat
+            </button>
+          )}
         </div>
       </div>
       </div>
