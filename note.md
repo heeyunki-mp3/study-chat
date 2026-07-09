@@ -1,49 +1,66 @@
 # Notes
 
-## MASTER TODO — consolidated 2026-07-09 (the operative list; per-item detail in §0a and the dated §2 entries)
+## MASTER TODO — status tracker (updated 2026-07-09)
 
-### A. Launch-blocking — do BEFORE the pilot (target: 2026-07-10 mid-day)
+One line per item: status, opened date, completed date. Per-item detail lives in §0a (P-items), the dated §2 entries, and §1. Pre-July completed work stays in §0b.
 
-**App code:**
-- **A1. Swap the no-consent Prolific code → `C8ZQ9LBY`.** ⬜ `PROLIFIC_DECLINED_URL` in `ConsentPage.jsx` still has the placeholder `C1M1NSHW`. One-liner + rebuild. (Resolves the P3 verification question — placeholder was wrong.)
-- **A2. Record how each session ended, in the DB.** ⬜ Exit-status on `participant_responses`: `completed` / `failed_attention` (idle kick) / `unsubstantial` / `inappropriate` (trolling) / `no_consent` / `abandoned` + WHERE they dropped (intro / round N / login / survey). Supersedes P10. ⚠️ Decliners have no DB row today (row is created at chat start) → `no_consent` needs a new write path (small endpoint from ConsentPage on decline, keyed by PROLIFIC_PID). "Where abandoned" can combine a last-phase field with the existing dur_*/q-columns.
-- **A3. Fix the P9b data-loss bug.** ⬜ A disagreement-follow-up reply OVERWRITES the participant's earlier call-on answer for that round in the q-columns (should append). Silent response loss — must not run the pilot with this.
-- **A4. Copy: tell participants they'll be returned to Prolific after the survey.** ⬜ (SurveyPage header and/or login flow.)
-- **A5. Copy: login page middle paragraph — append "you will sign in with the account."** ⬜ (Confirm exact paragraph when implementing.)
+### ⬜ OPEN
 
-**Qualtrics (survey `SV_3HIPgZRXfMvUgsu`):**
-- **A6. Re-apply the End-of-Survey top-window redirect snippet.** ⬜ Did NOT carry over from the pilot survey — without it completers never get back to Prolific automatically. (Details in §1.)
-- **A7. Fix the "techniques to access accounts" question** — real options (currently broken Likert leftovers) + allow multiple selections. [P14] ⬜
-- **A8. Fix the 2FA question** the same way. [P15] ⬜
-- **A9. Capture device type** (browser/OS/device embedded metadata) and expose the column. ⬜
-- **A10. Confirm the `pw_vs_pk` embedded-data field exists** in Survey Flow + its column enabled. ⬜
-- **A11. "Exit survey falsify"** — scope unclear, clarify with prof, then do. ⬜
+| ID | Item | Opened |
+|---|---|---|
+| A1 | Swap no-consent Prolific code → `C8ZQ9LBY` (`ConsentPage.jsx` still has placeholder `C1M1NSHW`) | 2026-07-09 |
+| A2 | Record how each session ended in DB (completed / failed_attention / unsubstantial / inappropriate / no_consent / abandoned + where). Supersedes P10. Decliners need a new write path — no DB row exists at decline time | 2026-07-09 |
+| A3 | P9b bug: disagreement reply OVERWRITES the round's earlier answer in q-columns (silent data loss) | 2026-07-09 |
+| A4 | Copy: tell participants they'll return to Prolific after the survey | 2026-07-09 |
+| A5 | Copy: login middle paragraph + "you will sign in with the account" | 2026-07-09 |
+| A6 | Qualtrics: re-apply End-of-Survey top-window redirect to `SV_3HIPgZRXfMvUgsu` (didn't carry over from pilot survey) | 2026-05-13 |
+| A7 | Qualtrics: fix "techniques to access accounts" options + multi-select (P14) | 2026-07-09 |
+| A8 | Qualtrics: fix the 2FA question (P15) | 2026-07-09 |
+| A9 | Qualtrics: capture device type (browser/OS embedded metadata) | 2026-07-09 |
+| A10 | Qualtrics: confirm `pw_vs_pk` embedded-data field + column enabled | 2026-06-25 |
+| A11 | "Exit survey falsify" — clarify scope with prof, then do | 2026-07-09 |
+| B1 | Backup then wipe test data (DB + Qualtrics; archive `server/logs/`) | 2026-07-09 |
+| B2 | Flip `SHOW_EXIT_BUTTON_ALWAYS` → `false` (⚠️ currently **true**), rebuild, scp `dist/` | 2026-07-09 |
+| B3 | Server deploy: git pull + Plesk Restart App (runs duration-column ALTERs, ships all pending changes) | 2026-07-09 |
+| B4 | Production smoke test: full run + all three Prolific exit codes | 2026-07-09 |
+| B5 | CSV merge check (DB export ⋈ Qualtrics on session id / PROLIFIC_PID / pw_vs_pk) | 2026-07-09 |
+| B6 | **Launch pilot** — target 2026-07-10 mid-day | 2026-07-09 |
+| C1 | P5: Eunice types a bit quicker (tune constants) | 2026-07-09 |
+| C2 | P8: shorten bot answers on the last big question | 2026-07-09 |
+| C3 | Wrap-up pacing: 3 closing bubbles land in ~11s; proposal (2-4s gaps + 5-8s type) awaiting decision | 2026-07-09 |
+| D1 | Verify in pilot: Eunice bubble order (explanation → Mina → summary) | 2026-07-09 |
+| D2 | Verify in pilot: new pacing (ack gap, summary hold, poll pauses, 3-6s poll think) | 2026-07-09 |
+| D3 | Verify in pilot: Prolific exit codes recorded per path | 2026-07-09 |
+| D4 | Verify in pilot: duration columns populate sanely | 2026-07-09 |
+| E1 | Backlog: Option A — serialize all moderator emits (mutex) | 2026-07-06 |
+| E2 | Backlog: log each moderator message with purpose + source function (old item 8) | 2026-07-06 |
+| E3 | Backlog: LLM answers/recaps don't name the asker (P6 extension) | 2026-07-09 |
+| E4 | Backlog: Derek pro-persona tone check (not deployed) | 2026-04-22 |
+| E5 | Backlog: minor edge cases from review sweep (CLI botIds, prior-context boundary, dev proxy 404s, capitalizeFirst, navigate-in-render, idleTypingMs fallback, poll-instructions typo) | 2026-07-08 |
 
-### B. Launch-day operations — 2026-07-10, in this order
-- **B1. Backup, then wipe test data**: export `participant_responses` + Qualtrics responses; archive `server/logs/` transcripts; wipe both stores clean. ⬜
-- **B2. Flip `SHOW_EXIT_BUTTON_ALWAYS` → `false`** (⚠️ currently **true** for testing) in `ChatPage.jsx`, `npm run build`, scp `dist/`. ⬜
-- **B3. Server deploy**: git push → pull on Plesk → **Restart App** (runs the duration-column ALTERs; ships all pending changes: timing tuning, passkey ordering, personalized explanation, ack gating, exit-status if A2 done). ⬜
-- **B4. End-to-end smoke test on production**: one full run incl. decline path (→ C8ZQ9LBY), a kick path (→ CN7JBFL7), and survey completion (→ CQVN22U3 via the A6 redirect). ⬜
-- **B5. CSV merge check**: DB export joins cleanly with Qualtrics CSV on `CHAT_SESSION_ID`/`session_id` + `PROLIFIC_PID` (+ `pw_vs_pk`). ⬜
-- **B6. Launch mid-day.** ⬜
+### ✅ DONE (July cycle)
 
-### C. Nice-to-have before launch (prof feedback; not blocking)
-- **C1. P5 — Eunice types a bit quicker** (tune `EXPLANATORY_TYPING_DELAY_MS` / her human-pace). ⬜
-- **C2. P8 — shorten bot answers on the last big question** (passkey/genAI; `shorten` flag doesn't cover it, Sid writes 2-3 bubbles). ⬜
-- **C3. Wrap-up pacing** — the 3 closing bubbles land in ~11s (0.8s gaps, fixed 3-5s type). Proposed: 2-4s inter-bubble gaps + 5-8s type each. Awaiting decision. ⬜
-
-### D. Verify during the pilot
-- **D1.** P7 — out-of-order Eunice bubbles gone (explanation → Mina → summary). ⬜
-- **D2.** New pacing flows feel right: ack → first question (0.6-0.8s gap), poll summary hold, poll-summary → next-question pause, poll bot think 3-6s. ⬜
-- **D3.** Exit codes recorded correctly on Prolific for each path. ⬜
-- **D4.** Funnel duration columns populate sane values. ⬜
-
-### E. Backlog — post-pilot
-- **E1.** Option A — serialize ALL moderator emits (one mutex; kills the typing-indicator race class). (§2 2026-07-06.)
-- **E2.** Old item 8 — log each moderator message with its purpose + producing function.
-- **E3.** P6 extension — LLM-generated answers/recaps don't name the asker (fixed explanation does).
-- **E4.** Derek pro-persona tone check (not deployed; personas kept in file).
-- **E5.** Minor edge cases from the 2026-07-08 review sweep: CLI-fallback `botIds`, bot prior-context boundary, dev-only proxy 404s, `capitalizeFirst` casing, `navigate()`-in-render (LoginChoice), client `idleTypingMs` fallback mismatch, unreachable poll-instructions typo.
+| ID | Item | Opened | Done |
+|---|---|---|---|
+| P1 | Consent form: 15 → 20 minutes | 2026-07-09 | 2026-07-09 |
+| P2 | Consent form: $3.00 → $4.00 | 2026-07-09 | 2026-07-09 |
+| P3 | Decline/kick → Prolific redirect with 5-4-3-2-1 countdown (code value superseded by A1) | 2026-07-08 | 2026-07-08 |
+| P4 | Exit Chat button gated on study_complete (+ `SHOW_EXIT_BUTTON_ALWAYS` testing toggle) | 2026-07-09 | 2026-07-09 |
+| P6 | Passkey explanation names the asker(s): "Good question @Mina (@user)!" | 2026-07-09 | 2026-07-09 |
+| P7 | Out-of-order Eunice bubbles (fixed 07-06; full ordering guarantee 07-09; verify in pilot = D1) | 2026-07-06 | 2026-07-09 |
+| P9 | Answered: where random messages land in the CSV (round q-columns; intro-phase → transcript only) | 2026-07-09 | 2026-07-09 |
+| P11 | Login payouts: Today +$4, follow-up +$10 | 2026-07-09 | 2026-07-09 |
+| P12 | Login page end-of-study feel: banner + retitles + removed log-in link | 2026-07-09 | 2026-07-09 |
+| P13 | Survey header overlap (`.survey-page` top: 61px) | 2026-07-09 | 2026-07-09 |
+| — | Consent form vertically centered | 2026-07-09 | 2026-07-09 |
+| — | Transcript header: Session ID + Prolific PID | 2026-07-08 | 2026-07-08 |
+| — | Funnel durations in DB (dur_opening/focus_group/auth_selection/auth_creation, last-click anchored) | 2026-07-08 | 2026-07-08 |
+| — | Resend-on-rejoin outbox (dropped-connection message loss) | 2026-07-09 | 2026-07-09 |
+| — | Poll bot think delay (own constant; hand-tuned 3-6s) + 40% explain-variant probability | 2026-07-09 | 2026-07-09 |
+| — | Poll summary: hold send for Mina's ack + hidden generation + 1-2s pause before next question | 2026-07-09 | 2026-07-09 |
+| — | Study-goal ack: reading pause + structural ordering vs first question + 0.6-0.8s gap | 2026-07-09 | 2026-07-09 |
+| — | Camera-stream leak, stale typing after rejoin, missing nudge re-arm (review fixes 1-3) | 2026-07-08 | 2026-07-08 |
+| — | Dead-code cleanup + edge-case review sweep | 2026-07-08 | 2026-07-08 |
 
 ## 0a. Pilot feedback todos — prof notes, received 2026-07-09 (detail/status record; open items tracked in MASTER TODO above)
 
