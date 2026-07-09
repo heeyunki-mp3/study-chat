@@ -119,7 +119,7 @@ const POLL_BOT_THINK_DELAY_MS = { min: 3000, max: 6000 };
 // Silent "reading" pause before the bot's study-goal ack ("Ok!") starts typing.
 // Upper bound matters: pre-delay + type-out (longest ack ≈2.5s) must land BEFORE
 // Eunice's first question, which arrives at 2s pause + 3–5s typing = 5s earliest.
-const STUDY_GOAL_ACK_PRE_DELAY_MS = { min: 1500, max: 2200 };
+const STUDY_GOAL_ACK_PRE_DELAY_MS = { min: 2200, max: 3200 };
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
