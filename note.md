@@ -1,109 +1,31 @@
 # Notes
 
-## MASTER TODO (updated 2026-07-09 — details in §0a, §1, and the dated §2 entries)
+## 0. Todos
 
-### Open — before launch
-- [ ] **Use the real no-consent Prolific code (C8ZQ9LBY)** — opened 2026-07-09
-- [ ] **Record how each session ended in the DB** (completed / attention kick / unsubstantial / trolling / no consent / dropped out + where) — opened 2026-07-09
-- [ ] **Fix: disagreement reply erases the round's earlier answer in the DB** — opened 2026-07-09
-- [ ] **Add copy: "you'll be returned to Prolific after the survey"** — opened 2026-07-09
-- [ ] **Add copy: "you will sign in with this account" (login page, middle paragraph)** — opened 2026-07-09
-- [ ] **Qualtrics: re-apply the End-of-Survey redirect to the live survey** — opened 2026-05-13
-- [ ] **Qualtrics: fix the account-access-techniques question (real options + multi-select)** — opened 2026-07-09
-- [ ] **Qualtrics: fix the 2FA question** — opened 2026-07-09
-- [ ] **Qualtrics: capture device type** — opened 2026-07-09
-- [ ] **Qualtrics: confirm the pw_vs_pk embedded-data field is set up** — opened 2026-06-25
-- [ ] **Clarify "exit survey falsify" with prof, then do it** — opened 2026-07-09
-
-### Open — launch day (2026-07-10, in order)
-- [ ] **Back up, then wipe test data (DB + Qualtrics + archive transcripts)** — opened 2026-07-09
-- [ ] **Set SHOW_EXIT_BUTTON_ALWAYS back to false, rebuild, upload dist** (⚠️ currently true) — opened 2026-07-09
-- [ ] **Deploy server (git pull + Plesk restart — runs the new column ALTERs)** — opened 2026-07-09
-- [ ] **Smoke-test a full run on production (all three Prolific exit codes)** — opened 2026-07-09
-- [ ] **Check the DB export merges with the Qualtrics CSV** — opened 2026-07-09
-- [ ] **Launch the pilot (mid-day)** — opened 2026-07-09
-
-### Open — nice-to-have
-- [ ] **Make Eunice type a bit quicker** — opened 2026-07-09
-- [ ] **Shorten bot answers on the last big question** — opened 2026-07-09
-- [ ] **Slow down the wrap-up (3 bubbles land in ~11s; proposal pending)** — opened 2026-07-09
-
-### Open — verify during the pilot
-- [ ] **Eunice's bubble order: explanation → Mina → summary** — opened 2026-07-09
-- [ ] **New pacing feels right (ack gap, summary hold, poll pauses)** — opened 2026-07-09
-- [ ] **Prolific exit codes recorded correctly per path** — opened 2026-07-09
-- [ ] **Duration columns populate sane values** — opened 2026-07-09
-
-### Open — backlog (post-pilot)
-- [ ] **Serialize all moderator messages through one queue (Option A)** — opened 2026-07-06
+- [ ] **Swap the no-consent Prolific code to `C8ZQ9LBY`** (`ConsentPage.jsx` still has placeholder `C1M1NSHW`) — opened 2026-07-09
+- [ ] **Record how each session ended in the DB**: failed attention check, no consent, completed, dropped out mid-study (and where) — opened 2026-07-09
+- [ ] **Copy: tell participants they'll end up on Prolific after the survey** — opened 2026-07-09
+- [ ] **Copy: add "you will sign in with the account" to the end of the login page's middle paragraph** — opened 2026-07-09
+- [ ] **Save, then delete the test data from the DB and Qualtrics** — opened 2026-07-09
+- [ ] **Qualtrics: capture the participant's device type** — opened 2026-07-09
+- [ ] **Exit survey "falsify"** (clarify scope) — opened 2026-07-09
+- [ ] **Start the pilot 2026-07-10 mid-day** (before launch: `SHOW_EXIT_BUTTON_ALWAYS` back to `false` — currently `true` — rebuild + deploy client and server) — opened 2026-07-09
+- [ ] **CSV merging check** (DB export merges with the Qualtrics CSV) — opened 2026-07-09
+- [ ] **Eunice should type a bit quicker** (prof) — opened 2026-07-09
+- [ ] **Shorten bot answers on the last (passkey) big question** (prof; the `shorten` flag doesn't cover that round) — opened 2026-07-09
+- [ ] **Slow down Eunice's wrap-up** (3 closing bubbles land in ~11s — decide pacing) — opened 2026-07-09
+- [ ] **Qualtrics: fix the "techniques to access accounts" question** — real answer options + allow multiple selections (prof) — opened 2026-07-09
+- [ ] **Qualtrics: fix the 2FA question** (prof) — opened 2026-07-09
+- [ ] **Qualtrics: re-apply the End-of-Survey redirect to `SV_3HIPgZRXfMvUgsu`** — opened 2026-05-13
+  - How: End-of-Survey block → Message → Custom → HTML View → paste the top-window redirect snippet (`window.top.location.replace` + postMessage fallback). `SurveyPage.jsx`'s message listener is the safety net; `CompletePage.jsx` kept as fallback. The config did NOT carry over from the pilot survey.
 - [ ] **Log each moderator message with its purpose and source function** — opened 2026-07-06
-- [ ] **Name the asker in LLM-generated answers too** — opened 2026-07-09
-- [ ] **Derek pro-persona tone check (not deployed)** — opened 2026-04-22
-- [ ] **Minor edge cases from the code review sweep** — opened 2026-07-08
+- [ ] **Derek pro-passkey tone check** (Derek not deployed; personas kept in file) — opened 2026-04-22
 
-### Done
-- [x] **Consent form says 20 minutes** — opened 2026-07-09 · done 2026-07-09
-- [x] **Consent form says $4.00** — opened 2026-07-09 · done 2026-07-09
-- [x] **Decliners and kicked users auto-redirect to Prolific with a countdown** — opened 2026-07-08 · done 2026-07-08
-- [x] **Exit Chat button only appears after the study ends (with testing toggle)** — opened 2026-07-09 · done 2026-07-09
-- [x] **Passkey explanation names the asker ("Good question @Mina!")** — opened 2026-07-09 · done 2026-07-09
-- [x] **Out-of-order Eunice bubbles fixed (order now guaranteed)** — opened 2026-07-06 · done 2026-07-09
-- [x] **Answered prof: where messages land in the CSV** — opened 2026-07-09 · done 2026-07-09
-- [x] **Login payouts show +$4 today / +$10 follow-up** — opened 2026-07-09 · done 2026-07-09
-- [x] **Login page no longer reads like the end of the study** — opened 2026-07-09 · done 2026-07-09
-- [x] **Survey no longer hidden behind the GT header** — opened 2026-07-09 · done 2026-07-09
-- [x] **Consent form vertically centered** — opened 2026-07-09 · done 2026-07-09
-- [x] **Transcript header includes session ID + Prolific PID** — opened 2026-07-08 · done 2026-07-08
-- [x] **Funnel stage durations recorded in the DB** — opened 2026-07-08 · done 2026-07-08
-- [x] **Messages lost to connection drops are resent on rejoin** — opened 2026-07-09 · done 2026-07-09
-- [x] **Poll bots think longer before answering + 40% chance of a longer answer** — opened 2026-07-09 · done 2026-07-09
-- [x] **Poll summary waits for Mina's ack (while appearing to keep typing) + pause before next question** — opened 2026-07-09 · done 2026-07-09
-- [x] **Study-goal "Ok!" always lands before the first question (with a 0.6-0.8s gap)** — opened 2026-07-09 · done 2026-07-09
-- [x] **Camera-stream leak, stale typing indicator, missing nudge re-arm fixed** — opened 2026-07-08 · done 2026-07-08
-- [x] **Dead-code cleanup + full edge-case review** — opened 2026-07-08 · done 2026-07-08
-
-## 0a. Pilot feedback todos — prof notes, received 2026-07-09 (detail/status record; open items tracked in MASTER TODO above)
-
-From "Notes for Focus Group.pdf". Status checked against the code on 2026-07-09.
-
-**App code — open:**
-- **P1. Consent form: study length 15 → 20 minutes.** ✅ Done — 2026-07-09. Both occurrences in `ConsentPage.jsx` now say "approximately 20 minutes".
-- **P2. Consent form: payment $3.00 → $4.00.** ✅ Done — 2026-07-09 (`ConsentPage.jsx`).
-- **P4. ⚠️ IMPORTANT — Exit Chat button clickable during the whole chat**, letting participants skip the focus group entirely. ✅ Done — 2026-07-09. The footer button in `ChatPage.jsx` now renders only once `study_complete` fires. Testing escape hatch: `SHOW_EXIT_BUTTON_ALWAYS` constant at the top of `ChatPage.jsx` — set `true` to keep the button always visible while testing, `false` for production. ⚠️ MUST be `false` before launching the pilot (it currently is). Minor UX note: Eunice's 2nd wrap-up bubble mentions the button a few seconds before it appears (it shows after her 3rd bubble, when `study_complete` is emitted) — acceptable.
-- **P5. Eunice should type a bit quicker.** ⬜ Knobs: `EXPLANATORY_TYPING_DELAY_MS` (fixed 3–5s broadcasts) and the shared `TYPING_SPEED` 0.8–1.4 w/s used for her human-paced messages — a faster moderator-only speed partially re-introduces what item 1 removed, so tune carefully.
-- **P6. Name the asker when Eunice answers the passkey question.** ✅ Done — 2026-07-09 (fixed-explanation part). New `personalizedPasskeyExplanation(askers)` decorates the EMITTED text only: "Good question @Mina! …" when only Mina asked; "Good question @Mina @Test! …" when the human asked too (mentions in ask order, so human-primary reads "@Test @Mina"). All internal matching/storage (`alreadyExplained`, `isPasskeyAnswer`, `answeredQuestions`, the canned-follow-up trigger) still uses the canonical `PASSKEY_EXPLANATION[0]` — so the controlled-stimulus wording is unchanged apart from the mention. Tracking flags on pollState: `minaAskedPasskey` (set in cAABQ's passkey branch), `humanAskedPasskey` (set in the human_message passkey path before the claim check); each emit site computes the mentions at SEND time. Covered sites: Mina-primary (cAABQ claim branch), human-primary (hand-rolled block), and the generic human path outside polls (last big question). The client renders the @names as colored mention chips. NOT covered (rarely relevant): the LLM-generated recap/answers (`generateModeratorQuestionAnswer`) don't name the asker — extend its prompt if wanted later.
-- **P8. Bot passkey answers too long** (two separate notes: Sid's 2-bubble negative answer → cut to 1 bubble / one line, and another 2-bubble Sid answer → merge to one bubble, ~2 sentences). ⬜ The `shorten` flag currently applies only to control-group big questions and the pro/anti FIRST big question — the last (passkey/genAI) big question is unshortened with up to 3 bubbles. Likely fix: shorten the LAST big question too (or cap Sid's `max_bubbles`).
-- **P9b. Bug found while answering P9:** when the participant answers a **disagreement follow-up**, `humanMessagesThisRound` is reset, so `saveCurrentRoundResponses` OVERWRITES that round's earlier call-on answer in the q-column with only the disagreement reply (the original answer survives only in the transcript txt). Should append. ⬜
-- **P10. Record kicks in the DB.** ⬜ Kick reason (idle / unsubstantial / inappropriate) is currently NOT in the DB — only in server logs + the transcript. Add e.g. an `exit_status` column written on the three kick paths (and "completed" at wrap-up) so it shows in the CSV.
-- **P11. Login page follow-up payout +$3 → +$10.** ✅ Done — 2026-07-09 (`StudyTimeline` in `LoginChoice.jsx`, shown on both steps). ALSO changed "Today +$3" → "+$4" to match the consent form's $4.00 (P2) — same payment, would otherwise contradict the consent form. Flag to prof in case Today should stay $3.
-- **P12. Login page reads like the end of the study** (major issue). ✅ Done — 2026-07-09. All four changes in `LoginChoice.jsx`: (a) highlighted `NotFinishedBanner` ("**You're not finished yet!** Please select a User ID and login method to access the final questions and complete the survey.") — full-width yellow strip (`.fg-notice-banner` in FocusGroupFlow.css), shown on BOTH steps since the leave-early risk also exists on step 2; (b) h1 "Register to continue" → "One more step to finish the study"; (c) hero copy "Create an account to submit…" → "Select a User ID and login method to submit…"; (d) "Returning participant? Log in" link removed.
-- **P13. Survey page: instruction line hidden behind the GT header.** ✅ Done — 2026-07-09. `.survey-page` was `position: fixed; top: 0` (SurveyPage.css), sliding under the sticky 61px `.site-header` which covered "Please complete the following survey before you go". Fixed with `top: 61px`, matching the `calc(100dvh - 61px)` convention used on the other pages. The iframe also shrinks by 61px, so nothing at the bottom of the Qualtrics content gets cut off either.
-
-**Already fixed (verify in next pilot):**
-- **P3. Decline consent → Prolific no-consent URL.** ✅ Done 2026-07-08 — decliners get a 5-4-3-2-1 countdown then redirect to `…/submissions/complete?cc=C1M1NSHW`; kicked users likewise to `cc=CN7JBFL7`. Consent lives in our app (not Qualtrics), so the in-app redirect replaces the prof's suggested Qualtrics branch. ⚠️ Confirm C1M1NSHW is the exact no-consent code Prolific issued.
-- **P7. Eunice's out-of-order bubbles** (answer to Mina → poll summary → second answer bubble). ✅ Believed fixed 2026-07-06, before these notes were written up: PASSKEY_EXPLANATION trimmed 2 → 1 bubble (the stray third bubble no longer exists), Fix B serializes the summary behind an in-flight explanation, and exact-count summaries ("3 of us know…") were replaced with fuzzy quantifiers. Residual edge documented under "Moderator typing-indicator race".
-
-**Answers to prof's questions:**
-- **P9. "If I write something randomly at a random point — will that appear in the CSV?"** Yes, if it's during a question round: every participant message is appended to that round's column — `q1_new_features`, `q2_vpn`, `q3_password_managers`, `q4_passkeys_heard`, `q5_passkey_switch` (JSON array of their messages, by round order). Messages sent BEFORE the first question (intro / study-goal phase) are NOT in the DB — transcript txt only. Caveat: see P9b overwrite bug.
-- **P10. "If someone gets kicked, where is that recorded?"** Currently nowhere in the CSV — see todo P10.
-
-**Qualtrics-side (survey `SV_3HIPgZRXfMvUgsu`, not in repo):**
-- **P14.** "Which of the following techniques do you use to access your accounts?" — replace the broken answer options (currently mixes Likert items like "Somewhat agree") with real ones and allow MULTIPLE selections. ⬜
-- **P15.** Fix the next question (about 2FA) the same way. ⬜
-
-## 0. Open Todos
-
-Still open. Completed work is in §0b below (item numbers are preserved there since these notes cross-reference them).
-
-8. **Log each moderator message with its purpose and source function.** ⬜
-   - **Issue / goal:** No easy way to audit the moderator flow — can't tell which function produced a given Eunice message or what its purpose/type is.
-   - **Fix:** TBD — add logging that records, per moderator message: the text, its purpose/type (intro, big question, cue, ack, summary, follow-up, answer…), and the producing function.
+## 0b. Completed — Issues & Fixes (2026-06-29 → 2026-07-06)
 
 10. **Rethink the poll summary.** ✅ Done — 2026-07-06
    - **Issue:** The "X people have used it and Y haven't" summary sounded robotic and assumed usage (a bare "yes" to the pw-manager poll came out as "you've used one" instead of "you know it"). Polls 2 and 3 also landed cold — no transition between them, felt like abrupt context switches.
    - **Fix (`server/index.js`):** (a) **Summary prompt rewrite** — `generateRoundSummary` poll branch now enforces: under 12 words, one bubble, warm/professional-but-friendly tone (bans "haha"/"lol"/"hmm"), FUZZY quantifiers only ("everyone"/"most of you"/"some of you"/"nobody") — NEVER exact counts, and strictly distinguishes USED vs HEARD-OF vs DON'T-KNOW (fixes the "assumed usage" bug). Opener variety pool baked into the prompt: "Great!", "Oh nice!", "Interesting!", "Cool!", "Perfect!", "Oh got it,", "Wonderful,", "Awesome!". Examples cover the 4 distributions (all yes / most yes / mixed / all no / some don't know). (b) **Poll lead-ins for polls 2 & 3, same bubble as the question** — two pools: `POLL_LEAD_INS_MIDDLE` (`"Moving on,"`, `"Alright, next one,"`, `"Ok, next up,"`, `"Great, next question,"`, `"Onto the next,"`) for middle polls, `POLL_LEAD_INS_LAST` (`"Lastly,"`, `"One more,"`, `"Last one,"`) for the final poll. Picked by `pickFromPool(session, pool, key)` with no-repeat-in-session (per-pool tracking via `usedPollLeadInMiddleIndices` / `usedPollLeadInLastIndices`). `withPollLeadIn(leadIn, question)` prepends the lead-in and lowercases the question's first char while preserving acronyms (`"Moving on, have you ever used or heard about VPN?"`). `advanceToNextRound` detects "is this the last poll?" by scanning `session.allRounds` for any remaining `poll` after `nextRoundIndex`. Poll 1 is unchanged — still uses the standalone `"For the next few questions…"` preamble (prof preference).
-
-## 0b. Completed — Issues & Fixes (2026-06-29 → 2026-07-06)
 
 23. **`PASSKEY_EXPLANATION` trimmed to 1 bubble; Mina hard-coded follow-up after Eunice explains; human/Mina passkey-question coordination.** ✅ Done — 2026-07-06
    - **Issue:** (a) The 2nd sentence of `PASSKEY_EXPLANATION` ("The passkey stays on your own device…") was extra info that read as a lecture beat. (b) After Eunice explained passkey during the passkey poll, Mina had already asked "wait whats a passkey??" and never came back — stored poll answer stayed as the question, so summaries said "some of you haven't heard of it" even after the explanation. (c) When BOTH the human and Mina asked what a passkey is during the passkey poll, Eunice emitted the full fixed explanation TWICE (once for each), which read like a broken record.
@@ -194,12 +116,10 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
    - **Issue:** Frank answered "i never heard of them before" (a valid, complete answer) but `classifyHumanMessage`'s substantive-check returned false → triggered the "Could you elaborate please?" nudge.
    - **Fix (`server/index.js`):** (1) The `substantive` classifier now counts honest "I don't know / never heard of it / not familiar" statements as complete valid answers (false ONLY for pure filler like "ok"/"idk"/"lol", off-topic, or question-only). (2) Lowered the auto-substantive word-count threshold from >15 → >10 words.
 
-## 1. Todo List
+## 1. Feature log — done work with descriptions (open items live in §0 Todos)
 
 - ~~**Bot language realism**: Mina and other bots text in too-proper English. Update prompts so they type more like real humans (abbreviations, typos, casual grammar, etc.)~~ **Done** — Mina's texting style updated across all 4 variants (default, pro, anti, control): all lowercase, only `.` punctuation (never at end of last sentence), `??` and `!!` for questions/exclamations, no apostrophes/commas/quotes/dashes.
 - ~~**Prolific integration**~~ **Done** — URL params parsed on entry, saved to DB, passed to Qualtrics iframe
-- **Derek pro passkey tone check**: Verify Derek's pro persona actually sounds like he enjoys/supports passkeys in practice (prompt says "cautiously supportive" — may need to be warmer). Note: Derek is no longer deployed (replaced by Anthony) but personas kept in file.
-- **Qualtrics End-of-Survey redirect** (top-window, not iframe): the live survey is now `SV_3HIPgZRXfMvUgsu` (real survey, replaced pilot `SV_bPBOLqFJFN18XtQ` on 2026-05-13). In THIS survey's End-of-Survey block, switch the End-of-Survey Message to **Custom**, open the **HTML View** of the rich text editor, and paste the snippet from the chat (window.top.location.replace + postMessage fallback). The script targets the TOP window so the participant fully leaves the React app. `SurveyPage.jsx` also has a `window.addEventListener("message", …)` listener that catches `{type: "studyComplete"}` and does `window.location.replace(PROLIFIC_COMPLETE_URL)` — this is the safety net for browsers that block cross-origin top-navigation without user activation. `CompletePage.jsx` and `/complete` route are still in place but unused under this approach (kept as fallback). ⚠️ The redirect config does NOT carry over from the pilot survey — must be re-applied to `SV_3HIPgZRXfMvUgsu`.
 - ~~**Log all auth method clicks**~~ **Done — 2026-05-13; reworked 2026-05-29** — `LoginChoice.jsx` SecureStep keeps `clicksRef = useRef([])`; `selectMethod` pushes every click (incl. back-and-forth switches) → e.g. `["passkey","password","passkey"]`. **Bug fixed 2026-05-29:** clicks used to be sent only with `register-password`/`webauthn-register-verify`, so they were written ONLY on successful registration — abandoned sessions and cancelled passkey prompts (`NotAllowedError` then leave) recorded nothing ("sometimes doesn't record at all"). Now `selectMethod` calls `logClicks()` which fires a `fetch("/api/focus-group/log-auth-click", {keepalive:true})` on EVERY click. New server endpoint is the SOLE writer of `auth_method_clicks` (registration endpoints no longer touch the column, avoiding null-overwrite). Server has `sanitizeAuthMethodClicks()` (filters to "password"/"passkey", caps 100, returns JSON string or null; null → endpoint no-ops so it never clobbers a prior value). Column `participant_responses.auth_method_clicks JSON` (ALTER TABLE IF NOT EXISTS in init). Production: **Plesk → Restart App** for the ALTER + new endpoint.
 - ~~**Alternate password vs passkey card order + log it**~~ **Done — 2026-05-13** — Strict alternation, server-driven. New endpoint `POST /api/focus-group/assign-auth-order` looks up the participant's row, returns the stored `auth_method_top` if already set (idempotent), otherwise counts rows where `auth_method_top IS NOT NULL` and assigns `n % 2 === 0 ? "password" : "passkey"`, persisting it on the participant's row. `LoginChoice.jsx` SecureStep calls this in a `useEffect` on mount and only renders the method cards once `topMethod !== null` (shows "Loading sign-in options…" placeholder briefly). Registration endpoints no longer touch `auth_method_top` — the assignment endpoint is the sole writer. Column `participant_responses.auth_method_top VARCHAR(16)` added via ALTER TABLE IF NOT EXISTS in init block. Production: **Plesk → Restart App** for the ALTER + new endpoint to be live. Race condition note: two concurrent first-time hits could both read the same count before either UPDATEs — acceptable for a small-N study; if strict serializability is needed later, wrap the count+update in a transaction with `SELECT ... FOR UPDATE` on a sentinel row.
 - ~~**Dark-mode readability fix**~~ **Done — 2026-06-25** — OS dark-mode users saw a greyed-out/unreadable page (e.g. consent form): the Vite-default `index.css` set `:root` to a dark background (`#242424`) and only switched to white inside `@media (prefers-color-scheme: light)`, so dark-mode users got a dark page behind the app's dark text. Fix: force a light scheme app-wide — `color-scheme: light`, `:root` background `#ffffff` / color `#213547`, default `button` background `#f9f9f9`, and removed the now-redundant `prefers-color-scheme: light` media query (kept its `a:hover` color). The app does NOT support a dark theme; it just always renders light for everyone.
@@ -209,6 +129,23 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 - ~~**Welcome (NamePage) UX**: stop the page from scrolling, center the photo + name block, make the GT header span full width, and replace the 9-icon grid with a 3-random-icon carousel that sits to the right of the "Allow camera" circle (selecting an icon slides the row leftward; far items fade).~~ **Done — 2026-05-13** — `index.css` `.site-header` now uses `width: 100vw; margin-left: calc(50% - 50vw)` (full-bleed) and `body`/`#root` overridden to `display: block; width: 100%` so the header is guaranteed full width even if a parent has `max-width`. `NamePage.jsx` outer container is `height: calc(100vh - 61px); overflow: hidden`. Carousel: `items = [camera, ...3 random presets from profile_1..9.jpg]`, 140px circles, `gap: 24px`, translated by `-ITEM_SIZE/2 - activeIndex*STEP` so the active item is page-centered. Opacity = clamp((2.5 − distance)/1, 0, 1) (so distance-1 = full, distance-2 = 0.5, distance-3 = 0); scale falls 0.12 per step (min 0.55). Clicking a non-active item calls `selectIndex(i)` → if preset, stops the camera stream and stores URL in `capturedPhoto`; if returning to camera, clears any non-`data:` URL so the "Allow camera" button reappears. ChatPage needs no change — both data URLs and `/profile_pictures/...` URLs work in `<img src>`.
 
 ## 2. Issue
+
+### Prof pilot-feedback fixes ("Notes for Focus Group.pdf") — received 2026-07-09, fixed 2026-07-08/09
+
+- **Consent form said 15 minutes / $3.00** → both occurrences in `ConsentPage.jsx` now say "approximately 20 minutes" and "$4.00".
+- **Exit Chat button was clickable during the whole chat** (participants could skip the focus group). The footer button in `ChatPage.jsx` now renders only once `study_complete` fires. Testing escape hatch: `SHOW_EXIT_BUTTON_ALWAYS` constant at the top of `ChatPage.jsx` — `true` keeps it always visible for testing; ⚠️ MUST be `false` before the pilot. Minor UX note: Eunice's 2nd wrap-up bubble mentions the button a few seconds before it appears (shows after her 3rd bubble) — acceptable.
+- **Unclear who Eunice was answering** when others wrote after Mina's question → `personalizedPasskeyExplanation(askers)` decorates the EMITTED text only: "Good question @Mina! …", or "Good question @Mina @Test! …" when the human asked too (mentions in ask order). All internal matching/storage (`alreadyExplained`, `isPasskeyAnswer`, `answeredQuestions`, the canned-follow-up trigger) still uses the canonical `PASSKEY_EXPLANATION[0]`, so the controlled stimulus is unchanged apart from the mention. Flags `minaAskedPasskey` / `humanAskedPasskey` on pollState; mentions computed at SEND time; covers the Mina-primary, human-primary, and outside-poll emit sites. LLM-generated recaps do NOT name the asker (extend later if wanted).
+- **Login follow-up payout** → "+$10"; "Today" also changed +$3 → "+$4" to match the consent form (flag to prof in case Today should stay $3).
+- **Login page read like the end of the study** (prof's major issue) → 4 changes in `LoginChoice.jsx`: yellow `NotFinishedBanner` ("**You're not finished yet!** Please select a User ID and login method to access the final questions and complete the survey.") on BOTH steps; "Register to continue" → "One more step to finish the study"; "Create an account to submit…" → "Select a User ID and login method to submit…"; "Returning participant? Log in" link removed.
+- **Survey's first line hidden behind the GT header** → `.survey-page` was `position: fixed; top: 0`, sliding under the sticky 61px header; now `top: 61px`.
+- **Decline consent → Prolific redirect** (done 2026-07-08): decliners get a 5-4-3-2-1 countdown then redirect (kicked users likewise, to `cc=CN7JBFL7`). Consent lives in our app, so the in-app redirect replaces the prof's suggested Qualtrics branch. The decline code still needs swapping to the real `C8ZQ9LBY` (see §0 Todos).
+- **Out-of-order Eunice bubbles** (answer → summary → 2nd answer bubble): already fixed 2026-07-06 before the notes arrived (explanation trimmed to 1 bubble, Fix B serialization, fuzzy-quantifier summaries); ordering now fully guaranteed by the 2026-07-09 passkey-poll rework below.
+- **Prof Q: "will a random message appear in the CSV?"** Yes, during a question round — appended to that round's column (`q1_new_features` … `q5_passkey_switch`, JSON array per round). Messages before the first question (intro/study-goal) are in the transcript txt only.
+- **Prof Q: "where are kicks recorded?"** Currently nowhere in the DB — tracked in §0 Todos (record how each session ended).
+
+### Disagreement reply OVERWRITES the round's earlier answer in the DB — found 2026-07-09 (OPEN)
+
+When the participant answers a **disagreement follow-up**, `humanMessagesThisRound` is reset at the turn start, so `saveCurrentRoundResponses` overwrites that round's q-column with only the disagreement reply — the original call-on answer survives only in the transcript txt. Should append instead. Silent response loss; worth fixing before real data collection.
 
 ### Passkey-poll ordering: explanation → Mina's ack → summary, with concurrent summary write-up — 2026-07-09 (FIXED)
 
