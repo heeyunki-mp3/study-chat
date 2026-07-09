@@ -1,66 +1,66 @@
 # Notes
 
-## MASTER TODO — status tracker (updated 2026-07-09)
+## MASTER TODO (updated 2026-07-09 — details in §0a, §1, and the dated §2 entries)
 
-One line per item: status, opened date, completed date. Per-item detail lives in §0a (P-items), the dated §2 entries, and §1. Pre-July completed work stays in §0b.
+### Open — before launch
+- [ ] **Use the real no-consent Prolific code (C8ZQ9LBY)** — opened 2026-07-09
+- [ ] **Record how each session ended in the DB** (completed / attention kick / unsubstantial / trolling / no consent / dropped out + where) — opened 2026-07-09
+- [ ] **Fix: disagreement reply erases the round's earlier answer in the DB** — opened 2026-07-09
+- [ ] **Add copy: "you'll be returned to Prolific after the survey"** — opened 2026-07-09
+- [ ] **Add copy: "you will sign in with this account" (login page, middle paragraph)** — opened 2026-07-09
+- [ ] **Qualtrics: re-apply the End-of-Survey redirect to the live survey** — opened 2026-05-13
+- [ ] **Qualtrics: fix the account-access-techniques question (real options + multi-select)** — opened 2026-07-09
+- [ ] **Qualtrics: fix the 2FA question** — opened 2026-07-09
+- [ ] **Qualtrics: capture device type** — opened 2026-07-09
+- [ ] **Qualtrics: confirm the pw_vs_pk embedded-data field is set up** — opened 2026-06-25
+- [ ] **Clarify "exit survey falsify" with prof, then do it** — opened 2026-07-09
 
-### ⬜ OPEN
+### Open — launch day (2026-07-10, in order)
+- [ ] **Back up, then wipe test data (DB + Qualtrics + archive transcripts)** — opened 2026-07-09
+- [ ] **Set SHOW_EXIT_BUTTON_ALWAYS back to false, rebuild, upload dist** (⚠️ currently true) — opened 2026-07-09
+- [ ] **Deploy server (git pull + Plesk restart — runs the new column ALTERs)** — opened 2026-07-09
+- [ ] **Smoke-test a full run on production (all three Prolific exit codes)** — opened 2026-07-09
+- [ ] **Check the DB export merges with the Qualtrics CSV** — opened 2026-07-09
+- [ ] **Launch the pilot (mid-day)** — opened 2026-07-09
 
-| ID | Item | Opened |
-|---|---|---|
-| A1 | Swap no-consent Prolific code → `C8ZQ9LBY` (`ConsentPage.jsx` still has placeholder `C1M1NSHW`) | 2026-07-09 |
-| A2 | Record how each session ended in DB (completed / failed_attention / unsubstantial / inappropriate / no_consent / abandoned + where). Supersedes P10. Decliners need a new write path — no DB row exists at decline time | 2026-07-09 |
-| A3 | P9b bug: disagreement reply OVERWRITES the round's earlier answer in q-columns (silent data loss) | 2026-07-09 |
-| A4 | Copy: tell participants they'll return to Prolific after the survey | 2026-07-09 |
-| A5 | Copy: login middle paragraph + "you will sign in with the account" | 2026-07-09 |
-| A6 | Qualtrics: re-apply End-of-Survey top-window redirect to `SV_3HIPgZRXfMvUgsu` (didn't carry over from pilot survey) | 2026-05-13 |
-| A7 | Qualtrics: fix "techniques to access accounts" options + multi-select (P14) | 2026-07-09 |
-| A8 | Qualtrics: fix the 2FA question (P15) | 2026-07-09 |
-| A9 | Qualtrics: capture device type (browser/OS embedded metadata) | 2026-07-09 |
-| A10 | Qualtrics: confirm `pw_vs_pk` embedded-data field + column enabled | 2026-06-25 |
-| A11 | "Exit survey falsify" — clarify scope with prof, then do | 2026-07-09 |
-| B1 | Backup then wipe test data (DB + Qualtrics; archive `server/logs/`) | 2026-07-09 |
-| B2 | Flip `SHOW_EXIT_BUTTON_ALWAYS` → `false` (⚠️ currently **true**), rebuild, scp `dist/` | 2026-07-09 |
-| B3 | Server deploy: git pull + Plesk Restart App (runs duration-column ALTERs, ships all pending changes) | 2026-07-09 |
-| B4 | Production smoke test: full run + all three Prolific exit codes | 2026-07-09 |
-| B5 | CSV merge check (DB export ⋈ Qualtrics on session id / PROLIFIC_PID / pw_vs_pk) | 2026-07-09 |
-| B6 | **Launch pilot** — target 2026-07-10 mid-day | 2026-07-09 |
-| C1 | P5: Eunice types a bit quicker (tune constants) | 2026-07-09 |
-| C2 | P8: shorten bot answers on the last big question | 2026-07-09 |
-| C3 | Wrap-up pacing: 3 closing bubbles land in ~11s; proposal (2-4s gaps + 5-8s type) awaiting decision | 2026-07-09 |
-| D1 | Verify in pilot: Eunice bubble order (explanation → Mina → summary) | 2026-07-09 |
-| D2 | Verify in pilot: new pacing (ack gap, summary hold, poll pauses, 3-6s poll think) | 2026-07-09 |
-| D3 | Verify in pilot: Prolific exit codes recorded per path | 2026-07-09 |
-| D4 | Verify in pilot: duration columns populate sanely | 2026-07-09 |
-| E1 | Backlog: Option A — serialize all moderator emits (mutex) | 2026-07-06 |
-| E2 | Backlog: log each moderator message with purpose + source function (old item 8) | 2026-07-06 |
-| E3 | Backlog: LLM answers/recaps don't name the asker (P6 extension) | 2026-07-09 |
-| E4 | Backlog: Derek pro-persona tone check (not deployed) | 2026-04-22 |
-| E5 | Backlog: minor edge cases from review sweep (CLI botIds, prior-context boundary, dev proxy 404s, capitalizeFirst, navigate-in-render, idleTypingMs fallback, poll-instructions typo) | 2026-07-08 |
+### Open — nice-to-have
+- [ ] **Make Eunice type a bit quicker** — opened 2026-07-09
+- [ ] **Shorten bot answers on the last big question** — opened 2026-07-09
+- [ ] **Slow down the wrap-up (3 bubbles land in ~11s; proposal pending)** — opened 2026-07-09
 
-### ✅ DONE (July cycle)
+### Open — verify during the pilot
+- [ ] **Eunice's bubble order: explanation → Mina → summary** — opened 2026-07-09
+- [ ] **New pacing feels right (ack gap, summary hold, poll pauses)** — opened 2026-07-09
+- [ ] **Prolific exit codes recorded correctly per path** — opened 2026-07-09
+- [ ] **Duration columns populate sane values** — opened 2026-07-09
 
-| ID | Item | Opened | Done |
-|---|---|---|---|
-| P1 | Consent form: 15 → 20 minutes | 2026-07-09 | 2026-07-09 |
-| P2 | Consent form: $3.00 → $4.00 | 2026-07-09 | 2026-07-09 |
-| P3 | Decline/kick → Prolific redirect with 5-4-3-2-1 countdown (code value superseded by A1) | 2026-07-08 | 2026-07-08 |
-| P4 | Exit Chat button gated on study_complete (+ `SHOW_EXIT_BUTTON_ALWAYS` testing toggle) | 2026-07-09 | 2026-07-09 |
-| P6 | Passkey explanation names the asker(s): "Good question @Mina (@user)!" | 2026-07-09 | 2026-07-09 |
-| P7 | Out-of-order Eunice bubbles (fixed 07-06; full ordering guarantee 07-09; verify in pilot = D1) | 2026-07-06 | 2026-07-09 |
-| P9 | Answered: where random messages land in the CSV (round q-columns; intro-phase → transcript only) | 2026-07-09 | 2026-07-09 |
-| P11 | Login payouts: Today +$4, follow-up +$10 | 2026-07-09 | 2026-07-09 |
-| P12 | Login page end-of-study feel: banner + retitles + removed log-in link | 2026-07-09 | 2026-07-09 |
-| P13 | Survey header overlap (`.survey-page` top: 61px) | 2026-07-09 | 2026-07-09 |
-| — | Consent form vertically centered | 2026-07-09 | 2026-07-09 |
-| — | Transcript header: Session ID + Prolific PID | 2026-07-08 | 2026-07-08 |
-| — | Funnel durations in DB (dur_opening/focus_group/auth_selection/auth_creation, last-click anchored) | 2026-07-08 | 2026-07-08 |
-| — | Resend-on-rejoin outbox (dropped-connection message loss) | 2026-07-09 | 2026-07-09 |
-| — | Poll bot think delay (own constant; hand-tuned 3-6s) + 40% explain-variant probability | 2026-07-09 | 2026-07-09 |
-| — | Poll summary: hold send for Mina's ack + hidden generation + 1-2s pause before next question | 2026-07-09 | 2026-07-09 |
-| — | Study-goal ack: reading pause + structural ordering vs first question + 0.6-0.8s gap | 2026-07-09 | 2026-07-09 |
-| — | Camera-stream leak, stale typing after rejoin, missing nudge re-arm (review fixes 1-3) | 2026-07-08 | 2026-07-08 |
-| — | Dead-code cleanup + edge-case review sweep | 2026-07-08 | 2026-07-08 |
+### Open — backlog (post-pilot)
+- [ ] **Serialize all moderator messages through one queue (Option A)** — opened 2026-07-06
+- [ ] **Log each moderator message with its purpose and source function** — opened 2026-07-06
+- [ ] **Name the asker in LLM-generated answers too** — opened 2026-07-09
+- [ ] **Derek pro-persona tone check (not deployed)** — opened 2026-04-22
+- [ ] **Minor edge cases from the code review sweep** — opened 2026-07-08
+
+### Done
+- [x] **Consent form says 20 minutes** — opened 2026-07-09 · done 2026-07-09
+- [x] **Consent form says $4.00** — opened 2026-07-09 · done 2026-07-09
+- [x] **Decliners and kicked users auto-redirect to Prolific with a countdown** — opened 2026-07-08 · done 2026-07-08
+- [x] **Exit Chat button only appears after the study ends (with testing toggle)** — opened 2026-07-09 · done 2026-07-09
+- [x] **Passkey explanation names the asker ("Good question @Mina!")** — opened 2026-07-09 · done 2026-07-09
+- [x] **Out-of-order Eunice bubbles fixed (order now guaranteed)** — opened 2026-07-06 · done 2026-07-09
+- [x] **Answered prof: where messages land in the CSV** — opened 2026-07-09 · done 2026-07-09
+- [x] **Login payouts show +$4 today / +$10 follow-up** — opened 2026-07-09 · done 2026-07-09
+- [x] **Login page no longer reads like the end of the study** — opened 2026-07-09 · done 2026-07-09
+- [x] **Survey no longer hidden behind the GT header** — opened 2026-07-09 · done 2026-07-09
+- [x] **Consent form vertically centered** — opened 2026-07-09 · done 2026-07-09
+- [x] **Transcript header includes session ID + Prolific PID** — opened 2026-07-08 · done 2026-07-08
+- [x] **Funnel stage durations recorded in the DB** — opened 2026-07-08 · done 2026-07-08
+- [x] **Messages lost to connection drops are resent on rejoin** — opened 2026-07-09 · done 2026-07-09
+- [x] **Poll bots think longer before answering + 40% chance of a longer answer** — opened 2026-07-09 · done 2026-07-09
+- [x] **Poll summary waits for Mina's ack (while appearing to keep typing) + pause before next question** — opened 2026-07-09 · done 2026-07-09
+- [x] **Study-goal "Ok!" always lands before the first question (with a 0.6-0.8s gap)** — opened 2026-07-09 · done 2026-07-09
+- [x] **Camera-stream leak, stale typing indicator, missing nudge re-arm fixed** — opened 2026-07-08 · done 2026-07-08
+- [x] **Dead-code cleanup + full edge-case review** — opened 2026-07-08 · done 2026-07-08
 
 ## 0a. Pilot feedback todos — prof notes, received 2026-07-09 (detail/status record; open items tracked in MASTER TODO above)
 
