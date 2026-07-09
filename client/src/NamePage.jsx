@@ -62,6 +62,10 @@ export default function NamePage() {
     if (prolificPid) sessionStorage.setItem("PROLIFIC_PID", prolificPid);
     if (studyId) sessionStorage.setItem("STUDY_ID", studyId);
     if (prolificSessionId) sessionStorage.setItem("PROLIFIC_SESSION_ID", prolificSessionId);
+    // Funnel timing fallback for direct hits to /welcome (ConsentPage normally sets it).
+    if (!sessionStorage.getItem("openedAtMs")) {
+      sessionStorage.setItem("openedAtMs", String(Date.now()));
+    }
   }, []);
 
   function requestCamera() {
@@ -80,7 +84,13 @@ export default function NamePage() {
     const timeout = setTimeout(reset, 5000);
     promise
       .then((s) => {
-        if (settled) return;
+        if (settled) {
+          // The 5s timeout already reset this request (the user answered the
+          // permission prompt too late). Nothing references this stream anymore,
+          // so stop it — otherwise the camera stays on invisibly until the tab closes.
+          s.getTracks().forEach((t) => t.stop());
+          return;
+        }
         settled = true;
         clearTimeout(timeout);
         if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());

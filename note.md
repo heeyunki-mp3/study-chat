@@ -1,5 +1,34 @@
 # Notes
 
+## 0a. Pilot feedback todos — prof notes, received 2026-07-09
+
+From "Notes for Focus Group.pdf". Status checked against the code on 2026-07-09.
+
+**App code — open:**
+- **P1. Consent form: study length 15 → 20 minutes.** ✅ Done — 2026-07-09. Both occurrences in `ConsentPage.jsx` now say "approximately 20 minutes".
+- **P2. Consent form: payment $3.00 → $4.00.** ✅ Done — 2026-07-09 (`ConsentPage.jsx`).
+- **P4. ⚠️ IMPORTANT — Exit Chat button clickable during the whole chat**, letting participants skip the focus group entirely. ⬜ The footer button in `ChatPage.jsx` renders unconditionally; it should only appear (or become enabled) once `study_complete` fires ("Eunice starts saying goodbye"). The `studyComplete` state already exists to gate it.
+- **P5. Eunice should type a bit quicker.** ⬜ Knobs: `EXPLANATORY_TYPING_DELAY_MS` (fixed 3–5s broadcasts) and the shared `TYPING_SPEED` 0.8–1.4 w/s used for her human-paced messages — a faster moderator-only speed partially re-introduces what item 1 removed, so tune carefully.
+- **P6. Name the asker when Eunice answers a question** (e.g. "Good question, Mina!") so it's clear who she's replying to when others wrote in between. ⬜ `PASSKEY_EXPLANATION` starts with a bare "Good question!" — prepend the asker's name dynamically at emit time (keep the rest of the fixed stimulus identical); the LLM answer path (`generateModeratorQuestionAnswer`) needs the asker name in its prompt too.
+- **P8. Bot passkey answers too long** (two separate notes: Sid's 2-bubble negative answer → cut to 1 bubble / one line, and another 2-bubble Sid answer → merge to one bubble, ~2 sentences). ⬜ The `shorten` flag currently applies only to control-group big questions and the pro/anti FIRST big question — the last (passkey/genAI) big question is unshortened with up to 3 bubbles. Likely fix: shorten the LAST big question too (or cap Sid's `max_bubbles`).
+- **P9b. Bug found while answering P9:** when the participant answers a **disagreement follow-up**, `humanMessagesThisRound` is reset, so `saveCurrentRoundResponses` OVERWRITES that round's earlier call-on answer in the q-column with only the disagreement reply (the original answer survives only in the transcript txt). Should append. ⬜
+- **P10. Record kicks in the DB.** ⬜ Kick reason (idle / unsubstantial / inappropriate) is currently NOT in the DB — only in server logs + the transcript. Add e.g. an `exit_status` column written on the three kick paths (and "completed" at wrap-up) so it shows in the CSV.
+- **P11. Login page follow-up payout +$3 → +$10** (`StudyTimeline` in `LoginChoice.jsx`, and its copy says "+$3" for Today too — presumably → +$4 to match P2; confirm with prof). ⬜
+- **P12. Login page reads like the end of the study** (major issue). ✅ Done — 2026-07-09. All four changes in `LoginChoice.jsx`: (a) highlighted `NotFinishedBanner` ("**You're not finished yet!** Please select a User ID and login method to access the final questions and complete the survey.") — full-width yellow strip (`.fg-notice-banner` in FocusGroupFlow.css), shown on BOTH steps since the leave-early risk also exists on step 2; (b) h1 "Register to continue" → "One more step to finish the study"; (c) hero copy "Create an account to submit…" → "Select a User ID and login method to submit…"; (d) "Returning participant? Log in" link removed.
+- **P13. Survey page: instruction line hidden behind the GT header.** ⬜ Root cause confirmed: `.survey-page` is `position: fixed; top: 0` (SurveyPage.css) so it slides under the sticky 61px `.site-header` — "Please complete the following survey before you go" is covered. Fix: `top: 61px` (or the header-height var).
+
+**Already fixed (verify in next pilot):**
+- **P3. Decline consent → Prolific no-consent URL.** ✅ Done 2026-07-08 — decliners get a 5-4-3-2-1 countdown then redirect to `…/submissions/complete?cc=C1M1NSHW`; kicked users likewise to `cc=CN7JBFL7`. Consent lives in our app (not Qualtrics), so the in-app redirect replaces the prof's suggested Qualtrics branch. ⚠️ Confirm C1M1NSHW is the exact no-consent code Prolific issued.
+- **P7. Eunice's out-of-order bubbles** (answer to Mina → poll summary → second answer bubble). ✅ Believed fixed 2026-07-06, before these notes were written up: PASSKEY_EXPLANATION trimmed 2 → 1 bubble (the stray third bubble no longer exists), Fix B serializes the summary behind an in-flight explanation, and exact-count summaries ("3 of us know…") were replaced with fuzzy quantifiers. Residual edge documented under "Moderator typing-indicator race".
+
+**Answers to prof's questions:**
+- **P9. "If I write something randomly at a random point — will that appear in the CSV?"** Yes, if it's during a question round: every participant message is appended to that round's column — `q1_new_features`, `q2_vpn`, `q3_password_managers`, `q4_passkeys_heard`, `q5_passkey_switch` (JSON array of their messages, by round order). Messages sent BEFORE the first question (intro / study-goal phase) are NOT in the DB — transcript txt only. Caveat: see P9b overwrite bug.
+- **P10. "If someone gets kicked, where is that recorded?"** Currently nowhere in the CSV — see todo P10.
+
+**Qualtrics-side (survey `SV_3HIPgZRXfMvUgsu`, not in repo):**
+- **P14.** "Which of the following techniques do you use to access your accounts?" — replace the broken answer options (currently mixes Likert items like "Somewhat agree") with real ones and allow MULTIPLE selections. ⬜
+- **P15.** Fix the next question (about 2FA) the same way. ⬜
+
 ## 0. Open Todos
 
 Still open. Completed work is in §0b below (item numbers are preserved there since these notes cross-reference them).
@@ -118,6 +147,55 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 - ~~**Welcome (NamePage) UX**: stop the page from scrolling, center the photo + name block, make the GT header span full width, and replace the 9-icon grid with a 3-random-icon carousel that sits to the right of the "Allow camera" circle (selecting an icon slides the row leftward; far items fade).~~ **Done — 2026-05-13** — `index.css` `.site-header` now uses `width: 100vw; margin-left: calc(50% - 50vw)` (full-bleed) and `body`/`#root` overridden to `display: block; width: 100%` so the header is guaranteed full width even if a parent has `max-width`. `NamePage.jsx` outer container is `height: calc(100vh - 61px); overflow: hidden`. Carousel: `items = [camera, ...3 random presets from profile_1..9.jpg]`, 140px circles, `gap: 24px`, translated by `-ITEM_SIZE/2 - activeIndex*STEP` so the active item is page-centered. Opacity = clamp((2.5 − distance)/1, 0, 1) (so distance-1 = full, distance-2 = 0.5, distance-3 = 0); scale falls 0.12 per step (min 0.55). Clicking a non-active item calls `selectIndex(i)` → if preset, stops the camera stream and stores URL in `capturedPhoto`; if returning to camera, clears any non-`data:` URL so the "Allow camera" button reappears. ChatPage needs no change — both data URLs and `/profile_pictures/...` URLs work in `<img src>`.
 
 ## 2. Issue
+
+### Funnel stage durations in participant_responses — 2026-07-08
+
+Four INT (milliseconds) columns added to `participant_responses` (ALTER TABLE IF NOT EXISTS in the init block, same pattern as before) recording how long each funnel stage took. (First implemented as `ts_*` DATETIME checkpoints, then reworked same-day to durations per prof request — the ts_* columns never shipped; if the intermediate build ever ran against a DB, drop them manually.)
+
+| Column | Duration measured | How |
+|---|---|---|
+| `dur_opening_ms` | App opened (consent page) → focus-group chat starts (consent + welcome + waiting room) | Client-side: `sessionStorage.openedAtMs` set at ConsentPage mount (NamePage fallback for direct `/welcome` hits; first visit wins, reloads don't reset), ChatPage sends `msSinceOpened = now − openedAtMs` with `participant_name`. Single clock → no skew. |
+| `dur_focus_group_ms` | Chat start → chat end (wrap-up OR any of the 3 kicks: idle, unsubstantial, inappropriate; first end wins) | Server-side: `session.chatStartAt` stamped at `participant_name`, `session.chatEndAt` at the 4 end points; diff computed in `saveSessionToDatabase`, persisted with `COALESCE(existing, VALUES(...))` first-wins. |
+| `dur_auth_selection_ms` | Password/passkey cards shown → **LAST** method-card click. Changing one's mind counts as still selecting: click passkey → click password → create password ⇒ selection ends at the *password* click. | Client-side in SecureStep: `shownAtRef` anchored when `topMethod` resolves (cards render); `lastClickAtRef` re-anchored on EVERY card click. Running value sent with each `log-auth-click` (latest overwrites, so abandoners keep shown→their-last-click); the registration request writes the final authoritative value on success. |
+| `dur_auth_creation_ms` | Last method click → SUCCESSFUL registration. Same scenario ⇒ password click → account created. A failed passkey attempt followed by a re-click re-anchors to the newest click. | Client-side: `authCreationMs = now − lastClickAtRef` sent in the `register-password` / `webauthn-register-verify` bodies (alongside `authSelectionMs`); stored on the success UPDATE (`COALESCE(?, dur)` so a missing value never clobbers). |
+
+Server sanitizes all client-reported durations via `sanitizeDurationMs()` (finite, ≥0, rounded, capped at INT max). NULL semantics are informative: `dur_focus_group_ms` NULL = abandoned mid-chat; `dur_auth_selection_ms`/`dur_auth_creation_ms` NULL = never reached/completed that stage. Total selection-screen→account time = `dur_auth_selection_ms + dur_auth_creation_ms`. Deploy: server → git pull + Plesk **Restart App** (runs the ALTERs); client → rebuild + scp `dist/`.
+
+### Prolific completion codes for early exits (kicked / declined) — 2026-07-08
+
+Kicked and consent-declined participants are now auto-returned to Prolific with distinct completion codes instead of being told to close the page:
+- **Kicked** (any kick reason — idle/attention-check, unsubstantial, inappropriate/trolling): `https://app.prolific.com/submissions/complete?cc=CN7JBFL7`
+- **Declined consent**: `https://app.prolific.com/submissions/complete?cc=C1M1NSHW`
+- (Completed studies keep the existing `cc=CQVN22U3` via SurveyPage/CompletePage.)
+
+Implementation: `ChatPage.jsx` `kicked` handler now navigates to `/?kicked=1` (was `/?declined=1`) after the blocking alert. `ConsentPage.jsx` end screen handles both `?kicked=1` and declined (query param or decline click): shows a 5-4-3-2-1 countdown ("Redirecting you back to Prolific in N…"), then `window.location.replace(exitUrl)`, with a manual "click here" fallback link. The kicked variant says "Your session has ended…" instead of "Since you did not agree to participate…". Reloading `/?kicked=1` just restarts the countdown, so the code still gets recorded. Client-side change — rebuild + scp `dist/` to deploy.
+
+### Transcript header: session ID + Prolific PID — 2026-07-08
+
+The per-session transcript txt header (written in the `participant_name` handler, `server/index.js`) now includes `Session ID:` and `Prolific PID:` lines after `Participant:`. The PID shows `(none)` for non-Prolific runs (direct hits, testing). Prolific params are stored on the session just before the header write, so both values are always available there. Server-side change — needs git pull + Plesk **Restart App** to go live.
+
+### Full-code edge-case review + dead-code cleanup — 2026-07-08
+
+**Cleanup applied (behavior-preserving only, verified with `node --check`, eslint, and a client build):**
+- Deleted dead files: `client/src/ChatPage.jsx.temp` (stale pre-rewrite ChatPage copy), `client/src/App.css` (never imported), `client/src/assets/react.svg` (empty, unreferenced).
+- `client/src/main.jsx`: removed unused `StrictMode` import.
+- `client/src/ChatPage.jsx`: removed dead `socket.emit("end")` in `goLogin` — the server has no `"end"` handler.
+- `server/prompts.js`: removed never-imported `pickRandomCast`, its now-orphaned `uniqByHandle`, and the unused `humanParticipantName`/`human` in `buildUserPrompt` (the human name is only used in `systemPrompt`).
+- `server/index.js`: extracted `transcriptPathFor(session)` (the transcript path was built identically in `appendTranscriptLine` and the `participant_name` handler); reused `isHuman` and removed the dead `nextNameForLog` ternary in `advanceCallOn` (always the bot branch there); removed unused `disagreedByResolved` and merged the duplicate `disagreedByKey`/`disagreedByDisplay` in `runDisagreementPhase`; fixed stale comments (header idle timings said 3s/7s vs actual 4s/4s constants; `checkAndAnswerBotQuestion` docstring said "2 bubbles + re-ask"; CLI comment said "random cast").
+
+**Edge cases found (items 1, 2, 6 fixed on 2026-07-08; the rest left as-is — decide per item):**
+1. **NamePage camera-stream leak** (`requestCamera`). ✅ FIXED — 2026-07-08. The 5s timeout sets `settled` and shows the error; if the user answered the permission prompt *after* 5s, the granted stream was never stored in `streamRef` and never stopped → camera light stayed on with no UI (and no way to stop it — the unmount cleanup only stops `streamRef.current`) until the tab closed. Consequence if unfixed: a slow permission answer left the participant's webcam silently ON through the entire study (waiting room, chat, survey) — a serious perceived-privacy problem for a security-perception study, and clicking "Allow camera" again stacked a second live stream. Fix: in the `.then`, when `settled` is already true, stop the stream's tracks immediately.
+2. **Stale "typing…" after rejoin** (`ChatPage`). ✅ FIXED — 2026-07-08. The `typing` state map was not reset in the `seed` handler; the old socket's `emitTyping(false)` died with the disconnected flow, so a bot/Eunice mid-typing at disconnect stayed "typing…" after reconnect until that same speaker happened to type again — for a bot that had just finished its turn, potentially the rest of the session. Consequence if unfixed: participant waits politely for a message that never comes, stops answering, idle nudges escalate, worst case they get kicked while "waiting for Sid to finish typing". Fix: `setTyping({})` at the top of the seed handler (fresh flows re-emit their own indicators after rejoin).
+3. **Mina's canned passkey follow-up can write into the wrong poll**: `checkAndAnswerBotQuestion` re-reads `session.pollState` at fire time (after ~2s + typing delay); if the passkey poll finished via straggler grace and the next poll already started, `pollState.answers["Mina"]` lands in the NEW poll. Rare (passkey poll is last in both scripts, so currently only theoretical). NOT fixed.
+4. **CLI fallback leaves `botIds`/`botIdMap` empty** (`createSession`): when CLI bot names match no personas, `bots` is refilled from the rotation cast but `botIds`/`botIdMap` keep the empty first-pass values (DB `bots_config` null; persona lookup falls back to handle). CLI-only path, never hit in production.
+5. **`getBotResponse` prior-context boundary rarely matches**: `currentRoundMsgs` keys are `name:joined-round-text` (with the human aliased to the introduced name) but the loop compares per-message `name:text` keys from `session.messages` — the `break` mostly never fires, so current-round moderator lines can appear duplicated in the "Earlier discussion context" block. Prompt-quality only, no user-visible break.
+6. **Missing nudge re-arm in one cancel path**. ✅ FIXED — 2026-07-08. The inline cancel branch in `runDisagreementPhase` (right after `detectDisagreements`) rolled back like `cancelAdvance` but did NOT call `startIdleNudgeTimer` — same gap the 2026-06-14 sweep fixed inside `cancelAdvance` itself. Consequence if unfixed: user types during the ~1-2s disagreement-detect call, then abandons (draft never sent, laptop closed, or the `human_idle` packet drops on the flaky polling transport) → server sits in `waitingForHumanIdle` with NO nudge timer → no nudge, no kick, permanent dead-air stall (normally the client's own `human_idle` timer recovers it, so this only bites when that signal never arrives). Fix: replaced the inline copy with the equivalent `cancelAdvance(session, …, { rollbackIndex: "prev", clearRound: true })` call, which performs the identical rollback AND re-arms the idle nudge timer.
+7. **`runPollRound` bot promises use `new Promise(async (resolve) => …)`**: any throw not covered by the inner try/catches (e.g. inside `checkAndAnswerBotQuestion`) skips `resolve()` → that bot's promise hangs (straggler grace masks it). Antipattern; converting changes error propagation, so left as-is.
+8. **Typo in the first-poll instructions in `startFirstRound`**: "please respond briefly:yes, no, …" (missing space/dash; the `advanceToNextRound` copy reads "briefly — yes"). Currently unreachable — round 1 is always a big question in both scripts — but will surface if the script order ever changes.
+9. **Dev-only: registration endpoints 404 under `npm run dev`**: `LoginChoice`'s fetches use relative `/api/focus-group/...` and `vite.config.js` has no proxy to :3001 (ChatPage/NamePage use `SERVER_BASE` for dev; LoginChoice doesn't). Works in production (same origin).
+10. **`capitalizeFirst` lowercases the rest of the name**: "McKenna" → "Mckenna" for the display/introduced name.
+11. **Client `idleTypingMs` fallback mismatch**: ChatPage defaults to `?? 10000` while the server always sends 4000 — only matters for keystrokes before the `session` event lands.
+12. **`navigate()` during render in `LoginChoice`**: the `chatCompleted` guard calls navigate in the render body (React dev warning; works). Standard fix is a `useEffect` guard like NamePage's.
 
 ### Moderator typing-indicator race (dead-air before next question) — 2026-07-06 (PARTIALLY FIXED — Fix B applied; Option A backlog)
 

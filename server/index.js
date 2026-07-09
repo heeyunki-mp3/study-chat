@@ -2,7 +2,7 @@
  * It works
  * Study-chat server: moderator-led call-on flow.
  * No queue. Eunice (moderator) calls on one participant at a time; only that participant gets one OpenAI request (up to 3 messages).
- * Human turn: moderator advances only when human has sent at least 1 message AND is idle. Idle = no typing 3s with empty input, or no typing 7s with non-empty input.
+ * Human turn: moderator advances only when human has sent at least 1 message AND is idle. Idle thresholds come from IDLE_EMPTY_MS / IDLE_TYPING_MS below.
  * After first round: detect view misalignments (disagreedWith/disagreedBy/differenceSummary), then prompt each "person to ask" to respond (one OpenAI call per).
  */
 
@@ -31,7 +31,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Bot names from CLI: npm start -- Anthony Mina Sid (optional; if empty, spawn random cast)
+// Bot names from CLI: npm start -- Anthony Mina Sid (optional; if empty, use the group-rotation cast)
 const CLI_BOT_NAMES = process.argv
   .slice(2)
   .map((s) => String(s).trim())
@@ -62,10 +62,15 @@ function clip(s, maxLen = 120) {
   return t.length <= maxLen ? t : t.slice(0, maxLen) + "…";
 }
 
+/** Path of the per-session transcript file (also used for the header write on session start). */
+function transcriptPathFor(session) {
+  return path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
+}
+
 /** Append one line to the session transcript file (same pattern as log file). */
 function appendTranscriptLine(session, name, text) {
   if (!session?.sessionId) return;
-  const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
+  const transcriptPath = transcriptPathFor(session);
   const line = `${name}: ${String(text ?? "").trim()}\n`;
   try {
     fs.appendFileSync(transcriptPath, line, "utf8");
@@ -312,6 +317,10 @@ let dbPool = null;
         prolific_pid VARCHAR(100) DEFAULT NULL,
         prolific_study_id VARCHAR(100) DEFAULT NULL,
         prolific_session_id VARCHAR(100) DEFAULT NULL,
+        dur_opening_ms INT DEFAULT NULL,
+        dur_focus_group_ms INT DEFAULT NULL,
+        dur_auth_selection_ms INT DEFAULT NULL,
+        dur_auth_creation_ms INT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -377,6 +386,29 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS auth_method_clicks JSON DEFAULT NULL
+    `).catch(() => {});
+    // Funnel stage durations (milliseconds). dur_opening_ms = app opened → chat
+    // start (measured on the client's clock, so no cross-clock skew);
+    // dur_focus_group_ms = chat start → wrap-up or kick (server-side);
+    // dur_auth_selection_ms = password/passkey cards shown → LAST method-card click
+    // (changing one's mind counts as still selecting);
+    // dur_auth_creation_ms = last method click → successful registration
+    // (both measured client-side in SecureStep and sent with the existing requests).
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS dur_opening_ms INT DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS dur_focus_group_ms INT DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS dur_auth_selection_ms INT DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS dur_auth_creation_ms INT DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -495,7 +527,6 @@ async function getBotResponse(botName, context) {
     otherName: others,
     respondTo: directive ? { type: "directive", text: directive } : null,
     moderatorName: MODERATOR_NAME,
-    humanParticipantName: humanRefName,
     maxBubbles,
     questionType: roundType,
     shorten,
@@ -1447,6 +1478,14 @@ const WEBAUTHN_RP_NAME = "Georgia Tech Focus Group";
 const WEBAUTHN_RP_ID = process.env.WEBAUTHN_RP_ID || "localhost";
 const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || `http://localhost:${process.env.PORT || 3001}`;
 
+// Sanitize a client-supplied duration into a non-negative integer ms value,
+// or null if unusable. Capped to MySQL INT max so a garbage value can't error the write.
+function sanitizeDurationMs(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.min(Math.round(n), 2147483647);
+}
+
 // Sanitize the client-supplied click log into a JSON string of valid method names,
 // or null if there's nothing usable. Capped to avoid unbounded payloads.
 function sanitizeAuthMethodClicks(raw) {
@@ -1462,15 +1501,22 @@ function sanitizeAuthMethodClicks(raw) {
 // survives even if the participant never completes registration (abandons the
 // page, cancels the passkey prompt, etc.). Sole writer of auth_method_clicks.
 app.post("/api/focus-group/log-auth-click", express.json(), async (req, res) => {
-  const { sessionId, participantId, authMethodClicks } = req.body || {};
+  const { sessionId, participantId, authMethodClicks, msFromShownToLastClick } = req.body || {};
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
   const clicks = sanitizeAuthMethodClicks(authMethodClicks);
   if (!clicks) return res.json({ ok: true }); // nothing valid to store
+  // Selection duration: cards shown → LAST method click. Every click overwrites
+  // (latest wins, unlike the first-wins timestamps elsewhere); a missing/invalid
+  // value never clobbers a stored one. The registration endpoints write the final
+  // authoritative value on success.
+  const selectionMs = sanitizeDurationMs(msFromShownToLastClick);
   try {
     await dbPool.execute(
-      `UPDATE participant_responses SET auth_method_clicks = ? WHERE session_id = ? AND participant_id = ?`,
-      [clicks, sessionId, participantId]
+      `UPDATE participant_responses
+       SET auth_method_clicks = ?, dur_auth_selection_ms = COALESCE(?, dur_auth_selection_ms)
+       WHERE session_id = ? AND participant_id = ?`,
+      [clicks, selectionMs, sessionId, participantId]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -1515,7 +1561,7 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password, sessionId, participantId } = req.body || {};
+  const { email, password, sessionId, participantId, authSelectionMs, authCreationMs } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
@@ -1523,11 +1569,17 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
     const hash = await bcrypt.hash(password, 12);
     const strength = zxcvbn(password).score; // 0–4 (zxcvbn standard)
     const token = crypto.randomUUID();
+    // Final durations, measured client-side and anchored on the LAST method click:
+    // selection = cards shown → last click; creation = last click → this success.
+    const selectionMs = sanitizeDurationMs(authSelectionMs);
+    const creationMs = sanitizeDurationMs(authCreationMs);
     await dbPool.execute(
       `UPDATE participant_responses
-       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password'
+       SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password',
+           dur_auth_selection_ms = COALESCE(?, dur_auth_selection_ms),
+           dur_auth_creation_ms = COALESCE(?, dur_auth_creation_ms)
        WHERE session_id = ? AND participant_id = ?`,
-      [email, hash, strength, token, sessionId, participantId]
+      [email, hash, strength, token, selectionMs, creationMs, sessionId, participantId]
     );
     logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
@@ -1572,7 +1624,7 @@ app.post("/api/focus-group/webauthn-register-options", express.json(), async (re
 
 // POST /api/focus-group/webauthn-register-verify
 app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req, res) => {
-  const { email, attestation, sessionId, participantId } = req.body || {};
+  const { email, attestation, sessionId, participantId, authSelectionMs, authCreationMs } = req.body || {};
   if (!email || !attestation) return res.status(400).json({ error: "Email and attestation are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
@@ -1596,11 +1648,17 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
       return res.status(400).json({ error: "Passkey verification failed" });
     }
     const token = crypto.randomUUID();
+    // Final durations, measured client-side and anchored on the LAST method click:
+    // selection = cards shown → last click; creation = last click → this success.
+    const selectionMs = sanitizeDurationMs(authSelectionMs);
+    const creationMs = sanitizeDurationMs(authCreationMs);
     await dbPool.execute(
       `UPDATE participant_responses
-       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey'
+       SET webauthn_credential = ?, webauthn_challenge = NULL, session_token = ?, auth_choice = 'passkey',
+           dur_auth_selection_ms = COALESCE(?, dur_auth_selection_ms),
+           dur_auth_creation_ms = COALESCE(?, dur_auth_creation_ms)
        WHERE session_id = ? AND participant_id = ?`,
-      [JSON.stringify(verification.registrationInfo), token, sessionId, participantId]
+      [JSON.stringify(verification.registrationInfo), token, selectionMs, creationMs, sessionId, participantId]
     );
     logLine("DB", `User registered (passkey) email=${email} participant=${participantId}`);
     res.json({ ok: true, sessionToken: token });
@@ -1738,6 +1796,7 @@ io.on("connection", (socket) => {
         const kickMsg = `No worries @${session.humanDisplayName}, looks like you got pulled away. We'll wrap things up on your end so the group can keep going. Thanks for signing up!`;
         emitMessage(MODERATOR_NAME, kickMsg);
         logLine("QUEUE", "idle kick: closing session after unanswered nudges");
+        session.chatEndAt = session.chatEndAt || new Date();
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
         saveCurrentRoundResponses();
@@ -1785,6 +1844,7 @@ io.on("connection", (socket) => {
     const kickMsg = "Please provide more substantial responses. You have been removed from the session.";
     emitMessage(MODERATOR_NAME, kickMsg);
     logLine("QUEUE", "unsubstantial kick: closing session after 4 unsubstantial in a row");
+    session.chatEndAt = session.chatEndAt || new Date();
     await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
     io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
     saveCurrentRoundResponses();
@@ -1950,7 +2010,7 @@ io.on("connection", (socket) => {
 
     const nextName = co.order[co.currentIndex];
     const isHuman = isHumanTurn(session, nextName);
-    const nameForCue = isHumanTurn(session, nextName) ? session.humanDisplayName : nextName;
+    const nameForCue = isHuman ? session.humanDisplayName : nextName;
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
@@ -1976,8 +2036,8 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const nextNameForLog = isHuman ? session.humanDisplayName : nextName;
-    logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=${nextNameForLog}`);
+    // Only bot turns reach this point (the human turn returned above).
+    logLine("QUEUE", `call-on who_spoke=[${co.whoSpoke.join(", ")}] next=${nextName}`);
     await emitModeratorLine(cue, { humanPace: true });
     if (fromHumanIdle && wasAdvanceCancelled(session)) {
       cancelAdvance(session, "advanceCallOn cancelled (user typing), waiting for human_idle again", "prev");
@@ -1990,8 +2050,8 @@ io.on("connection", (socket) => {
 
   /**
    * After a bot emits its bubbles, check whether the last thing it said contains
-   * a question to the moderator. If so, have Eunice answer (2 bubbles: answer +
-   * re-ask of the round question) before the caller continues the flow.
+   * a question to the moderator. If so, have Eunice answer it (answer only — the
+   * round question is never re-asked here) before the caller continues the flow.
    */
   async function checkAndAnswerBotQuestion(bubbles, roundQuestion, askerBotName) {
     if (!Array.isArray(bubbles) || bubbles.length === 0 || !session) return;
@@ -2173,15 +2233,12 @@ io.on("connection", (socket) => {
       console.error("View-misalignment detection error", e?.message || e);
     }
     if (!session) return;
-    if (session.pendingAdvanceFromIdle && session.cancelAdvanceFromIdle) {
-      co.currentIndex -= 1;
-      co.waitingForHumanIdle = true;
-      co.humanRepliedThisTurn = true;
-      co.roundDone = false;
-      co.disagreementPhase = false;
-      session.pendingAdvanceFromIdle = false;
-      session.cancelAdvanceFromIdle = false;
-      logLine("QUEUE", "advance cancelled (user typing), waiting for human_idle again");
+    if (wasAdvanceCancelled(session)) {
+      // Same rollback as the other cancel sites in this function. Routing through
+      // cancelAdvance (instead of the previous inline copy) also re-arms the idle
+      // nudge timer — without it, a user who typed during detectDisagreements and
+      // then walked away sat in waitingForHumanIdle with no nudge/kick escalation.
+      cancelAdvance(session, "advance cancelled (user typing), waiting for human_idle again", { rollbackIndex: "prev", clearRound: true });
       return;
     }
     const botNames = session.bots;
@@ -2220,15 +2277,13 @@ io.on("connection", (socket) => {
       // disagreedWith must be the one who spoke first; swap if LLM got order wrong
       if (orderIndex(a) > orderIndex(b)) [a, b] = [b, a];
       const disagreedWithResolved = a;
-      const disagreedByResolved = b;
       const differenceSummary = String(p.differenceSummary ?? "").trim();
       // Use display names (humanDisplayName for human) everywhere: logs, prompts, transcripts
       const disagreedWithDisplay = a === participantName ? humanDisplayName : a;
       const disagreedByDisplay = b === participantName ? humanDisplayName : b;
-      const disagreedByKey = b === participantName ? humanDisplayName : b;
-      const disagreedByText = Array.isArray(answersByPerson[disagreedByKey])
-        ? answersByPerson[disagreedByKey].join(" ")
-        : (answersByPerson[disagreedByKey] ?? "");
+      const disagreedByText = Array.isArray(answersByPerson[disagreedByDisplay])
+        ? answersByPerson[disagreedByDisplay].join(" ")
+        : (answersByPerson[disagreedByDisplay] ?? "");
       toPrompt.push({
         disagreedWith: disagreedWithDisplay,
         disagreedBy: disagreedByDisplay,
@@ -2316,10 +2371,14 @@ io.on("connection", (socket) => {
     saveCurrentRoundResponses();
     const r = sess.humanResponsesByRound;
     try {
+      // Focus-group duration: only computable once the chat has ended (wrap-up or kick).
+      const focusGroupMs = sess.chatStartAt && sess.chatEndAt
+        ? Math.max(0, sess.chatEndAt.getTime() - sess.chatStartAt.getTime())
+        : null;
       await dbPool.execute(
         `INSERT INTO participant_responses
-         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, dur_opening_ms, dur_focus_group_ms, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
            q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
@@ -2328,7 +2387,9 @@ io.on("connection", (socket) => {
            q5_passkey_switch = COALESCE(VALUES(q5_passkey_switch), q5_passkey_switch),
            prolific_pid = COALESCE(VALUES(prolific_pid), prolific_pid),
            prolific_study_id = COALESCE(VALUES(prolific_study_id), prolific_study_id),
-           prolific_session_id = COALESCE(VALUES(prolific_session_id), prolific_session_id)`,
+           prolific_session_id = COALESCE(VALUES(prolific_session_id), prolific_session_id),
+           dur_opening_ms = COALESCE(dur_opening_ms, VALUES(dur_opening_ms)),
+           dur_focus_group_ms = COALESCE(dur_focus_group_ms, VALUES(dur_focus_group_ms))`,
         [
           sess.sessionId,
           sess.participantName,
@@ -2337,6 +2398,8 @@ io.on("connection", (socket) => {
           sess.prolificPid || null,
           sess.prolificStudyId || null,
           sess.prolificSessionId || null,
+          sess.openingDurationMs ?? null,
+          focusGroupMs,
           r[0] || null,
           r[1] || null,
           r[2] || null,
@@ -2363,6 +2426,7 @@ io.on("connection", (socket) => {
     if (nextRoundIndex >= session.allRounds.length) {
       session.pendingAdvanceFromIdle = false;
       logLine("QUEUE", "all rounds done, wrapping up");
+      session.chatEndAt = session.chatEndAt || new Date();
       await saveSessionToDatabase();
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today. I really appreciate you all sharing your experiences!");
       if (!session) return;
@@ -2896,10 +2960,16 @@ io.on("connection", (socket) => {
     if (data?.prolificPid) session.prolificPid = String(data.prolificPid).trim();
     if (data?.studyId) session.prolificStudyId = String(data.studyId).trim();
     if (data?.prolificSessionId) session.prolificSessionId = String(data.prolificSessionId).trim();
+    // Funnel timing: the client reports how long the participant took from opening
+    // the app (consent page) to reaching the chat — measured on the client's own
+    // clock, so there's no cross-clock skew. Chat start is stamped for computing
+    // the focus-group duration when the chat ends.
+    session.openingDurationMs = sanitizeDurationMs(data?.msSinceOpened);
+    session.chatStartAt = new Date();
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     // Write transcript header with group info
-    const transcriptPath = path.join(LOG_DIR, `t_${session.assignedGroup || "cli"}_${session.humanDisplayName || session.participantName}_${runStamp}_${session.sessionId}.txt`);
+    const transcriptPath = transcriptPathFor(session);
     try {
       const groupLabel = (session.assignedGroup || "cli").toUpperCase();
       const timestamp = new Date().toISOString();
@@ -2907,6 +2977,8 @@ io.on("connection", (socket) => {
         `=== GROUP: ${groupLabel} ===`,
         `Timestamp: ${timestamp}`,
         `Participant: ${session.humanDisplayName || session.participantName}`,
+        `Session ID: ${session.sessionId}`,
+        `Prolific PID: ${session.prolificPid || "(none)"}`,
         `Bots: ${session.bots.join(", ")}`,
         `Date: ${runStamp}`,
         `---`,
@@ -3268,6 +3340,7 @@ io.on("connection", (socket) => {
       clearIdleNudgeTimer();
       clearElaborationPromptTimer();
       logLine("QUEUE", "human_message: inappropriate content detected, kicking user");
+      session.chatEndAt = session.chatEndAt || new Date();
       await new Promise((r) => setTimeout(r, INAPPROPRIATE_KICK_DELAY_MS));
       if (session) io.to(socket.id).emit("kicked", { reason: "inappropriate", message: "You have been removed by the moderator." });
       if (session) {

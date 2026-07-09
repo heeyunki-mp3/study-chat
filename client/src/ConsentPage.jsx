@@ -3,15 +3,45 @@ import { useNavigate } from "react-router-dom";
 
 const CONSENT_KEY = "participantConsent";
 
+// Prolific completion codes for the two early-exit paths. Completed studies use a
+// third code (see SurveyPage / CompletePage).
+const PROLIFIC_KICKED_URL = "https://app.prolific.com/submissions/complete?cc=CN7JBFL7";
+const PROLIFIC_DECLINED_URL = "https://app.prolific.com/submissions/complete?cc=C1M1NSHW";
+const REDIRECT_COUNTDOWN_S = 5;
+
 export default function ConsentPage() {
   const [choice, setChoice] = useState(null); // "agree" | "decline" | null
   const [error, setError] = useState("");
-  // Kicked participants are redirected here with ?declined=1 so they land on the
-  // same "you will not proceed" screen shown when consent is declined.
+  // Kicked participants (idle / unsubstantial / inappropriate) are redirected here
+  // with ?kicked=1; they see the same end screen as declined consent but are sent
+  // to a different Prolific completion code.
+  const [kicked] = useState(
+    () => new URLSearchParams(window.location.search).get("kicked") === "1"
+  );
   const [declined, setDeclined] = useState(
     () => new URLSearchParams(window.location.search).get("declined") === "1"
   );
+  const [countdown, setCountdown] = useState(REDIRECT_COUNTDOWN_S);
   const navigate = useNavigate();
+
+  const exitUrl = kicked ? PROLIFIC_KICKED_URL : PROLIFIC_DECLINED_URL;
+  const showEndScreen = kicked || declined;
+
+  // End screen: count down 5-4-3-2-1, then send them back to Prolific so the
+  // submission is recorded with the right completion code instead of timing out.
+  useEffect(() => {
+    if (!showEndScreen) return;
+    const interval = setInterval(() => {
+      setCountdown((c) => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showEndScreen]);
+
+  useEffect(() => {
+    if (showEndScreen && countdown === 0) {
+      window.location.replace(exitUrl);
+    }
+  }, [showEndScreen, countdown, exitUrl]);
 
   // Capture Prolific URL params on entry so they survive even if the participant
   // declines (we still want to know they hit the funnel).
@@ -23,6 +53,12 @@ export default function ConsentPage() {
     if (prolificPid) sessionStorage.setItem("PROLIFIC_PID", prolificPid);
     if (studyId) sessionStorage.setItem("STUDY_ID", studyId);
     if (prolificSessionId) sessionStorage.setItem("PROLIFIC_SESSION_ID", prolificSessionId);
+    // Funnel timing: when the participant first opened the app (per tab). Sent to
+    // the server with participant_name and stored as ts_opened. First visit wins —
+    // a reload doesn't reset it.
+    if (!sessionStorage.getItem("openedAtMs")) {
+      sessionStorage.setItem("openedAtMs", String(Date.now()));
+    }
   }, []);
 
   function handleNext() {
@@ -40,7 +76,7 @@ export default function ConsentPage() {
     }
   }
 
-  if (declined) {
+  if (showEndScreen) {
     return (
       <div
         style={{
@@ -59,8 +95,19 @@ export default function ConsentPage() {
           Thank you for your interest
         </h2>
         <p style={{ color: "#444", maxWidth: 520, lineHeight: 1.6 }}>
-          Since you did not agree to participate, you will not proceed to the next step.
-          Please close this page.
+          {kicked
+            ? "Your session has ended, and you will not proceed to the next step."
+            : "Since you did not agree to participate, you will not proceed to the next step."}
+        </p>
+        <p style={{ color: "#1976d2", marginTop: 16 }}>
+          Redirecting you back to Prolific in {countdown}…
+        </p>
+        <p style={{ color: "#666", fontSize: 13, marginTop: 8 }}>
+          If you are not redirected,{" "}
+          <a href={exitUrl} style={{ color: "#1976d2" }}>
+            click here
+          </a>
+          .
         </p>
       </div>
     );
@@ -95,13 +142,13 @@ export default function ConsentPage() {
           <p>
             As part of this study, you will take part in a short online focus group discussion
             followed by a brief survey about your experiences and opinions. The study will take
-            approximately 15 minutes to complete. The survey is anonymous, and we will not collect
+            approximately 20 minutes to complete. The survey is anonymous, and we will not collect
             any information that directly identifies you. The risks associated with participation
             are minimal and are no greater than those encountered in everyday online interactions.
           </p>
 
           <p>
-            You will receive $3.00 for completing this study, which takes approximately 15 minutes,
+            You will receive $4.00 for completing this study, which takes approximately 20 minutes,
             and will be paid through Prolific. You will not receive any direct personal benefit from
             participating.
           </p>

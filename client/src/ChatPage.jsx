@@ -360,11 +360,15 @@ export default function ChatPage() {
         console.log("attempting rejoin", existingSessionId);
         socket.emit("rejoin", { sessionId: existingSessionId });
       } else {
+        // Opening duration: how long from opening the app (consent page) to
+        // reaching the chat — computed here on the client's own clock.
+        const openedAtMs = Number(sessionStorage.getItem("openedAtMs"));
         socket.emit("participant_name", {
           name: participantName,
           prolificPid: sessionStorage.getItem("PROLIFIC_PID") || undefined,
           studyId: sessionStorage.getItem("STUDY_ID") || undefined,
           prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
+          msSinceOpened: openedAtMs > 0 ? Date.now() - openedAtMs : undefined,
         });
       }
     });
@@ -373,11 +377,13 @@ export default function ChatPage() {
     socket.on("rejoin_failed", () => {
       console.log("rejoin failed, starting new session");
       sessionStorage.removeItem("studySessionId");
+      const openedAtMs = Number(sessionStorage.getItem("openedAtMs"));
       socket.emit("participant_name", {
         name: participantName,
         prolificPid: sessionStorage.getItem("PROLIFIC_PID") || undefined,
         studyId: sessionStorage.getItem("STUDY_ID") || undefined,
         prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
+        msSinceOpened: openedAtMs > 0 ? Date.now() - openedAtMs : undefined,
       });
     });
 
@@ -387,6 +393,11 @@ export default function ChatPage() {
     });
 
     socket.on("seed", (seedMsgs) => {
+      // Drop typing indicators carried over from before a disconnect. The server
+      // flow that turned one on died with the old socket, so its `isTyping: false`
+      // never arrives — without this reset, "X typing…" can stick for the rest of
+      // the session after a reconnect.
+      setTyping({});
       // On rejoin, replace messages instead of appending. Compute direction per
       // message — hard-coding "incoming" makes the participant's own prior messages
       // render on the bot side after every reconnect.
@@ -450,7 +461,9 @@ export default function ChatPage() {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
       sessionStorage.setItem("chatCompleted", sessionStorage.getItem("studySessionId") || "1");
-      navigate("/?declined=1", { replace: true });
+      // ?kicked=1 (vs ?declined=1) so ConsentPage's end screen redirects to the
+      // kicked/attention-check Prolific completion code, not the no-consent one.
+      navigate("/?kicked=1", { replace: true });
     });
 
     socket.on("study_complete", ({ sessionId, participantId } = {}) => {
@@ -574,7 +587,6 @@ export default function ChatPage() {
   }
 
   function goLogin() {
-    socket.emit("end");
     const sid = session?.sessionId || sessionStorage.getItem("studySessionId") || "";
     if (sid) localStorage.setItem("sessionId", sid);
     const pName = sessionStorage.getItem("participantName") || "";

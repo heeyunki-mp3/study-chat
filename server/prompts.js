@@ -58,33 +58,9 @@ function sanitizeOneLine(s) {
   return safeStr(s).replace(/\s+/g, " ").trim();
 }
 
-function uniqByHandle(arr) {
-  const seen = new Set();
-  const out = [];
-  for (const p of arr) {
-    const h = safeStr(p?.handle);
-    if (!h || seen.has(h)) continue;
-    seen.add(h);
-    out.push(p);
-  }
-  return out;
-}
-
 // =====================
 // Cast selection
 // =====================
-export function pickRandomCast(k = 4) {
-  const pool = uniqByHandle(PERSONAS);
-  if (pool.length <= k) return pool;
-
-  const shuffled = [...pool];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, k);
-}
-
 export function getCastByHandles(handles) {
   if (!Array.isArray(handles) || handles.length === 0) return [];
   // Build lookup by id (exact, e.g. "mina_pro") and by handle (e.g. "Mina").
@@ -249,7 +225,6 @@ export function buildUserPrompt({
   otherName,
   respondTo = null,
   moderatorName = MODERATOR_NAME_DEFAULT,
-  humanParticipantName = "You",
   maxBubbles = 3,
   questionType = "big_question",
   shorten = false,
@@ -258,7 +233,6 @@ export function buildUserPrompt({
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
   const mod = sanitizeOneLine(moderatorName);
-  const human = sanitizeOneLine(humanParticipantName) || "You";
 
   const modeBlock =
     mode === "idle_chat"

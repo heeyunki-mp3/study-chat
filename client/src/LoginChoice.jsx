@@ -6,6 +6,17 @@ import "./FocusGroupFlow.css";
 
 // ─── Shared sub-components ────────────────────────────────────
 
+// Pilot feedback: this page read like the end of the study, so some participants
+// might leave without registering + taking the exit survey. Shown on both steps.
+function NotFinishedBanner() {
+  return (
+    <div className="fg-notice-banner" role="alert">
+      <strong>You're not finished yet!</strong> Please select a User ID and login
+      method to access the final questions and complete the survey.
+    </div>
+  );
+}
+
 function StudyTimeline() {
   return (
     <div className="fg-timeline">
@@ -155,6 +166,7 @@ function UserIdStep({ onContinue }) {
 
   return (
     <div className="fg-page">
+      <NotFinishedBanner />
       <main className="fg-main">
         <div className="fg-container">
           {/* Left: hero */}
@@ -163,10 +175,11 @@ function UserIdStep({ onContinue }) {
               <span className="fg-step">Step 1 of 2</span>
             </div>
             <span className="fg-eyebrow">You're almost done</span>
-            <h1>Register to continue</h1>
+            <h1>One more step to finish the study</h1>
             <p>
-              Create an account to submit your exit survey and receive today's
-              payment. You may also be invited to future paid follow-up studies.
+              Select a User ID and login method to submit your exit survey and
+              receive today's payment. You may also be invited to future paid
+              follow-up studies.
             </p>
             <StudyTimeline />
           </div>
@@ -201,10 +214,6 @@ function UserIdStep({ onContinue }) {
                 Continue
               </button>
             </form>
-
-            <a href="/login" className="fg-link" style={{ marginTop: 4 }}>
-              Returning participant? Log in
-            </a>
           </div>
         </div>
       </main>
@@ -225,6 +234,13 @@ function SecureStep({ userId, onBack }) {
   const [topMethod, setTopMethod] = useState(null);
   const activeRequestRef = useRef(0); // incremented on each new request to cancel stale ones
   const clicksRef = useRef([]); // ordered log of every method card the user clicked, e.g. ["passkey","password"]
+  // Selection/creation timing (all on the client clock):
+  // cards shown → LAST method click = dur_auth_selection_ms (back-and-forth
+  // switching counts as still selecting); last click → successful registration
+  // = dur_auth_creation_ms. E.g. click passkey, change mind, click password,
+  // create → selection ends at the password click; creation starts there.
+  const shownAtRef = useRef(null); // when the method cards became visible
+  const lastClickAtRef = useRef(null); // when the most recent method card was clicked
 
   useEffect(() => {
     let cancelled = false;
@@ -251,6 +267,12 @@ function SecureStep({ userId, onBack }) {
     return () => { cancelled = true; };
   }, [ctx.sessionId, ctx.participantId]);
 
+  // The method cards render once topMethod resolves — anchor the selection timer there.
+  useEffect(() => {
+    if (topMethod !== null && shownAtRef.current === null) {
+      shownAtRef.current = Date.now();
+    }
+  }, [topMethod]);
 
   async function handlePasswordSubmit(e) {
     e.preventDefault();
@@ -265,7 +287,19 @@ function SecureStep({ userId, onBack }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Server still keys this on `email` — pass the user ID through that field.
-        body: JSON.stringify({ email: userId, password, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({
+          email: userId,
+          password,
+          sessionId: ctx.sessionId,
+          participantId: ctx.participantId,
+          // Final durations, anchored on the LAST method click before this success:
+          // selection = cards shown → last click; creation = last click → now.
+          authSelectionMs:
+            shownAtRef.current !== null && lastClickAtRef.current !== null
+              ? lastClickAtRef.current - shownAtRef.current
+              : undefined,
+          authCreationMs: lastClickAtRef.current !== null ? Date.now() - lastClickAtRef.current : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -303,7 +337,19 @@ function SecureStep({ userId, onBack }) {
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userId, attestation, sessionId: ctx.sessionId, participantId: ctx.participantId }),
+        body: JSON.stringify({
+          email: userId,
+          attestation,
+          sessionId: ctx.sessionId,
+          participantId: ctx.participantId,
+          // Final durations, anchored on the LAST method click before this success:
+          // selection = cards shown → last click; creation = last click → now.
+          authSelectionMs:
+            shownAtRef.current !== null && lastClickAtRef.current !== null
+              ? lastClickAtRef.current - shownAtRef.current
+              : undefined,
+          authCreationMs: lastClickAtRef.current !== null ? Date.now() - lastClickAtRef.current : undefined,
+        }),
       });
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
@@ -339,6 +385,12 @@ function SecureStep({ userId, onBack }) {
           sessionId: ctx.sessionId,
           participantId: ctx.participantId,
           authMethodClicks: clicksRef.current,
+          // Cards shown → this (latest) click. Each click overwrites on the server,
+          // so the stored value tracks the LAST click; registration finalizes it.
+          msFromShownToLastClick:
+            shownAtRef.current !== null && lastClickAtRef.current !== null
+              ? lastClickAtRef.current - shownAtRef.current
+              : undefined,
         }),
       }).catch(() => {});
     } catch {
@@ -349,6 +401,7 @@ function SecureStep({ userId, onBack }) {
   function selectMethod(m) {
     // Cancel any in-flight request
     activeRequestRef.current += 1;
+    lastClickAtRef.current = Date.now(); // every click re-anchors the selection→creation split
     clicksRef.current.push(m); // record every click, including back-and-forth switches
     logClicks(); // persist on every click, not just on successful registration
     setLoading(false);
@@ -362,6 +415,7 @@ function SecureStep({ userId, onBack }) {
 
   return (
     <div className="fg-page">
+      <NotFinishedBanner />
       <main className="fg-main">
         <div className="fg-container">
           {/* Left: hero */}

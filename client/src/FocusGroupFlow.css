@@ -40,6 +40,22 @@
   padding: 48px 24px;
 }
 
+/* — "Not finished yet" banner — pilot feedback: the page read like the end of
+   the study, so participants might leave before registering + taking the survey. */
+.fg-notice-banner {
+  background: #FFF3C4;
+  border-bottom: 1px solid #F1DE8A;
+  color: #5C4A00;
+  padding: 12px 24px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.fg-notice-banner strong {
+  color: #473A00;
+}
+
 .fg-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
