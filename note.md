@@ -2,14 +2,12 @@
 
 ## 0. Todos
 
-- [ ] **Swap the no-consent Prolific code to `C8ZQ9LBY`** (`ConsentPage.jsx` still has placeholder `C1M1NSHW`) — opened 2026-07-09
-- [ ] **Record how each session ended in the DB**: failed attention check, no consent, completed, dropped out mid-study (and where) — opened 2026-07-09
 - [ ] **Copy: tell participants they'll end up on Prolific after the survey** — opened 2026-07-09
 - [ ] **Copy: add "you will sign in with the account" to the end of the login page's middle paragraph** — opened 2026-07-09
 - [ ] **Save, then delete the test data from the DB and Qualtrics** — opened 2026-07-09
 - [ ] **Qualtrics: capture the participant's device type** — opened 2026-07-09
 - [ ] **Exit survey "falsify"** (clarify scope) — opened 2026-07-09
-- [ ] **Start the pilot 2026-07-10 mid-day** (before launch: `SHOW_EXIT_BUTTON_ALWAYS` back to `false` — currently `true` — rebuild + deploy client and server) — opened 2026-07-09
+- [ ] **Start the pilot** (before launch: `make exit-button-off` — currently `true`/testing — then rebuild + deploy client AND server) — opened 2026-07-09
 - [ ] **CSV merging check** (DB export merges with the Qualtrics CSV) — opened 2026-07-09
 - [ ] **Eunice should type a bit quicker** (prof) — opened 2026-07-09
 - [ ] **Shorten bot answers on the last (passkey) big question** (prof; the `shorten` flag doesn't cover that round) — opened 2026-07-09
@@ -130,6 +128,16 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 
 ## 2. Issue
 
+### Exit status recorded in the DB — opened 2026-07-09, done 2026-07-09
+
+Two columns on `participant_responses` (ALTER IF NOT EXISTS): **`exit_status`** — `completed` / `failed_attention` (idle kick) / `unsubstantial` / `inappropriate` (trolling) / `no_consent` / `abandoned` — and **`exit_stage`** — where it ended: `consent` / `intro` / `study_goal` / `round N/M (poll|big_question)` / `wrap_up` (via `describeExitStage(sess)`). Both first-write-wins in the upsert so a later TTL expiry can't relabel a completed/kicked session.
+
+Write points: the three kick paths and the wrap-up set status+stage on the session (persisted by the existing `saveSessionToDatabase` calls); **abandoned** is stamped at session-TTL expiry; **no_consent** comes from a new `POST /api/focus-group/no-consent` endpoint — decliners have no row, so it INSERTs one with a synthetic session id (`noconsent_…`), participant_id = Prolific PID (or "anonymous") + the Prolific params; `ConsentPage.jsx` fires it keepalive on the decline click, before the countdown redirect.
+
+Side fix while implementing: the session-TTL timer used to evict a session 30 min after the FIRST disconnect even if the participant had rejoined and was active (a later disconnect would then be un-rejoinable). Now `disconnectedAt` is stamped on disconnect and cleared on rejoin; the timer only expires a session that is still disconnected AND has been so for the full TTL (a newer disconnect's own timer owns the expiry).
+
+Reading the CSV: `completed` + empty registration columns = finished the chat but dropped at login/survey (the server can't see Qualtrics); repeated declines from one person create one `no_consent` row per decline click.
+
 ### Prof pilot-feedback fixes ("Notes for Focus Group.pdf") — received 2026-07-09, fixed 2026-07-08/09
 
 - **Consent form said 15 minutes / $3.00** → both occurrences in `ConsentPage.jsx` now say "approximately 20 minutes" and "$4.00".
@@ -138,7 +146,7 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 - **Login follow-up payout** → "+$10"; "Today" also changed +$3 → "+$4" to match the consent form (flag to prof in case Today should stay $3).
 - **Login page read like the end of the study** (prof's major issue) → 4 changes in `LoginChoice.jsx`: yellow `NotFinishedBanner` ("**You're not finished yet!** Please select a User ID and login method to access the final questions and complete the survey.") on BOTH steps; "Register to continue" → "One more step to finish the study"; "Create an account to submit…" → "Select a User ID and login method to submit…"; "Returning participant? Log in" link removed.
 - **Survey's first line hidden behind the GT header** → `.survey-page` was `position: fixed; top: 0`, sliding under the sticky 61px header; now `top: 61px`.
-- **Decline consent → Prolific redirect** (done 2026-07-08): decliners get a 5-4-3-2-1 countdown then redirect (kicked users likewise, to `cc=CN7JBFL7`). Consent lives in our app, so the in-app redirect replaces the prof's suggested Qualtrics branch. The decline code still needs swapping to the real `C8ZQ9LBY` (see §0 Todos).
+- **Decline consent → Prolific redirect** (done 2026-07-08; code corrected 2026-07-09): decliners get a 5-4-3-2-1 countdown then redirect to the real no-consent code `cc=C8ZQ9LBY` (placeholder `C1M1NSHW` swapped out 2026-07-09); kicked users likewise to `cc=CN7JBFL7`. Consent lives in our app, so the in-app redirect replaces the prof's suggested Qualtrics branch.
 - **Out-of-order Eunice bubbles** (answer → summary → 2nd answer bubble): already fixed 2026-07-06 before the notes arrived (explanation trimmed to 1 bubble, Fix B serialization, fuzzy-quantifier summaries); ordering now fully guaranteed by the 2026-07-09 passkey-poll rework below.
 - **Prof Q: "will a random message appear in the CSV?"** Yes, during a question round — appended to that round's column (`q1_new_features` … `q5_passkey_switch`, JSON array per round). Messages before the first question (intro/study-goal) are in the transcript txt only.
 - **Prof Q: "where are kicks recorded?"** Currently nowhere in the DB — tracked in §0 Todos (record how each session ended).

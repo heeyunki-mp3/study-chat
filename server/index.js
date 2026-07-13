@@ -344,6 +344,8 @@ let dbPool = null;
         dur_focus_group_ms INT DEFAULT NULL,
         dur_auth_selection_ms INT DEFAULT NULL,
         dur_auth_creation_ms INT DEFAULT NULL,
+        exit_status VARCHAR(32) DEFAULT NULL,
+        exit_stage VARCHAR(64) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -432,6 +434,20 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS dur_auth_creation_ms INT DEFAULT NULL
+    `).catch(() => {});
+    // How the participant's session ended. exit_status: completed /
+    // failed_attention (idle kick) / unsubstantial / inappropriate (trolling) /
+    // no_consent (decline, row created by the /no-consent endpoint) / abandoned
+    // (never rejoined before the session TTL). exit_stage: where it ended —
+    // consent / intro / study_goal / "round N/M (type)" / wrap_up. First write
+    // wins so a later TTL expiry can't relabel a completed or kicked session.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS exit_status VARCHAR(32) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS exit_stage VARCHAR(64) DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -1524,6 +1540,23 @@ const WEBAUTHN_RP_NAME = "Georgia Tech Focus Group";
 const WEBAUTHN_RP_ID = process.env.WEBAUTHN_RP_ID || "localhost";
 const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || `http://localhost:${process.env.PORT || 3001}`;
 
+/**
+ * Human-readable label for where a session currently is in the study, used as
+ * exit_stage when it ends (kick / abandon): "intro", "study_goal", or
+ * "round N/M (poll|big_question)".
+ */
+function describeExitStage(sess) {
+  if (!sess) return null;
+  const ri = sess.currentRoundIndex ?? -1;
+  if (ri >= 0) {
+    const total = sess.allRounds?.length || 0;
+    const type = sess.allRounds?.[ri]?.type || "?";
+    return `round ${ri + 1}/${total} (${type})`;
+  }
+  if (sess.studyGoalStarted) return "study_goal";
+  return "intro";
+}
+
 // Sanitize a client-supplied duration into a non-negative integer ms value,
 // or null if unusable. Capped to MySQL INT max so a garbage value can't error the write.
 function sanitizeDurationMs(raw) {
@@ -1541,6 +1574,37 @@ function sanitizeAuthMethodClicks(raw) {
     .slice(0, 100);
   return cleaned.length ? JSON.stringify(cleaned) : null;
 }
+
+// POST /api/focus-group/no-consent
+// Records a consent decline. Decliners never reach the chat, so no
+// participant_responses row exists for them — this creates one with
+// exit_status='no_consent' (keyed by a synthetic session id; participant_id is
+// the Prolific PID when available) so declines show up in the CSV.
+app.post("/api/focus-group/no-consent", express.json(), async (req, res) => {
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  const { prolificPid, studyId, prolificSessionId } = req.body || {};
+  const pid = String(prolificPid || "").trim().slice(0, 100);
+  const syntheticSessionId = `noconsent_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  try {
+    await dbPool.execute(
+      `INSERT INTO participant_responses
+       (session_id, participant_id, prolific_pid, prolific_study_id, prolific_session_id, exit_status, exit_stage)
+       VALUES (?, ?, ?, ?, ?, 'no_consent', 'consent')`,
+      [
+        syntheticSessionId,
+        pid || "anonymous",
+        pid || null,
+        String(studyId || "").trim().slice(0, 100) || null,
+        String(prolificSessionId || "").trim().slice(0, 100) || null,
+      ]
+    );
+    logLine("DB", `no-consent recorded (pid=${pid || "anonymous"})`);
+    res.json({ ok: true });
+  } catch (e) {
+    logLine("DB_ERROR", `no-consent insert failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to record" });
+  }
+});
 
 // POST /api/focus-group/log-auth-click
 // Persists the running click log on EVERY SecureStep card click, so the data
@@ -1843,6 +1907,8 @@ io.on("connection", (socket) => {
         emitMessage(MODERATOR_NAME, kickMsg);
         logLine("QUEUE", "idle kick: closing session after unanswered nudges");
         session.chatEndAt = session.chatEndAt || new Date();
+        session.exitStatus = session.exitStatus || "failed_attention";
+        session.exitStage = session.exitStage || describeExitStage(session);
         await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
         io.to(socket.id).emit("kicked", { reason: "idle", message: "You have been removed from the session." });
         saveCurrentRoundResponses();
@@ -1891,6 +1957,8 @@ io.on("connection", (socket) => {
     emitMessage(MODERATOR_NAME, kickMsg);
     logLine("QUEUE", "unsubstantial kick: closing session after 4 unsubstantial in a row");
     session.chatEndAt = session.chatEndAt || new Date();
+    session.exitStatus = session.exitStatus || "unsubstantial";
+    session.exitStage = session.exitStage || describeExitStage(session);
     await new Promise((r) => setTimeout(r, KICK_DISPLAY_MS));
     io.to(socket.id).emit("kicked", { reason: "unsubstantial", message: kickMsg });
     saveCurrentRoundResponses();
@@ -2457,8 +2525,8 @@ io.on("connection", (socket) => {
         : null;
       await dbPool.execute(
         `INSERT INTO participant_responses
-         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, dur_opening_ms, dur_focus_group_ms, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, dur_opening_ms, dur_focus_group_ms, exit_status, exit_stage, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
            q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
@@ -2469,7 +2537,9 @@ io.on("connection", (socket) => {
            prolific_study_id = COALESCE(VALUES(prolific_study_id), prolific_study_id),
            prolific_session_id = COALESCE(VALUES(prolific_session_id), prolific_session_id),
            dur_opening_ms = COALESCE(dur_opening_ms, VALUES(dur_opening_ms)),
-           dur_focus_group_ms = COALESCE(dur_focus_group_ms, VALUES(dur_focus_group_ms))`,
+           dur_focus_group_ms = COALESCE(dur_focus_group_ms, VALUES(dur_focus_group_ms)),
+           exit_status = COALESCE(exit_status, VALUES(exit_status)),
+           exit_stage = COALESCE(exit_stage, VALUES(exit_stage))`,
         [
           sess.sessionId,
           sess.participantName,
@@ -2480,6 +2550,8 @@ io.on("connection", (socket) => {
           sess.prolificSessionId || null,
           sess.openingDurationMs ?? null,
           focusGroupMs,
+          sess.exitStatus || null,
+          sess.exitStage || null,
           r[0] || null,
           r[1] || null,
           r[2] || null,
@@ -2507,6 +2579,8 @@ io.on("connection", (socket) => {
       session.pendingAdvanceFromIdle = false;
       logLine("QUEUE", "all rounds done, wrapping up");
       session.chatEndAt = session.chatEndAt || new Date();
+      session.exitStatus = session.exitStatus || "completed";
+      session.exitStage = session.exitStage || "wrap_up";
       await saveSessionToDatabase();
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today. I really appreciate you all sharing your experiences!");
       if (!session) return;
@@ -3283,6 +3357,7 @@ io.on("connection", (socket) => {
       return;
     }
     session = activeSessions.get(sid);
+    session.disconnectedAt = null; // back online — disarm the pending TTL expiry
     logLine("REJOIN", `id=${socket.id} sessionId=${sid} participant=${session.humanDisplayName || session.participantName}`);
     // Re-send session info and full message history
     socket.emit("session", {
@@ -3499,6 +3574,8 @@ io.on("connection", (socket) => {
       clearElaborationPromptTimer();
       logLine("QUEUE", "human_message: inappropriate content detected, kicking user");
       session.chatEndAt = session.chatEndAt || new Date();
+      session.exitStatus = session.exitStatus || "inappropriate";
+      session.exitStage = session.exitStage || describeExitStage(session);
       await new Promise((r) => setTimeout(r, INAPPROPRIATE_KICK_DELAY_MS));
       if (session) io.to(socket.id).emit("kicked", { reason: "inappropriate", message: "You have been removed by the moderator." });
       if (session) {
@@ -3694,16 +3771,28 @@ io.on("connection", (socket) => {
       // Disconnect implies typing has ended; clear stuck flag so a future rejoin
       // can't inherit "typing forever".
       session.humanIsTyping = false;
+      session.disconnectedAt = Date.now(); // cleared on rejoin
       logLine("DISCONNECT", `id=${socket.id} sessionId=${session.sessionId} (session preserved for rejoin)`);
       saveCurrentRoundResponses();
       await saveSessionToDatabase(session);
-      // Schedule cleanup after TTL — if no rejoin, remove session
+      // Schedule cleanup after TTL — if no rejoin, remove session. Guards:
+      // (a) a rejoin clears disconnectedAt, so this timer (from an EARLIER
+      // disconnect) no longer evicts a live, rejoined session; (b) if they
+      // disconnected again later, only the newest timer (full TTL elapsed since
+      // that disconnect) expires the session.
       const sid = session.sessionId;
       setTimeout(() => {
-        if (activeSessions.has(sid)) {
-          activeSessions.delete(sid);
-          logLine("SESSION_EXPIRED", `sessionId=${sid} removed after TTL`);
-        }
+        const sess = activeSessions.get(sid);
+        if (!sess) return;
+        if (!sess.disconnectedAt) return; // rejoined and currently connected
+        if (Date.now() - sess.disconnectedAt < SESSION_TTL_MS - 1000) return; // newer disconnect owns expiry
+        activeSessions.delete(sid);
+        logLine("SESSION_EXPIRED", `sessionId=${sid} removed after TTL`);
+        // Funnel exit record: never came back → abandoned at whatever stage
+        // they were in. First-wins, so a completed/kicked session keeps its status.
+        sess.exitStatus = sess.exitStatus || "abandoned";
+        sess.exitStage = sess.exitStage || describeExitStage(sess);
+        saveSessionToDatabase(sess);
       }, SESSION_TTL_MS);
     }
     // Don't null session — keep reference so rejoin can restore it

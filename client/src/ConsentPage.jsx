@@ -6,7 +6,7 @@ const CONSENT_KEY = "participantConsent";
 // Prolific completion codes for the two early-exit paths. Completed studies use a
 // third code (see SurveyPage / CompletePage).
 const PROLIFIC_KICKED_URL = "https://app.prolific.com/submissions/complete?cc=CN7JBFL7";
-const PROLIFIC_DECLINED_URL = "https://app.prolific.com/submissions/complete?cc=C1M1NSHW";
+const PROLIFIC_DECLINED_URL = "https://app.prolific.com/submissions/complete?cc=C8ZQ9LBY";
 const REDIRECT_COUNTDOWN_S = 5;
 
 export default function ConsentPage() {
@@ -72,6 +72,23 @@ export default function ConsentPage() {
       navigate("/welcome", { replace: true });
     } else {
       sessionStorage.removeItem(CONSENT_KEY);
+      // Record the decline in the DB (exit_status='no_consent') — decliners never
+      // reach the chat, so no row would exist otherwise. Best-effort; keepalive
+      // lets it finish even though the Prolific redirect follows shortly.
+      try {
+        fetch("/api/focus-group/no-consent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
+            prolificPid: sessionStorage.getItem("PROLIFIC_PID") || undefined,
+            studyId: sessionStorage.getItem("STUDY_ID") || undefined,
+            prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
+          }),
+        }).catch(() => {});
+      } catch {
+        // ignore — recording the decline must never block the decline screen
+      }
       setDeclined(true);
     }
   }
