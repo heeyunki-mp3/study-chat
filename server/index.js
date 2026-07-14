@@ -2601,7 +2601,7 @@ io.on("connection", (socket) => {
       await saveSessionToDatabase();
       await emitModeratorLine("Thanks everyone, that wraps up our discussion for today. I really appreciate you all sharing your experiences!");
       if (!session) return;
-      await emitModeratorLine("To finish up, click the \"Exit Chat\" button below. You'll create an account and then complete a short exit survey. Some of the questions may be sensitive, so please set up your account with secure login credentials.", { consecutive: true });
+      await emitModeratorLine("To finish up, click the \"Exit Chat\" button below. You'll create an account and then complete a short exit survey. Some of the questions may be sensitive, so please set up your account with secure login credentials. After the survey, you will be redirected to Prolific for payment.", { consecutive: true });
       if (!session) return;
       await emitModeratorLine("You will also use this same account again in about two weeks for a paid follow-up study, so keep your login handy.", { consecutive: true });
       if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName });

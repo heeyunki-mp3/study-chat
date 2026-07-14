@@ -2,15 +2,11 @@
 
 ## 0. Todos
 
-- [ ] **Copy: tell participants they'll end up on Prolific after the survey** — opened 2026-07-09 — survey-page header line DONE 2026-07-13 ("When you submit it, you will be taken back to Prolific automatically…"); optional Eunice wrap-up mention pending wording approval
 - [ ] **Save, then delete the test data from the DB and Qualtrics** — opened 2026-07-09
 - [ ] **Qualtrics: capture the participant's device type** — opened 2026-07-09
 - [ ] **Exit survey "falsify"** (clarify scope) — opened 2026-07-09
 - [ ] **Start the pilot** (before launch: `make exit-button-off` — currently `true`/testing — then rebuild + deploy client AND server) — opened 2026-07-09
 - [ ] **CSV merging check** (DB export merges with the Qualtrics CSV) — opened 2026-07-09
-- [ ] **Eunice should type a bit quicker** (prof) — opened 2026-07-09
-- [ ] **Shorten bot answers on the last (passkey) big question** (prof; the `shorten` flag doesn't cover that round) — opened 2026-07-09
-- [ ] **Slow down Eunice's wrap-up** (3 closing bubbles land in ~11s — decide pacing) — opened 2026-07-09
 - [ ] **Qualtrics: fix the "techniques to access accounts" question** — real answer options + allow multiple selections (prof) — opened 2026-07-09
 - [ ] **Qualtrics: fix the 2FA question** (prof) — opened 2026-07-09
 - [ ] **Qualtrics: re-apply the End-of-Survey redirect to `SV_3HIPgZRXfMvUgsu`** — opened 2026-05-13
@@ -136,6 +132,10 @@ Write points: the three kick paths and the wrap-up set status+stage on the sessi
 Side fix while implementing: the session-TTL timer used to evict a session 30 min after the FIRST disconnect even if the participant had rejoined and was active (a later disconnect would then be un-rejoinable). Now `disconnectedAt` is stamped on disconnect and cleared on rejoin; the timer only expires a session that is still disconnected AND has been so for the full TTL (a newer disconnect's own timer owns the expiry).
 
 Reading the CSV: `completed` + empty registration columns = finished the chat but dropped at login/survey (the server can't see Qualtrics); repeated declines from one person create one `no_consent` row per decline click.
+
+### Participants told they'll return to Prolific after the survey — opened 2026-07-09, done 2026-07-14
+
+Two placements: (1) survey-page header (`SurveyPage.jsx`, added 2026-07-13): "Please complete the following survey before you go. When you submit it, you will be taken back to Prolific automatically to record your completion." (2) Eunice's wrap-up bubble 2 (`server/index.js`, added 2026-07-14) now ends: "…please set up your account with secure login credentials. After the survey, you will be redirected to Prolific for payment." Note: the actual redirect is performed by the Qualtrics End-of-Survey config, which still needs to be re-applied (see §0 Todos).
 
 ### Profile-picture choice recorded in the DB — 2026-07-14
 
