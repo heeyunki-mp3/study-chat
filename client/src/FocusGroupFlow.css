@@ -56,14 +56,13 @@
   color: #473A00;
 }
 
-/* Inline highlight for must-not-miss phrases in body copy (same marker-yellow
-   language as the banner), e.g. "You will sign in with this account again." */
+/* Inline emphasis for must-not-miss phrases in body copy, e.g. "You will sign
+   in with this account again." — GT navy semibold with a gold underline. */
 .fg-highlight {
-  background: #FFF3C4;
-  color: #473A00;
+  color: var(--gt-navy);
   font-weight: 600;
-  padding: 1px 5px;
-  border-radius: 3px;
+  border-bottom: 2px solid var(--gt-gold);
+  padding-bottom: 1px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }

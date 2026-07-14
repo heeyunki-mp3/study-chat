@@ -427,9 +427,9 @@ function SecureStep({ userId, onBack }) {
             <span className="fg-eyebrow">You're almost done</span>
             <h1>Secure your account</h1>
             <p>
-              You'll use this account again in <strong>2 weeks</strong> for the
-              paid follow-up study, so pick something you'll have access to.
-              Your exit survey and any future study data are tied to it.
+              You'll need access to this account in <strong>2 weeks</strong> for
+              the paid follow-up study. Since the questions and data linked to
+              it may be sensitive, please keep the account secure.
             </p>
             <StudyTimeline />
           </div>
