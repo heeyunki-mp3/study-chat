@@ -115,7 +115,7 @@ const BOT_THINK_DELAY_MS = { min: 4000, max: 6000 }; // Pause before bot shows "
 // bot-like, and the wider range spreads the three bots apart instead of all
 // starting to type at once. The OpenAI call still runs hidden inside this delay.
 // Keep max + type-out comfortably under POLL_STRAGGLER_GRACE_MS (15s).
-const POLL_BOT_THINK_DELAY_MS = { min: 3000, max: 6000 };
+const POLL_BOT_THINK_DELAY_MS = { min: 2000, max: 5000 };
 // Silent "reading" pause before the bot's study-goal ack ("Ok!") starts typing.
 // No upper-bound constraint: the first question's SEND is gated on the ack emit
 // (bounded promise in runStudyGoal → startFirstRound's holdFirstEmitFor), so the
@@ -131,7 +131,7 @@ const POST_ACK_SEND_GAP_MS = { min: 600, max: 800 };
 const POLL_STRAGGLER_GRACE_MS = 15000;        // After the human finishes a poll, max wait for slow bots before sending the summary anyway
 const TYPING_SPEED = { min: 0.8, max: 1.4 };  // Bot typing speed range (words/sec) ≈ 48–84 WPM — human texting pace
 const EXPLANATORY_TYPING_DELAY_MS = { min: 3000, max: 5000 };  // Moderator explanatory broadcasts (intro, study goal, poll instructions, polls, first big question, wrap-up) — FIXED type delay regardless of length. Human-paced moderator messages (reactions, summaries, discussion prompts, final big question) instead type at the length-based TYPING_SPEED.
-const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 5000 };       // Moderator think delay before typing
+const MODERATOR_THINK_DELAY_MS = { min: 3000, max: 4000 };       // Moderator think delay before typing
 const MODERATOR_CONSECUTIVE_DELAY_MS = { min: 500, max: 1500 };  // Shorter delay between consecutive moderator messages
 
 

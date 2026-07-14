@@ -581,12 +581,14 @@ export default function ChatPage() {
     .map(([k]) => k)
     .join(", ");
 
-  // Fires on every keystroke
-  function handleInputChange(val) {
+  // Fires on every keystroke. chatscope passes (innerHtml, textContent, ...):
+  // innerHtml feeds the contenteditable back (display), but draft detection must
+  // use textContent — pasted rich text makes innerHtml non-empty markup.
+  function handleInputChange(val, textContent) {
     if (studyCompleteRef.current) return; // study over — don't emit anything
     setInput(val);
-    inputRef.current = val ?? "";
-    const hasDraft = String(val ?? "").trim().length > 0;
+    inputRef.current = textContent ?? val ?? "";
+    const hasDraft = String(textContent ?? "").trim().length > 0;
 
     socket.emit("human_typing", { isTyping: true, hasDraft });
 
@@ -610,9 +612,13 @@ export default function ChatPage() {
     }, idleMs);
   }
 
+  // Called with PLAIN TEXT (innerText/textContent — see the MessageInput wiring
+  // below). Never pass chatscope's first callback arg here: it's innerHTML, and
+  // pasted rich text would send raw <span style=…> markup into the transcript,
+  // DB, and LLM prompts.
   function onSend(text) {
     if (studyCompleteRef.current) return; // study over — don't send post-study messages
-    const t = (text || "").trim();
+    const t = (text || "").replace(/\u00a0/g, " ").trim();
     if (!t) return;
 
     if (typingTimeoutRef.current) {
@@ -777,7 +783,9 @@ export default function ChatPage() {
               placeholder={studyComplete ? "Chat ended — click Exit Chat" : "Type..."}
               value={input}
               onChange={handleInputChange}
-              onSend={onSend}
+              // chatscope passes (innerHtml, textContent, innerText). Send the
+              // PLAIN TEXT — innerHtml carries pasted rich-text markup.
+              onSend={(innerHtml, textContent, innerText) => onSend(innerText || textContent || "")}
               disabled={studyComplete}
             />
           </div>
