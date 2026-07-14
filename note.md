@@ -2,8 +2,7 @@
 
 ## 0. Todos
 
-- [ ] **Copy: tell participants they'll end up on Prolific after the survey** — opened 2026-07-09
-- [ ] **Copy: add "you will sign in with the account" to the end of the login page's middle paragraph** — opened 2026-07-09
+- [ ] **Copy: tell participants they'll end up on Prolific after the survey** — opened 2026-07-09 — survey-page header line DONE 2026-07-13 ("When you submit it, you will be taken back to Prolific automatically…"); optional Eunice wrap-up mention pending wording approval
 - [ ] **Save, then delete the test data from the DB and Qualtrics** — opened 2026-07-09
 - [ ] **Qualtrics: capture the participant's device type** — opened 2026-07-09
 - [ ] **Exit survey "falsify"** (clarify scope) — opened 2026-07-09

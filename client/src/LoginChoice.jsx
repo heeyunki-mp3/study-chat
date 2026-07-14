@@ -179,7 +179,7 @@ function UserIdStep({ onContinue }) {
             <p>
               Select a User ID and login method to submit your exit survey and
               receive today's payment. You may also be invited to future paid
-              follow-up studies.
+              follow-up studies. <strong>You will sign in with this account again.</strong>
             </p>
             <StudyTimeline />
           </div>

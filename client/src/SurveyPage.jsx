@@ -64,7 +64,11 @@ export default function SurveyPage() {
     <div className="survey-page">
       <div className="survey-header">
         <h2>Survey</h2>
-        <p>Please complete the following survey before you go.</p>
+        <p>
+          Please complete the following survey before you go. When you submit
+          it, you will be taken back to Prolific automatically to record your
+          completion.
+        </p>
       </div>
       <iframe
         src={surveyUrl}
