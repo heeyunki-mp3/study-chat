@@ -14,10 +14,20 @@ export default function ConsentPage() {
   const [error, setError] = useState("");
   // Kicked participants (idle / unsubstantial / inappropriate) are redirected here
   // with ?kicked=1; they see the same end screen as declined consent but are sent
-  // to a different Prolific completion code.
-  const [kicked] = useState(
-    () => new URLSearchParams(window.location.search).get("kicked") === "1"
-  );
+  // to a different Prolific completion code. The sessionStorage flag makes the
+  // lockout stick for the whole tab: even a bare "/" (back button, retyped URL)
+  // shows the end screen instead of the consent form, so the study can't be
+  // restarted after a kick.
+  const [kicked] = useState(() => {
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("kicked") === "1" ||
+        sessionStorage.getItem("studyEnded") === "kicked"
+      );
+    } catch {
+      return new URLSearchParams(window.location.search).get("kicked") === "1";
+    }
+  });
   const [declined, setDeclined] = useState(
     () => new URLSearchParams(window.location.search).get("declined") === "1"
   );

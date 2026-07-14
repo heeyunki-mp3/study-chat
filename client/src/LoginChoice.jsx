@@ -179,7 +179,8 @@ function UserIdStep({ onContinue }) {
             <p>
               Select a User ID and login method to submit your exit survey and
               receive today's payment. You may also be invited to future paid
-              follow-up studies. <strong>You will sign in with this account again.</strong>
+              follow-up studies.{" "}
+              <strong className="fg-highlight">You will sign in with this account again.</strong>
             </p>
             <StudyTimeline />
           </div>
@@ -553,9 +554,12 @@ export default function LoginChoice() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, []);
 
-  // Guard: must have completed chat
+  // Guard: must have completed the chat — and not by being kicked (kicked users
+  // also have chatCompleted set, but must not reach registration/survey; "/"
+  // shows them the kicked end screen via the studyEnded flag).
   const chatCompleted = sessionStorage.getItem("chatCompleted");
-  if (!chatCompleted) {
+  const wasKicked = sessionStorage.getItem("studyEnded") === "kicked";
+  if (!chatCompleted || wasKicked) {
     navigate("/", { replace: true });
     return null;
   }

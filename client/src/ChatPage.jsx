@@ -20,7 +20,7 @@ const SERVER_BASE = import.meta.env.DEV ? "http://127.0.0.1:3001" : "";
 //   true (testing): the button is always visible so you can jump to the
 //     login/survey flow without sitting through the whole chat.
 // ⚠️ Must be false before launching the pilot.
-const SHOW_EXIT_BUTTON_ALWAYS = true;
+const SHOW_EXIT_BUTTON_ALWAYS = false;
 
 // Bots that use one of the reserved participant-style photos instead of their own
 // named PNG. profile_8.jpg / profile_9.jpg are excluded from the user picker
@@ -515,6 +515,10 @@ export default function ChatPage() {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
       sessionStorage.setItem("chatCompleted", sessionStorage.getItem("studySessionId") || "1");
+      // Locks this tab out of the funnel: ConsentPage always shows the kicked
+      // end screen and NamePage refuses entry, so back-button / typing /welcome
+      // can't restart the study after a kick.
+      sessionStorage.setItem("studyEnded", "kicked");
       // ?kicked=1 (vs ?declined=1) so ConsentPage's end screen redirects to the
       // kicked/attention-check Prolific completion code, not the no-consent one.
       navigate("/?kicked=1", { replace: true });

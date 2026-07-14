@@ -10,9 +10,10 @@ export default function SurveyPage() {
 
   const sessionId = useMemo(() => sessionStorage.getItem("chatCompleted") || "", []);
 
-  // Guard: must come from chat page with a valid session
+  // Guard: must come from chat page with a valid session — and not kicked
+  // (kicked users have the session flag set too, but must not reach the survey).
   useEffect(() => {
-    if (!sessionId) {
+    if (!sessionId || sessionStorage.getItem("studyEnded") === "kicked") {
       navigate("/", { replace: true });
       return;
     }

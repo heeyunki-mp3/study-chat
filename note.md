@@ -137,6 +137,10 @@ Side fix while implementing: the session-TTL timer used to evict a session 30 mi
 
 Reading the CSV: `completed` + empty registration columns = finished the chat but dropped at login/survey (the server can't see Qualtrics); repeated declines from one person create one `no_consent` row per decline click.
 
+### Kicked participants could restart or skip ahead — 2026-07-13 (FIXED)
+
+After a kick, the countdown page didn't lock anything: back-button or typing `/welcome` reached NamePage (whose submit even clears the flow flags) → full study restart; worse, the kick sets `chatCompleted`, which is exactly what the `/login` and `/survey` guards check → a kicked participant could register, take the exit survey, and collect the COMPLETED Prolific code. Fix: the kicked handler sets `sessionStorage.studyEnded = "kicked"`; guards added — ConsentPage shows the kicked end screen even on a bare `/`, NamePage bounces to `/`, LoginChoice and SurveyPage refuse kicked tabs. Per-tab lockout (sessionStorage): a fresh tab isn't blocked — acceptable since Prolific blocks repeat submissions per PID; also convenient for testing (new tab = clean slate).
+
 ### Prof pilot-feedback fixes ("Notes for Focus Group.pdf") — received 2026-07-09, fixed 2026-07-08/09
 
 - **Consent form said 15 minutes / $3.00** → both occurrences in `ConsentPage.jsx` now say "approximately 20 minutes" and "$4.00".

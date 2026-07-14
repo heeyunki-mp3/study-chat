@@ -56,6 +56,18 @@
   color: #473A00;
 }
 
+/* Inline highlight for must-not-miss phrases in body copy (same marker-yellow
+   language as the banner), e.g. "You will sign in with this account again." */
+.fg-highlight {
+  background: #FFF3C4;
+  color: #473A00;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 .fg-container {
   display: grid;
   grid-template-columns: 1fr 1fr;

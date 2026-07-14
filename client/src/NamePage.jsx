@@ -46,9 +46,14 @@ export default function NamePage() {
   const streamRef = useRef(null);
   const navigate = useNavigate();
 
-  // Gate: require consent before showing the welcome page
+  // Gate: kicked participants can't restart the study from this tab — bounce to
+  // "/" where ConsentPage shows the kicked end screen (studyEnded flag). Also
+  // require consent before showing the welcome page.
   useEffect(() => {
-    if (sessionStorage.getItem("participantConsent") !== "agreed") {
+    if (
+      sessionStorage.getItem("studyEnded") === "kicked" ||
+      sessionStorage.getItem("participantConsent") !== "agreed"
+    ) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
