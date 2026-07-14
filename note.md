@@ -2,6 +2,8 @@
 
 ## 0. Todos
 
+- [ ] **Verify Passenger runs ONE app process** (launch-blocking) — opened 2026-07-14
+  - Why: sessions live in memory + socket.io polling must hit the same process; Passenger can spawn extra processes under concurrent load → dead chats/failed rejoins that solo testing never shows. How to check: each process writes its own timestamped log file in `server/logs/` at startup ("backend running on…") — after Restart App, exactly ONE new file should ever appear between restarts; then open 3-4 parallel sessions (different tabs is fine) and watch for a second log file or `rejoin_failed`. If Plesk exposes it, pin max app processes/pool size to 1.
 - [ ] **Save, then delete the test data from the DB and Qualtrics** — opened 2026-07-09
 - [ ] **Qualtrics: capture the participant's device type** — opened 2026-07-09
 - [ ] **Exit survey "falsify"** (clarify scope) — opened 2026-07-09
@@ -132,6 +134,10 @@ Write points: the three kick paths and the wrap-up set status+stage on the sessi
 Side fix while implementing: the session-TTL timer used to evict a session 30 min after the FIRST disconnect even if the participant had rejoined and was active (a later disconnect would then be un-rejoinable). Now `disconnectedAt` is stamped on disconnect and cleared on rejoin; the timer only expires a session that is still disconnected AND has been so for the full TTL (a newer disconnect's own timer owns the expiry).
 
 Reading the CSV: `completed` + empty registration columns = finished the chat but dropped at login/survey (the server can't see Qualtrics); repeated declines from one person create one `no_consent` row per decline click.
+
+### Password/passkey alternation race fixed with a MySQL named lock — 2026-07-14
+
+The `assign-auth-order` count-then-assign ran on separate pool connections with no serialization — two simultaneous first-timers could both read the same count and both get "password" on top (documented as accepted in the 2026-05-13 entry; revisited pre-pilot). Now the whole section runs on one dedicated connection under `GET_LOCK('assign_auth_order', 5)` / `RELEASE_LOCK` (released in `finally`, covering the early returns) — strict alternation across connections AND server processes, so it also stays correct if Passenger ever runs multiple app processes. On lock timeout (5s) it proceeds anyway — worst case is the old best-effort behavior.
 
 ### Participants told they'll return to Prolific after the survey — opened 2026-07-09, done 2026-07-14
 

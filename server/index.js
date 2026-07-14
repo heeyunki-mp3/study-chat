@@ -1658,8 +1658,17 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
   const { sessionId, participantId } = req.body || {};
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  let conn;
   try {
-    const [existing] = await dbPool.execute(
+    // Named MySQL lock serializes the count-then-assign section across pool
+    // connections AND server processes, so two participants hitting this at the
+    // same instant can't both read the same count and get the same card order
+    // (previously a known, accepted race). GET_LOCK/RELEASE_LOCK must run on
+    // the SAME connection, hence the dedicated one. On lock timeout (5s) we
+    // proceed anyway — worst case is the old best-effort behavior.
+    conn = await dbPool.getConnection();
+    await conn.query("SELECT GET_LOCK('assign_auth_order', 5)");
+    const [existing] = await conn.execute(
       `SELECT auth_method_top FROM participant_responses WHERE session_id = ? AND participant_id = ?`,
       [sessionId, participantId]
     );
@@ -1667,12 +1676,12 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
     if (existing[0].auth_method_top === "password" || existing[0].auth_method_top === "passkey") {
       return res.json({ authMethodTop: existing[0].auth_method_top });
     }
-    const [countRows] = await dbPool.execute(
+    const [countRows] = await conn.execute(
       `SELECT COUNT(*) AS n FROM participant_responses WHERE auth_method_top IS NOT NULL`
     );
     const n = Number(countRows[0]?.n || 0);
     const assignment = n % 2 === 0 ? "password" : "passkey";
-    await dbPool.execute(
+    await conn.execute(
       `UPDATE participant_responses SET auth_method_top = ? WHERE session_id = ? AND participant_id = ?`,
       [assignment, sessionId, participantId]
     );
@@ -1681,6 +1690,11 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
   } catch (e) {
     logLine("DB_ERROR", `assign-auth-order failed: ${e?.message}`);
     res.status(500).json({ error: "Failed to assign auth order" });
+  } finally {
+    if (conn) {
+      await conn.query("SELECT RELEASE_LOCK('assign_auth_order')").catch(() => {});
+      conn.release();
+    }
   }
 });
 
