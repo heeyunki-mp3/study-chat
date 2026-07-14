@@ -427,10 +427,11 @@ function SecureStep({ userId, onBack }) {
             <span className="fg-eyebrow">You're almost done</span>
             <h1>Secure your account</h1>
             <p>
-              You'll need access to this account in <strong>2 weeks</strong> for
-              the paid follow-up study. Since the questions and data linked to
-              it may be sensitive, please{" "}
-              <strong className="fg-highlight">keep the account secure</strong>.
+              You'll need access to this account in{" "}
+              <strong className="fg-emph">2 weeks</strong> for the paid
+              follow-up study. Since the questions and data linked to it may be
+              sensitive, please{" "}
+              <strong className="fg-emph">keep the account secure</strong>.
             </p>
             <StudyTimeline />
           </div>

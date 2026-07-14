@@ -67,6 +67,13 @@
   -webkit-box-decoration-break: clone;
 }
 
+/* Quieter inline emphasis: GT navy bold, no underline (e.g. "2 weeks",
+   "keep the account secure" on the method-selection step). */
+.fg-emph {
+  color: var(--gt-navy);
+  font-weight: 600;
+}
+
 .fg-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
