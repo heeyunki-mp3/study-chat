@@ -137,6 +137,10 @@ Side fix while implementing: the session-TTL timer used to evict a session 30 mi
 
 Reading the CSV: `completed` + empty registration columns = finished the chat but dropped at login/survey (the server can't see Qualtrics); repeated declines from one person create one `no_consent` row per decline click.
 
+### Profile-picture choice recorded in the DB — 2026-07-14
+
+New `profile_pic_choice VARCHAR(16)` column on `participant_responses` (ALTER IF NOT EXISTS): **`camera`** (took a photo), **`profile_N`** (picked preset avatar N, e.g. `profile_3`), or **`none`** (submitted the welcome page without a picture). Derived client-side in `ChatPage.jsx` (`getProfilePicChoice()` — data: URL = camera capture, `/profile_pictures/profile_N.jpg` = preset) and sent with `participant_name` (both the fresh-session and rejoin-failed emits); server whitelists via `sanitizeProfilePicChoice()` and stores first-write-wins in the upsert.
+
 ### Kicked participants could restart or skip ahead — 2026-07-13 (FIXED)
 
 After a kick, the countdown page didn't lock anything: back-button or typing `/welcome` reached NamePage (whose submit even clears the flow flags) → full study restart; worse, the kick sets `chatCompleted`, which is exactly what the `/login` and `/survey` guards check → a kicked participant could register, take the exit survey, and collect the COMPLETED Prolific code. Fix: the kicked handler sets `sessionStorage.studyEnded = "kicked"`; guards added — ConsentPage shows the kicked end screen even on a bare `/`, NamePage bounces to `/`, LoginChoice and SurveyPage refuse kicked tabs. Per-tab lockout (sessionStorage): a fresh tab isn't blocked — acceptable since Prolific blocks repeat submissions per PID; also convenient for testing (new tab = clean slate).

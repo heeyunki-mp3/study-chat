@@ -429,7 +429,8 @@ function SecureStep({ userId, onBack }) {
             <p>
               You'll need access to this account in <strong>2 weeks</strong> for
               the paid follow-up study. Since the questions and data linked to
-              it may be sensitive, please keep the account secure.
+              it may be sensitive, please{" "}
+              <strong className="fg-highlight">keep the account secure</strong>.
             </p>
             <StudyTimeline />
           </div>

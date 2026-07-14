@@ -346,6 +346,7 @@ let dbPool = null;
         dur_auth_creation_ms INT DEFAULT NULL,
         exit_status VARCHAR(32) DEFAULT NULL,
         exit_stage VARCHAR(64) DEFAULT NULL,
+        profile_pic_choice VARCHAR(16) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -448,6 +449,13 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS exit_stage VARCHAR(64) DEFAULT NULL
+    `).catch(() => {});
+    // How the participant set their profile picture on the welcome page:
+    // "camera" (took a photo), "profile_N" (picked preset avatar N),
+    // "none" (submitted without a picture). Sent by the client with participant_name.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS profile_pic_choice VARCHAR(16) DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -1557,6 +1565,13 @@ function describeExitStage(sess) {
   return "intro";
 }
 
+// Whitelist the client-reported profile-picture choice: "camera", "none",
+// "preset" (fallback), or "profile_N". Anything else → null.
+function sanitizeProfilePicChoice(raw) {
+  const s = String(raw || "").trim();
+  return /^(camera|none|preset|profile_\d{1,2})$/.test(s) ? s : null;
+}
+
 // Sanitize a client-supplied duration into a non-negative integer ms value,
 // or null if unusable. Capped to MySQL INT max so a garbage value can't error the write.
 function sanitizeDurationMs(raw) {
@@ -2525,8 +2540,8 @@ io.on("connection", (socket) => {
         : null;
       await dbPool.execute(
         `INSERT INTO participant_responses
-         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, dur_opening_ms, dur_focus_group_ms, exit_status, exit_stage, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (session_id, participant_id, assigned_group, bots_config, prolific_pid, prolific_study_id, prolific_session_id, dur_opening_ms, dur_focus_group_ms, exit_status, exit_stage, profile_pic_choice, q1_new_features, q2_vpn, q3_password_managers, q4_passkeys_heard, q5_passkey_switch)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            q1_new_features = COALESCE(VALUES(q1_new_features), q1_new_features),
            q2_vpn = COALESCE(VALUES(q2_vpn), q2_vpn),
@@ -2539,7 +2554,8 @@ io.on("connection", (socket) => {
            dur_opening_ms = COALESCE(dur_opening_ms, VALUES(dur_opening_ms)),
            dur_focus_group_ms = COALESCE(dur_focus_group_ms, VALUES(dur_focus_group_ms)),
            exit_status = COALESCE(exit_status, VALUES(exit_status)),
-           exit_stage = COALESCE(exit_stage, VALUES(exit_stage))`,
+           exit_stage = COALESCE(exit_stage, VALUES(exit_stage)),
+           profile_pic_choice = COALESCE(profile_pic_choice, VALUES(profile_pic_choice))`,
         [
           sess.sessionId,
           sess.participantName,
@@ -2552,6 +2568,7 @@ io.on("connection", (socket) => {
           focusGroupMs,
           sess.exitStatus || null,
           sess.exitStage || null,
+          sess.profilePicChoice || null,
           r[0] || null,
           r[1] || null,
           r[2] || null,
@@ -3198,6 +3215,8 @@ io.on("connection", (socket) => {
     // the focus-group duration when the chat ends.
     session.openingDurationMs = sanitizeDurationMs(data?.msSinceOpened);
     session.chatStartAt = new Date();
+    // How they set their profile picture on the welcome page (camera / profile_N / none).
+    session.profilePicChoice = sanitizeProfilePicChoice(data?.profilePicChoice);
     logLine("SESSION_START", `id=${socket.id} bots=${session.botIds.join(",")} group=${session.assignedGroup || "cli"}`);
     logLine("SESSION_START", `participant_name set to "${name}"`);
     // Write transcript header with group info

@@ -70,6 +70,22 @@ function isSelf(sender, myName) {
   return false;
 }
 
+// Compact label of how the participant set their profile picture on the welcome
+// page, recorded in the DB: "camera" (took a photo), "profile_N" (picked preset
+// avatar N), or "none". Camera captures are stored as data: URLs; presets as
+// /profile_pictures/profile_N.jpg URLs.
+function getProfilePicChoice() {
+  try {
+    const pfp = sessionStorage.getItem(PARTICIPANT_PROFILE_KEY) || "";
+    if (!pfp) return "none";
+    if (pfp.startsWith("data:")) return "camera";
+    const m = pfp.match(/profile_(\d+)\.jpg/);
+    return m ? `profile_${m[1]}` : "preset";
+  } catch {
+    return "none";
+  }
+}
+
 function getColorForSender(sender, session, myName) {
   if (!sender) return PARTICIPANT_PALETTE[0];
   if (isSelf(sender, myName)) return PARTICIPANT_PALETTE[0];
@@ -385,6 +401,7 @@ export default function ChatPage() {
           studyId: sessionStorage.getItem("STUDY_ID") || undefined,
           prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
           msSinceOpened: openedAtMs > 0 ? Date.now() - openedAtMs : undefined,
+          profilePicChoice: getProfilePicChoice(),
         });
       }
     });
@@ -402,6 +419,7 @@ export default function ChatPage() {
         studyId: sessionStorage.getItem("STUDY_ID") || undefined,
         prolificSessionId: sessionStorage.getItem("PROLIFIC_SESSION_ID") || undefined,
         msSinceOpened: openedAtMs > 0 ? Date.now() - openedAtMs : undefined,
+        profilePicChoice: getProfilePicChoice(),
       });
     });
 
