@@ -3,9 +3,12 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* App is light-themed (white header/cards, dark text). Force a light
+     color scheme so OS dark-mode users don't get a dark page background
+     behind the dark text, which made pages like the consent form unreadable. */
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,10 +27,19 @@ a:hover {
 
 body {
   margin: 0;
-  /* display: flex; */
-  place-items: center;
+  display: block;
   min-width: 320px;
+  /* 100dvh tracks the *small* viewport on mobile (shrinks with the address bar),
+     so the page doesn't overflow into scrollable empty space at the bottom.
+     100vh stays as a fallback for browsers that don't support dvh. */
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 h1 {
@@ -42,7 +54,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #f9f9f9;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -54,17 +66,8 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+a:hover {
+  color: #747bff;
 }
 
 /* Chat area is 15cm; bubbles and input must not push — wrap only */
@@ -231,4 +234,47 @@ button:focus-visible {
   overflow-y: auto !important;
   min-height: 1.5em !important;
   max-height: none !important;
+}
+
+/* ─── Site header (GT logo + Focus Group) ─── */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 16px 24px;
+  box-sizing: border-box;
+  background: #fff;
+  border-bottom: 1px solid #E5E7EB;
+  flex-shrink: 0;
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.site-header-logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.site-header-divider {
+  width: 1px;
+  height: 20px;
+  background: #D1D5DB;
+  flex-shrink: 0;
+}
+
+.site-header-title {
+  font-family: "Geist", system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #003057;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }

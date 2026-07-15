@@ -13,7 +13,7 @@ export default function WaitingPage() {
   // Guard: must come from welcome page, and not already past this step
   useEffect(() => {
     if (!sessionStorage.getItem("participantName") || sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {
-      navigate("/", { replace: true });
+      navigate("/welcome", { replace: true });
       return;
     }
   }, [navigate]);
@@ -23,11 +23,26 @@ export default function WaitingPage() {
     window.history.replaceState(null, "", "/waiting");
     window.history.pushState(null, "", "/waiting");
     const onBack = () => {
-      navigate("/", { replace: true });
+      navigate("/welcome", { replace: true });
     };
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);
   }, [navigate]);
+
+  // Warn the participant before they reload or close the tab in the waiting room.
+  // Reloading here drops their spot and forfeits payment. The native browser dialog
+  // can't show custom text (browsers force a generic "Reload site? / Leave site?"
+  // message), but it forces a confirmation. The auto-advance to /chat is a
+  // client-side navigation that unmounts this page, so it won't trigger the warning.
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ""; // required for Chrome to show the prompt
+      return "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
 
   useEffect(() => {
     let navId = null;
@@ -52,7 +67,7 @@ export default function WaitingPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "calc(100dvh - 61px)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

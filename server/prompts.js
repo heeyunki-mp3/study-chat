@@ -58,33 +58,9 @@ function sanitizeOneLine(s) {
   return safeStr(s).replace(/\s+/g, " ").trim();
 }
 
-function uniqByHandle(arr) {
-  const seen = new Set();
-  const out = [];
-  for (const p of arr) {
-    const h = safeStr(p?.handle);
-    if (!h || seen.has(h)) continue;
-    seen.add(h);
-    out.push(p);
-  }
-  return out;
-}
-
 // =====================
 // Cast selection
 // =====================
-export function pickRandomCast(k = 4) {
-  const pool = uniqByHandle(PERSONAS);
-  if (pool.length <= k) return pool;
-
-  const shuffled = [...pool];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, k);
-}
-
 export function getCastByHandles(handles) {
   if (!Array.isArray(handles) || handles.length === 0) return [];
   // Build lookup by id (exact, e.g. "mina_pro") and by handle (e.g. "Mina").
@@ -127,6 +103,8 @@ export function systemPrompt(botName, otherNamesCsv, persona = {}, moderatorName
 
   const bio = sanitizeOneLine(persona.bio || persona.about || "");
   const personaPrompt = safeStr(persona.persona_prompt || "");
+  const pollStyle = safeStr(persona.poll_style || "");
+  const techExperience = safeStr(persona.tech_experience || "");
 
   const awareness = (persona.passkeys?.awareness || "").toString().toLowerCase();
   let passkeyBlock;
@@ -202,6 +180,7 @@ STYLE:
 - Do NOT use emoji (only use emoji to show strong emotion and use multiple emoji)
 
 HARD RULES:
+- Never use the word "huh".
 - Never say you are AI/bot/model/ChatGPT/OpenAI.
 - Never mention study/experiment/research/IRB/deception.
 - Don't give policy disclaimers.
@@ -226,6 +205,12 @@ ${personaPrompt ? `
 The following rules define your personality, tone, and writing style. If anything above conflicts with these rules, THESE RULES WIN. Follow them exactly.
 
 ${personaPrompt}` : ""}
+${techExperience ? `
+YOUR EXPERIENCE WITH THESE TECHNOLOGIES (use this to answer poll questions truthfully in character):
+${techExperience}` : ""}
+${pollStyle ? `
+POLL ANSWER WORDING (your preferred yes/no forms):
+${pollStyle}` : ""}
 `.trim();
 
   return base;
@@ -240,14 +225,14 @@ export function buildUserPrompt({
   otherName,
   respondTo = null,
   moderatorName = MODERATOR_NAME_DEFAULT,
-  humanParticipantName = "You",
   maxBubbles = 3,
   questionType = "big_question",
+  shorten = false,
+  pollExplain = false,
 }) {
   const me = sanitizeOneLine(botName);
   const others = sanitizeOneLine(otherName || "");
   const mod = sanitizeOneLine(moderatorName);
-  const human = sanitizeOneLine(humanParticipantName) || "You";
 
   const modeBlock =
     mode === "idle_chat"
@@ -282,13 +267,53 @@ Answer this first, then you may react to newer messages in the transcript.
         : "";
 
   const formatBlock = questionType === "poll"
-    ? `Return EXACTLY 1 chat message as a JSON array with one string. The message must be 6 words or fewer — a very short phrase or single sentence (e.g. ["Yes I use one"] or ["Nope never heard of it"] or ["Heard of it never tried"]).
-  If you don't know the technology that the moderator is asking about, you MUST ask a clarification question. For example, if the moderator asks about passkeys, and you don't know what it is, you must ask: "What is a passkey?" or "I don't know what a passkey is. Can you explain what it is?" or "I only know that it is about login. Can someone explain what passkey is?" depnding on your knowledge about the technology.
-  
+    ? (pollExplain
+      ? `Return EXACTLY 1 chat message as a JSON array with one string. This is a quick poll. Give your yes/no stance plus a SHORT reason, but keep the WHOLE message UNDER 10 words, in your character's voice.
+
+- Base your yes/no on your persona's actual experience and awareness, not at random.
+- For the yes/no word itself, use your preferred wording from the POLL ANSWER WORDING block in your persona above (e.g. "Yea"/"Yes"/"yeah", "nope"/"no").
+- Stay 100% in your character's voice: phrasing, slang, punctuation, and capitalization MUST match the Language Realism rules in your persona block above.
+- If there is no note about capitalization, captialize as a correct English sentence would.
+- Examples of the vibe (DO NOT copy, use your own voice and experience):
+  - "Yes, I use one for work mostly"
+  - "nope never really got into that"
+  - "Ive heard of it but never set one up"
+
+If you genuinely don't know the technology the moderator is asking about, instead ask a brief clarification question IN YOUR VOICE (e.g. an indifferent retail worker would say "wait what even is that thingy"). Match your persona's awareness level — if your persona says you have NO awareness of the topic, don't pretend to know.
+
 HARD FORMAT RULES:
 - Output ONLY valid JSON. No markdown, no extra text.
 - Must be a JSON array with exactly 1 string.
-- 6 words maximum. No exceptions.`
+- UNDER 10 words total. One short chat message, not a paragraph.
+- Voice must match your persona's Language Realism rules (lowercase / no apostrophes / etc. if your persona requires it).`
+      : `Return EXACTLY 1 chat message as a JSON array with one string. This is a quick poll and you are giving a SHORT answer with NO explanation.
+
+Pick ONE option that matches your character's actual experience (have you used it / heard of it / not?):
+"yes" "Yes" "Yeah" "yeah" "yea" "Yea" "no" "No" "Nope" "I don't think so" "i dont think so"
+
+- Choose a yes-type or no-type answer based on your persona's real experience and awareness, NOT at random.
+- For WHICH wording to use, follow the POLL ANSWER WORDING block in your persona above (your preferred yes form, e.g. "Yea" vs "Yes" vs "yeah", and your preferred no form, e.g. "nope" vs "no"). Match your persona's capitalization; if no rule is given, capitalize the first letter.
+- EXCEPTION: if your persona genuinely does NOT know the technology the moderator is asking about, do NOT pick a yes/no option. Instead ask a short question in your voice about what it is (e.g. "wait whats a passkey??", "what even is that thing"). If your persona says you have NO awareness of the topic, you MUST ask what it is rather than answer yes/no.
+
+HARD FORMAT RULES:
+- Output ONLY valid JSON. No markdown, no extra text.
+- Must be a JSON array with exactly 1 string.
+- Unless you are asking what the technology is (see the EXCEPTION above), the string must be ONLY one of the options listed above, with no explanation or extra words.`)
+    : shorten
+    ? `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Keep it SHORT — maximum 2 sentences TOTAL across all bubbles.
+
+HARD FORMAT RULES:
+- Output ONLY valid JSON. No markdown, no extra text.
+- Must be a JSON array of strings.
+
+CONTENT RULES:
+- MAXIMUM 2 sentences total across ALL bubbles combined. Be concise.
+- Each JSON item = ONE short idea or sentence. Up to ${maxBubbles} items max.
+- Each item should be ~1 sentence, up to ~100 characters.
+- Avoid low-content filler like: "yeah", "true", "i agree", "same".
+- AVOID USING ---, --, - OR OTHER SEPARATORS.
+- You are ${me}. Never claim to be ${others}.
+- Never say "I'm <other participant>".`
     : `Return 1 to ${maxBubbles} chat message(s) as a JSON array of strings. Use 1–${maxBubbles} bubbles depending on how much you have to say; one bubble is fine for short answers.
 
 HARD FORMAT RULES:

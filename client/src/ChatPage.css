@@ -1,9 +1,49 @@
+/* While the chat page is mounted, lock the document to the visible viewport so the
+   body can't scroll behind the chat. Globals set `min-height: 100vh` which on iOS is
+   the *large* viewport — it doesn't shrink with the keyboard, so without this reset
+   the body becomes scrollable and white space appears below the chat. */
+html.chat-active,
+html.chat-active body,
+html.chat-active #root {
+  min-height: 0;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  overflow: hidden;
+  /* Don't let the page rubber-band on iOS while chatting. */
+  overscroll-behavior: none;
+}
+
+/* Use a flex layout (header on top, chat below filling the rest) instead of
+   `position: fixed`. Fixed-positioned elements on iOS drift when the keyboard
+   opens because iOS auto-scrolls the layout viewport — that's what was leaving
+   white space at the bottom when the keyboard appeared. As a flex item, chat-page
+   naturally tracks whatever vertical space remains after the header, shrinking
+   correctly when --app-h shrinks with the keyboard. */
+html.chat-active #root {
+  display: flex;
+  flex-direction: column;
+}
+html.chat-active .chat-page {
+  position: static;
+  height: auto;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 .chat-page {
   position: fixed;
-  top: 0;
+  /* Sit below the global SiteHeader. --header-h is measured at runtime in ChatPage.jsx;
+     the 60px default matches the header's natural height to avoid a first-paint flash. */
+  top: var(--header-h, 60px);
   left: 0;
   right: 0;
-  bottom: 0;
+  /* Bind to the visual viewport so the page shrinks above the mobile keyboard.
+     --app-h is set from window.visualViewport.height (ChatPage.jsx);
+     100dvh is the modern fallback, 100vh is the ancient fallback. */
+  height: calc(100vh - var(--header-h, 60px));
+  height: calc(100dvh - var(--header-h, 60px));
+  height: calc(var(--app-h, 100dvh) - var(--header-h, 60px));
   display: flex;
   overflow: hidden;
   background: #ffffff;
@@ -112,6 +152,8 @@
   flex-direction: column;
   overflow: hidden;
   padding: 16px;
+  /* Honor iPhone home-indicator inset so the input isn't covered. */
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .chat-messages-wrapper {
@@ -134,12 +176,14 @@
   padding: 10px 14px;
 }
 
-/* Small screens: collapse sidebar to icon-only */
+/* Small screens: collapse sidebar to icon-only, drop the rigid 15cm width,
+   tighten paddings, and shrink the typing strip so the input stays visible. */
 @media (max-width: 700px) {
   .chat-sidebar {
     width: auto;
     min-width: auto;
-    padding: 12px 8px;
+    padding: 10px 6px;
+    gap: 8px;
     align-items: center;
   }
 
@@ -148,15 +192,63 @@
   }
 
   .chat-participant-card {
-    padding: 6px;
+    padding: 4px;
     gap: 0;
     justify-content: center;
     border-radius: 50%;
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .chat-participant-avatar {
+    width: 32px;
+    height: 32px;
   }
 
   .chat-participant-info {
+    display: none;
+  }
+
+  .chat-main {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .chat-messages-wrapper {
+    /* On mobile, let flex own the height — 75vh doesn't shrink with the keyboard. */
+    height: auto;
+  }
+
+  .chat-footer {
+    margin-top: 6px;
+  }
+
+  .chat-exit-btn {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
+
+/* Shorter typing-indicator strip on phones so the input doesn't get pushed under the keyboard. */
+@media (max-width: 700px) {
+  .chat-layout-with-gap .chat-typing-gap {
+    min-height: 2em;
+    font-size: 0.8em;
+    padding: 0 0.5em;
+  }
+}
+
+/* When the soft keyboard is open on a phone, drop the Exit-button strip and the
+   chat-main's bottom padding so the input sits flush against the keyboard with
+   no white space below it. (env(safe-area-inset-bottom) isn't reliably zeroed
+   by Safari while the keyboard is up, hence the explicit override.) */
+@media (max-width: 700px) {
+  html.kb-open .chat-main {
+    padding-bottom: 0;
+  }
+  html.kb-open .chat-footer {
     display: none;
   }
 }
