@@ -4,6 +4,25 @@ const PROLIFIC_COMPLETE_URL = "https://app.prolific.com/submissions/complete?cc=
 
 export default function CompletePage() {
   useEffect(() => {
+    // Tell the server the participant reached the final Prolific redirect — this
+    // marks the session a "successful instance" for the per-group recruitment
+    // cap. keepalive lets the request finish after location.replace below;
+    // the server stamps first-wins, so a duplicate beacon is harmless.
+    try {
+      const sessionId = localStorage.getItem("sessionId") || "";
+      const participantId = localStorage.getItem("participantId") || "";
+      if (sessionId && participantId) {
+        fetch("/api/focus-group/survey-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ sessionId, participantId }),
+        }).catch(() => {});
+      }
+    } catch {
+      // ignore — the beacon is best-effort
+    }
+
     // Clear flow flags so the back button doesn't put them in a half-complete state.
     try {
       sessionStorage.removeItem("passedWaiting");

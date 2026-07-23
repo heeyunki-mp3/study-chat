@@ -347,6 +347,7 @@ let dbPool = null;
         exit_status VARCHAR(32) DEFAULT NULL,
         exit_stage VARCHAR(64) DEFAULT NULL,
         profile_pic_choice VARCHAR(16) DEFAULT NULL,
+        survey_redirected_at DATETIME DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -456,6 +457,14 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS profile_pic_choice VARCHAR(16) DEFAULT NULL
+    `).catch(() => {});
+    // When the participant hit the final Qualtrics → Prolific redirect (the
+    // /complete page, or the SurveyPage postMessage fallback). A row with
+    // exit_status='completed' AND survey_redirected_at set is a "successful
+    // instance" — the definition the per-group recruitment cap counts against.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS survey_redirected_at DATETIME DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -1298,7 +1307,7 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // =====================
 // Session state (one per socket/room)
 // =====================
-// Group rotation: pro → anti → half → pro → ...
+// Group rotation: pro → anti → control → pro → ...
 const GROUP_ROTATION = ["pro", "anti", "control"];
 const GROUP_BOTS = {
   pro:     ["sid_pro", "mina_pro", "anthony_pro"],
@@ -1307,14 +1316,63 @@ const GROUP_BOTS = {
 };
 let groupRotationIndex = 0;
 
-function createSession(participantName) {
+// Per-group recruitment cap: a group with this many SUCCESSFUL instances stops
+// receiving new participants. Successful = completed the whole funnel: chat
+// wrap-up (exit_status='completed', so kicked/abandoned never count) AND the
+// final Qualtrics → Prolific redirect was recorded (survey_redirected_at).
+const GROUP_CAP = Number(process.env.GROUP_CAP || 200);
+
+async function countSuccessfulByGroup() {
+  const counts = { pro: 0, anti: 0, control: 0 };
+  if (!dbPool) return counts;
+  const [rows] = await dbPool.execute(`
+    SELECT assigned_group AS g, COUNT(*) AS n
+    FROM participant_responses
+    WHERE exit_status = 'completed' AND survey_redirected_at IS NOT NULL
+    GROUP BY assigned_group
+  `);
+  for (const r of rows) {
+    // The DB enum stores control as 'cont'.
+    const g = r.g === "cont" ? "control" : r.g;
+    if (g in counts) counts[g] = Number(r.n);
+  }
+  return counts;
+}
+
+// Strict rotation, skipping any group that already reached GROUP_CAP successful
+// instances (the remaining groups keep alternating). Fails open: if the DB is
+// unreachable or every group is at cap, fall back to plain rotation rather than
+// blocking the study — assignment must never hard-fail on a counting query.
+async function pickAssignedGroup() {
+  let counts = null;
+  try {
+    counts = await countSuccessfulByGroup();
+  } catch (e) {
+    logLine("GROUP", `success-count query failed (${e?.message}); using plain rotation`);
+  }
+  if (counts) {
+    for (let i = 0; i < GROUP_ROTATION.length; i++) {
+      const g = GROUP_ROTATION[(groupRotationIndex + i) % GROUP_ROTATION.length];
+      if (counts[g] < GROUP_CAP) {
+        groupRotationIndex += i + 1;
+        logLine("GROUP", `successful counts pro=${counts.pro} anti=${counts.anti} control=${counts.control} (cap ${GROUP_CAP}) → ${g}`);
+        return g;
+      }
+    }
+    logLine("GROUP", `all groups at cap (${GROUP_CAP}); assigning by plain rotation`);
+  }
+  const g = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
+  groupRotationIndex++;
+  return g;
+}
+
+async function createSession(participantName) {
   let assignedGroup = null;
   let cast;
   if (CLI_BOT_NAMES.length > 0) {
     cast = getCastByHandles(CLI_BOT_NAMES);
   } else {
-    assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
-    groupRotationIndex++;
+    assignedGroup = await pickAssignedGroup();
     cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
     logLine("GROUP", `assigned group: ${assignedGroup} → bots: ${GROUP_BOTS[assignedGroup].join(", ")}`);
   }
@@ -1324,8 +1382,7 @@ function createSession(participantName) {
   cast.forEach((p) => { botIdMap[p.handle] = p.id; });
   if (CLI_BOT_NAMES.length > 0 && bots.length === 0) {
     console.warn("CLI bot names matched no personas; falling back to random cast.");
-    assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
-    groupRotationIndex++;
+    assignedGroup = await pickAssignedGroup();
     cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
     cast.forEach((p) => bots.push(p.handle));
     logLine("GROUP", `fallback assigned group: ${assignedGroup} → bots: ${bots.join(", ")}`);
@@ -1804,6 +1861,32 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
   } catch (e) {
     logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}\n${e?.stack}`);
     res.status(500).json({ error: e?.message || "Verification failed" });
+  }
+});
+
+// POST /api/focus-group/survey-complete
+// Fired (keepalive, fire-and-forget) at the final Qualtrics → Prolific redirect:
+// by the /complete page on mount, and by SurveyPage's studyComplete-postMessage
+// fallback. Stamps survey_redirected_at first-wins, so duplicate beacons (both
+// paths firing, React re-mounts) are harmless. Together with
+// exit_status='completed' this defines a "successful instance" for the
+// per-group recruitment cap.
+app.post("/api/focus-group/survey-complete", express.json(), async (req, res) => {
+  const { sessionId, participantId } = req.body || {};
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  try {
+    await dbPool.execute(
+      `UPDATE participant_responses
+       SET survey_redirected_at = COALESCE(survey_redirected_at, NOW())
+       WHERE session_id = ? AND participant_id = ?`,
+      [sessionId, participantId]
+    );
+    logLine("DB", `survey-complete recorded session=${sessionId} participant=${participantId}`);
+    res.json({ ok: true });
+  } catch (e) {
+    logLine("DB_ERROR", `survey-complete failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to record" });
   }
 });
 
@@ -3218,7 +3301,7 @@ io.on("connection", (socket) => {
 
   socket.on("participant_name", async (data) => {
     const name = (data?.name || "").trim() || "Participant";
-    session = createSession(name);
+    session = await createSession(name);
     // Store Prolific params if provided
     if (data?.prolificPid) session.prolificPid = String(data.prolificPid).trim();
     if (data?.studyId) session.prolificStudyId = String(data.studyId).trim();

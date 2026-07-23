@@ -38,6 +38,23 @@ export default function SurveyPage() {
     function onMessage(e) {
       // We accept any origin here — the only thing we do is navigate to a fixed URL.
       if (e?.data && e.data.type === "studyComplete") {
+        // Record the successful redirect for the per-group recruitment cap.
+        // keepalive lets the request finish after location.replace; the server
+        // stamps first-wins, so the /complete page's duplicate beacon is harmless.
+        try {
+          const ctxSessionId = localStorage.getItem("sessionId") || "";
+          const participantId = localStorage.getItem("participantId") || "";
+          if (ctxSessionId && participantId) {
+            fetch("/api/focus-group/survey-complete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              keepalive: true,
+              body: JSON.stringify({ sessionId: ctxSessionId, participantId }),
+            }).catch(() => {});
+          }
+        } catch {
+          // ignore — the beacon is best-effort
+        }
         window.location.replace(PROLIFIC_COMPLETE_URL);
       }
     }
