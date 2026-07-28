@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SurveyPage.css";
 
-const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_3HIPgZRXfMvUgsu";
+const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_0v6cwB6aynkwgTQ";
 const PROLIFIC_COMPLETE_URL = "https://app.prolific.com/submissions/complete?cc=CQVN22U3";
 
 export default function SurveyPage() {
@@ -74,6 +74,9 @@ export default function SurveyPage() {
     // Auth method the participant registered with: "pw" (password) or "pk" (passkey).
     const pwVsPk = sessionStorage.getItem("pw_vs_pk");
     if (pwVsPk) params.set("pw_vs_pk", pwVsPk);
+    // ag = blinded group code, mapped server-side (decode at analysis time).
+    const ag = sessionStorage.getItem("ag");
+    if (ag) params.set("ag", ag);
     const qs = params.toString();
     return qs ? `${QUALTRICS_BASE}?${qs}` : QUALTRICS_BASE;
   }, [sessionId]);

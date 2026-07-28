@@ -542,9 +542,11 @@ export default function ChatPage() {
       navigate("/?kicked=1", { replace: true });
     });
 
-    socket.on("study_complete", ({ sessionId, participantId } = {}) => {
+    socket.on("study_complete", ({ sessionId, participantId, ag } = {}) => {
       if (sessionId) localStorage.setItem("sessionId", sessionId);
       if (participantId) localStorage.setItem("participantId", participantId);
+      // ag = blinded group code (server-side mapping), forwarded to Qualtrics by SurveyPage.
+      if (ag) sessionStorage.setItem("ag", ag);
       sessionStorage.setItem("chatCompleted", sessionId || "1");
       // Lock the input: any further typing must not leak into the server transcript.
       studyCompleteRef.current = true;
