@@ -1314,6 +1314,9 @@ const GROUP_BOTS = {
   anti:    ["sid_anti", "mina_anti", "anthony_anti"],
   control: ["sid_control", "mina_control", "anthony_control"],
 };
+// Blinded group code sent to the browser / Qualtrics (pro→p, anti→a, control→c);
+// the plaintext condition name never reaches the client. Decode at analysis time.
+const blindedGroupCode = (g) => ({ pro: "p", anti: "a", control: "c" }[g] || null);
 let groupRotationIndex = 0;
 
 // Per-group recruitment cap: a group with this many SUCCESSFUL instances stops
@@ -2701,9 +2704,7 @@ io.on("connection", (socket) => {
       await emitModeratorLine("To finish up, click the \"Exit Chat\" button below. You'll create an account and then complete a short exit survey. Some of the questions may be sensitive, so please set up your account with secure login credentials. After the survey, you will be redirected to Prolific for payment.", { consecutive: true });
       if (!session) return;
       await emitModeratorLine("You will also use this same account again in about two weeks for a paid follow-up study, so keep your login handy.", { consecutive: true });
-      // ag = blinded group code for Qualtrics (pro→p, anti→a, control→c); mapped
-      // here so the plaintext condition name never reaches the browser.
-      if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName, ag: { pro: "p", anti: "a", control: "c" }[session.assignedGroup] || null });
+      if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName, ag: blindedGroupCode(session.assignedGroup) });
       return;
     }
     const nextRound = session.allRounds[nextRoundIndex];
@@ -3345,6 +3346,9 @@ io.on("connection", (socket) => {
       bots: session.bots,
       idleEmptyMs: IDLE_EMPTY_MS,
       idleTypingMs: IDLE_TYPING_MS,
+      // Sent at session start (not just study_complete) so an early exit —
+      // e.g. the testing Exit button — still forwards the group to Qualtrics.
+      ag: blindedGroupCode(session.assignedGroup),
     });
     socket.emit(
       "seed",
@@ -3484,6 +3488,9 @@ io.on("connection", (socket) => {
       bots: session.bots,
       idleEmptyMs: IDLE_EMPTY_MS,
       idleTypingMs: IDLE_TYPING_MS,
+      // Sent at session start (not just study_complete) so an early exit —
+      // e.g. the testing Exit button — still forwards the group to Qualtrics.
+      ag: blindedGroupCode(session.assignedGroup),
     });
     socket.emit(
       "seed",

@@ -426,6 +426,9 @@ export default function ChatPage() {
     socket.on("session", (s) => {
       setSession(s);
       if (s?.sessionId) sessionStorage.setItem("studySessionId", s.sessionId);
+      // Blinded group code, available from session start so SurveyPage can
+      // forward it to Qualtrics even after an early (testing) exit.
+      if (s?.ag) sessionStorage.setItem("ag", s.ag);
     });
 
     socket.on("seed", (seedMsgs) => {

@@ -127,6 +127,10 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 
 ## 2. Issue
 
+### `ag` emitted at session start, not just study_complete — 2026-07-29
+
+`ag` (blinded group code) was only sent with `study_complete`, so an early exit via the testing Exit button reached Qualtrics with no `ag` param — looked like "ag not recorded". Fix: new `blindedGroupCode()` helper (`server/index.js`, next to `GROUP_BOTS`); both `session` handshake emits (initial + rejoin) now include `ag`, and ChatPage's `session` handler stores it in `sessionStorage` immediately. `study_complete` still sends it (harmless overwrite, same value). Deploy: server restart + client rebuild. Reminder: Qualtrics only records it if `ag` is declared as Embedded Data in the Survey Flow (§0 todo for `SV_0v6cwB6aynkwgTQ`).
+
 ### Exit status recorded in the DB — opened 2026-07-09, done 2026-07-09
 
 Two columns on `participant_responses` (ALTER IF NOT EXISTS): **`exit_status`** — `completed` / `failed_attention` (idle kick) / `unsubstantial` / `inappropriate` (trolling) / `no_consent` / `abandoned` — and **`exit_stage`** — where it ended: `consent` / `intro` / `study_goal` / `round N/M (poll|big_question)` / `wrap_up` (via `describeExitStage(sess)`). Both first-write-wins in the upsert so a later TTL expiry can't relabel a completed/kicked session.
