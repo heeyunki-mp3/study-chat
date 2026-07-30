@@ -437,6 +437,17 @@ let dbPool = null;
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS dur_auth_creation_ms INT DEFAULT NULL
     `).catch(() => {});
+    // Step-by-step trail of passkey creation on SecureStep, all attempts appended:
+    // options_requested → options_received → prompt_opened → prompt_completed →
+    // registered, with failures as "failed:<ErrorName>" plus the library's error
+    // message in detail. ms = offset from the method cards becoming visible. The
+    // LAST entry is the step the participant is currently on (or abandoned at) —
+    // e.g. a trail ending at prompt_opened means they never resolved the OS
+    // passkey dialog. JSON array of {step, ms, detail?}.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS passkey_steps JSON DEFAULT NULL
+    `).catch(() => {});
     // How the participant's session ended. exit_status: completed /
     // failed_attention (idle kick) / unsubstantial / inappropriate (trolling) /
     // no_consent (decline, row created by the /no-consent endpoint) / abandoned
@@ -1640,6 +1651,28 @@ function sanitizeDurationMs(raw) {
   return Math.min(Math.round(n), 2147483647);
 }
 
+// Sanitize the client-supplied passkey step trail into an array of
+// {step, ms?, detail?}, or null if nothing usable. Step names are constrained
+// to word chars, ":" and "-" (e.g. "failed:NotAllowedError"); capped to avoid
+// unbounded payloads.
+function sanitizePasskeySteps(raw) {
+  if (!Array.isArray(raw)) return null;
+  const cleaned = raw
+    .slice(0, 50)
+    .map((e) => {
+      const step = String(e?.step || "").trim();
+      if (!/^[\w:-]{1,64}$/.test(step)) return null;
+      const out = { step };
+      const ms = sanitizeDurationMs(e?.ms);
+      if (ms !== null) out.ms = ms;
+      const detail = String(e?.detail || "").trim().slice(0, 200);
+      if (detail) out.detail = detail;
+      return out;
+    })
+    .filter(Boolean);
+  return cleaned.length ? cleaned : null;
+}
+
 // Sanitize the client-supplied click log into a JSON string of valid method names,
 // or null if there's nothing usable. Capped to avoid unbounded payloads.
 function sanitizeAuthMethodClicks(raw) {
@@ -1707,6 +1740,35 @@ app.post("/api/focus-group/log-auth-click", express.json(), async (req, res) => 
   } catch (e) {
     logLine("DB_ERROR", `log-auth-click failed: ${e?.message}`);
     res.status(500).json({ error: "Failed to log click" });
+  }
+});
+
+// POST /api/focus-group/passkey-step
+// Persists the running passkey-creation step trail on EVERY step, so the data
+// survives abandons and cancelled prompts (same pattern as log-auth-click:
+// sole writer of passkey_steps, full-array overwrite, latest wins). Each report
+// is also logLined so the participant's current step is visible live in the
+// server log; the DB write is skipped (not failed) when the DB is down so the
+// log-file trail still accumulates.
+app.post("/api/focus-group/passkey-step", express.json(), async (req, res) => {
+  const { sessionId, participantId, steps } = req.body || {};
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
+  const cleaned = sanitizePasskeySteps(steps);
+  if (!cleaned) return res.json({ ok: true }); // nothing valid to store
+  const latest = cleaned[cleaned.length - 1];
+  logLine("PASSKEY", `participant=${participantId} step=${latest.step}${latest.detail ? ` (${latest.detail})` : ""} [${cleaned.length} total]`);
+  if (!dbPool) return res.json({ ok: true });
+  try {
+    await dbPool.execute(
+      `UPDATE participant_responses
+       SET passkey_steps = ?
+       WHERE session_id = ? AND participant_id = ?`,
+      [JSON.stringify(cleaned), sessionId, participantId]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    logLine("DB_ERROR", `passkey-step failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to log step" });
   }
 });
 

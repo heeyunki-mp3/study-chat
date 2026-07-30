@@ -127,9 +127,15 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 
 ## 2. Issue
 
+### Passkey creation step trail logged — 2026-07-30
+
+SimpleWebAuthn logs nothing internally (verified: zero console calls in v13.3.0), and the OS ceremony inside `navigator.credentials.create()` is a JS black box — so we log every observable step around it. New `passkey_steps` JSON column on `participant_responses` (ALTER IF NOT EXISTS) + `POST /api/focus-group/passkey-step` (same sole-writer/full-overwrite pattern as `log-auth-click`; logLines each report so the current step is visible LIVE in the server log, and still logs when the DB is down). Client (`LoginChoice.jsx` `handlePasskey`): reports `options_requested` → `options_received` → `prompt_opened` → `prompt_completed` → `registered`, failures as `failed:<ErrorName>` with the library's error message as detail (reported before the stale-request guard, so cancel-by-switching-cards is captured too). Retries append into the same array; `ms` = offset from the method cards appearing. Read it as: LAST entry = where they are / where they died (e.g. trail ending at `prompt_opened` = abandoned the OS dialog). Deploy: server restart + client rebuild.
+
 ### `ag` emitted at session start, not just study_complete — 2026-07-29
 
 `ag` (blinded group code) was only sent with `study_complete`, so an early exit via the testing Exit button reached Qualtrics with no `ag` param — looked like "ag not recorded". Fix: new `blindedGroupCode()` helper (`server/index.js`, next to `GROUP_BOTS`); both `session` handshake emits (initial + rejoin) now include `ag`, and ChatPage's `session` handler stores it in `sessionStorage` immediately. `study_complete` still sends it (harmless overwrite, same value). Deploy: server restart + client rebuild. Reminder: Qualtrics only records it if `ag` is declared as Embedded Data in the Survey Flow (§0 todo for `SV_0v6cwB6aynkwgTQ`).
+
+Deploy verification 2026-07-29 (socket probe against the live server, mimicking ChatPage's handshake): the client bundle updated immediately, but the server kept serving OLD code for a while after "Restart App" — a probe at ~17:52 got a `session` payload with NO `ag`; probes minutes later got `ag` consistently (5/5, rotation cycling a→c→p). Passenger applies the restart LAZILY on a later request, so post-restart tests in an already-open tab (handshake predates the swap) show stale behavior — always verify with a fresh session, and see the §0 Passenger-process todo. Probe junk sessions named `agprobe_delete_me` (~5) will appear as abandoned rows in `participant_responses` — delete with the other test data.
 
 ### Exit status recorded in the DB — opened 2026-07-09, done 2026-07-09
 

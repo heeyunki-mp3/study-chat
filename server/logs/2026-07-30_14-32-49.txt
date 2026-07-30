@@ -1,0 +1,9 @@
+2026-07-30 18:32:49.047 [DB] === DATABASE INIT START ===
+2026-07-30 18:32:49.048 [DB] DB_HOST=localhost DB_PORT=3306 DB_USER=focusgroupcc DB_NAME=focusgroupcc_ DB_PW=(set)
+2026-07-30 18:32:49.048 [DB] importing mysql2/promise...
+2026-07-30 18:32:49.077 [DB] mysql2 imported successfully, creating connection pool...
+2026-07-30 18:32:49.077 [DB] pool created, executing CREATE TABLE...
+2026-07-30 18:32:49.083 [SESSION_START] backend running on http://localhost:3001
+2026-07-30 18:32:49.085 [DB_ERROR] === DATABASE INIT FAILED:  ===
+2026-07-30 18:32:49.085 [DB_ERROR] Full error: {"stack":"AggregateError: \n    at file:///Users/heeyunkim/study-chat/server/index.js:327:18","errors":[{"stack":"Error: connect ECONNREFUSED ::1:3306\n    at createConnectionError (node:net:1652:14)\n    at afterConnectMultiple (node:net:1682:16)","code":"ECONNREFUSED"},{"stack":"Error: connect ECONNREFUSED 127.0.0.1:3306\n    at createConnectionError (node:net:1652:14)\n    at afterConnectMultiple (node:net:1682:16)","code":"ECONNREFUSED"}],"code":"ECONNREFUSED","fatal":true}
+2026-07-30 18:32:51.840 [PASSKEY] participant=tester step=failed:NotAllowedError (User cancelled the operation) [3 total]

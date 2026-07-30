@@ -320,6 +320,7 @@ function SecureStep({ userId, onBack }) {
     setLoading(true);
     setError("");
     try {
+      reportPasskeyStep("options_requested");
       // 1. Get registration options from server
       const optRes = await fetch("/api/focus-group/webauthn-register-options", {
         method: "POST",
@@ -329,10 +330,13 @@ function SecureStep({ userId, onBack }) {
       const optData = await optRes.json();
       if (!optRes.ok) throw new Error(optData.error || "Failed to start passkey registration");
       if (activeRequestRef.current !== requestId) return;
+      reportPasskeyStep("options_received");
 
       // 2. Browser ceremony
+      reportPasskeyStep("prompt_opened");
       const attestation = await startRegistration({ optionsJSON: optData.options });
       if (activeRequestRef.current !== requestId) return;
+      reportPasskeyStep("prompt_completed");
 
       // 3. Verify with server
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
@@ -355,6 +359,7 @@ function SecureStep({ userId, onBack }) {
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
       if (activeRequestRef.current !== requestId) return;
+      reportPasskeyStep("registered");
 
       sessionStorage.setItem("sessionToken", verData.sessionToken);
       // Record the auth method the participant completed registration with, for
@@ -362,6 +367,9 @@ function SecureStep({ userId, onBack }) {
       sessionStorage.setItem("pw_vs_pk", "pk");
       navigate("/survey", { replace: true });
     } catch (err) {
+      // Report BEFORE the stale-request guard: a prompt cancelled by switching
+      // method cards still lands in the trail with the library's diagnosis.
+      reportPasskeyStep(`failed:${err?.name || "Error"}`, err?.message);
       if (activeRequestRef.current !== requestId) return;
       if (err.name === "NotAllowedError") {
         setError("Passkey registration was cancelled. Please try again.");
@@ -370,6 +378,34 @@ function SecureStep({ userId, onBack }) {
       }
     } finally {
       if (activeRequestRef.current === requestId) setLoading(false);
+    }
+  }
+
+  // Running trail of passkey-creation steps, all attempts appended (a retry
+  // starts a new options_requested → … run in the same array).
+  const passkeyStepsRef = useRef([]);
+
+  function reportPasskeyStep(step, detail) {
+    // Fire-and-forget, same pattern as logClicks: persist the WHOLE trail on
+    // every step so it survives abandons and cancelled prompts. ms is offset
+    // from the method cards becoming visible, matching dur_auth_selection_ms.
+    try {
+      const entry = { step };
+      if (shownAtRef.current !== null) entry.ms = Date.now() - shownAtRef.current;
+      if (detail) entry.detail = String(detail).slice(0, 200);
+      passkeyStepsRef.current = [...passkeyStepsRef.current.slice(-49), entry];
+      fetch("/api/focus-group/passkey-step", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          sessionId: ctx.sessionId,
+          participantId: ctx.participantId,
+          steps: passkeyStepsRef.current,
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore — logging is best-effort
     }
   }
 
