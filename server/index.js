@@ -1136,6 +1136,14 @@ Return ONLY the message text. No quotes, no JSON, no formatting.`;
     : `Hey @${humanName}, still around? Your thoughts on this would be great.`;
 }
 
+/** Remember the moderator's recent cue messages so the next cue can be phrased differently (keeps last 4). */
+function recordCue(session, cueText) {
+  if (!session || !cueText) return;
+  if (!Array.isArray(session.recentCues)) session.recentCues = [];
+  session.recentCues.push(String(cueText).trim());
+  if (session.recentCues.length > 4) session.recentCues.shift();
+}
+
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
 async function generateModeratorCue(latestMessage, nextName, opts = {}) {
   const { isFirstInRound = false, isIntro = false, bigQuestion, roundQuestion } = opts;
@@ -1218,6 +1226,16 @@ Your reaction MUST quote, paraphrase, or name a SPECIFIC thing from their messag
 Remember to prefix the name with @.`;
   }
 
+  // Anti-repetition: show Eunice her own recent cues so she phrases this one differently.
+  // The cue is otherwise stateless (it never sees its earlier messages), which is why it
+  // kept re-picking the same "your take?" hand-off every turn.
+  const recentCues = Array.isArray(opts.session?.recentCues) ? opts.session.recentCues : [];
+  if (recentCues.length) {
+    userPrompt += `\n\nDO NOT REPEAT YOURSELF: here are your most recent hand-off messages:\n${recentCues
+      .map((c) => `- "${c}"`)
+      .join("\n")}\nWord this one differently from all of them — especially vary the short prompt phrase after the @name (do NOT keep using the same one like "your take?"). Keep it natural.`;
+  }
+
   // Tag which branch this cue came from so the log shows whether the strengthened
   // mid-round prompt is actually being used vs. one of the other paths.
   const cueBranch = participantAskedWhatPasskeyIs
@@ -1241,11 +1259,17 @@ Remember to prefix the name with @.`;
       temperature: 0.7,
     });
     const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
-    if (text) return text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
+    if (text) {
+      const finalText = text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
+      recordCue(opts.session, finalText);
+      return finalText;
+    }
   } catch (e) {
     console.error("generateModeratorCue error", e?.message || e);
   }
-  return `How about you, @${nextName}?`;
+  const fallback = `How about you, @${nextName}?`;
+  recordCue(opts.session, fallback);
+  return fallback;
 }
 
 /** Last non-moderator message from session (for ack context). */
@@ -1458,6 +1482,7 @@ async function createSession(participantName) {
     usedRoundAckIndices: [],
     roundTranscript: [],  // Messages for current round; reset each new question
     humanResponsesByRound: {},  // { roundIndex: ["msg1", "msg2", ...] }
+    recentCues: [],  // last few moderator hand-off messages, fed back so Eunice varies her phrasing
   };
 }
 
@@ -2345,7 +2370,7 @@ io.on("connection", (socket) => {
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, nameForCue, { roundQuestion: co.question });
+      cue = await generateModeratorCue(latest, nameForCue, { roundQuestion: co.question, session });
     } catch (e) {
       cue = `How about you, ${nameForCue}?`;
     }
@@ -2859,7 +2884,7 @@ io.on("connection", (socket) => {
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
     let cue;
     try {
-      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextRound.question });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextRound.question, session });
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
@@ -3045,7 +3070,7 @@ io.on("connection", (socket) => {
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
     let cue;
     try {
-      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: firstRound.question });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: firstRound.question, session });
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
