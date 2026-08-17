@@ -243,6 +243,20 @@ function SecureStep({ userId, onBack }) {
   const shownAtRef = useRef(null); // when the method cards became visible
   const lastClickAtRef = useRef(null); // when the most recent method card was clicked
 
+  // Password entry telemetry: HOW the password field got its content — counted
+  // per input event, never the content itself. typed = single-char keystrokes;
+  // pastes/drops = clipboard/drag; autofill = value set programmatically with no
+  // inputType (browser autofill, suggested strong password, or a password-manager
+  // extension); multiChar = other multi-char inserts (IME, autocorrect).
+  // Classified into pw_entry_method at submit. Reset whenever the field is
+  // programmatically cleared so counts always describe the submitted value.
+  const pwEntryRef = useRef({ typed: 0, pastes: 0, drops: 0, autofill: 0, multiChar: 0 });
+  const pwInputRef = useRef(null);
+
+  function resetPwEntry() {
+    pwEntryRef.current = { typed: 0, pastes: 0, drops: 0, autofill: 0, multiChar: 0 };
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -283,6 +297,25 @@ function SecureStep({ userId, onBack }) {
     }
     setLoading(true);
     setError("");
+    // Autofill CSS probe: the browser marks autofilled fields with a pseudo-class
+    // (:autofill standard, :-webkit-autofill legacy). Catches cases where the
+    // fill produced no usable input event. Selector support varies, hence the
+    // sequential try/catch.
+    let autofillCss = false;
+    try { autofillCss = !!pwInputRef.current?.matches(":autofill"); } catch { /* unsupported */ }
+    if (!autofillCss) {
+      try { autofillCss = !!pwInputRef.current?.matches(":-webkit-autofill"); } catch { /* unsupported */ }
+    }
+    const t = pwEntryRef.current;
+    const pwEntry = {
+      method:
+        autofillCss || t.autofill > 0 ? "autofill_or_manager"
+        : t.pastes + t.drops > 0 ? (t.typed > 0 ? "mixed" : "pasted")
+        : t.typed > 0 ? "typed"
+        : "unknown",
+      ...t,
+      autofillCss,
+    };
     try {
       const res = await fetch("/api/focus-group/register-password", {
         method: "POST",
@@ -291,6 +324,7 @@ function SecureStep({ userId, onBack }) {
         body: JSON.stringify({
           email: userId,
           password,
+          pwEntry,
           sessionId: ctx.sessionId,
           participantId: ctx.participantId,
           // Final durations, anchored on the LAST method click before this success:
@@ -444,6 +478,7 @@ function SecureStep({ userId, onBack }) {
     setLoading(false);
     setMethod(m);
     setPassword("");
+    resetPwEntry();
     setError("");
     if (m === "passkey") {
       handlePasskey(activeRequestRef.current);
@@ -478,7 +513,7 @@ function SecureStep({ userId, onBack }) {
               onClick={() => {
                 activeRequestRef.current += 1;
                 setLoading(false);
-                if (method) { setMethod(null); setPassword(""); setError(""); }
+                if (method) { setMethod(null); setPassword(""); resetPwEntry(); setError(""); }
                 else { onBack(); }
               }}
               label={method ? "Back to method selection" : "Back to user ID"}
@@ -534,7 +569,19 @@ function SecureStep({ userId, onBack }) {
                     className="fg-input"
                     type="password"
                     value={password}
-                    onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                    ref={pwInputRef}
+                    onChange={(e) => {
+                      const t = pwEntryRef.current;
+                      const it = e.nativeEvent?.inputType;
+                      const delta = e.target.value.length - password.length;
+                      if (it === "insertText") t.typed++;
+                      else if (it === "insertFromPaste") t.pastes++;
+                      else if (it === "insertFromDrop") t.drops++;
+                      else if (!it && delta > 0) t.autofill++;
+                      else if (delta > 1) t.multiChar++;
+                      setPassword(e.target.value);
+                      setError("");
+                    }}
                     placeholder="Create a strong password"
                     autoComplete="new-password"
                     autoFocus

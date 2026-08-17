@@ -448,6 +448,21 @@ let dbPool = null;
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS passkey_steps JSON DEFAULT NULL
     `).catch(() => {});
+    // How the password field got its content (password path only), measured
+    // client-side per input event — never the content itself. pw_entry_method:
+    // typed / pasted / mixed / autofill_or_manager / unknown. Manager detection
+    // is a HEURISTIC: browser autofill and value-setting extensions are caught
+    // (no-inputType inserts, :autofill CSS), but extensions that simulate
+    // per-key typing are indistinguishable from a human and count as typed.
+    // pw_entry_counts: {typed, pastes, drops, autofill, multiChar, autofillCss}.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS pw_entry_method VARCHAR(24) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS pw_entry_counts JSON DEFAULT NULL
+    `).catch(() => {});
     // How the participant's session ended. exit_status: completed /
     // failed_attention (idle kick) / unsubstantial / inappropriate (trolling) /
     // no_consent (decline, row created by the /no-consent endpoint) / abandoned
@@ -1651,6 +1666,23 @@ function sanitizeDurationMs(raw) {
   return Math.min(Math.round(n), 2147483647);
 }
 
+// Sanitize the client-reported password-entry telemetry: method from a fixed
+// whitelist, counters clamped to non-negative ints. Returns {method, countsJson},
+// both null when unusable.
+function sanitizePwEntry(raw) {
+  const METHODS = ["typed", "pasted", "mixed", "autofill_or_manager", "unknown"];
+  if (!raw || typeof raw !== "object" || !METHODS.includes(raw.method)) {
+    return { method: null, countsJson: null };
+  }
+  const counts = {};
+  for (const k of ["typed", "pastes", "drops", "autofill", "multiChar"]) {
+    const n = Number(raw[k]);
+    counts[k] = Number.isFinite(n) && n >= 0 ? Math.min(Math.round(n), 100000) : 0;
+  }
+  counts.autofillCss = !!raw.autofillCss;
+  return { method: raw.method, countsJson: JSON.stringify(counts) };
+}
+
 // Sanitize the client-supplied passkey step trail into an array of
 // {step, ms?, detail?}, or null if nothing usable. Step names are constrained
 // to word chars, ":" and "-" (e.g. "failed:NotAllowedError"); capped to avoid
@@ -1822,7 +1854,7 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password, sessionId, participantId, authSelectionMs, authCreationMs } = req.body || {};
+  const { email, password, sessionId, participantId, authSelectionMs, authCreationMs, pwEntry } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
@@ -1834,15 +1866,17 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
     // selection = cards shown → last click; creation = last click → this success.
     const selectionMs = sanitizeDurationMs(authSelectionMs);
     const creationMs = sanitizeDurationMs(authCreationMs);
+    const entry = sanitizePwEntry(pwEntry);
     await dbPool.execute(
       `UPDATE participant_responses
        SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password',
+           pw_entry_method = ?, pw_entry_counts = ?,
            dur_auth_selection_ms = COALESCE(?, dur_auth_selection_ms),
            dur_auth_creation_ms = COALESCE(?, dur_auth_creation_ms)
        WHERE session_id = ? AND participant_id = ?`,
-      [email, hash, strength, token, selectionMs, creationMs, sessionId, participantId]
+      [email, hash, strength, token, entry.method, entry.countsJson, selectionMs, creationMs, sessionId, participantId]
     );
-    logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
+    logLine("DB", `User registered (password, strength=${strength}, entry=${entry.method || "n/a"}) email=${email} participant=${participantId}${entry.countsJson ? ` counts=${entry.countsJson}` : ""}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
     logLine("DB_ERROR", `register-password failed: ${e?.message}`);

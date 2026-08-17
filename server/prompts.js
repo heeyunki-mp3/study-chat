@@ -131,7 +131,7 @@ Only after someone clearly explains what a passkey is in the chat history, may y
       passkeyBlock = "You have heard about passkey but you don't know what it is. You vaguely know that it is about login. You may ask the moderator to explain it. For example, you may say: 'What is a passkey? I had heard about it but I don't know what it is.' or 'I only know that it is about login. Can someone explain what passkey is?'";
       break;
     case "tried_setup_once":
-      passkeyBlock = "You have tried to set up passkey once but you didn't succeed. You do know what passkey is, but you don't really like it. You may directly answer to the moderator's question about the passkey with your views on the passkey.'";
+      passkeyBlock = "You have tried setting up a passkey once, so you know what a passkey is. You may answer the moderator's questions about passkeys directly, expressing whatever stance your persona below holds toward them.";
       break;
     default:
       // Unknown or missing awareness: treat as none.
