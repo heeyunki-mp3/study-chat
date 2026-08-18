@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import SiteHeader from "./SiteHeader.jsx";
 import ConsentPage from "./ConsentPage.jsx";
@@ -12,10 +12,10 @@ import ErrorPage from "./ErrorPage.jsx";
 import { isReloadOrBackForwardEntry, isUnloadAllowed } from "./navGuard.js";
 
 // Shown in the native confirm() dialog when the participant presses the browser Back
-// button on a protected page. (Browsers don't allow the reload-style beforeunload
-// dialog to fire on an in-app back navigation, so confirm() is the built-in warning
-// we can show there.)
-const BACK_WARNING = "You may lose your progress if you leave this page. Are you sure you want to go back?";
+// OR Forward button. (Browsers don't allow the reload-style beforeunload dialog to
+// fire on an in-app history navigation, so confirm() is the built-in warning we can
+// show there.)
+const NAV_WARNING = "You may lose your progress if you leave this page. Are you sure?";
 
 // Pages the participant actively moves through. Reloading or pressing back on any of
 // these is treated as "incorrect access" and routed to ErrorPage. (Consent "/" is
@@ -56,24 +56,33 @@ function AccessGuard() {
     PROTECTED_PATHS.has(location.pathname) &&
     !isTerminalScreen(location.pathname, location.search);
 
-  // Back button on a protected page: warn with the built-in confirm() dialog first;
-  // if they confirm, send them to the blocked page, otherwise re-arm the sentinel so
-  // they stay put. The sentinel is a duplicate of the current URL, so after the pop
-  // location.href is still this page — re-pushing it keeps them here.
+  // Remember the last committed in-app location so a cancelled back/forward can be
+  // undone (restores the exact page they were on before pressing the button).
+  const lastLocationRef = useRef(location.pathname + location.search);
   useEffect(() => {
-    if (!isProtected) return undefined;
+    lastLocationRef.current = location.pathname + location.search;
+  }, [location]);
+
+  // Trap the browser Back AND Forward buttons app-wide. popstate fires only for those
+  // buttons (React Router's navigate() uses push/replaceState, which don't fire it),
+  // so every popstate here is a real back/forward press — including a forward press
+  // that would re-enter the app after a back. Warn with the built-in confirm() dialog;
+  // on confirm go to the blocked page, on cancel restore the page they were on (so a
+  // cancelled forward can't sneak them back in). The sentinel pushed on mount keeps a
+  // back press in-app (firing popstate) instead of unloading the document.
+  useEffect(() => {
     window.history.pushState(null, "", window.location.href);
     const onPop = () => {
       if (isUnloadAllowed()) return; // a legitimate exit is already in progress
-      if (window.confirm(BACK_WARNING)) {
+      if (window.confirm(NAV_WARNING)) {
         navigate("/blocked", { replace: true });
       } else {
-        window.history.pushState(null, "", window.location.href);
+        navigate(lastLocationRef.current, { replace: true });
       }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [isProtected, navigate]);
+  }, [navigate]);
 
   // Warn before reload/close on a protected page. permitUnload() (set right before a
   // legitimate Prolific redirect) suppresses it so a real exit isn't interrupted.
