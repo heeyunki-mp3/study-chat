@@ -8,11 +8,17 @@ import ChatPage from "./ChatPage.jsx";
 import SurveyPage from "./SurveyPage.jsx";
 import CompletePage from "./CompletePage.jsx";
 import LoginChoice from "./LoginChoice.jsx";
-import BlockedPage from "./BlockedPage.jsx";
+import ErrorPage from "./ErrorPage.jsx";
 import { isReloadOrBackForwardEntry, isUnloadAllowed } from "./navGuard.js";
 
+// Shown in the native confirm() dialog when the participant presses the browser Back
+// button on a protected page. (Browsers don't allow the reload-style beforeunload
+// dialog to fire on an in-app back navigation, so confirm() is the built-in warning
+// we can show there.)
+const BACK_WARNING = "You may lose your progress if you leave this page. Are you sure you want to go back?";
+
 // Pages the participant actively moves through. Reloading or pressing back on any of
-// these is treated as "incorrect access" and routed to BlockedPage. (Consent "/" is
+// these is treated as "incorrect access" and routed to ErrorPage. (Consent "/" is
 // included — but its kicked/declined end screen is exempt, see isTerminalScreen.)
 const PROTECTED_PATHS = new Set(["/", "/welcome", "/waiting", "/chat", "/login", "/survey"]);
 
@@ -32,7 +38,7 @@ function isTerminalScreen(pathname, search) {
 }
 
 // Decided ONCE per document load: did we arrive via reload / back-forward onto a
-// protected page? If so we render BlockedPage instead of the real route, so a
+// protected page? If so we render ErrorPage instead of the real route, so a
 // reloaded /chat never re-mounts (and never tries to rejoin), a re-entered /survey
 // never restarts, etc. In-app navigation keeps type "navigate", so the normal
 // funnel is unaffected — this only trips on an actual reload or browser back/forward.
@@ -40,7 +46,7 @@ const BLOCKED_ON_ENTRY =
   isReloadOrBackForwardEntry() &&
   !isTerminalScreen(window.location.pathname, window.location.search);
 
-// Installed on protected pages: traps the browser Back button (-> BlockedPage) and
+// Installed on protected pages: traps the browser Back button (-> ErrorPage) and
 // warns before reload/close ("you may lose your progress"). Lives inside the router
 // so it can useNavigate/useLocation.
 function AccessGuard() {
@@ -50,11 +56,21 @@ function AccessGuard() {
     PROTECTED_PATHS.has(location.pathname) &&
     !isTerminalScreen(location.pathname, location.search);
 
-  // Back button on a protected page -> blocked page.
+  // Back button on a protected page: warn with the built-in confirm() dialog first;
+  // if they confirm, send them to the blocked page, otherwise re-arm the sentinel so
+  // they stay put. The sentinel is a duplicate of the current URL, so after the pop
+  // location.href is still this page — re-pushing it keeps them here.
   useEffect(() => {
     if (!isProtected) return undefined;
     window.history.pushState(null, "", window.location.href);
-    const onPop = () => navigate("/blocked", { replace: true });
+    const onPop = () => {
+      if (isUnloadAllowed()) return; // a legitimate exit is already in progress
+      if (window.confirm(BACK_WARNING)) {
+        navigate("/blocked", { replace: true });
+      } else {
+        window.history.pushState(null, "", window.location.href);
+      }
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [isProtected, navigate]);
@@ -81,7 +97,7 @@ export default function App() {
     <BrowserRouter>
       <SiteHeader />
       {BLOCKED_ON_ENTRY ? (
-        <BlockedPage />
+        <ErrorPage />
       ) : (
         <>
           <AccessGuard />
@@ -93,8 +109,17 @@ export default function App() {
             <Route path="/survey" element={<SurveyPage />} />
             <Route path="/complete" element={<CompletePage />} />
             <Route path="/login" element={<LoginChoice />} />
-            <Route path="/blocked" element={<BlockedPage />} />
-            <Route path="*" element={<BlockedPage />} />
+            <Route path="/blocked" element={<ErrorPage />} />
+            <Route
+              path="*"
+              element={
+                <ErrorPage
+                  code="404"
+                  title="Page not found"
+                  message="This page doesn’t exist or isn’t part of the study."
+                />
+              }
+            />
           </Routes>
         </>
       )}

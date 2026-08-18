@@ -3,7 +3,7 @@
 // The study is a single-pass funnel. Reloading a page or using the browser
 // back/forward button can corrupt a participant's in-memory session (e.g. a
 // reloaded /chat would try to rejoin, a re-entered /survey would restart it), so
-// the guard blocks those and shows BlockedPage instead. These helpers back that.
+// the guard blocks those and shows ErrorPage instead. These helpers back that.
 
 // Set to true right before a LEGITIMATE programmatic navigation off the app
 // (the Qualtrics -> Prolific handoff, the decline/kick -> Prolific redirect).
