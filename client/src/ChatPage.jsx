@@ -348,34 +348,10 @@ export default function ChatPage() {
   // the seed in case only the echo was lost).
   const outboxRef = useRef([]);
 
-  // If user presses back, send them to "/" (new session) instead of previous page
-  useEffect(() => {
-    window.history.replaceState(null, "", "/chat");
-    window.history.pushState(null, "", "/chat");
-    const onBack = () => {
-      navigate("/", { replace: true });
-    };
-    window.addEventListener("popstate", onBack);
-    return () => window.removeEventListener("popstate", onBack);
-  }, [navigate]);
-
-  // Warn the participant before they reload or close the tab mid-study. A reload
-  // past the 30-min session TTL (or after a server restart) starts a fresh
-  // session and loses all progress, which forfeits their payment. The native
-  // browser dialog can't show custom text — browsers force a generic
-  // "Reload site? / Leave site?" message and ignore any string we provide — but
-  // it does force a confirmation so an accidental reload can't silently wipe the
-  // session. Skip the warning once the study is complete (they're meant to leave).
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      if (studyCompleteRef.current) return undefined;
-      e.preventDefault();
-      e.returnValue = ""; // required for Chrome to show the prompt
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  // Back button and reload/close are handled globally by App.jsx's AccessGuard: back
+  // routes to the blocked page, and reload shows the warning then the blocked page
+  // (a reloaded chat never re-mounts, so it can't try to rejoin a stale session).
+  // Transient socket drops that don't reload the page still auto-reconnect below.
 
   useEffect(() => {
     if (!participantName || !sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { permitUnload } from "./navGuard.js";
 import "./SurveyPage.css";
 
 const QUALTRICS_BASE = "https://gatech.co1.qualtrics.com/jfe/form/SV_0v6cwB6aynkwgTQ";
@@ -19,16 +20,8 @@ export default function SurveyPage() {
     }
   }, [navigate, sessionId]);
 
-  // If user presses back, send them to "/" (new session) instead of chat
-  useEffect(() => {
-    window.history.replaceState(null, "", "/survey");
-    window.history.pushState(null, "", "/survey");
-    const onBack = () => {
-      navigate("/", { replace: true });
-    };
-    window.addEventListener("popstate", onBack);
-    return () => window.removeEventListener("popstate", onBack);
-  }, [navigate]);
+  // Back button / reload are handled globally by App.jsx's AccessGuard (which routes
+  // them to the blocked page and warns before reload), so no per-page trap here.
 
   // Fallback path for Qualtrics → top-level redirect.
   // The End-of-Survey script in Qualtrics may also try `window.top.location.replace(...)`
@@ -55,6 +48,9 @@ export default function SurveyPage() {
         } catch {
           // ignore — the beacon is best-effort
         }
+        // Legitimate exit — suppress the global reload/close warning so it can't
+        // interrupt the handoff back to Prolific.
+        permitUnload();
         window.location.replace(PROLIFIC_COMPLETE_URL);
       }
     }

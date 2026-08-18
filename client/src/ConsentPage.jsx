@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { permitUnload } from "./navGuard.js";
 
 const CONSENT_KEY = "participantConsent";
 
@@ -49,6 +50,10 @@ export default function ConsentPage() {
 
   useEffect(() => {
     if (showEndScreen && countdown === 0) {
+      // Legitimate exit to Prolific — suppress the global reload/close warning so it
+      // can't interrupt the redirect (the declined end screen is state-driven and may
+      // still count as a protected page).
+      permitUnload();
       window.location.replace(exitUrl);
     }
   }, [showEndScreen, countdown, exitUrl]);

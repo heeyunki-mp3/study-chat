@@ -18,31 +18,8 @@ export default function WaitingPage() {
     }
   }, [navigate]);
 
-  // If user presses back, send them to "/" (new session) instead of previous page
-  useEffect(() => {
-    window.history.replaceState(null, "", "/waiting");
-    window.history.pushState(null, "", "/waiting");
-    const onBack = () => {
-      navigate("/welcome", { replace: true });
-    };
-    window.addEventListener("popstate", onBack);
-    return () => window.removeEventListener("popstate", onBack);
-  }, [navigate]);
-
-  // Warn the participant before they reload or close the tab in the waiting room.
-  // Reloading here drops their spot and forfeits payment. The native browser dialog
-  // can't show custom text (browsers force a generic "Reload site? / Leave site?"
-  // message), but it forces a confirmation. The auto-advance to /chat is a
-  // client-side navigation that unmounts this page, so it won't trigger the warning.
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = ""; // required for Chrome to show the prompt
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  // Back button and reload/close are handled globally by App.jsx's AccessGuard
+  // (back routes to the blocked page, reload warns then blocks), so no per-page trap.
 
   useEffect(() => {
     let navId = null;

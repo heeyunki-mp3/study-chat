@@ -623,21 +623,8 @@ export default function LoginChoice() {
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
 
-  // Warn the participant before they reload or close the tab anywhere on the login/
-  // registration page (both the user-ID step and the password/passkey step).
-  // Abandoning here loses their place in the study and forfeits payment. The native
-  // browser dialog can't show custom text (browsers force a generic "Reload site? /
-  // Leave site?" message), but it forces a confirmation. The forward navigation to
-  // /survey unmounts this page (and is client-side), so it won't trigger the warning.
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = ""; // required for Chrome to show the prompt
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  // Back button and reload/close are handled globally by App.jsx's AccessGuard
+  // (back routes to the blocked page, reload warns then blocks), so no per-page trap.
 
   // Guard: must have completed the chat — and not by being kicked (kicked users
   // also have chatCompleted set, but must not reach registration/survey; "/"

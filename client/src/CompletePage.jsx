@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { permitUnload } from "./navGuard.js";
 
 const PROLIFIC_COMPLETE_URL = "https://app.prolific.com/submissions/complete?cc=CQVN22U3";
 
@@ -40,6 +41,9 @@ export default function CompletePage() {
       }
     })();
 
+    // Legitimate exit — suppress the global reload/close warning so it can't
+    // interrupt the handoff back to Prolific.
+    permitUnload();
     target.location.replace(PROLIFIC_COMPLETE_URL);
   }, []);
 

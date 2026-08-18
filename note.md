@@ -127,6 +127,18 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 
 ## 2. Issue
 
+### Single-pass access guard: reload / back button → 404 "blocked" page — 2026-08-17
+
+Requirement: participants must not be able to reload or use the browser back button mid-study; if they do, show an error page ("incorrect way to access the website"). Also add the missing "you may lose your progress" reload/close warning on the survey (chat/waiting/login already had one). Scope chosen by the user: **all pages, including chat** (see risk note).
+
+- **New `client/src/navGuard.js`**: `permitUnload()`/`isUnloadAllowed()` (a flag that lets legitimate Prolific redirects through the beforeunload warning) + `isReloadOrBackForwardEntry()` (Navigation Timing API; true when THIS document loaded via reload/back-forward, false for in-app React Router transitions).
+- **New `client/src/BlockedPage.jsx`**: 404-style "this page can't be accessed this way" screen. Also the `*` catch-all route and `/blocked`.
+- **`App.jsx`**: `BLOCKED_ON_ENTRY` computed once per document load — if this document loaded via reload/back-forward onto a protected page, App renders BlockedPage instead of the real route (so a reloaded `/chat` never re-mounts/rejoins, `/survey` never restarts). `<AccessGuard>` (inside the router) traps the browser Back button on protected pages (→ `/blocked`) and installs the reload/close warning (suppressed when `isUnloadAllowed()`).
+- **PROTECTED_PATHS** = `/`, `/welcome`, `/waiting`, `/chat`, `/login`, `/survey`. **Terminal Prolific-redirect screens are EXEMPT** (`isTerminalScreen`): `/complete`, `/blocked`, and consent `/` when kicked/declined — blocking those would stop the completion/kick/decline redirect and cost the participant payment.
+- **Removed now-redundant per-page handlers** (would double-fire with the global guard): popstate traps in Chat/Waiting/Survey, beforeunload in Chat/Waiting/Login. Added `permitUnload()` before every Prolific `location.replace` (SurveyPage onMessage, CompletePage, ConsentPage end screen — the declined end screen is state-driven so it may still count as protected).
+
+⚠️ **Risks (flagged to user):** (1) **Chat reload disables rejoin** — a reloaded `/chat` renders BlockedPage instead of mounting ChatPage, so the reload-triggered rejoin (item 20) no longer runs; an accidental full reload / mobile tab-eviction mid-chat blocks the participant with NO recovery (lost completion + payment). Transient socket drops that don't reload the page still auto-reconnect. To exempt chat, split the reload-block set from the back-trap set and drop `/chat` from the former. (2) Consent entry `/` reload also blocks — a participant who refreshes the first page must re-click the Prolific link (fresh "navigate") to recover. Deploy: **client rebuild only** (no server change).
+
 ### Pro/anti personas leaked the opposite stance on passkeys — 2026-08-17
 
 Pro bots kept volunteering passkey **downsides** (screenshot: Sid "the only downside is the setup hassle", Anthony "tried once, got overwhelmed with syncing", Mina "setup stuff can be annoying"); anti would do the reverse. Three root causes, all fixed:
