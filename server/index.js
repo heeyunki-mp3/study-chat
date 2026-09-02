@@ -2099,6 +2099,8 @@ io.on("connection", (socket) => {
       session.idleHasDraft = false;
       session.idleLastNudgeAt = null;
       session.idleNudgeCount = 0;
+      session.humanMessagePending = false;
+      session.idleNudgeInFlight = false;
     }
   }
 
@@ -2111,12 +2113,23 @@ io.on("connection", (socket) => {
     session.idleHasDraft = false;
     session.idleLastNudgeAt = null;
     session.idleNudgeCount = 0;
+    session.humanMessagePending = false;
+    session.idleNudgeInFlight = false;
 
     session.idleNudgeIntervalId = setInterval(async () => {
       if (!session || !isWaitingForHuman(session)) {
         clearIdleNudgeTimer();
         return;
       }
+      // Fix 1: a human message just arrived and is being classified/processed — don't
+      // nudge or kick until it's resolved, so an engaged participant can't be pulled
+      // out mid-answer while a slow (under-load) classify call is in flight.
+      if (session.humanMessagePending) return;
+      // Re-entry guard: a nudge is currently being generated/typed. Needed because
+      // idleLastNudgeAt is now stamped only AFTER the nudge is visible (Fix 2), so
+      // without this the interval could fire again mid-generation and stack nudges.
+      if (session.idleNudgeInFlight) return;
+
       const now = Date.now();
       const nudgeInterval = session.idleHasDraft ? NUDGE_AFTER_TYPING_WITH_DRAFT_MS : NUDGE_MS;
       const nextNudgeAt = session.idleLastNudgeAt != null
@@ -2134,10 +2147,11 @@ io.on("connection", (socket) => {
         return;
       }
 
-      session.idleLastNudgeAt = now;
-      session.idleNudgeCount = (session.idleNudgeCount || 0) + 1;
+      // This is the (idleNudgeCount + 1)-th escalation.
+      const nextCount = (session.idleNudgeCount || 0) + 1;
 
-      if (session.idleNudgeCount >= MAX_NUDGES) {
+      if (nextCount >= MAX_NUDGES) {
+        session.idleNudgeCount = nextCount;
         clearIdleNudgeTimer();
         const kickMsg = `No worries @${session.humanDisplayName}, looks like you got pulled away. We'll wrap things up on your end so the group can keep going. Thanks for signing up!`;
         emitMessage(MODERATOR_NAME, kickMsg);
@@ -2168,20 +2182,34 @@ io.on("connection", (socket) => {
       // Include recent transcript for context
       const recentMsgs = (session.roundTranscript || session.messages || []).slice(-8);
       nudgeContext.transcript = recentMsgs.map((m) => `${m.name}: ${m.text}`).join("\n").slice(0, 600);
-      const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount, nudgeContext);
-      // Cancel if user is typing OR if the wait state changed (user already responded and advanced) mid-await.
-      const cancelCheck = () => !session || !!session.humanIsTyping || !isWaitingForHuman(session);
-      await emitModeratorLine(nudgeMsg, { cancelCheck, humanPace: true });
-      if (!session || cancelCheck()) {
-        if (session) {
-          session.idleNudgeCount = Math.max(0, (session.idleNudgeCount || 0) - 1);
-          session.idleLastNudgeAt = null;
-          session.idleLastActivityAt = Date.now();
+
+      // Fix 2: hold the re-entry guard across the (slow) generation + typing, and stamp
+      // idleLastNudgeAt only AFTER the nudge is actually visible — so the participant
+      // always gets the full interval of reading time before the next escalation
+      // (previously the clock started at generation time, collapsing nudge + kick).
+      session.idleNudgeInFlight = true;
+      try {
+        const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, nextCount, nudgeContext);
+        // Cancel if user is typing, already responded/advanced, or a message is now
+        // pending classification mid-await.
+        const cancelCheck = () =>
+          !session || !!session.humanIsTyping || !isWaitingForHuman(session) || !!session.humanMessagePending;
+        await emitModeratorLine(nudgeMsg, { cancelCheck, humanPace: true });
+        if (!session || cancelCheck()) {
+          if (session) {
+            session.idleLastNudgeAt = null;
+            session.idleLastActivityAt = Date.now();
+          }
+          logLine("QUEUE", "idle nudge cancelled (user responded or started typing)");
+          return;
         }
-        logLine("QUEUE", "idle nudge cancelled (user responded or started typing)");
-        return;
+        // Nudge is now visible — count it and start the clock from NOW.
+        session.idleNudgeCount = nextCount;
+        session.idleLastNudgeAt = Date.now();
+        logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
+      } finally {
+        if (session) session.idleNudgeInFlight = false;
       }
-      logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
     }, IDLE_CHECK_MS);
   }
 
@@ -3761,9 +3789,16 @@ io.on("connection", (socket) => {
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();
       session.idleUserHasTyped = true;
-      // Don't reset idleNudgeCount here — that lets a bare-greeting loop ("hi" every
-      // 15s) stall the chat in intro forever. Counter is reset only when the message
-      // actually progresses the flow (substantive answer, accepted intro, etc.).
+      // Fix 1: a message just arrived — pause the idle nudge/kick machine until it has
+      // been classified, so an engaged participant can't be kicked mid-answer while a
+      // slow (under-load) classify call is in flight.
+      session.humanMessagePending = true;
+      // Reset the nudge clock so the next escalation is a full interval away.
+      session.idleLastNudgeAt = null;
+      // Outside intro, a message means the participant is present — reset the kick
+      // counter. In intro we deliberately keep it, so a bare-greeting loop ("hi" every
+      // 15s) still eventually kicks instead of stalling the chat forever.
+      if (!session.waitingForHumanIntro) session.idleNudgeCount = 0;
     }
     logLine("HUMAN_INPUT", `[${session.humanDisplayName}] "${clip(text, 160)}"`);
 
@@ -3810,9 +3845,18 @@ io.on("connection", (socket) => {
     const combinedText = session.humanMessagesThisRound.join(" ");
     const burstText = session.humanMessagesBurst.join(" ");
 
-    const { isQuestion: isModQuestion, substantive, inappropriate } = await classifyHumanMessage(
-      burstText, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
-    );
+    let clsResult;
+    try {
+      clsResult = await classifyHumanMessage(
+        burstText, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
+      );
+    } finally {
+      // Classification finished (or the session ended) — let the idle machine resume.
+      // The kick counter was already reset above (non-intro), so the brief post-classify
+      // window can't reach a kick from a standing start.
+      if (session) session.humanMessagePending = false;
+    }
+    const { isQuestion: isModQuestion, substantive, inappropriate } = clsResult;
     logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive} (burst: "${burstText.slice(0, 120)}") (combined: "${combinedText.slice(0, 120)}")`);
 
     if (inappropriate) {

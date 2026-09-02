@@ -17,10 +17,13 @@ import { isReloadOrBackForwardEntry, isUnloadAllowed } from "./navGuard.js";
 // show there.)
 const NAV_WARNING = "You may lose your progress if you leave this page. Are you sure?";
 
-// Pages the participant actively moves through. Reloading or pressing back on any of
-// these is treated as "incorrect access" and routed to ErrorPage. (Consent "/" is
-// included — but its kicked/declined end screen is exempt, see isTerminalScreen.)
-const PROTECTED_PATHS = new Set(["/", "/welcome", "/waiting", "/chat", "/login", "/survey"]);
+// Pages the participant actively moves through. Reloading or pressing back/forward on
+// any of these routes to ErrorPage. NOTE: "/survey" is deliberately NOT sealed — the
+// Qualtrics survey hands off to Prolific via a top-window redirect, and a beforeunload
+// prompt or reload-block on /survey can interrupt that handoff (an accidental reload
+// would also 400 them mid-survey). Consent "/" is included, but its kicked/declined
+// end screen is exempt (see isTerminalScreen).
+const PROTECTED_PATHS = new Set(["/", "/welcome", "/waiting", "/chat", "/login"]);
 
 // Terminal screens that must be allowed to proceed even on a reload/back-forward:
 // they auto-redirect to Prolific (completion / kick / decline codes), and blocking
@@ -38,12 +41,14 @@ function isTerminalScreen(pathname, search) {
 }
 
 // Decided ONCE per document load: did we arrive via reload / back-forward onto a
-// protected page? If so we render ErrorPage instead of the real route, so a
-// reloaded /chat never re-mounts (and never tries to rejoin), a re-entered /survey
-// never restarts, etc. In-app navigation keeps type "navigate", so the normal
-// funnel is unaffected — this only trips on an actual reload or browser back/forward.
+// SEALED (protected) page? If so we render ErrorPage instead of the real route, so a
+// reloaded /chat never re-mounts (and never tries to rejoin). Non-sealed pages
+// (/survey, /complete, unknown URLs) render normally. In-app navigation keeps type
+// "navigate", so the normal funnel is unaffected — this only trips on an actual reload
+// or browser back/forward onto a sealed page.
 const BLOCKED_ON_ENTRY =
   isReloadOrBackForwardEntry() &&
+  PROTECTED_PATHS.has(window.location.pathname) &&
   !isTerminalScreen(window.location.pathname, window.location.search);
 
 // Installed on protected pages: traps the browser Back button (-> ErrorPage) and
@@ -74,6 +79,11 @@ function AccessGuard() {
     window.history.pushState(null, "", window.location.href);
     const onPop = () => {
       if (isUnloadAllowed()) return; // a legitimate exit is already in progress
+      // Only trap back/forward that leaves a sealed page (funnel pages, or the blocked
+      // page so a forward press can't re-enter the app). /survey and /complete are the
+      // Prolific exit ramps and must stay unsealed.
+      const fromPath = lastLocationRef.current.split("?")[0];
+      if (!PROTECTED_PATHS.has(fromPath) && fromPath !== "/blocked") return;
       if (window.confirm(NAV_WARNING)) {
         navigate("/blocked", { replace: true });
       } else {
