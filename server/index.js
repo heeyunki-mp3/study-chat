@@ -1375,9 +1375,13 @@ const blindedGroupCode = (g) => ({ pro: "p", anti: "a", control: "c" }[g] || nul
 let groupRotationIndex = 0;
 
 // Per-group recruitment cap: a group with this many SUCCESSFUL instances stops
-// receiving new participants. Successful = completed the whole funnel: chat
-// wrap-up (exit_status='completed', so kicked/abandoned never count) AND the
-// final Qualtrics → Prolific redirect was recorded (survey_redirected_at).
+// receiving new participants. Successful = chat wrap-up reached
+// (exit_status='completed', so kicked/abandoned never count).
+// NOTE: this previously also required survey_redirected_at IS NOT NULL (the
+// Qualtrics → Prolific redirect beacon), but that column is never stamped in
+// practice, so the count was always 0 and no group ever capped. Counting
+// exit_status='completed' alone is a looser upper bound than actual Prolific
+// approvals — chat-finishers who drop during the survey still count here.
 const GROUP_CAP = Number(process.env.GROUP_CAP || 200);
 
 async function countSuccessfulByGroup() {
@@ -1386,7 +1390,7 @@ async function countSuccessfulByGroup() {
   const [rows] = await dbPool.execute(`
     SELECT assigned_group AS g, COUNT(*) AS n
     FROM participant_responses
-    WHERE exit_status = 'completed' AND survey_redirected_at IS NOT NULL
+    WHERE exit_status = 'completed'
     GROUP BY assigned_group
   `);
   for (const r of rows) {

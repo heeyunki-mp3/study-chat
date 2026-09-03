@@ -6,7 +6,7 @@
 export default function ErrorPage({
   code = "400",
   title = "Bad request",
-  message = "It looks like you reloaded the page or used the browser’s back button. This study has to be completed in one continuous pass, so reloading or navigating back isn’t supported.",
+  message = "This study has to be completed in one continuous pass, so reloading or navigating back isn’t supported.",
 }) {
   return (
     <div
