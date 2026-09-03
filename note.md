@@ -127,6 +127,18 @@ Each item: **Issue** then **Fix**. Item numbers preserved (other notes cross-ref
 
 ## 2. Issue
 
+### Entry gate: require Prolific PID + reject duplicate PID → 400 — 2026-09-02
+
+Requirement: block non-Prolific access and duplicate/returning participants at the entry (ConsentPage `/`). Two conditions, both render the 400 ErrorPage:
+1. **No `PROLIFIC_PID` in the URL** → 400 (purely client-side, always enforced).
+2. **`PROLIFIC_PID` already in the DB** → 400 (duplicate/returning participant).
+
+- **Server**: new `GET /api/focus-group/check-pid?pid=...` → `{exists: bool}` via `SELECT 1 FROM participant_responses WHERE prolific_pid = ? LIMIT 1`. Uses `prolific_pid` (the reliable PID column — `participant_id` holds the display name in the main upsert). **Fails OPEN** (`exists:false`) if `dbPool` is down / query errors, so a transient error can't lock out a real first-timer.
+- **Client** (`ConsentPage.jsx`): `pidGate` state (`checking`→`ok`/`blocked`). On mount (fresh consent only), read `PROLIFIC_PID` from the URL: missing → `blocked`; present → `check-pid` fetch → `exists` → `blocked`; network error → `ok` (fail open). `blocked` renders `<ErrorPage/>` (400). **Kicked/declined end screens are exempt** (they arrive without a PID and must still redirect to Prolific).
+- **When a PID counts as "in the DB":** `prolific_pid` is written when the participant reaches the **chat** (main upsert) or **declines** (`no-consent` row). So first entry passes; any re-entry after starting/completing/declining → 400.
+
+⚠️ **Consequences to know:** (a) A participant who disconnects and **re-clicks the Prolific link is now 400'd** (PID already in DB) — no recovery for a drop. (b) **Declining is final** — a declined PID is in the DB, so re-entry is blocked. (c) **Your own testing:** each test PID is single-use unless you clear the DB or use fresh `?PROLIFIC_PID=...` values; direct URL access with no PID → 400. (d) **Wipe test data before launch** or old rows' PIDs count as "used". (e) Client gate is bypassable by a determined user (edit URL / disable JS), but the server is the source of truth for the duplicate check — fine for a research study. Deploy: **server restart** (endpoint) + **client rebuild** (gate).
+
 ### Engaged participants idle-kicked mid-answer; "are you there?" + kick collapsed — 2026-08-18
 
 Participant report: got the "are you there?" nudge and the idle kick **at the same time**, right after answering (answered the first big question "very well" → "could you elaborate" → "you just try them out, nothing more you can do" → pulled out). They did NOT fail attention — they were engaging. Two root causes:
@@ -137,6 +149,8 @@ Participant report: got the "are you there?" nudge and the idle kick **at the sa
 - **Fix 1 — pause during classify**: new `session.humanMessagePending` flag, set the moment a message arrives (also resets the nudge clock, and resets the kick counter **outside intro** — intro keeps the no-reset behavior so a bare-greeting loop still eventually kicks). The idle interval returns early while the flag is set; it's cleared in a `try/finally` around `classifyHumanMessage`.
 - **Fix 2 — stamp the clock post-emit**: `idleLastNudgeAt` is now set AFTER the nudge is actually emitted (visible), and a new `idleNudgeInFlight` re-entry guard prevents stacked nudges during the slow generation. Net: the participant always gets a full `NUDGE_MS` of reading time before the next escalation. Genuinely-absent users still kick (nudge1 → 20s → nudge2 → 20s → kick), just with honest timing.
 - Both flags reset in `startIdleNudgeTimer`/`clearIdleNudgeTimer`. Aggravator still on the launch checklist: OpenAI 429/latency under concurrency — raise tier / stagger the Prolific release. Deploy: **server restart**.
+
+**Follow-ups after the live "Zach" incident (2026-09-02 log):** confirmed the exact bug — Zach answered "Very well" then a longer substantive answer, classifier said substantive, but the ~28s-typing nudges piled up (old clock-at-generation) on a counter that his terse "Very well" never reset, and he was kicked as `failed_attention` with a nudge even landing AFTER the kick. Two additional fixes so the scenario can't recur even before the counter/clock fixes bite: (a) **loosened the ≤2-word substantive gate** in `classifyHumanMessage` — `<=2 → <=1` word forced-non-substantive, so 2-word real answers ("very well", "pretty good") go to the classifier instead of auto-failing into the elaborate/nudge loop; (b) **shortened the nudge messages** (`generateNudgeMessage`: "1 SHORT sentence, under ~12 words" + trimmed the examples/fallbacks) so they type in a few seconds instead of ~28s. Deploy: **server restart**.
 
 ### Single-pass access guard: reload/back warn (native) then block — 400/404 — 2026-08-17 (refined 2026-08-18)
 

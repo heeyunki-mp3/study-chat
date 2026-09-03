@@ -921,7 +921,12 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const combined = combinedText || burstText;
 
   const combinedWordCount = String(combined).trim().split(/\s+/).filter(Boolean).length;
-  const forcedSubstantive = combinedWordCount > 10 ? true : combinedWordCount <= 2 ? false : null;
+  // Word-count shortcuts to skip the LLM call on obvious cases: >10 words is clearly a
+  // real answer; a single bare word ("ok"/"idk"/"no") is filler. Answers of 2+ words
+  // (e.g. "very well", "pretty good") go to the classifier instead of being auto-failed
+  // — auto-failing terse-but-real answers used to trap participants in the elaborate/
+  // nudge loop and get them falsely kicked.
+  const forcedSubstantive = combinedWordCount > 10 ? true : combinedWordCount <= 1 ? false : null;
 
   const { type = "call_on", prompt = "" } = context || {};
   const qContext = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"`;
@@ -1086,13 +1091,13 @@ async function generateNudgeMessage(humanName, nudgeNumber, context = {}) {
   } else if (phase === "poll") {
     phaseDesc = `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`;
     style = nudgeNumber === 1
-      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
-      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, curious what you think here."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your take would be great."`;
   } else {
     phaseDesc = `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
     style = nudgeNumber === 1
-      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
-      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, curious what you think here."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your take would be great."`;
   }
 
   const sys = `You are a warm, casual human discussion moderator named ${MODERATOR_NAME}. Generate a single nudge message for an idle participant.
@@ -1104,7 +1109,7 @@ ${transcript ? `\nRecent chat:\n${transcript}` : ""}
 Rules:
 - MUST include @${humanName} somewhere in the message.
 - Your nudge MUST match the current phase. ${phase === "intro" ? 'Since we are in the INTRODUCTION phase, you MUST ask them to introduce themselves. NEVER say "what you think about this" or reference any discussion topic.' : ""}
-- Exactly 1 sentence. Never more than 2 sentences.
+- Exactly 1 SHORT sentence — keep it under about 12 words so it sends quickly.
 - Sound like a real person, NOT an AI assistant. No exclamation-heavy or overly enthusiastic language.
 - Be concise and natural.
 - ${style}
@@ -1132,8 +1137,8 @@ Return ONLY the message text. No quotes, no JSON, no formatting.`;
       : `Hey @${humanName}, still with us? We'd love to hear a quick intro from you.`;
   }
   return nudgeNumber === 1
-    ? `Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready.`
-    : `Hey @${humanName}, still around? Your thoughts on this would be great.`;
+    ? `Hey @${humanName}, curious what you think here.`
+    : `Hey @${humanName}, still around? Your take would be great.`;
 }
 
 /** Remember the moderator's recent cue messages so the next cue can be phrased differently (keeps last 4). */
@@ -1768,6 +1773,27 @@ app.post("/api/focus-group/no-consent", express.json(), async (req, res) => {
   } catch (e) {
     logLine("DB_ERROR", `no-consent insert failed: ${e?.message}`);
     res.status(500).json({ error: "Failed to record" });
+  }
+});
+
+// GET /api/focus-group/check-pid?pid=...
+// Entry gate used by ConsentPage: has this Prolific PID already been seen in the DB?
+// If so the participant is a duplicate (retaking the study / re-entering) and the
+// client shows a 400. Fails OPEN (exists:false) when the DB is unavailable so a
+// transient error never locks out a legitimate first-time participant.
+app.get("/api/focus-group/check-pid", async (req, res) => {
+  const pid = String(req.query.pid || "").trim().slice(0, 100);
+  if (!pid) return res.status(400).json({ ok: false, exists: false, error: "missing pid" });
+  if (!dbPool) return res.json({ ok: true, exists: false });
+  try {
+    const [rows] = await dbPool.execute(
+      `SELECT 1 FROM participant_responses WHERE prolific_pid = ? LIMIT 1`,
+      [pid]
+    );
+    return res.json({ ok: true, exists: rows.length > 0 });
+  } catch (e) {
+    logLine("DB_ERROR", `check-pid query failed: ${e?.message}`);
+    return res.json({ ok: true, exists: false });
   }
 });
 
