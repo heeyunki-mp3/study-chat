@@ -2371,7 +2371,19 @@ io.on("connection", (socket) => {
     const typeDelay = humanPace
       ? typingDelayMs(text)
       : randomBetween(EXPLANATORY_TYPING_DELAY_MS.min, EXPLANATORY_TYPING_DELAY_MS.max);
-    await delay(typeDelay);
+    // Poll for cancellation during the type-out so a human who starts typing
+    // mid-message cancels within ~1s, instead of waiting out the full length-based
+    // typing animation (which can be 10+s for a long nudge). Only bites when a
+    // cancelCheck is passed (nudges, elaboration prompts) or cancelAdvanceFromIdle
+    // flips; otherwise it just waits out typeDelay in 1s steps.
+    for (let waited = 0; waited < typeDelay; waited += 1000) {
+      await delay(Math.min(1000, typeDelay - waited));
+      if (!session) return;
+      if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
+        emitTyping(MODERATOR_NAME, false);
+        return;
+      }
+    }
     if (awaitBeforeSend) await awaitBeforeSend;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
