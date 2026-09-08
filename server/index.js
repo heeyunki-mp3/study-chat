@@ -1406,6 +1406,15 @@ async function countSuccessfulByGroup() {
 // unreachable or every group is at cap, fall back to plain rotation rather than
 // blocking the study — assignment must never hard-fail on a counting query.
 async function pickAssignedGroup() {
+  // TEMPORARY MANUAL OVERRIDE (2026-09-08, per user): force every new participant
+  // into the control group. This bypasses the cap-aware rotation below entirely
+  // (so the GROUP_CAP does NOT apply while it's on). To restore normal
+  // pro→anti→control assignment, set FORCE_CONTROL to false or delete this block.
+  const FORCE_CONTROL = true;
+  if (FORCE_CONTROL) {
+    logLine("GROUP", "forced assignment → control (manual override)");
+    return "control";
+  }
   let counts = null;
   try {
     counts = await countSuccessfulByGroup();
@@ -3495,6 +3504,29 @@ io.on("connection", (socket) => {
 
   socket.on("participant_name", async (data) => {
     const name = (data?.name || "").trim() || "Participant";
+    // Server-side duplicate-PID gate (backstop for the client-side ConsentPage
+    // gate): reject a Prolific PID already in the DB — a retaking/returning
+    // participant — BEFORE creating a session, so a stale or JS-disabled client
+    // can't bypass it and start a chat. Fails OPEN on a DB error so a transient
+    // issue never locks out a legitimate first-timer. Same lookup as /check-pid.
+    const incomingPid = String(data?.prolificPid || "").trim().slice(0, 100);
+    if (incomingPid && dbPool) {
+      let pidExists = false;
+      try {
+        const [rows] = await dbPool.execute(
+          `SELECT 1 FROM participant_responses WHERE prolific_pid = ? LIMIT 1`,
+          [incomingPid]
+        );
+        pidExists = rows.length > 0;
+      } catch (e) {
+        logLine("DB_ERROR", `participant_name duplicate-PID check failed: ${e?.message}; allowing (fail open)`);
+      }
+      if (pidExists) {
+        logLine("SESSION_START", `duplicate PID rejected server-side: ${incomingPid}`);
+        socket.emit("pid_blocked", { reason: "duplicate_pid" });
+        return;
+      }
+    }
     session = await createSession(name);
     // Store Prolific params if provided
     if (data?.prolificPid) session.prolificPid = String(data.prolificPid).trim();

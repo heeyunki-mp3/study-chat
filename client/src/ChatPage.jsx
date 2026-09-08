@@ -508,6 +508,14 @@ export default function ChatPage() {
       setTyping((prev) => ({ ...prev, [who]: isTyping }));
     });
 
+    socket.on("pid_blocked", () => {
+      // Server-side duplicate-PID gate fired (the client-side ConsentPage gate was
+      // bypassed or stale). Dead-end to the 400 page — no Prolific redirect, since a
+      // duplicate/returning participant must not get a completion code.
+      socket.disconnect();
+      navigate("/blocked", { replace: true });
+    });
+
     socket.on("kicked", ({ message } = {}) => {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
