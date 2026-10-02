@@ -347,6 +347,7 @@ let dbPool = null;
         exit_status VARCHAR(32) DEFAULT NULL,
         exit_stage VARCHAR(64) DEFAULT NULL,
         profile_pic_choice VARCHAR(16) DEFAULT NULL,
+        survey_redirected_at DATETIME DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_session_participant (session_id, participant_id)
       )
@@ -436,6 +437,32 @@ let dbPool = null;
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS dur_auth_creation_ms INT DEFAULT NULL
     `).catch(() => {});
+    // Step-by-step trail of passkey creation on SecureStep, all attempts appended:
+    // options_requested → options_received → prompt_opened → prompt_completed →
+    // registered, with failures as "failed:<ErrorName>" plus the library's error
+    // message in detail. ms = offset from the method cards becoming visible. The
+    // LAST entry is the step the participant is currently on (or abandoned at) —
+    // e.g. a trail ending at prompt_opened means they never resolved the OS
+    // passkey dialog. JSON array of {step, ms, detail?}.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS passkey_steps JSON DEFAULT NULL
+    `).catch(() => {});
+    // How the password field got its content (password path only), measured
+    // client-side per input event — never the content itself. pw_entry_method:
+    // typed / pasted / mixed / autofill_or_manager / unknown. Manager detection
+    // is a HEURISTIC: browser autofill and value-setting extensions are caught
+    // (no-inputType inserts, :autofill CSS), but extensions that simulate
+    // per-key typing are indistinguishable from a human and count as typed.
+    // pw_entry_counts: {typed, pastes, drops, autofill, multiChar, autofillCss}.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS pw_entry_method VARCHAR(24) DEFAULT NULL
+    `).catch(() => {});
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS pw_entry_counts JSON DEFAULT NULL
+    `).catch(() => {});
     // How the participant's session ended. exit_status: completed /
     // failed_attention (idle kick) / unsubstantial / inappropriate (trolling) /
     // no_consent (decline, row created by the /no-consent endpoint) / abandoned
@@ -456,6 +483,14 @@ let dbPool = null;
     await dbPool.execute(`
       ALTER TABLE participant_responses
         ADD COLUMN IF NOT EXISTS profile_pic_choice VARCHAR(16) DEFAULT NULL
+    `).catch(() => {});
+    // When the participant hit the final Qualtrics → Prolific redirect (the
+    // /complete page, or the SurveyPage postMessage fallback). A row with
+    // exit_status='completed' AND survey_redirected_at set is a "successful
+    // instance" — the definition the per-group recruitment cap counts against.
+    await dbPool.execute(`
+      ALTER TABLE participant_responses
+        ADD COLUMN IF NOT EXISTS survey_redirected_at DATETIME DEFAULT NULL
     `).catch(() => {});
     logLine("DB", "=== DATABASE INIT SUCCESS — participant_responses table ready ===");
   } catch (e) {
@@ -886,7 +921,12 @@ async function classifyHumanMessage(burstText, combinedText, context, roundQuest
   const combined = combinedText || burstText;
 
   const combinedWordCount = String(combined).trim().split(/\s+/).filter(Boolean).length;
-  const forcedSubstantive = combinedWordCount > 10 ? true : combinedWordCount <= 2 ? false : null;
+  // Word-count shortcuts to skip the LLM call on obvious cases: >10 words is clearly a
+  // real answer; a single bare word ("ok"/"idk"/"no") is filler. Answers of 2+ words
+  // (e.g. "very well", "pretty good") go to the classifier instead of being auto-failed
+  // — auto-failing terse-but-real answers used to trap participants in the elaborate/
+  // nudge loop and get them falsely kicked.
+  const forcedSubstantive = combinedWordCount > 10 ? true : combinedWordCount <= 1 ? false : null;
 
   const { type = "call_on", prompt = "" } = context || {};
   const qContext = `Prompt type: ${type}\nDiscussion question: "${String(roundQuestion ?? "").slice(0, 200)}"\nPrompt shown to participant: "${String(prompt || "").slice(0, 300)}"`;
@@ -1051,13 +1091,13 @@ async function generateNudgeMessage(humanName, nudgeNumber, context = {}) {
   } else if (phase === "poll") {
     phaseDesc = `The moderator asked a quick poll question: "${question}". The participant needs to give a short answer.`;
     style = nudgeNumber === 1
-      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
-      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, curious what you think here."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your take would be great."`;
   } else {
     phaseDesc = `The current discussion question is: "${question}". The participant needs to share their thoughts.`;
     style = nudgeNumber === 1
-      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready."`
-      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your thoughts on this would be great."`;
+      ? `Gently ask @${humanName} to share their thoughts on the question. Do NOT ask if they are still there. Example: "Hey @${humanName}, curious what you think here."`
+      : `Check if @${humanName} is still around and ask them to share their thoughts. Example: "Hey @${humanName}, still around? Your take would be great."`;
   }
 
   const sys = `You are a warm, casual human discussion moderator named ${MODERATOR_NAME}. Generate a single nudge message for an idle participant.
@@ -1069,7 +1109,7 @@ ${transcript ? `\nRecent chat:\n${transcript}` : ""}
 Rules:
 - MUST include @${humanName} somewhere in the message.
 - Your nudge MUST match the current phase. ${phase === "intro" ? 'Since we are in the INTRODUCTION phase, you MUST ask them to introduce themselves. NEVER say "what you think about this" or reference any discussion topic.' : ""}
-- Exactly 1 sentence. Never more than 2 sentences.
+- Exactly 1 SHORT sentence — keep it under about 12 words so it sends quickly.
 - Sound like a real person, NOT an AI assistant. No exclamation-heavy or overly enthusiastic language.
 - Be concise and natural.
 - ${style}
@@ -1097,8 +1137,16 @@ Return ONLY the message text. No quotes, no JSON, no formatting.`;
       : `Hey @${humanName}, still with us? We'd love to hear a quick intro from you.`;
   }
   return nudgeNumber === 1
-    ? `Hey @${humanName}, would love to hear your thoughts on this one whenever you're ready.`
-    : `Hey @${humanName}, still around? Your thoughts on this would be great.`;
+    ? `Hey @${humanName}, curious what you think here.`
+    : `Hey @${humanName}, still around? Your take would be great.`;
+}
+
+/** Remember the moderator's recent cue messages so the next cue can be phrased differently (keeps last 4). */
+function recordCue(session, cueText) {
+  if (!session || !cueText) return;
+  if (!Array.isArray(session.recentCues)) session.recentCues = [];
+  session.recentCues.push(String(cueText).trim());
+  if (session.recentCues.length > 4) session.recentCues.shift();
 }
 
 /** Generate moderator cue: short ack of latest message + cue next person (OpenAI). */
@@ -1183,6 +1231,16 @@ Your reaction MUST quote, paraphrase, or name a SPECIFIC thing from their messag
 Remember to prefix the name with @.`;
   }
 
+  // Anti-repetition: show Eunice her own recent cues so she phrases this one differently.
+  // The cue is otherwise stateless (it never sees its earlier messages), which is why it
+  // kept re-picking the same "your take?" hand-off every turn.
+  const recentCues = Array.isArray(opts.session?.recentCues) ? opts.session.recentCues : [];
+  if (recentCues.length) {
+    userPrompt += `\n\nDO NOT REPEAT YOURSELF: here are your most recent hand-off messages:\n${recentCues
+      .map((c) => `- "${c}"`)
+      .join("\n")}\nWord this one differently from all of them — especially vary the short prompt phrase after the @name (do NOT keep using the same one like "your take?"). Keep it natural.`;
+  }
+
   // Tag which branch this cue came from so the log shows whether the strengthened
   // mid-round prompt is actually being used vs. one of the other paths.
   const cueBranch = participantAskedWhatPasskeyIs
@@ -1206,11 +1264,17 @@ Remember to prefix the name with @.`;
       temperature: 0.7,
     });
     const text = (completion?.choices?.[0]?.message?.content ?? "").trim();
-    if (text) return text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
+    if (text) {
+      const finalText = text.replace(/---/g, "").trim() || `How about you, @${nextName}?`;
+      recordCue(opts.session, finalText);
+      return finalText;
+    }
   } catch (e) {
     console.error("generateModeratorCue error", e?.message || e);
   }
-  return `How about you, @${nextName}?`;
+  const fallback = `How about you, @${nextName}?`;
+  recordCue(opts.session, fallback);
+  return fallback;
 }
 
 /** Last non-moderator message from session (for ack context). */
@@ -1298,23 +1362,88 @@ function hasHumanRepliedAfterIntroPrompt(session) {
 // =====================
 // Session state (one per socket/room)
 // =====================
-// Group rotation: pro → anti → half → pro → ...
+// Group rotation: pro → anti → control → pro → ...
 const GROUP_ROTATION = ["pro", "anti", "control"];
 const GROUP_BOTS = {
   pro:     ["sid_pro", "mina_pro", "anthony_pro"],
   anti:    ["sid_anti", "mina_anti", "anthony_anti"],
   control: ["sid_control", "mina_control", "anthony_control"],
 };
+// Blinded group code sent to the browser / Qualtrics (pro→p, anti→a, control→c);
+// the plaintext condition name never reaches the client. Decode at analysis time.
+const blindedGroupCode = (g) => ({ pro: "p", anti: "a", control: "c" }[g] || null);
 let groupRotationIndex = 0;
 
-function createSession(participantName) {
+// Per-group recruitment cap: a group with this many SUCCESSFUL instances stops
+// receiving new participants. Successful = chat wrap-up reached
+// (exit_status='completed', so kicked/abandoned never count).
+// NOTE: this previously also required survey_redirected_at IS NOT NULL (the
+// Qualtrics → Prolific redirect beacon), but that column is never stamped in
+// practice, so the count was always 0 and no group ever capped. Counting
+// exit_status='completed' alone is a looser upper bound than actual Prolific
+// approvals — chat-finishers who drop during the survey still count here.
+const GROUP_CAP = Number(process.env.GROUP_CAP || 200);
+
+async function countSuccessfulByGroup() {
+  const counts = { pro: 0, anti: 0, control: 0 };
+  if (!dbPool) return counts;
+  const [rows] = await dbPool.execute(`
+    SELECT assigned_group AS g, COUNT(*) AS n
+    FROM participant_responses
+    WHERE exit_status = 'completed'
+    GROUP BY assigned_group
+  `);
+  for (const r of rows) {
+    // The DB enum stores control as 'cont'.
+    const g = r.g === "cont" ? "control" : r.g;
+    if (g in counts) counts[g] = Number(r.n);
+  }
+  return counts;
+}
+
+// Strict rotation, skipping any group that already reached GROUP_CAP successful
+// instances (the remaining groups keep alternating). Fails open: if the DB is
+// unreachable or every group is at cap, fall back to plain rotation rather than
+// blocking the study — assignment must never hard-fail on a counting query.
+async function pickAssignedGroup() {
+  // TEMPORARY MANUAL OVERRIDE (2026-09-08, per user): force every new participant
+  // into the control group. This bypasses the cap-aware rotation below entirely
+  // (so the GROUP_CAP does NOT apply while it's on). To restore normal
+  // pro→anti→control assignment, set FORCE_CONTROL to false or delete this block.
+  const FORCE_CONTROL = true;
+  if (FORCE_CONTROL) {
+    logLine("GROUP", "forced assignment → control (manual override)");
+    return "control";
+  }
+  let counts = null;
+  try {
+    counts = await countSuccessfulByGroup();
+  } catch (e) {
+    logLine("GROUP", `success-count query failed (${e?.message}); using plain rotation`);
+  }
+  if (counts) {
+    for (let i = 0; i < GROUP_ROTATION.length; i++) {
+      const g = GROUP_ROTATION[(groupRotationIndex + i) % GROUP_ROTATION.length];
+      if (counts[g] < GROUP_CAP) {
+        groupRotationIndex += i + 1;
+        logLine("GROUP", `successful counts pro=${counts.pro} anti=${counts.anti} control=${counts.control} (cap ${GROUP_CAP}) → ${g}`);
+        return g;
+      }
+    }
+    logLine("GROUP", `all groups at cap (${GROUP_CAP}); assigning by plain rotation`);
+  }
+  const g = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
+  groupRotationIndex++;
+  return g;
+}
+
+async function createSession(participantName) {
   let assignedGroup = null;
   let cast;
   if (CLI_BOT_NAMES.length > 0) {
     cast = getCastByHandles(CLI_BOT_NAMES);
   } else {
-    assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
-    groupRotationIndex++;
+    assignedGroup = await pickAssignedGroup();
     cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
     logLine("GROUP", `assigned group: ${assignedGroup} → bots: ${GROUP_BOTS[assignedGroup].join(", ")}`);
   }
@@ -1324,8 +1453,7 @@ function createSession(participantName) {
   cast.forEach((p) => { botIdMap[p.handle] = p.id; });
   if (CLI_BOT_NAMES.length > 0 && bots.length === 0) {
     console.warn("CLI bot names matched no personas; falling back to random cast.");
-    assignedGroup = GROUP_ROTATION[groupRotationIndex % GROUP_ROTATION.length];
-    groupRotationIndex++;
+    assignedGroup = await pickAssignedGroup();
     cast = getCastByHandles(GROUP_BOTS[assignedGroup]);
     cast.forEach((p) => bots.push(p.handle));
     logLine("GROUP", `fallback assigned group: ${assignedGroup} → bots: ${bots.join(", ")}`);
@@ -1372,6 +1500,7 @@ function createSession(participantName) {
     usedRoundAckIndices: [],
     roundTranscript: [],  // Messages for current round; reset each new question
     humanResponsesByRound: {},  // { roundIndex: ["msg1", "msg2", ...] }
+    recentCues: [],  // last few moderator hand-off messages, fed back so Eunice varies her phrasing
   };
 }
 
@@ -1580,6 +1709,45 @@ function sanitizeDurationMs(raw) {
   return Math.min(Math.round(n), 2147483647);
 }
 
+// Sanitize the client-reported password-entry telemetry: method from a fixed
+// whitelist, counters clamped to non-negative ints. Returns {method, countsJson},
+// both null when unusable.
+function sanitizePwEntry(raw) {
+  const METHODS = ["typed", "pasted", "mixed", "autofill_or_manager", "unknown"];
+  if (!raw || typeof raw !== "object" || !METHODS.includes(raw.method)) {
+    return { method: null, countsJson: null };
+  }
+  const counts = {};
+  for (const k of ["typed", "pastes", "drops", "autofill", "multiChar"]) {
+    const n = Number(raw[k]);
+    counts[k] = Number.isFinite(n) && n >= 0 ? Math.min(Math.round(n), 100000) : 0;
+  }
+  counts.autofillCss = !!raw.autofillCss;
+  return { method: raw.method, countsJson: JSON.stringify(counts) };
+}
+
+// Sanitize the client-supplied passkey step trail into an array of
+// {step, ms?, detail?}, or null if nothing usable. Step names are constrained
+// to word chars, ":" and "-" (e.g. "failed:NotAllowedError"); capped to avoid
+// unbounded payloads.
+function sanitizePasskeySteps(raw) {
+  if (!Array.isArray(raw)) return null;
+  const cleaned = raw
+    .slice(0, 50)
+    .map((e) => {
+      const step = String(e?.step || "").trim();
+      if (!/^[\w:-]{1,64}$/.test(step)) return null;
+      const out = { step };
+      const ms = sanitizeDurationMs(e?.ms);
+      if (ms !== null) out.ms = ms;
+      const detail = String(e?.detail || "").trim().slice(0, 200);
+      if (detail) out.detail = detail;
+      return out;
+    })
+    .filter(Boolean);
+  return cleaned.length ? cleaned : null;
+}
+
 // Sanitize the client-supplied click log into a JSON string of valid method names,
 // or null if there's nothing usable. Capped to avoid unbounded payloads.
 function sanitizeAuthMethodClicks(raw) {
@@ -1621,6 +1789,27 @@ app.post("/api/focus-group/no-consent", express.json(), async (req, res) => {
   }
 });
 
+// GET /api/focus-group/check-pid?pid=...
+// Entry gate used by ConsentPage: has this Prolific PID already been seen in the DB?
+// If so the participant is a duplicate (retaking the study / re-entering) and the
+// client shows a 400. Fails OPEN (exists:false) when the DB is unavailable so a
+// transient error never locks out a legitimate first-time participant.
+app.get("/api/focus-group/check-pid", async (req, res) => {
+  const pid = String(req.query.pid || "").trim().slice(0, 100);
+  if (!pid) return res.status(400).json({ ok: false, exists: false, error: "missing pid" });
+  if (!dbPool) return res.json({ ok: true, exists: false });
+  try {
+    const [rows] = await dbPool.execute(
+      `SELECT 1 FROM participant_responses WHERE prolific_pid = ? LIMIT 1`,
+      [pid]
+    );
+    return res.json({ ok: true, exists: rows.length > 0 });
+  } catch (e) {
+    logLine("DB_ERROR", `check-pid query failed: ${e?.message}`);
+    return res.json({ ok: true, exists: false });
+  }
+});
+
 // POST /api/focus-group/log-auth-click
 // Persists the running click log on EVERY SecureStep card click, so the data
 // survives even if the participant never completes registration (abandons the
@@ -1647,6 +1836,35 @@ app.post("/api/focus-group/log-auth-click", express.json(), async (req, res) => 
   } catch (e) {
     logLine("DB_ERROR", `log-auth-click failed: ${e?.message}`);
     res.status(500).json({ error: "Failed to log click" });
+  }
+});
+
+// POST /api/focus-group/passkey-step
+// Persists the running passkey-creation step trail on EVERY step, so the data
+// survives abandons and cancelled prompts (same pattern as log-auth-click:
+// sole writer of passkey_steps, full-array overwrite, latest wins). Each report
+// is also logLined so the participant's current step is visible live in the
+// server log; the DB write is skipped (not failed) when the DB is down so the
+// log-file trail still accumulates.
+app.post("/api/focus-group/passkey-step", express.json(), async (req, res) => {
+  const { sessionId, participantId, steps } = req.body || {};
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
+  const cleaned = sanitizePasskeySteps(steps);
+  if (!cleaned) return res.json({ ok: true }); // nothing valid to store
+  const latest = cleaned[cleaned.length - 1];
+  logLine("PASSKEY", `participant=${participantId} step=${latest.step}${latest.detail ? ` (${latest.detail})` : ""} [${cleaned.length} total]`);
+  if (!dbPool) return res.json({ ok: true });
+  try {
+    await dbPool.execute(
+      `UPDATE participant_responses
+       SET passkey_steps = ?
+       WHERE session_id = ? AND participant_id = ?`,
+      [JSON.stringify(cleaned), sessionId, participantId]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    logLine("DB_ERROR", `passkey-step failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to log step" });
   }
 });
 
@@ -1700,7 +1918,7 @@ app.post("/api/focus-group/assign-auth-order", express.json(), async (req, res) 
 
 // POST /api/focus-group/register-password
 app.post("/api/focus-group/register-password", express.json(), async (req, res) => {
-  const { email, password, sessionId, participantId, authSelectionMs, authCreationMs } = req.body || {};
+  const { email, password, sessionId, participantId, authSelectionMs, authCreationMs, pwEntry } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
   if (!dbPool) return res.status(503).json({ error: "Database not available" });
@@ -1712,15 +1930,17 @@ app.post("/api/focus-group/register-password", express.json(), async (req, res) 
     // selection = cards shown → last click; creation = last click → this success.
     const selectionMs = sanitizeDurationMs(authSelectionMs);
     const creationMs = sanitizeDurationMs(authCreationMs);
+    const entry = sanitizePwEntry(pwEntry);
     await dbPool.execute(
       `UPDATE participant_responses
        SET email = ?, password_hash = ?, password_strength = ?, session_token = ?, auth_choice = 'password',
+           pw_entry_method = ?, pw_entry_counts = ?,
            dur_auth_selection_ms = COALESCE(?, dur_auth_selection_ms),
            dur_auth_creation_ms = COALESCE(?, dur_auth_creation_ms)
        WHERE session_id = ? AND participant_id = ?`,
-      [email, hash, strength, token, selectionMs, creationMs, sessionId, participantId]
+      [email, hash, strength, token, entry.method, entry.countsJson, selectionMs, creationMs, sessionId, participantId]
     );
-    logLine("DB", `User registered (password, strength=${strength}) email=${email} participant=${participantId}`);
+    logLine("DB", `User registered (password, strength=${strength}, entry=${entry.method || "n/a"}) email=${email} participant=${participantId}${entry.countsJson ? ` counts=${entry.countsJson}` : ""}`);
     res.json({ ok: true, sessionToken: token });
   } catch (e) {
     logLine("DB_ERROR", `register-password failed: ${e?.message}`);
@@ -1804,6 +2024,32 @@ app.post("/api/focus-group/webauthn-register-verify", express.json(), async (req
   } catch (e) {
     logLine("DB_ERROR", `webauthn-register-verify failed: ${e?.message}\n${e?.stack}`);
     res.status(500).json({ error: e?.message || "Verification failed" });
+  }
+});
+
+// POST /api/focus-group/survey-complete
+// Fired (keepalive, fire-and-forget) at the final Qualtrics → Prolific redirect:
+// by the /complete page on mount, and by SurveyPage's studyComplete-postMessage
+// fallback. Stamps survey_redirected_at first-wins, so duplicate beacons (both
+// paths firing, React re-mounts) are harmless. Together with
+// exit_status='completed' this defines a "successful instance" for the
+// per-group recruitment cap.
+app.post("/api/focus-group/survey-complete", express.json(), async (req, res) => {
+  const { sessionId, participantId } = req.body || {};
+  if (!sessionId || !participantId) return res.status(400).json({ error: "Session context missing" });
+  if (!dbPool) return res.status(503).json({ error: "Database not available" });
+  try {
+    await dbPool.execute(
+      `UPDATE participant_responses
+       SET survey_redirected_at = COALESCE(survey_redirected_at, NOW())
+       WHERE session_id = ? AND participant_id = ?`,
+      [sessionId, participantId]
+    );
+    logLine("DB", `survey-complete recorded session=${sessionId} participant=${participantId}`);
+    res.json({ ok: true });
+  } catch (e) {
+    logLine("DB_ERROR", `survey-complete failed: ${e?.message}`);
+    res.status(500).json({ error: "Failed to record" });
   }
 });
 
@@ -1892,6 +2138,8 @@ io.on("connection", (socket) => {
       session.idleHasDraft = false;
       session.idleLastNudgeAt = null;
       session.idleNudgeCount = 0;
+      session.humanMessagePending = false;
+      session.idleNudgeInFlight = false;
     }
   }
 
@@ -1904,12 +2152,23 @@ io.on("connection", (socket) => {
     session.idleHasDraft = false;
     session.idleLastNudgeAt = null;
     session.idleNudgeCount = 0;
+    session.humanMessagePending = false;
+    session.idleNudgeInFlight = false;
 
     session.idleNudgeIntervalId = setInterval(async () => {
       if (!session || !isWaitingForHuman(session)) {
         clearIdleNudgeTimer();
         return;
       }
+      // Fix 1: a human message just arrived and is being classified/processed — don't
+      // nudge or kick until it's resolved, so an engaged participant can't be pulled
+      // out mid-answer while a slow (under-load) classify call is in flight.
+      if (session.humanMessagePending) return;
+      // Re-entry guard: a nudge is currently being generated/typed. Needed because
+      // idleLastNudgeAt is now stamped only AFTER the nudge is visible (Fix 2), so
+      // without this the interval could fire again mid-generation and stack nudges.
+      if (session.idleNudgeInFlight) return;
+
       const now = Date.now();
       const nudgeInterval = session.idleHasDraft ? NUDGE_AFTER_TYPING_WITH_DRAFT_MS : NUDGE_MS;
       const nextNudgeAt = session.idleLastNudgeAt != null
@@ -1927,10 +2186,11 @@ io.on("connection", (socket) => {
         return;
       }
 
-      session.idleLastNudgeAt = now;
-      session.idleNudgeCount = (session.idleNudgeCount || 0) + 1;
+      // This is the (idleNudgeCount + 1)-th escalation.
+      const nextCount = (session.idleNudgeCount || 0) + 1;
 
-      if (session.idleNudgeCount >= MAX_NUDGES) {
+      if (nextCount >= MAX_NUDGES) {
+        session.idleNudgeCount = nextCount;
         clearIdleNudgeTimer();
         const kickMsg = `No worries @${session.humanDisplayName}, looks like you got pulled away. We'll wrap things up on your end so the group can keep going. Thanks for signing up!`;
         emitMessage(MODERATOR_NAME, kickMsg);
@@ -1961,20 +2221,34 @@ io.on("connection", (socket) => {
       // Include recent transcript for context
       const recentMsgs = (session.roundTranscript || session.messages || []).slice(-8);
       nudgeContext.transcript = recentMsgs.map((m) => `${m.name}: ${m.text}`).join("\n").slice(0, 600);
-      const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, session.idleNudgeCount, nudgeContext);
-      // Cancel if user is typing OR if the wait state changed (user already responded and advanced) mid-await.
-      const cancelCheck = () => !session || !!session.humanIsTyping || !isWaitingForHuman(session);
-      await emitModeratorLine(nudgeMsg, { cancelCheck, humanPace: true });
-      if (!session || cancelCheck()) {
-        if (session) {
-          session.idleNudgeCount = Math.max(0, (session.idleNudgeCount || 0) - 1);
-          session.idleLastNudgeAt = null;
-          session.idleLastActivityAt = Date.now();
+
+      // Fix 2: hold the re-entry guard across the (slow) generation + typing, and stamp
+      // idleLastNudgeAt only AFTER the nudge is actually visible — so the participant
+      // always gets the full interval of reading time before the next escalation
+      // (previously the clock started at generation time, collapsing nudge + kick).
+      session.idleNudgeInFlight = true;
+      try {
+        const nudgeMsg = await generateNudgeMessage(session.humanDisplayName, nextCount, nudgeContext);
+        // Cancel if user is typing, already responded/advanced, or a message is now
+        // pending classification mid-await.
+        const cancelCheck = () =>
+          !session || !!session.humanIsTyping || !isWaitingForHuman(session) || !!session.humanMessagePending;
+        await emitModeratorLine(nudgeMsg, { cancelCheck, humanPace: true });
+        if (!session || cancelCheck()) {
+          if (session) {
+            session.idleLastNudgeAt = null;
+            session.idleLastActivityAt = Date.now();
+          }
+          logLine("QUEUE", "idle nudge cancelled (user responded or started typing)");
+          return;
         }
-        logLine("QUEUE", "idle nudge cancelled (user responded or started typing)");
-        return;
+        // Nudge is now visible — count it and start the clock from NOW.
+        session.idleNudgeCount = nextCount;
+        session.idleLastNudgeAt = Date.now();
+        logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
+      } finally {
+        if (session) session.idleNudgeInFlight = false;
       }
-      logLine("QUEUE", `idle nudge ${session.idleNudgeCount}/${MAX_NUDGES} sent`);
     }, IDLE_CHECK_MS);
   }
 
@@ -2106,7 +2380,19 @@ io.on("connection", (socket) => {
     const typeDelay = humanPace
       ? typingDelayMs(text)
       : randomBetween(EXPLANATORY_TYPING_DELAY_MS.min, EXPLANATORY_TYPING_DELAY_MS.max);
-    await delay(typeDelay);
+    // Poll for cancellation during the type-out so a human who starts typing
+    // mid-message cancels within ~1s, instead of waiting out the full length-based
+    // typing animation (which can be 10+s for a long nudge). Only bites when a
+    // cancelCheck is passed (nudges, elaboration prompts) or cancelAdvanceFromIdle
+    // flips; otherwise it just waits out typeDelay in 1s steps.
+    for (let waited = 0; waited < typeDelay; waited += 1000) {
+      await delay(Math.min(1000, typeDelay - waited));
+      if (!session) return;
+      if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
+        emitTyping(MODERATOR_NAME, false);
+        return;
+      }
+    }
     if (awaitBeforeSend) await awaitBeforeSend;
     if (!session) return;
     if (session.cancelAdvanceFromIdle || cancelCheck?.()) {
@@ -2163,7 +2449,7 @@ io.on("connection", (socket) => {
     const latest = getLastParticipantMessage(session);
     let cue;
     try {
-      cue = await generateModeratorCue(latest, nameForCue, { roundQuestion: co.question });
+      cue = await generateModeratorCue(latest, nameForCue, { roundQuestion: co.question, session });
     } catch (e) {
       cue = `How about you, ${nameForCue}?`;
     }
@@ -2618,7 +2904,7 @@ io.on("connection", (socket) => {
       await emitModeratorLine("To finish up, click the \"Exit Chat\" button below. You'll create an account and then complete a short exit survey. Some of the questions may be sensitive, so please set up your account with secure login credentials. After the survey, you will be redirected to Prolific for payment.", { consecutive: true });
       if (!session) return;
       await emitModeratorLine("You will also use this same account again in about two weeks for a paid follow-up study, so keep your login handy.", { consecutive: true });
-      if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName });
+      if (session) io.to(socket.id).emit("study_complete", { sessionId: session.sessionId, participantId: session.participantName, ag: blindedGroupCode(session.assignedGroup) });
       return;
     }
     const nextRound = session.allRounds[nextRoundIndex];
@@ -2677,7 +2963,7 @@ io.on("connection", (socket) => {
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
     let cue;
     try {
-      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextRound.question });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: nextRound.question, session });
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
@@ -2863,7 +3149,7 @@ io.on("connection", (socket) => {
     const nameForCue = isHumanTurn(session, firstSpeaker) ? session.humanDisplayName : firstSpeaker;
     let cue;
     try {
-      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: firstRound.question });
+      cue = await generateModeratorCue(null, nameForCue, { isFirstInRound: true, bigQuestion: firstRound.question, session });
     } catch (e) {
       cue = `Let's start with ${nameForCue}.`;
     }
@@ -3218,7 +3504,30 @@ io.on("connection", (socket) => {
 
   socket.on("participant_name", async (data) => {
     const name = (data?.name || "").trim() || "Participant";
-    session = createSession(name);
+    // Server-side duplicate-PID gate (backstop for the client-side ConsentPage
+    // gate): reject a Prolific PID already in the DB — a retaking/returning
+    // participant — BEFORE creating a session, so a stale or JS-disabled client
+    // can't bypass it and start a chat. Fails OPEN on a DB error so a transient
+    // issue never locks out a legitimate first-timer. Same lookup as /check-pid.
+    const incomingPid = String(data?.prolificPid || "").trim().slice(0, 100);
+    if (incomingPid && dbPool) {
+      let pidExists = false;
+      try {
+        const [rows] = await dbPool.execute(
+          `SELECT 1 FROM participant_responses WHERE prolific_pid = ? LIMIT 1`,
+          [incomingPid]
+        );
+        pidExists = rows.length > 0;
+      } catch (e) {
+        logLine("DB_ERROR", `participant_name duplicate-PID check failed: ${e?.message}; allowing (fail open)`);
+      }
+      if (pidExists) {
+        logLine("SESSION_START", `duplicate PID rejected server-side: ${incomingPid}`);
+        socket.emit("pid_blocked", { reason: "duplicate_pid" });
+        return;
+      }
+    }
+    session = await createSession(name);
     // Store Prolific params if provided
     if (data?.prolificPid) session.prolificPid = String(data.prolificPid).trim();
     if (data?.studyId) session.prolificStudyId = String(data.studyId).trim();
@@ -3260,6 +3569,9 @@ io.on("connection", (socket) => {
       bots: session.bots,
       idleEmptyMs: IDLE_EMPTY_MS,
       idleTypingMs: IDLE_TYPING_MS,
+      // Sent at session start (not just study_complete) so an early exit —
+      // e.g. the testing Exit button — still forwards the group to Qualtrics.
+      ag: blindedGroupCode(session.assignedGroup),
     });
     socket.emit(
       "seed",
@@ -3399,6 +3711,9 @@ io.on("connection", (socket) => {
       bots: session.bots,
       idleEmptyMs: IDLE_EMPTY_MS,
       idleTypingMs: IDLE_TYPING_MS,
+      // Sent at session start (not just study_complete) so an early exit —
+      // e.g. the testing Exit button — still forwards the group to Qualtrics.
+      ag: blindedGroupCode(session.assignedGroup),
     });
     socket.emit(
       "seed",
@@ -3548,9 +3863,16 @@ io.on("connection", (socket) => {
     if (session && isWaitingForHuman(session)) {
       session.idleLastActivityAt = Date.now();
       session.idleUserHasTyped = true;
-      // Don't reset idleNudgeCount here — that lets a bare-greeting loop ("hi" every
-      // 15s) stall the chat in intro forever. Counter is reset only when the message
-      // actually progresses the flow (substantive answer, accepted intro, etc.).
+      // Fix 1: a message just arrived — pause the idle nudge/kick machine until it has
+      // been classified, so an engaged participant can't be kicked mid-answer while a
+      // slow (under-load) classify call is in flight.
+      session.humanMessagePending = true;
+      // Reset the nudge clock so the next escalation is a full interval away.
+      session.idleLastNudgeAt = null;
+      // Outside intro, a message means the participant is present — reset the kick
+      // counter. In intro we deliberately keep it, so a bare-greeting loop ("hi" every
+      // 15s) still eventually kicks instead of stalling the chat forever.
+      if (!session.waitingForHumanIntro) session.idleNudgeCount = 0;
     }
     logLine("HUMAN_INPUT", `[${session.humanDisplayName}] "${clip(text, 160)}"`);
 
@@ -3597,9 +3919,18 @@ io.on("connection", (socket) => {
     const combinedText = session.humanMessagesThisRound.join(" ");
     const burstText = session.humanMessagesBurst.join(" ");
 
-    const { isQuestion: isModQuestion, substantive, inappropriate } = await classifyHumanMessage(
-      burstText, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
-    );
+    let clsResult;
+    try {
+      clsResult = await classifyHumanMessage(
+        burstText, combinedText, ctx || { type: "call_on", prompt: "" }, roundQuestion
+      );
+    } finally {
+      // Classification finished (or the session ended) — let the idle machine resume.
+      // The kick counter was already reset above (non-intro), so the brief post-classify
+      // window can't reach a kick from a standing start.
+      if (session) session.humanMessagePending = false;
+    }
+    const { isQuestion: isModQuestion, substantive, inappropriate } = clsResult;
     logLine("HUMAN", `classify: inappropriate=${inappropriate} isQuestion=${isModQuestion} substantive=${substantive} (burst: "${burstText.slice(0, 120)}") (combined: "${combinedText.slice(0, 120)}")`);
 
     if (inappropriate) {

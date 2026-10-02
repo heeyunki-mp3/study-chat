@@ -1,0 +1,37 @@
+2026-07-29 21:58:49.222 [DB] === DATABASE INIT START ===
+2026-07-29 21:58:49.224 [DB] DB_HOST=localhost DB_PORT=3306 DB_USER=focusgroupcc DB_NAME=focusgroupcc_ DB_PW=(set)
+2026-07-29 21:58:49.224 [DB] importing mysql2/promise...
+2026-07-29 21:58:49.256 [DB] mysql2 imported successfully, creating connection pool...
+2026-07-29 21:58:49.256 [DB] pool created, executing CREATE TABLE...
+2026-07-29 21:58:49.262 [SESSION_START] backend running on http://localhost:3001
+2026-07-29 21:58:49.263 [DB_ERROR] === DATABASE INIT FAILED:  ===
+2026-07-29 21:58:49.264 [DB_ERROR] Full error: {"stack":"AggregateError: \n    at file:///Users/heeyunkim/study-chat/server/index.js:327:18","errors":[{"stack":"Error: connect ECONNREFUSED ::1:3306\n    at createConnectionError (node:net:1652:14)\n    at afterConnectMultiple (node:net:1682:16)","code":"ECONNREFUSED"},{"stack":"Error: connect ECONNREFUSED 127.0.0.1:3306\n    at createConnectionError (node:net:1652:14)\n    at afterConnectMultiple (node:net:1682:16)","code":"ECONNREFUSED"}],"code":"ECONNREFUSED","fatal":true}
+2026-07-29 21:59:02.771 [GROUP] successful counts pro=0 anti=0 control=0 (cap 200) → pro
+2026-07-29 21:59:02.771 [GROUP] assigned group: pro → bots: sid_pro, mina_pro, anthony_pro
+2026-07-29 21:59:02.771 [SESSION_START] id=6sMGFkg1xCOzWudyAAAB bots=sid_pro,mina_pro,anthony_pro group=pro
+2026-07-29 21:59:02.771 [SESSION_START] participant_name set to "agprobe_delete_me"
+2026-07-29 21:59:02.772 [QUEUE] intro: seed sent, playing moderator intro then bot intros
+2026-07-29 21:59:02.772 [TYPING] moderator true
+2026-07-29 21:59:07.408 [TYPING] moderator false
+2026-07-29 21:59:07.411 [MESSAGE] [Eunice] "Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!"
+2026-07-29 21:59:07.411 [WAIT] Eunice start waiting for 1.3s
+2026-07-29 21:59:08.727 [WAIT] Eunice done waiting
+2026-07-29 21:59:08.727 [TYPING] moderator true
+2026-07-29 21:59:12.163 [TYPING] moderator false
+2026-07-29 21:59:12.164 [MESSAGE] [Eunice] "To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning."
+2026-07-29 21:59:12.165 [QUEUE] intro: bots all start thinking in parallel from 'To start us off', emit gated
+2026-07-29 21:59:12.165 [WAIT] Sid thinking for 4.4s
+2026-07-29 21:59:12.165 [WAIT] Mina thinking for 5.1s
+2026-07-29 21:59:12.166 [WAIT] Anthony thinking for 4.0s
+2026-07-29 21:59:16.186 [TYPING] bot=Anthony true
+2026-07-29 21:59:16.591 [TYPING] bot=Sid true
+2026-07-29 21:59:17.239 [TYPING] bot=Mina true
+2026-07-29 21:59:24.050 [TYPING] bot=Anthony false
+2026-07-29 21:59:24.052 [MESSAGE] [Anthony] "Hi, I'm Anthony. I teach high school math in Arlington."
+2026-07-29 21:59:27.878 [TYPING] bot=Mina false
+2026-07-29 21:59:27.878 [MESSAGE] [Mina] "Hi, I'm Mina. I work in retail in LA. Nice to meet you all"
+2026-07-29 21:59:30.868 [TYPING] bot=Sid false
+2026-07-29 21:59:30.869 [MESSAGE] [Sid] "Hey, I'm Sid. I am an IT support technician in New Jersey."
+2026-07-29 21:59:30.869 [QUEUE] waiting for human intro from Agprobe_delete_me
+2026-07-29 21:59:47.764 [DISCONNECT] id=6sMGFkg1xCOzWudyAAAB sessionId=sess_1785362342771_ac95ovv (session preserved for rejoin)
+2026-07-29 22:29:47.810 [SESSION_EXPIRED] sessionId=sess_1785362342771_ac95ovv removed after TTL

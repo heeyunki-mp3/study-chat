@@ -1,0 +1,13 @@
+=== GROUP: PRO ===
+Timestamp: 2026-07-29T21:59:02.771Z
+Participant: Agprobe_delete_me
+Session ID: sess_1785362342771_ac95ovv
+Prolific PID: (none)
+Bots: Sid, Mina, Anthony
+Date: 2026-07-29_17-58-49
+---
+Eunice: Hi everyone! My name is Eunice, and I'll be moderating today's discussion. Thanks for joining!
+Eunice: To start us off, can we go around and do quick introductions? You can just share your name and anything you feel like mentioning.
+Anthony: Hi, I'm Anthony. I teach high school math in Arlington.
+Mina: Hi, I'm Mina. I work in retail in LA. Nice to meet you all
+Sid: Hey, I'm Sid. I am an IT support technician in New Jersey.

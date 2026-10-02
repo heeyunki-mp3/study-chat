@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { permitUnload } from "./navGuard.js";
+import ErrorPage from "./ErrorPage.jsx";
 
 const CONSENT_KEY = "participantConsent";
 
@@ -32,6 +34,8 @@ export default function ConsentPage() {
     () => new URLSearchParams(window.location.search).get("declined") === "1"
   );
   const [countdown, setCountdown] = useState(REDIRECT_COUNTDOWN_S);
+  // Entry gate: "checking" until we know, then "ok" (show consent) or "blocked" (400).
+  const [pidGate, setPidGate] = useState("checking");
   const navigate = useNavigate();
 
   const exitUrl = kicked ? PROLIFIC_KICKED_URL : PROLIFIC_DECLINED_URL;
@@ -49,6 +53,10 @@ export default function ConsentPage() {
 
   useEffect(() => {
     if (showEndScreen && countdown === 0) {
+      // Legitimate exit to Prolific — suppress the global reload/close warning so it
+      // can't interrupt the redirect (the declined end screen is state-driven and may
+      // still count as a protected page).
+      permitUnload();
       window.location.replace(exitUrl);
     }
   }, [showEndScreen, countdown, exitUrl]);
@@ -70,6 +78,35 @@ export default function ConsentPage() {
       sessionStorage.setItem("openedAtMs", String(Date.now()));
     }
   }, []);
+
+  // Entry gate: require a Prolific PID in the URL, and reject a PID that's already in
+  // the DB (a duplicate / returning participant) — both show a 400 page. The kicked/
+  // declined end screens are exempt: they arrive without a PID and must still redirect
+  // to Prolific. Duplicate check fails open on a network error (don't block a real
+  // first-timer over a transient hiccup).
+  useEffect(() => {
+    if (showEndScreen) {
+      setPidGate("ok");
+      return;
+    }
+    const pid = new URLSearchParams(window.location.search).get("PROLIFIC_PID");
+    if (!pid) {
+      setPidGate("blocked");
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/focus-group/check-pid?pid=${encodeURIComponent(pid)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setPidGate(d?.exists ? "blocked" : "ok");
+      })
+      .catch(() => {
+        if (!cancelled) setPidGate("ok");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showEndScreen]);
 
   function handleNext() {
     if (!choice) {
@@ -136,6 +173,26 @@ export default function ConsentPage() {
           </a>
           .
         </p>
+      </div>
+    );
+  }
+
+  // Entry gate result (fresh consent screen only — end screens returned above).
+  // No PROLIFIC_PID in the URL, or a PID already in the DB → 400.
+  if (pidGate === "blocked") return <ErrorPage />;
+  if (pidGate === "checking") {
+    return (
+      <div
+        style={{
+          minHeight: "calc(100dvh - 61px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "system-ui, sans-serif",
+          color: "#666",
+        }}
+      >
+        Loading…
       </div>
     );
   }

@@ -243,6 +243,20 @@ function SecureStep({ userId, onBack }) {
   const shownAtRef = useRef(null); // when the method cards became visible
   const lastClickAtRef = useRef(null); // when the most recent method card was clicked
 
+  // Password entry telemetry: HOW the password field got its content — counted
+  // per input event, never the content itself. typed = single-char keystrokes;
+  // pastes/drops = clipboard/drag; autofill = value set programmatically with no
+  // inputType (browser autofill, suggested strong password, or a password-manager
+  // extension); multiChar = other multi-char inserts (IME, autocorrect).
+  // Classified into pw_entry_method at submit. Reset whenever the field is
+  // programmatically cleared so counts always describe the submitted value.
+  const pwEntryRef = useRef({ typed: 0, pastes: 0, drops: 0, autofill: 0, multiChar: 0 });
+  const pwInputRef = useRef(null);
+
+  function resetPwEntry() {
+    pwEntryRef.current = { typed: 0, pastes: 0, drops: 0, autofill: 0, multiChar: 0 };
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -283,6 +297,25 @@ function SecureStep({ userId, onBack }) {
     }
     setLoading(true);
     setError("");
+    // Autofill CSS probe: the browser marks autofilled fields with a pseudo-class
+    // (:autofill standard, :-webkit-autofill legacy). Catches cases where the
+    // fill produced no usable input event. Selector support varies, hence the
+    // sequential try/catch.
+    let autofillCss = false;
+    try { autofillCss = !!pwInputRef.current?.matches(":autofill"); } catch { /* unsupported */ }
+    if (!autofillCss) {
+      try { autofillCss = !!pwInputRef.current?.matches(":-webkit-autofill"); } catch { /* unsupported */ }
+    }
+    const t = pwEntryRef.current;
+    const pwEntry = {
+      method:
+        autofillCss || t.autofill > 0 ? "autofill_or_manager"
+        : t.pastes + t.drops > 0 ? (t.typed > 0 ? "mixed" : "pasted")
+        : t.typed > 0 ? "typed"
+        : "unknown",
+      ...t,
+      autofillCss,
+    };
     try {
       const res = await fetch("/api/focus-group/register-password", {
         method: "POST",
@@ -291,6 +324,7 @@ function SecureStep({ userId, onBack }) {
         body: JSON.stringify({
           email: userId,
           password,
+          pwEntry,
           sessionId: ctx.sessionId,
           participantId: ctx.participantId,
           // Final durations, anchored on the LAST method click before this success:
@@ -320,6 +354,7 @@ function SecureStep({ userId, onBack }) {
     setLoading(true);
     setError("");
     try {
+      reportPasskeyStep("options_requested");
       // 1. Get registration options from server
       const optRes = await fetch("/api/focus-group/webauthn-register-options", {
         method: "POST",
@@ -329,10 +364,13 @@ function SecureStep({ userId, onBack }) {
       const optData = await optRes.json();
       if (!optRes.ok) throw new Error(optData.error || "Failed to start passkey registration");
       if (activeRequestRef.current !== requestId) return;
+      reportPasskeyStep("options_received");
 
       // 2. Browser ceremony
+      reportPasskeyStep("prompt_opened");
       const attestation = await startRegistration({ optionsJSON: optData.options });
       if (activeRequestRef.current !== requestId) return;
+      reportPasskeyStep("prompt_completed");
 
       // 3. Verify with server
       const verRes = await fetch("/api/focus-group/webauthn-register-verify", {
@@ -355,6 +393,7 @@ function SecureStep({ userId, onBack }) {
       const verData = await verRes.json();
       if (!verRes.ok) throw new Error(verData.error || "Passkey verification failed");
       if (activeRequestRef.current !== requestId) return;
+      reportPasskeyStep("registered");
 
       sessionStorage.setItem("sessionToken", verData.sessionToken);
       // Record the auth method the participant completed registration with, for
@@ -362,6 +401,9 @@ function SecureStep({ userId, onBack }) {
       sessionStorage.setItem("pw_vs_pk", "pk");
       navigate("/survey", { replace: true });
     } catch (err) {
+      // Report BEFORE the stale-request guard: a prompt cancelled by switching
+      // method cards still lands in the trail with the library's diagnosis.
+      reportPasskeyStep(`failed:${err?.name || "Error"}`, err?.message);
       if (activeRequestRef.current !== requestId) return;
       if (err.name === "NotAllowedError") {
         setError("Passkey registration was cancelled. Please try again.");
@@ -370,6 +412,34 @@ function SecureStep({ userId, onBack }) {
       }
     } finally {
       if (activeRequestRef.current === requestId) setLoading(false);
+    }
+  }
+
+  // Running trail of passkey-creation steps, all attempts appended (a retry
+  // starts a new options_requested → … run in the same array).
+  const passkeyStepsRef = useRef([]);
+
+  function reportPasskeyStep(step, detail) {
+    // Fire-and-forget, same pattern as logClicks: persist the WHOLE trail on
+    // every step so it survives abandons and cancelled prompts. ms is offset
+    // from the method cards becoming visible, matching dur_auth_selection_ms.
+    try {
+      const entry = { step };
+      if (shownAtRef.current !== null) entry.ms = Date.now() - shownAtRef.current;
+      if (detail) entry.detail = String(detail).slice(0, 200);
+      passkeyStepsRef.current = [...passkeyStepsRef.current.slice(-49), entry];
+      fetch("/api/focus-group/passkey-step", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          sessionId: ctx.sessionId,
+          participantId: ctx.participantId,
+          steps: passkeyStepsRef.current,
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore — logging is best-effort
     }
   }
 
@@ -408,6 +478,7 @@ function SecureStep({ userId, onBack }) {
     setLoading(false);
     setMethod(m);
     setPassword("");
+    resetPwEntry();
     setError("");
     if (m === "passkey") {
       handlePasskey(activeRequestRef.current);
@@ -442,7 +513,7 @@ function SecureStep({ userId, onBack }) {
               onClick={() => {
                 activeRequestRef.current += 1;
                 setLoading(false);
-                if (method) { setMethod(null); setPassword(""); setError(""); }
+                if (method) { setMethod(null); setPassword(""); resetPwEntry(); setError(""); }
                 else { onBack(); }
               }}
               label={method ? "Back to method selection" : "Back to user ID"}
@@ -498,7 +569,19 @@ function SecureStep({ userId, onBack }) {
                     className="fg-input"
                     type="password"
                     value={password}
-                    onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                    ref={pwInputRef}
+                    onChange={(e) => {
+                      const t = pwEntryRef.current;
+                      const it = e.nativeEvent?.inputType;
+                      const delta = e.target.value.length - password.length;
+                      if (it === "insertText") t.typed++;
+                      else if (it === "insertFromPaste") t.pastes++;
+                      else if (it === "insertFromDrop") t.drops++;
+                      else if (!it && delta > 0) t.autofill++;
+                      else if (delta > 1) t.multiChar++;
+                      setPassword(e.target.value);
+                      setError("");
+                    }}
                     placeholder="Create a strong password"
                     autoComplete="new-password"
                     autoFocus
@@ -540,21 +623,8 @@ export default function LoginChoice() {
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
 
-  // Warn the participant before they reload or close the tab anywhere on the login/
-  // registration page (both the user-ID step and the password/passkey step).
-  // Abandoning here loses their place in the study and forfeits payment. The native
-  // browser dialog can't show custom text (browsers force a generic "Reload site? /
-  // Leave site?" message), but it forces a confirmation. The forward navigation to
-  // /survey unmounts this page (and is client-side), so it won't trigger the warning.
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = ""; // required for Chrome to show the prompt
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  // Back button and reload/close are handled globally by App.jsx's AccessGuard
+  // (back routes to the blocked page, reload warns then blocks), so no per-page trap.
 
   // Guard: must have completed the chat — and not by being kicked (kicked users
   // also have chatCompleted set, but must not reach registration/survey; "/"

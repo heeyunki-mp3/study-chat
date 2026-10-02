@@ -348,34 +348,10 @@ export default function ChatPage() {
   // the seed in case only the echo was lost).
   const outboxRef = useRef([]);
 
-  // If user presses back, send them to "/" (new session) instead of previous page
-  useEffect(() => {
-    window.history.replaceState(null, "", "/chat");
-    window.history.pushState(null, "", "/chat");
-    const onBack = () => {
-      navigate("/", { replace: true });
-    };
-    window.addEventListener("popstate", onBack);
-    return () => window.removeEventListener("popstate", onBack);
-  }, [navigate]);
-
-  // Warn the participant before they reload or close the tab mid-study. A reload
-  // past the 30-min session TTL (or after a server restart) starts a fresh
-  // session and loses all progress, which forfeits their payment. The native
-  // browser dialog can't show custom text — browsers force a generic
-  // "Reload site? / Leave site?" message and ignore any string we provide — but
-  // it does force a confirmation so an accidental reload can't silently wipe the
-  // session. Skip the warning once the study is complete (they're meant to leave).
-  useEffect(() => {
-    const onBeforeUnload = (e) => {
-      if (studyCompleteRef.current) return undefined;
-      e.preventDefault();
-      e.returnValue = ""; // required for Chrome to show the prompt
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  // Back button and reload/close are handled globally by App.jsx's AccessGuard: back
+  // routes to the blocked page, and reload shows the warning then the blocked page
+  // (a reloaded chat never re-mounts, so it can't try to rejoin a stale session).
+  // Transient socket drops that don't reload the page still auto-reconnect below.
 
   useEffect(() => {
     if (!participantName || !sessionStorage.getItem("passedWaiting") || sessionStorage.getItem("chatCompleted")) {
@@ -426,6 +402,9 @@ export default function ChatPage() {
     socket.on("session", (s) => {
       setSession(s);
       if (s?.sessionId) sessionStorage.setItem("studySessionId", s.sessionId);
+      // Blinded group code, available from session start so SurveyPage can
+      // forward it to Qualtrics even after an early (testing) exit.
+      if (s?.ag) sessionStorage.setItem("ag", s.ag);
     });
 
     socket.on("seed", (seedMsgs) => {
@@ -529,6 +508,14 @@ export default function ChatPage() {
       setTyping((prev) => ({ ...prev, [who]: isTyping }));
     });
 
+    socket.on("pid_blocked", () => {
+      // Server-side duplicate-PID gate fired (the client-side ConsentPage gate was
+      // bypassed or stale). Dead-end to the 400 page — no Prolific redirect, since a
+      // duplicate/returning participant must not get a completion code.
+      socket.disconnect();
+      navigate("/blocked", { replace: true });
+    });
+
     socket.on("kicked", ({ message } = {}) => {
       socket.disconnect();
       alert(message || "You have been removed from the session.");
@@ -542,9 +529,11 @@ export default function ChatPage() {
       navigate("/?kicked=1", { replace: true });
     });
 
-    socket.on("study_complete", ({ sessionId, participantId } = {}) => {
+    socket.on("study_complete", ({ sessionId, participantId, ag } = {}) => {
       if (sessionId) localStorage.setItem("sessionId", sessionId);
       if (participantId) localStorage.setItem("participantId", participantId);
+      // ag = blinded group code (server-side mapping), forwarded to Qualtrics by SurveyPage.
+      if (ag) sessionStorage.setItem("ag", ag);
       sessionStorage.setItem("chatCompleted", sessionId || "1");
       // Lock the input: any further typing must not leak into the server transcript.
       studyCompleteRef.current = true;
