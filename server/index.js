@@ -1406,14 +1406,15 @@ async function countSuccessfulByGroup() {
 // unreachable or every group is at cap, fall back to plain rotation rather than
 // blocking the study — assignment must never hard-fail on a counting query.
 async function pickAssignedGroup() {
-  // TEMPORARY MANUAL OVERRIDE (2026-09-08, per user): force every new participant
-  // into the control group. This bypasses the cap-aware rotation below entirely
-  // (so the GROUP_CAP does NOT apply while it's on). To restore normal
-  // pro→anti→control assignment, set FORCE_CONTROL to false or delete this block.
-  const FORCE_CONTROL = true;
-  if (FORCE_CONTROL) {
-    logLine("GROUP", "forced assignment → control (manual override)");
-    return "control";
+  // TEMPORARY MANUAL OVERRIDE (updated 2026-10-13, per user): force every new
+  // participant into a single group (was control, now pro). This bypasses the
+  // cap-aware rotation below entirely (so the GROUP_CAP does NOT apply while it's
+  // on). To restore normal pro→anti→control assignment, set FORCE_GROUP to null
+  // (or delete this block).
+  const FORCE_GROUP = "pro";
+  if (FORCE_GROUP) {
+    logLine("GROUP", `forced assignment → ${FORCE_GROUP} (manual override)`);
+    return FORCE_GROUP;
   }
   let counts = null;
   try {
